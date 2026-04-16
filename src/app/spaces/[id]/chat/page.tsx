@@ -106,8 +106,8 @@ export default function ChatPage(props: { params: Promise<{ id: string }> }) {
   };
 
   return (
-    <div className="flex flex-col h-screen max-h-screen bg-gray-50/50">
-      <header className="flex justify-between items-center p-4 border-b bg-white">
+    <div className="flex flex-col h-screen max-h-screen bg-background">
+      <header className="flex justify-between items-center p-4 border-b bg-background dark:bg-background/95">
         <h1 className="font-semibold text-lg">AI Knowledge Chat</h1>
         <div className="flex gap-4">
           <Link href={`/spaces/${params.id}/documents`}>
@@ -122,8 +122,8 @@ export default function ChatPage(props: { params: Promise<{ id: string }> }) {
       <main className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
         <div className="max-w-3xl mx-auto space-y-6">
           {messages.length === 0 ? (
-           <div className="text-center text-gray-500 mt-20">
-             <Bot className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+           <div className="text-center text-muted-foreground mt-20">
+             <Bot className="mx-auto h-12 w-12 text-muted-foreground/60 mb-4" />
              <h2 className="text-xl font-medium mb-2">Welcome to your Knowledge Base</h2>
              <p>Ask a question, and the AI will answer strictly based on your uploaded documents.</p>
            </div>
@@ -137,7 +137,7 @@ export default function ChatPage(props: { params: Promise<{ id: string }> }) {
                     </div>
                   )}
                   
-                  <Card className={`max-w-[85%] border-none shadow-sm ${m.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-white'}`}>
+                  <Card className={`max-w-[85%] border-none shadow-sm ${m.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-card dark:bg-card'}`}>
                     <CardContent className="p-4 prose prose-sm dark:prose-invert">
                       <ReactMarkdown>{m.content}</ReactMarkdown>
                     </CardContent>
@@ -156,13 +156,13 @@ export default function ChatPage(props: { params: Promise<{ id: string }> }) {
         </div>
       </main>
 
-      <footer className="p-4 bg-white border-t">
+      <footer className="p-4 bg-background dark:bg-background/95 border-t">
         <form onSubmit={handleSubmit} className="max-w-3xl mx-auto relative flex items-center">
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask about your knowledge base..."
-            className="pr-12 py-6 rounded-full bg-gray-100 border-none focus-visible:ring-1 focus-visible:ring-primary shadow-inner"
+            className="pr-12 py-6 rounded-full bg-input border-none focus-visible:ring-1 focus-visible:ring-primary shadow-inner"
             disabled={isLoading}
           />
           <Button 
@@ -174,7 +174,7 @@ export default function ChatPage(props: { params: Promise<{ id: string }> }) {
             {isLoading ? <Loader2 size={16} className="animate-spin" /> : <ArrowUp size={16} />}
           </Button>
         </form>
-        <div className="text-center mt-2 text-xs text-gray-400">
+        <div className="text-center mt-2 text-xs text-muted-foreground">
           AI can make mistakes. Verify answers with source documents.
         </div>
       </footer>
