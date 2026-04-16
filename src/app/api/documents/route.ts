@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import prisma from '@/lib/db'
 import { chunkText } from '@/lib/ai/chunking'
 import { generateEmbeddings } from '@/lib/ai/embeddings'
+import { getEmbeddingProvider } from '@/lib/ai/core/provider-factory'
 import { z } from 'zod'
 
 const ingestSchema = z.object({
@@ -10,6 +11,24 @@ const ingestSchema = z.object({
   content: z.string().min(10, "Content is too short"),
   spaceId: z.string().uuid("Invalid Space ID"),
 })
+
+/**
+ * Map provider to EmbeddingModel enum value
+ */
+function getEmbeddingModelEnum(): string {
+  const provider = getEmbeddingProvider();
+  const env = process.env.EMBEDDING_PROVIDER || process.env.LLM_PROVIDER || 'google';
+  
+  if (env === 'ollama') {
+    const model = process.env.OLLAMA_EMBEDDING_MODEL || 'nomic-embed-text';
+    if (model === 'nomic-embed-text') {
+      return 'OLLAMA_NOMIC_1536';
+    }
+    return 'OLLAMA_CUSTOM';
+  }
+  
+  return 'GOOGLE_GEMINI_3072';
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -78,9 +97,30 @@ export async function POST(req: NextRequest) {
     const chunks = chunkText(content)
 
     // 2. Generate embeddings for each chunk
-    const embeddings = await generateEmbeddings(chunks)
+    let embeddings: number[][];
+    try {
+      console.log('[INGESTION] Generating embeddings for', chunks.length, 'chunks');
+      embeddings = await generateEmbeddings(chunks);
+      console.log('[INGESTION] Successfully generated embeddings');
+    } catch (embedError: any) {
+      console.error('[INGESTION] Embedding generation failed:', {
+        error: embedError.message,
+        embeddingProvider: process.env.EMBEDDING_PROVIDER || process.env.LLM_PROVIDER || 'google',
+        config: {
+          OLLAMA_BASE_URL: process.env.OLLAMA_BASE_URL,
+          OLLAMA_EMBEDDING_MODEL: process.env.OLLAMA_EMBEDDING_MODEL,
+          OLLAMA_EMBEDDING_DIMENSION: process.env.OLLAMA_EMBEDDING_DIMENSION,
+        },
+      });
+      throw embedError;
+    }
+    
+    // 3. Get embedding model metadata
+    const embeddingProvider = getEmbeddingProvider()
+    const embeddingModelEnum = getEmbeddingModelEnum()
+    const embeddingDimension = embeddingProvider.dimension
 
-    // 3. Store in database
+    // 4. Store in database
     const document = await prisma.$transaction(async (tx: any) => {
       // Create Document logically
       const doc = await tx.document.create({
@@ -91,15 +131,15 @@ export async function POST(req: NextRequest) {
         }
       })
 
-      // Create chunks with vectors using raw SQL since Prisma doesn't map arrays of vectors easily in standard createMany
+      // Create chunks with vectors and metadata using raw SQL since Prisma doesn't map arrays of vectors easily in standard createMany
       for (let i = 0; i < chunks.length; i++) {
         const chunkContent = chunks[i]
         // pgvector requires strings like '[0.1, 0.2, 0.3...]' for raw inserts
         const chunkEmbedding = `[${embeddings[i].join(',')}]`
 
         await tx.$executeRaw`
-          INSERT INTO "DocumentChunk" ("documentId", "content", "embedding")
-          VALUES (${doc.id}::uuid, ${chunkContent}, ${chunkEmbedding}::vector);
+          INSERT INTO "DocumentChunk" ("documentId", "content", "embedding", "embeddingModel", "embeddingDimension")
+          VALUES (${doc.id}::uuid, ${chunkContent}, ${chunkEmbedding}::vector, ${embeddingModelEnum}::"EmbeddingModel", ${embeddingDimension});
         `
       }
 

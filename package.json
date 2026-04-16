@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "regenerate:embeddings": "ts-node -P tsconfig.json scripts/regenerate-embeddings.ts"
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.61",
@@ -21,6 +22,7 @@
     "clsx": "^2.1.1",
     "lucide-react": "^1.8.0",
     "next": "16.2.3",
+    "ollama-ai-provider-v2": "^3.5.0",
     "pg": "^8.20.0",
     "react": "19.2.5",
     "react-dom": "19.2.5",

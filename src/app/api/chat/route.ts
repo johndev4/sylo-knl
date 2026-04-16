@@ -1,11 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import prisma from '@/lib/db';
-import { generateEmbedding, googleAI } from '@/lib/ai/embeddings';
-import { streamText } from 'ai';
-import { Prisma } from '@prisma/client';
+import { executeRAGChat } from '@/lib/ai/rag/pipeline';
 
 export const maxDuration = 60; // allow longer timeout for RAG
+
+/**
+ * Convert provider-agnostic StreamChunk to HTTP streaming format
+ */
+function streamChunksToResponse(
+  chunks: AsyncIterable<any>,
+): ReadableStream<Uint8Array> {
+  return new ReadableStream({
+    async start(controller) {
+      try {
+        for await (const chunk of chunks) {
+          if (chunk.type === 'text') {
+            controller.enqueue(
+              new TextEncoder().encode(chunk.content || ''),
+            );
+          } else if (chunk.type === 'error') {
+            controller.enqueue(
+              new TextEncoder().encode(`[ERROR] ${chunk.error}`),
+            );
+            controller.close();
+            break;
+          } else if (chunk.type === 'finish') {
+            controller.close();
+          }
+        }
+      } catch (error: any) {
+        controller.error(error);
+      }
+    },
+  });
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -25,7 +54,10 @@ export async function POST(req: NextRequest) {
 
     // Validate request body
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
-      return NextResponse.json({ error: 'messages must be a non-empty array' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'messages must be a non-empty array' },
+        { status: 400 },
+      );
     }
 
     if (!spaceId) {
@@ -60,54 +92,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    // Get the latest user message
+    // Get the latest user message for embedding
     const latestMessage = messages[messages.length - 1];
 
-    // 1. Generate embedding for query
-    const queryEmbedding = await generateEmbedding(latestMessage.content);
-    console.log('[CHAT] Query embedding length:', queryEmbedding.length);
-    const embeddingString = `[${queryEmbedding.join(',')}]`;
+    // Execute RAG pipeline: embed → retrieve → context → stream
+    const chunks = executeRAGChat(latestMessage.content, spaceId, messages);
+    const stream = streamChunksToResponse(chunks);
 
-    // 2. Perform vector search using pgvector and Prisma.sql
-    // Using ::vector without size to avoid mismatch with unsized DB column
-    const chunks = await prisma.$queryRaw<Array<{ id: string; content: string; title: string }>>`
-      SELECT 
-        dc.id, 
-        dc.content, 
-        d.title, 
-        (dc.embedding <=> ${embeddingString}::vector) as distance
-      FROM "DocumentChunk" dc
-      JOIN "Document" d ON dc."documentId" = d.id
-      WHERE d."spaceId" = ${spaceId}::uuid
-      ORDER BY distance ASC
-      LIMIT 5;
-    `;
-
-    console.log('[CHAT] Retrieved chunks:', chunks.length);
-
-    // 3. Construct prompt with retrieved context
-    const contextContent =
-      chunks.length > 0
-        ? chunks.map((c) => `[Source: ${c.title}]\n${c.content}`).join('\n\n')
-        : 'No relevant documents found.';
-
-    console.log('[CHAT] Context Content:');
-    console.dir(contextContent);
-
-    const systemPrompt = `You are a helpful knowledge assistant. Answer the user's question based strictly on the provided context below. If the context does not contain the answer, say "I don't have enough information to answer that based on the provided documents."
-
-Context Documents:
-${contextContent}
-`;
-
-    // 4. Stream response from Gemini 2.5 Flash (legacy 1.5 is retired in 2026)
-    const result = streamText({
-      model: googleAI('gemini-2.5-flash'),
-      system: systemPrompt,
-      messages,
+    return new NextResponse(stream, {
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Transfer-Encoding': 'chunked',
+      },
     });
-
-    return result.toTextStreamResponse();
   } catch (error: any) {
     console.error('[CHAT ERROR] Full error:', error);
     console.error('[CHAT ERROR] Message:', error.message);
@@ -115,7 +112,11 @@ ${contextContent}
     console.error('[CHAT ERROR] Meta:', error.meta);
 
     // Handle specific error types
-    if (error.code === 'P2V001' || error.meta?.code === '22P02' || error.message?.includes('22P02')) {
+    if (
+      error.code === 'P2V001' ||
+      error.meta?.code === '22P02' ||
+      error.message?.includes('22P02')
+    ) {
       // Vector embedding not found or invalid
       return NextResponse.json(
         {

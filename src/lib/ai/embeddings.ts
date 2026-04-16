@@ -1,35 +1,25 @@
-import { embed, embedMany } from 'ai'
-import { createGoogleGenerativeAI } from '@ai-sdk/google'
+/**
+ * Provider-agnostic embeddings core interface.
+ * All embedding calls delegate to the active provider.
+ *
+ * These functions maintain backward compatibility with existing code
+ * while now supporting multiple providers (Google, Ollama, etc.).
+ */
 
-// Use a custom instance pointing to the stable v1 API.
-// Note: text-embedding-004 is retired in 2026 context, so we use gemini-embedding-001.
-export const googleAI = createGoogleGenerativeAI({
-  apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
-  baseURL: 'https://generativelanguage.googleapis.com/v1beta',
-})
-
-const EMBEDDING_MODEL = googleAI.textEmbeddingModel('gemini-embedding-001')
+import { getEmbeddingProvider } from './core/provider-factory';
 
 /**
  * Generate a single embedding for a piece of text (e.g., a search query)
  */
 export async function generateEmbedding(value: string): Promise<number[]> {
-  const result = await embed({
-    model: EMBEDDING_MODEL,
-    value,
-  })
-
-  return result.embedding
+  const provider = getEmbeddingProvider();
+  return provider.embed(value);
 }
 
 /**
  * Generate embeddings for multiple text chunks efficiently
  */
 export async function generateEmbeddings(values: string[]): Promise<number[][]> {
-  const result = await embedMany({
-    model: EMBEDDING_MODEL,
-    values,
-  })
-
-  return result.embeddings
+  const provider = getEmbeddingProvider();
+  return provider.embedMany(values);
 }

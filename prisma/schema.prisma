@@ -49,6 +49,12 @@ enum Role {
   VIEWER
 }
 
+enum EmbeddingModel {
+  GOOGLE_GEMINI_3072
+  OLLAMA_NOMIC_1536
+  OLLAMA_CUSTOM
+}
+
 model Document {
   id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   title     String
@@ -62,11 +68,16 @@ model Document {
 }
 
 model DocumentChunk {
-  id         String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  documentId String                       @db.Uuid
-  content    String
-  embedding  Unsupported("vector(3072)")?
-  createdAt  DateTime                     @default(now())
+  id                 String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  documentId         String                 @db.Uuid
+  content            String
+  embedding          Unsupported("vector")?
+  embeddingModel     EmbeddingModel         @default(GOOGLE_GEMINI_3072)
+  embeddingDimension Int                    @default(3072)
+  createdAt          DateTime               @default(now())
 
   document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([embeddingModel])
+  @@index([documentId, embeddingModel])
 }
