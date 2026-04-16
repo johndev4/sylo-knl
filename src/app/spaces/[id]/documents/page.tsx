@@ -59,16 +59,18 @@ export default function DocumentsPage(props: { params: Promise<{ id: string }> }
 
   return (
     <div className="container mx-auto p-6 max-w-4xl">
-      <div className="mb-6">
+      <div className="mb-8">
         <Link href={`/spaces`}>
           <Button variant="ghost" size="sm" className="mb-4">
             <ArrowLeft className="mr-2 h-4 w-4" /> Back to Spaces
           </Button>
         </Link>
-        <h1 className="text-3xl font-bold tracking-tight">Knowledge Ingestion</h1>
-        <p className="text-muted-foreground mt-2">
-          Add new documents to this space. Text will be chunked, embedded, and stored for RAG.
-        </p>
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight mb-1">Knowledge Ingestion</h1>
+          <p className="text-muted-foreground">
+            Add new documents to this space. Text will be chunked, embedded, and stored for RAG.
+          </p>
+        </div>
       </div>
 
       <Card>
@@ -98,13 +100,17 @@ export default function DocumentsPage(props: { params: Promise<{ id: string }> }
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 placeholder="Paste the full text here..."
-                className="flex min-h-[300px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex min-h-[300px] w-full rounded-lg border border-border bg-zinc-50 dark:bg-zinc-900 px-3 py-2 text-sm transition-smooth placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 dark:focus-visible:ring-offset-zinc-950"
                 required
               />
             </div>
 
             {message && (
-              <div className={`p-4 rounded-md text-sm ${message.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+              <div className={`p-4 rounded-lg text-sm border ${
+                message.type === 'success' 
+                  ? 'bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800/50' 
+                  : 'bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800/50'
+              }`}>
                 {message.text}
               </div>
             )}

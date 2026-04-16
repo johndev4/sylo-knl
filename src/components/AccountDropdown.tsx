@@ -121,10 +121,11 @@ export function AccountDropdown() {
         ref={triggerRef}
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          'flex items-center gap-2 px-2 py-2 rounded-lg',
-          'bg-input/30 hover:bg-input/50 dark:bg-input/20 dark:hover:bg-input/30',
-          'transition-colors duration-200 outline-none',
-          'focus:ring-2 focus:ring-accent/50 dark:focus:ring-accent/30'
+          'flex items-center gap-2 px-3 py-2 rounded-lg',
+          'bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-900 dark:hover:bg-zinc-800',
+          'border border-zinc-200 dark:border-zinc-800',
+          'transition-smooth outline-none',
+          'focus:ring-2 focus:ring-zinc-400/50 dark:focus:ring-zinc-600/50'
         )}
         aria-label="Account menu"
         aria-expanded={isOpen}
@@ -133,7 +134,7 @@ export function AccountDropdown() {
         <div
           className={cn(
             'w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium',
-            'bg-accent/50 dark:bg-accent/40 text-foreground dark:text-foreground/90'
+            'bg-zinc-200 dark:bg-zinc-800 text-foreground'
           )}
         >
           {initials}
@@ -141,7 +142,7 @@ export function AccountDropdown() {
 
         {/* Display Name (hidden on mobile) */}
         {!isLoading && userProfile && (
-          <span className="text-sm text-foreground/80 dark:text-foreground/70 hidden sm:inline max-w-[150px] truncate">
+          <span className="text-sm text-foreground/80 hidden sm:inline max-w-[150px] truncate">
             {userProfile.name || userProfile.email}
           </span>
         )}
@@ -152,8 +153,8 @@ export function AccountDropdown() {
         <div
           ref={dropdownRef}
           className={cn(
-            'absolute right-0 mt-2 w-56 rounded-lg border border-border/50 dark:border-border/30',
-            'bg-background dark:bg-background/95 shadow-lg dark:shadow-2xl',
+            'absolute right-0 mt-2 w-56 rounded-lg border border-zinc-200 dark:border-zinc-800',
+            'bg-white dark:bg-zinc-950 shadow-soft-md dark:shadow-soft-lg',
             'z-50 overflow-hidden animate-in fade-in-0 zoom-in-95 duration-200'
           )}
           role="menu"
@@ -164,16 +165,16 @@ export function AccountDropdown() {
           }}
         >
           {/* User Profile Header */}
-          <div className="px-3 py-2 border-b border-border/30 dark:border-border/20 bg-accent/5 dark:bg-accent/10">
-            <p className="text-xs font-medium text-foreground/70 dark:text-foreground/60 uppercase tracking-wider">
+          <div className="px-3 py-3 border-b border-zinc-200 dark:border-zinc-800/50 bg-zinc-50 dark:bg-zinc-900/50">
+            <p className="text-xs font-medium text-foreground/60 uppercase tracking-wider">
               Account
             </p>
             {userProfile && (
               <>
-                <p className="text-sm font-semibold text-foreground dark:text-foreground/95 truncate mt-1">
+                <p className="text-sm font-semibold text-foreground truncate mt-1">
                   {userProfile.name || 'User'}
                 </p>
-                <p className="text-xs text-foreground/60 dark:text-foreground/50 truncate">
+                <p className="text-xs text-foreground/60 truncate">
                   {userProfile.email}
                 </p>
               </>
@@ -186,14 +187,14 @@ export function AccountDropdown() {
             <a
               href="/account/settings"
               className={cn(
-                'flex items-center gap-2 px-3 py-2 text-sm text-foreground dark:text-foreground/90',
-                'hover:bg-accent/30 dark:hover:bg-accent/20 transition-colors duration-150',
+                'flex items-center gap-2 px-3 py-2 text-sm text-foreground',
+                'hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-smooth',
                 'cursor-pointer'
               )}
               role="menuitem"
               onClick={() => setIsOpen(false)}
             >
-              <Settings className="w-4 h-4 text-foreground/70 dark:text-foreground/60" />
+              <Settings className="w-4 h-4 text-foreground/60" />
               <span>Account Settings</span>
             </a>
 
@@ -204,8 +205,8 @@ export function AccountDropdown() {
               onClick={() => setShowThemeSubmenu(!showThemeSubmenu)}
               className={cn(
                 'w-full flex items-center justify-between px-3 py-2 text-sm',
-                'text-foreground dark:text-foreground/90 hover:bg-accent/30 dark:hover:bg-accent/20',
-                'transition-colors duration-150 cursor-pointer'
+                'text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900',
+                'transition-smooth cursor-pointer'
               )}
               role="menuitem"
               aria-haspopup="true"
@@ -214,7 +215,7 @@ export function AccountDropdown() {
               <span>Theme</span>
               <ChevronRight
                 className={cn(
-                  'w-4 h-4 text-foreground/60 dark:text-foreground/50 transition-transform',
+                  'w-4 h-4 text-foreground/60 transition-transform',
                   showThemeSubmenu && 'rotate-90'
                 )}
               />
@@ -222,7 +223,7 @@ export function AccountDropdown() {
 
             {/* Theme Submenu */}
             {showThemeSubmenu && (
-              <div className="px-2 py-1 bg-accent/5 dark:bg-accent/10 border-t border-border/20 dark:border-border/10">
+              <div className="px-2 py-1 bg-zinc-50 dark:bg-zinc-900/50 border-t border-zinc-200 dark:border-zinc-800/50">
                 <ThemeSubmenu />
               </div>
             )}
@@ -234,8 +235,8 @@ export function AccountDropdown() {
               onClick={handleLogout}
               className={cn(
                 'w-full flex items-center gap-2 px-3 py-2 text-sm',
-                'text-destructive dark:text-red-400 hover:bg-destructive/10 dark:hover:bg-destructive/20',
-                'transition-colors duration-150 cursor-pointer'
+                'text-destructive hover:bg-destructive/10 dark:hover:bg-destructive/20',
+                'transition-smooth cursor-pointer'
               )}
               role="menuitem"
             >

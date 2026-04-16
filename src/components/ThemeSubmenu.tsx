@@ -21,23 +21,23 @@ export function ThemeSubmenu() {
           key={option.id}
           onClick={() => setTheme(option.id)}
           className={cn(
-            'w-full flex items-center justify-between px-2 py-2 text-sm rounded-md transition-colors',
-            'hover:bg-accent/50 dark:hover:bg-accent/30',
-            theme === option.id ? 'bg-accent/30 dark:bg-accent/20' : ''
+            'w-full flex items-center justify-between px-3 py-2 text-sm rounded-md transition-smooth',
+            'hover:bg-zinc-200 dark:hover:bg-zinc-800',
+            theme === option.id ? 'bg-zinc-200 dark:bg-zinc-800' : ''
           )}
           role="menuitemradio"
           aria-checked={theme === option.id}
         >
           <div className="flex items-center gap-2">
-            <div className="text-foreground/70 dark:text-foreground/60">
+            <div className="text-foreground/70">
               {option.icon}
             </div>
-            <span className="text-foreground dark:text-foreground/90">
+            <span className="text-foreground">
               {option.label}
             </span>
           </div>
           {theme === option.id && (
-            <Check className="w-4 h-4 text-foreground dark:text-foreground/80" />
+            <Check className="w-4 h-4 text-foreground" />
           )}
         </button>
       ))}

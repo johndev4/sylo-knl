@@ -107,9 +107,9 @@ export default function ChatPage(props: { params: Promise<{ id: string }> }) {
 
   return (
     <div className="flex flex-col h-screen max-h-screen bg-background">
-      <header className="flex justify-between items-center p-4 border-b bg-background dark:bg-background/95">
+      <header className="flex justify-between items-center px-4 py-3 border-b border-zinc-200 dark:border-zinc-800/50 bg-white dark:bg-zinc-950/80 shadow-soft-xs">
         <h1 className="font-semibold text-lg">AI Knowledge Chat</h1>
-        <div className="flex gap-4">
+        <div className="flex gap-2">
           <Link href={`/spaces/${params.id}/documents`}>
             <Button variant="outline" size="sm">Manage Documents</Button>
           </Link>
@@ -130,22 +130,22 @@ export default function ChatPage(props: { params: Promise<{ id: string }> }) {
           ) : (
             <>
               {messages.map((m) => (
-                <div key={m.id} className={`flex gap-4 ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div key={m.id} className={`flex gap-3 ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                   {m.role === 'assistant' && (
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                      <Bot size={18} className="text-primary" />
+                    <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center shrink-0 border border-zinc-200 dark:border-zinc-800">
+                      <Bot size={18} className="text-foreground" />
                     </div>
                   )}
                   
-                  <Card className={`max-w-[85%] border-none shadow-sm ${m.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-card dark:bg-card'}`}>
-                    <CardContent className="p-4 prose prose-sm dark:prose-invert">
+                  <div className={`max-w-[85%] rounded-lg p-3 shadow-soft-sm ${m.role === 'user' ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950' : 'bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800'}`}>
+                    <div className="prose prose-sm dark:prose-invert max-w-none">
                       <ReactMarkdown>{m.content}</ReactMarkdown>
-                    </CardContent>
-                  </Card>
+                    </div>
+                  </div>
 
                   {m.role === 'user' && (
-                    <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0">
-                      <User size={18} className="text-primary-foreground" />
+                    <div className="w-8 h-8 rounded-lg bg-zinc-900 dark:bg-zinc-100 flex items-center justify-center shrink-0">
+                      <User size={18} className="text-white dark:text-zinc-950" />
                     </div>
                   )}
                 </div>
@@ -156,25 +156,25 @@ export default function ChatPage(props: { params: Promise<{ id: string }> }) {
         </div>
       </main>
 
-      <footer className="p-4 bg-background dark:bg-background/95 border-t">
-        <form onSubmit={handleSubmit} className="max-w-3xl mx-auto relative flex items-center">
+      <footer className="p-4 bg-white dark:bg-zinc-950/80 border-t border-zinc-200 dark:border-zinc-800/50 shadow-soft-xs">
+        <form onSubmit={handleSubmit} className="max-w-3xl mx-auto flex gap-2">
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask about your knowledge base..."
-            className="pr-12 py-6 rounded-full bg-input border-none focus-visible:ring-1 focus-visible:ring-primary shadow-inner"
+            className="flex-1 rounded-lg focus-visible:ring-2 transition-smooth"
             disabled={isLoading}
           />
           <Button 
             size="icon" 
             type="submit" 
             disabled={isLoading || !input.trim()} 
-            className="absolute right-2 rounded-full h-8 w-8"
+            className="rounded-lg h-9 w-9"
           >
             {isLoading ? <Loader2 size={16} className="animate-spin" /> : <ArrowUp size={16} />}
           </Button>
         </form>
-        <div className="text-center mt-2 text-xs text-muted-foreground">
+        <div className="text-center mt-3 text-xs text-muted-foreground">
           AI can make mistakes. Verify answers with source documents.
         </div>
       </footer>
