@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import { Suspense } from "react";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
@@ -31,9 +32,11 @@ export default function RootLayout({
       className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <head>
-        {/* Apply theme before hydration to prevent flash */}
-        <script
+      <head />
+      <body className="min-h-full flex flex-col bg-background text-foreground">
+        <Script
+          id="theme-script"
+          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `
               try {
@@ -47,8 +50,6 @@ export default function RootLayout({
             `,
           }}
         />
-      </head>
-      <body className="min-h-full flex flex-col bg-background text-foreground">
         <ThemeProvider>
           <Navbar />
           <Suspense fallback={null}>

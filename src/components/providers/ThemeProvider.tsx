@@ -16,11 +16,6 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const { theme, setTheme, mounted } = useTheme();
 
-  // Prevent rendering children until theme is initialized to avoid hydration mismatch
-  if (!mounted) {
-    return <>{children}</>;
-  }
-
   return (
     <ThemeContext.Provider value={{ theme, setTheme, mounted }}>
       {children}

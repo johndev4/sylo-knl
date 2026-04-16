@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { AccountDropdown } from '@/components/AccountDropdown';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { cn } from '@/lib/utils';
 
 export function Navbar() {
@@ -30,8 +31,11 @@ export function Navbar() {
           <span className="hidden sm:inline">Sylo</span>
         </Link>
 
-        {/* Account Dropdown */}
-        <AccountDropdown />
+        {/* Theme Toggle & Account Dropdown */}
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <AccountDropdown />
+        </div>
       </div>
     </nav>
   );
