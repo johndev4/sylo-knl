@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -85,6 +85,31 @@ export default function AccountSettingsPage() {
     }
   };
 
+  const { isDirty, isValid } = useMemo(() => {
+    if (!profile) return { isDirty: false, isValid: false };
+
+    const dirty =
+      formData.name !== (profile.name || '') ||
+      formData.bio !== (profile.bio || '') ||
+      formData.timezone !== (profile.timezone || '') ||
+      formData.useAvatarUrl !== (profile.useAvatarUrl ?? true);
+
+    const valid = formData.name.trim() !== '';
+
+    return { isDirty: dirty, isValid: valid };
+  }, [formData, profile]);
+
+  const canSave = isDirty && isValid && !submitting;
+
+  const getSaveButtonDescription = () => {
+    if (submitting) return "Saving your changes...";
+    if (saveSuccess) return "Changes saved successfully!";
+    if (!profile) return "";
+    if (!isDirty) return "No changes have been made to your profile yet.";
+    if (!isValid) return "Required fields are missing. Please provide a name.";
+    return "Click to save your profile changes.";
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     const checked = (e.target as HTMLInputElement).checked;
@@ -131,10 +156,10 @@ export default function AccountSettingsPage() {
       setProfile(updatedProfile);
       setSuccessMessage('Profile updated successfully!');
       setSaveSuccess(true);
-      
+
       // Notify other components (like the Navbar) that the profile has changed
       window.dispatchEvent(new Event('profile-updated'));
-      
+
       setTimeout(() => {
         setSuccessMessage('');
         setSaveSuccess(false);
@@ -352,9 +377,8 @@ export default function AccountSettingsPage() {
                       value={formData.bio}
                       onChange={handleChange}
                       disabled={submitting}
-                      className={`mt-1 w-full px-3 py-2 border border-input rounded-md bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed ${
-                        getFieldError('bio') ? 'border-destructive' : ''
-                      }`}
+                      className={`mt-1 w-full px-3 py-2 border border-input rounded-md bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed ${getFieldError('bio') ? 'border-destructive' : ''
+                        }`}
                       rows={4}
                       maxLength={500}
                     />
@@ -377,9 +401,8 @@ export default function AccountSettingsPage() {
                       value={formData.timezone}
                       onChange={handleChange}
                       disabled={submitting}
-                      className={`mt-1 w-full px-3 py-2 border border-input rounded-md bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed ${
-                        getFieldError('timezone') ? 'border-destructive' : ''
-                      }`}
+                      className={`mt-1 w-full px-3 py-2 border border-input rounded-md bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed ${getFieldError('timezone') ? 'border-destructive' : ''
+                        }`}
                     >
                       <option value="">Select timezone (optional)</option>
                       {VALID_TIMEZONES.map(tz => (
@@ -394,46 +417,72 @@ export default function AccountSettingsPage() {
                   </div>
                 </div>
 
-                {/* Submit Button */}
-                <div className="flex justify-end gap-3 pt-4 border-t border-border">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setFormData({
-                        name: profile.name || '',
-                        bio: profile.bio || '',
-                        timezone: profile.timezone || '',
-                        useAvatarUrl: profile.useAvatarUrl ?? true,
-                      });
-                      setErrors([]);
-                    }}
-                    disabled={submitting}
-                  >
-                    Cancel
-                  </Button>
-                  <Button 
-                    type="submit" 
-                    disabled={submitting || saveSuccess}
+                {/* Submit Button Section */}
+                <div className="flex flex-col sm:flex-row items-center justify-end gap-4 pt-4 border-t border-border">
+                  {/* Accessibility Hint (Visible only when needed or for screen readers) */}
+                  <p
+                    id="save-hint"
                     className={cn(
-                      "min-w-[120px] transition-all duration-200",
-                      saveSuccess && "bg-green-600 hover:bg-green-600 border-green-600"
+                      "text-xs font-medium transition-opacity duration-200",
+                      isDirty && !isValid ? "text-destructive opacity-100" : "text-muted-foreground opacity-70",
+                      !isDirty && !submitting && !saveSuccess ? "sm:block hidden" : ""
                     )}
+                    aria-live="polite"
                   >
-                    {submitting ? (
-                      <div className="flex items-center gap-2">
-                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-solid border-current border-r-transparent" />
-                        <span>Saving...</span>
-                      </div>
-                    ) : saveSuccess ? (
-                      <div className="flex items-center gap-2">
-                        <Check className="w-4 h-4" />
-                        <span>Saved!</span>
-                      </div>
-                    ) : (
-                      'Save Changes'
-                    )}
-                  </Button>
+                    {getSaveButtonDescription()}
+                  </p>
+
+                  <div className="flex gap-3 w-full sm:w-auto">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="flex-1 sm:flex-none"
+                      onClick={() => {
+                        setFormData({
+                          name: profile.name || '',
+                          bio: profile.bio || '',
+                          timezone: profile.timezone || '',
+                          useAvatarUrl: profile.useAvatarUrl ?? true,
+                        });
+                        setErrors([]);
+                      }}
+                      disabled={submitting}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      aria-disabled={!canSave}
+                      aria-describedby="save-hint"
+                      disabled={submitting} // Native disabled only during active submission
+                      className={cn(
+                        "flex-1 sm:min-w-[140px] transition-all duration-200",
+                        !canSave && !submitting && "opacity-50 cursor-not-allowed contrast-more:opacity-70",
+                        saveSuccess && "bg-green-600 hover:bg-green-600 border-green-600"
+                      )}
+                      onClick={(e) => {
+                        // Prevent click if aria-disabled
+                        if (!canSave && !submitting) {
+                          e.preventDefault();
+                          return;
+                        }
+                      }}
+                    >
+                      {submitting ? (
+                        <div className="flex items-center gap-2">
+                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-solid border-current border-r-transparent" />
+                          <span>Saving...</span>
+                        </div>
+                      ) : saveSuccess ? (
+                        <div className="flex items-center gap-2">
+                          <Check className="w-4 h-4" />
+                          <span>Saved!</span>
+                        </div>
+                      ) : (
+                        'Save Changes'
+                      )}
+                    </Button>
+                  </div>
                 </div>
               </form>
             </CardContent>
