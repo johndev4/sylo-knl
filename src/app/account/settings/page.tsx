@@ -6,6 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
+import { Check } from 'lucide-react';
 
 interface UserProfile {
   id: string;
@@ -14,6 +16,7 @@ interface UserProfile {
   avatarUrl: string | null;
   bio: string | null;
   timezone: string | null;
+  useAvatarUrl: boolean;
 }
 
 interface FormError {
@@ -39,11 +42,13 @@ export default function AccountSettingsPage() {
     name: '',
     bio: '',
     timezone: '',
+    useAvatarUrl: true,
   });
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<FormError[]>([]);
   const [successMessage, setSuccessMessage] = useState('');
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   // Fetch user profile on mount
   useEffect(() => {
@@ -70,6 +75,7 @@ export default function AccountSettingsPage() {
         name: data.name || '',
         bio: data.bio || '',
         timezone: data.timezone || '',
+        useAvatarUrl: data.useAvatarUrl ?? true,
       });
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -80,10 +86,11 @@ export default function AccountSettingsPage() {
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
+    const { name, value, type } = e.target;
+    const checked = (e.target as HTMLInputElement).checked;
     setFormData(prev => ({
       ...prev,
-      [name]: value,
+      [name]: type === 'checkbox' ? checked : value,
     }));
     // Clear errors for this field when user starts typing
     setErrors(prev => prev.filter(e => e.field !== name));
@@ -123,7 +130,11 @@ export default function AccountSettingsPage() {
       const updatedProfile = await response.json();
       setProfile(updatedProfile);
       setSuccessMessage('Profile updated successfully!');
-      setTimeout(() => setSuccessMessage(''), 3000);
+      setSaveSuccess(true);
+      setTimeout(() => {
+        setSuccessMessage('');
+        setSaveSuccess(false);
+      }, 3000);
     } catch (error) {
       console.error('Error updating profile:', error);
       setErrors([{ field: 'general', message: 'An error occurred. Please try again.' }]);
@@ -134,6 +145,17 @@ export default function AccountSettingsPage() {
 
   const getFieldError = (field: string) => {
     return errors.find(e => e.field === field)?.message;
+  };
+
+  const getInitials = (displayName: string | null, email: string): string => {
+    const source = displayName || email.split('@')[0];
+    return source
+      .split(/[\s._-]+/)
+      .slice(0, 2)
+      .map((part) => part[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
   };
 
   if (loading) {
@@ -162,6 +184,8 @@ export default function AccountSettingsPage() {
     );
   }
 
+  const initials = getInitials(profile.name, profile.email);
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto py-8 px-4">
@@ -186,8 +210,11 @@ export default function AccountSettingsPage() {
           )}
 
           {successMessage && (
-            <div className="mb-6 p-4 bg-green-500/10 text-green-700 dark:text-green-400 rounded-lg border border-green-500/20">
-              {successMessage}
+            <div className="mb-6 p-4 bg-green-500/10 text-green-700 dark:text-green-400 rounded-lg border border-green-500/20 flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+              <div className="bg-green-500/20 p-1 rounded-full">
+                <Check className="w-4 h-4" />
+              </div>
+              <p className="text-sm font-medium">{successMessage}</p>
             </div>
           )}
 
@@ -195,7 +222,7 @@ export default function AccountSettingsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Profile Information</CardTitle>
-              <CardDescription>Update your profile details. Your email and avatar cannot be changed.</CardDescription>
+              <CardDescription>Update your profile details. Your email cannot be changed.</CardDescription>
             </CardHeader>
 
             <CardContent>
@@ -214,6 +241,80 @@ export default function AccountSettingsPage() {
                     <p className="text-xs text-muted-foreground mt-1">Email cannot be changed</p>
                   </div>
                 </div>
+
+                {/* Avatar Display Section */}
+                {profile.avatarUrl && (
+                  <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 bg-zinc-50/50 dark:bg-zinc-900/50">
+                    <Label className="mb-4 block text-sm font-semibold tracking-tight">Avatar Display</Label>
+                    <div className="flex flex-wrap gap-4">
+                      {/* Google Picture Option */}
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, useAvatarUrl: true }))}
+                        className={cn(
+                          "relative flex flex-col items-center gap-3 p-4 rounded-2xl transition-all duration-200 border-2",
+                          formData.useAvatarUrl
+                            ? "border-primary bg-primary/5 shadow-sm"
+                            : "border-transparent bg-white dark:bg-zinc-950 hover:border-zinc-300 dark:hover:border-zinc-700"
+                        )}
+                      >
+                        <div className="relative">
+                          <img
+                            src={profile.avatarUrl}
+                            alt="Google avatar"
+                            referrerPolicy="no-referrer"
+                            className="w-20 h-20 rounded-full object-cover shadow-sm bg-zinc-100 dark:bg-zinc-800"
+                          />
+                          {formData.useAvatarUrl && (
+                            <div className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full p-1 shadow-md ring-2 ring-background">
+                              <Check className="w-3.5 h-3.5" />
+                            </div>
+                          )}
+                        </div>
+                        <span className={cn(
+                          "text-xs font-semibold uppercase tracking-wider",
+                          formData.useAvatarUrl ? "text-primary" : "text-muted-foreground"
+                        )}>
+                          Google Picture
+                        </span>
+                      </button>
+
+                      {/* Initials Option */}
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, useAvatarUrl: false }))}
+                        className={cn(
+                          "relative flex flex-col items-center gap-3 p-4 rounded-2xl transition-all duration-200 border-2",
+                          !formData.useAvatarUrl
+                            ? "border-primary bg-primary/5 shadow-sm"
+                            : "border-transparent bg-white dark:bg-zinc-950 hover:border-zinc-300 dark:hover:border-zinc-700"
+                        )}
+                      >
+                        <div className="relative">
+                          <div className={cn(
+                            "w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold shadow-sm",
+                            !formData.useAvatarUrl
+                              ? "bg-primary/10 text-primary"
+                              : "bg-zinc-200 dark:bg-zinc-800 text-foreground"
+                          )}>
+                            {initials}
+                          </div>
+                          {!formData.useAvatarUrl && (
+                            <div className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full p-1 shadow-md ring-2 ring-background">
+                              <Check className="w-3.5 h-3.5" />
+                            </div>
+                          )}
+                        </div>
+                        <span className={cn(
+                          "text-xs font-semibold uppercase tracking-wider",
+                          !formData.useAvatarUrl ? "text-primary" : "text-muted-foreground"
+                        )}>
+                          Initials
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 {/* Editable fields */}
                 <div className="space-y-4">
@@ -299,6 +400,7 @@ export default function AccountSettingsPage() {
                         name: profile.name || '',
                         bio: profile.bio || '',
                         timezone: profile.timezone || '',
+                        useAvatarUrl: profile.useAvatarUrl ?? true,
                       });
                       setErrors([]);
                     }}
@@ -306,8 +408,27 @@ export default function AccountSettingsPage() {
                   >
                     Cancel
                   </Button>
-                  <Button type="submit" disabled={submitting}>
-                    {submitting ? 'Saving...' : 'Save Changes'}
+                  <Button 
+                    type="submit" 
+                    disabled={submitting || saveSuccess}
+                    className={cn(
+                      "min-w-[120px] transition-all duration-200",
+                      saveSuccess && "bg-green-600 hover:bg-green-600 border-green-600"
+                    )}
+                  >
+                    {submitting ? (
+                      <div className="flex items-center gap-2">
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-solid border-current border-r-transparent" />
+                        <span>Saving...</span>
+                      </div>
+                    ) : saveSuccess ? (
+                      <div className="flex items-center gap-2">
+                        <Check className="w-4 h-4" />
+                        <span>Saved!</span>
+                      </div>
+                    ) : (
+                      'Save Changes'
+                    )}
                   </Button>
                 </div>
               </form>

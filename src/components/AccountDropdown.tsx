@@ -12,6 +12,7 @@ interface UserProfile {
   email: string;
   name: string | null;
   avatarUrl: string | null;
+  useAvatarUrl: boolean;
 }
 
 export function AccountDropdown() {
@@ -28,18 +29,18 @@ export function AccountDropdown() {
       try {
         const supabase = createClient();
         const { data: { user } } = await supabase.auth.getUser();
-        
+
         if (!user) {
           setIsLoading(false);
           return;
         }
-        
+
         const response = await fetch('/api/user/profile');
-        
+
         if (!response.ok) {
           throw new Error(`Failed to fetch profile: ${response.status}`);
         }
-        
+
         const data: UserProfile = await response.json();
         setUserProfile(data);
       } catch (err) {
@@ -108,13 +109,14 @@ export function AccountDropdown() {
   };
 
   const initials = userProfile ? getInitials(userProfile.name, userProfile.email) : '??';
+  const shouldUseAvatarUrl = userProfile?.useAvatarUrl && userProfile?.avatarUrl;
 
   // Don't render if user is not authenticated
   if (!isLoading && !userProfile) {
     return null;
   }
 
-  return (
+  return userProfile ? (
     <div className="relative">
       {/* Trigger Button */}
       <button
@@ -131,14 +133,23 @@ export function AccountDropdown() {
         aria-expanded={isOpen}
       >
         {/* Avatar */}
-        <div
-          className={cn(
-            'w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium',
-            'bg-zinc-200 dark:bg-zinc-800 text-foreground'
-          )}
-        >
-          {initials}
-        </div>
+        {shouldUseAvatarUrl ? (
+          <img
+            src={userProfile.avatarUrl ?? undefined}
+            alt={userProfile.name || 'User avatar'}
+            referrerPolicy="no-referrer"
+            className="w-8 h-8 rounded-full object-cover"
+          />
+        ) : (
+          <div
+            className={cn(
+              'w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium',
+              'bg-zinc-200 dark:bg-zinc-800 text-foreground'
+            )}
+          >
+            {initials}
+          </div>
+        )}
 
         {/* Display Name (hidden on mobile) */}
         {!isLoading && userProfile && (
@@ -247,5 +258,5 @@ export function AccountDropdown() {
         </div>
       )}
     </div>
-  );
+  ) : (<div></div>);
 }

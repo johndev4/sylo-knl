@@ -19,7 +19,12 @@ const VALID_TIMEZONES = [
 const updateProfileSchema = z.object({
   name: z.string().min(1).max(200).trim().optional(),
   bio: z.string().max(500).trim().optional(),
-  timezone: z.enum(VALID_TIMEZONES as [string, ...string[]]).optional(),
+  timezone: z.union([
+    z.enum(VALID_TIMEZONES as [string, ...string[]]),
+    z.literal(""),
+    z.null()
+  ]).optional().transform(v => (v === "" || v === null) ? null : v),
+  useAvatarUrl: z.boolean().optional(),
 });
 
 export async function GET() {
@@ -47,6 +52,7 @@ export async function GET() {
         avatarUrl: true,
         bio: true,
         timezone: true,
+        useAvatarUrl: true,
       },
     });
 
@@ -92,7 +98,8 @@ export async function PUT(request: NextRequest) {
       data: {
         ...(parsedData.name && { name: parsedData.name }),
         ...(parsedData.bio !== undefined && { bio: parsedData.bio }),
-        ...(parsedData.timezone && { timezone: parsedData.timezone }),
+        ...(parsedData.timezone !== undefined && { timezone: parsedData.timezone }),
+        ...(parsedData.useAvatarUrl !== undefined && { useAvatarUrl: parsedData.useAvatarUrl }),
       },
       select: {
         id: true,
@@ -101,6 +108,7 @@ export async function PUT(request: NextRequest) {
         avatarUrl: true,
         bio: true,
         timezone: true,
+        useAvatarUrl: true,
       },
     });
 
