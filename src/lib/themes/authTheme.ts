@@ -1,6 +1,6 @@
 import { ThemeMinimal } from "@supabase/auth-ui-shared";
 
-export function getAuthTheme(isDark: boolean): ThemeMinimal {
+export function getAuthTheme(isDark: boolean) {
   return {
     default: {
       colors: {

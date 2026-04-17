@@ -8,6 +8,8 @@ CREATE TABLE IF NOT EXISTS public."User" (
   email TEXT UNIQUE NOT NULL,
   name TEXT,
   "avatarUrl" TEXT,
+  bio TEXT,
+  timezone TEXT,
   "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
   "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -67,15 +69,22 @@ CREATE POLICY "Enable all access for all users" ON public."User" USING (true);
 CREATE OR REPLACE FUNCTION public.handle_new_user() 
 RETURNS trigger AS $$
 BEGIN
-  INSERT INTO public."User" (id, email, name, "avatarUrl", "createdAt", "updatedAt")
+  INSERT INTO public."User" (id, email, name, "avatarUrl", bio, timezone, "createdAt", "updatedAt")
   VALUES (
     new.id, 
     new.email, 
     new.raw_user_meta_data->>'full_name',
     new.raw_user_meta_data->>'avatar_url',
+    NULL,
+    NULL,
     NOW(),
     NOW()
-  );
+  )
+  ON CONFLICT (id) DO UPDATE SET
+    email = new.email,
+    name = COALESCE(new.raw_user_meta_data->>'full_name', public."User".name),
+    "avatarUrl" = COALESCE(new.raw_user_meta_data->>'avatar_url', public."User"."avatarUrl"),
+    "updatedAt" = NOW();
   RETURN new;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

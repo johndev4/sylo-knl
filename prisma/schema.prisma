@@ -1,6 +1,6 @@
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["typedSql", "postgresqlExtensions"]
+  previewFeatures = ["postgresqlExtensions", "typedSql"]
 }
 
 datasource db {
@@ -9,25 +9,25 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  email     String   @unique
+  id        String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email     String        @unique
   name      String?
   avatarUrl String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  spaces SpaceMember[]
+  bio       String?
+  timezone  String?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  spaces    SpaceMember[]
 }
 
 model Space {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id        String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name      String
-  isShared  Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  members   SpaceMember[]
+  isShared  Boolean       @default(false)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
   documents Document[]
+  members   SpaceMember[]
 }
 
 model SpaceMember {
@@ -36,11 +36,35 @@ model SpaceMember {
   userId    String   @db.Uuid
   role      Role     @default(VIEWER)
   createdAt DateTime @default(now())
-
-  space Space @relation(fields: [spaceId], references: [id], onDelete: Cascade)
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  space     Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([spaceId, userId])
+}
+
+model Document {
+  id        String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title     String
+  content   String
+  spaceId   String          @db.Uuid
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  space     Space           @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  chunks    DocumentChunk[]
+}
+
+model DocumentChunk {
+  id                 String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  documentId         String                 @db.Uuid
+  content            String
+  embedding          Unsupported("vector")?
+  embeddingModel     EmbeddingModel         @default(GOOGLE_GEMINI_3072)
+  embeddingDimension Int                    @default(3072)
+  createdAt          DateTime               @default(now())
+  document           Document               @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([embeddingModel])
+  @@index([documentId, embeddingModel])
 }
 
 enum Role {
@@ -53,31 +77,4 @@ enum EmbeddingModel {
   GOOGLE_GEMINI_3072
   OLLAMA_NOMIC_1536
   OLLAMA_CUSTOM
-}
-
-model Document {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  title     String
-  content   String
-  spaceId   String   @db.Uuid
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  space  Space           @relation(fields: [spaceId], references: [id], onDelete: Cascade)
-  chunks DocumentChunk[]
-}
-
-model DocumentChunk {
-  id                 String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  documentId         String                 @db.Uuid
-  content            String
-  embedding          Unsupported("vector")?
-  embeddingModel     EmbeddingModel         @default(GOOGLE_GEMINI_3072)
-  embeddingDimension Int                    @default(3072)
-  createdAt          DateTime               @default(now())
-
-  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
-
-  @@index([embeddingModel])
-  @@index([documentId, embeddingModel])
 }
