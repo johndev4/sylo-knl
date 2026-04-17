@@ -131,6 +131,10 @@ export default function AccountSettingsPage() {
       setProfile(updatedProfile);
       setSuccessMessage('Profile updated successfully!');
       setSaveSuccess(true);
+      
+      // Notify other components (like the Navbar) that the profile has changed
+      window.dispatchEvent(new Event('profile-updated'));
+      
       setTimeout(() => {
         setSuccessMessage('');
         setSaveSuccess(false);

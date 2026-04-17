@@ -32,8 +32,6 @@ export async function ensureUserExists(user: SupabaseUser) {
     },
     update: {
       email: user.email,
-      name: user.user_metadata?.full_name || undefined,
-      avatarUrl: user.user_metadata?.avatar_url || undefined,
       updatedAt: new Date(),
     },
     select: {

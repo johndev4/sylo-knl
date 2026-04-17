@@ -51,6 +51,13 @@ export function AccountDropdown() {
     };
 
     fetchUserProfile();
+
+    // Listen for profile updates from other components (like Settings page)
+    window.addEventListener('profile-updated', fetchUserProfile);
+    
+    return () => {
+      window.removeEventListener('profile-updated', fetchUserProfile);
+    };
   }, []);
 
   // Close dropdown on ESC
