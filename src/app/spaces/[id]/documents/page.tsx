@@ -62,7 +62,7 @@ export default function DocumentsPage(props: { params: Promise<{ id: string }> }
       <div className="mb-8">
         <Link href={`/spaces`}>
           <Button variant="ghost" size="sm" className="mb-4">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Spaces
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard
           </Button>
         </Link>
         <div>

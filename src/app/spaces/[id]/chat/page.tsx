@@ -114,7 +114,7 @@ export default function ChatPage(props: { params: Promise<{ id: string }> }) {
             <Button variant="outline" size="sm">Manage Documents</Button>
           </Link>
           <Link href="/spaces">
-            <Button variant="ghost" size="sm">Back to Spaces</Button>
+            <Button variant="ghost" size="sm">Back to Dashboard</Button>
           </Link>
         </div>
       </header>

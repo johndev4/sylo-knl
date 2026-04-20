@@ -13,8 +13,6 @@
     "@ai-sdk/google": "^3.0.64",
     "@ai-sdk/react": "^3.0.167",
     "@base-ui/react": "^1.4.0",
-    "@prisma/adapter-pg": "^7.7.0",
-    "@prisma/client": "^7.7.0",
     "@supabase/auth-ui-react": "^0.4.7",
     "@supabase/auth-ui-shared": "^0.1.8",
     "@supabase/ssr": "^0.10.2",
@@ -41,7 +39,6 @@
     "@types/react-dom": "^19",
     "eslint": "^10",
     "eslint-config-next": "16.2.4",
-    "prisma": "^7.7.0",
     "tailwindcss": "^4",
     "typescript": "^6"
   }

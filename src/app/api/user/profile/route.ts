@@ -1,8 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
-import prisma from '@/lib/db';
 import { NextResponse, NextRequest } from 'next/server';
 import { z } from 'zod';
-import { ensureUserExists } from '@/lib/db/user';
 
 // Valid IANA timezone identifiers (curated list)
 const VALID_TIMEZONES = [
@@ -33,43 +31,35 @@ export async function GET() {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
-    // Ensure user exists in database (handles trigger delay/failure)
-    await ensureUserExists(user);
 
     // Fetch user profile from database
-    const userProfile = await prisma.user.findUnique({
-      where: { id: user.id },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        avatarUrl: true,
-        bio: true,
-        timezone: true,
-        useAvatarUrl: true,
-      },
-    });
+    const { data: userProfile, error } = await supabase
+      .from('users')
+      .select('id, email, name, avatar_url, bio, timezone, use_avatar_url')
+      .eq('id', user.id)
+      .single();
 
-    if (!userProfile) {
-      return NextResponse.json(
-        { error: 'User profile not found' },
-        { status: 404 }
-      );
+    if (error || !userProfile) {
+      return NextResponse.json({ error: 'User profile not found' }, { status: 404 });
     }
 
-    return NextResponse.json(userProfile);
+    // Map DB snake_case to frontend camelCase expectations
+    const mappedProfile = {
+      id: userProfile.id,
+      email: userProfile.email,
+      name: userProfile.name,
+      avatarUrl: userProfile.avatar_url,
+      bio: userProfile.bio,
+      timezone: userProfile.timezone,
+      useAvatarUrl: userProfile.use_avatar_url,
+    };
+
+    return NextResponse.json(mappedProfile);
   } catch (error) {
     console.error('Failed to fetch user profile:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch profile' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch profile' }, { status: 500 });
   }
 }
 
@@ -79,40 +69,40 @@ export async function PUT(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Ensure user exists in database (handles trigger delay/failure)
-    await ensureUserExists(user);
-
-    // Parse and validate request body
     const body = await request.json();
     const parsedData = updateProfileSchema.parse(body);
 
-    // Update user profile
-    const updatedUser = await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        ...(parsedData.name && { name: parsedData.name }),
-        ...(parsedData.bio !== undefined && { bio: parsedData.bio }),
-        ...(parsedData.timezone !== undefined && { timezone: parsedData.timezone }),
-        ...(parsedData.useAvatarUrl !== undefined && { useAvatarUrl: parsedData.useAvatarUrl }),
-      },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        avatarUrl: true,
-        bio: true,
-        timezone: true,
-        useAvatarUrl: true,
-      },
-    });
+    const updateData: any = {};
+    if (parsedData.name) updateData.name = parsedData.name;
+    if (parsedData.bio !== undefined) updateData.bio = parsedData.bio;
+    if (parsedData.timezone !== undefined) updateData.timezone = parsedData.timezone;
+    if (parsedData.useAvatarUrl !== undefined) updateData.use_avatar_url = parsedData.useAvatarUrl;
 
-    return NextResponse.json(updatedUser);
+    const { data: updatedUser, error } = await supabase
+      .from('users')
+      .update(updateData)
+      .eq('id', user.id)
+      .select('id, email, name, avatar_url, bio, timezone, use_avatar_url')
+      .single();
+
+    if (error || !updatedUser) {
+      throw error || new Error('Update failed');
+    }
+
+    const mappedProfile = {
+      id: updatedUser.id,
+      email: updatedUser.email,
+      name: updatedUser.name,
+      avatarUrl: updatedUser.avatar_url,
+      bio: updatedUser.bio,
+      timezone: updatedUser.timezone,
+      useAvatarUrl: updatedUser.use_avatar_url,
+    };
+
+    return NextResponse.json(mappedProfile);
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -128,9 +118,6 @@ export async function PUT(request: NextRequest) {
     }
 
     console.error('Failed to update user profile:', error);
-    return NextResponse.json(
-      { error: 'Failed to update profile' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to update profile' }, { status: 500 });
   }
 }

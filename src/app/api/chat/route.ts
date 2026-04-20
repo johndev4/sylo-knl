@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import prisma from '@/lib/db';
 import { executeRAGChat } from '@/lib/ai/rag/pipeline';
 
 export const maxDuration = 60; // allow longer timeout for RAG
@@ -64,31 +63,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'spaceId is required' }, { status: 400 });
     }
 
-    // Sync user with our DB
-    await prisma.user.upsert({
-      where: { id: user.id },
-      update: {
-        email: user.email!,
-        name: user.user_metadata?.full_name || user.email?.split('@')[0],
-      },
-      create: {
-        id: user.id,
-        email: user.email!,
-        name: user.user_metadata?.full_name || user.email?.split('@')[0],
-      },
-    });
+    // Check workspace exists and user has access
+    let hasAccess = false;
+    
+    if (spaceId === user.id) {
+      hasAccess = true;
+    } else {
+      const { data: membership } = await supabase
+        .from('workspace_members')
+        .select('workspace_id')
+        .eq('workspace_id', spaceId)
+        .eq('user_id', user.id)
+        .single();
+      
+      hasAccess = !!membership;
+    }
 
-    // Verify access to space
-    const spaceMember = await prisma.spaceMember.findUnique({
-      where: {
-        spaceId_userId: {
-          spaceId,
-          userId: user.id,
-        },
-      },
-    });
-
-    if (!spaceMember) {
+    if (!hasAccess) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
