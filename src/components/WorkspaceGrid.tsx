@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { MessageSquare, FileText, Settings } from 'lucide-react';
@@ -18,89 +19,135 @@ interface WorkspaceGridProps {
   memberships: Membership[];
 }
 
-export function WorkspaceGrid({ memberships }: WorkspaceGridProps) {
-  const [mounted, setMounted] = useState(false);
+export function WorkspacesBentoGrid({ memberships }: WorkspaceGridProps) {
+  const prefersReducedMotion = useReducedMotion();
 
-  useEffect(() => { setMounted(true); }, []);
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: prefersReducedMotion ? 0 : 0.1,
+        delayChildren: prefersReducedMotion ? 0 : 0.15,
+      },
+    },
+  };
+
+  const cardVariants = {
+    hidden: { opacity: 0, y: 20, scale: 0.98 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      transition: {
+        duration: prefersReducedMotion ? 0 : 0.35,
+        ease: 'easeOut' as const,
+      },
+    },
+    hover: {
+      y: prefersReducedMotion ? 0 : -6,
+      transition: {
+        duration: prefersReducedMotion ? 0 : 0.2,
+        ease: 'easeInOut' as const,
+      },
+    },
+  };
 
   return (
-    <>
-      {/* ── Workspace cards grid ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 w-full">
-        {memberships.map((membership) => {
+    <section aria-label="Workspace dashboard" className="w-full">
+      <motion.div
+        className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4 xl:auto-rows-fr"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        {memberships.map((membership, index) => {
           const space = membership.workspace;
+          const isFeatured = index === 0;
 
           return (
-            <Card
+            <motion.article
               key={space.id}
+              variants={cardVariants}
+              whileHover="hover"
               className={cn(
-                'relative transition-all hover:shadow-md hover:-translate-y-0.5 flex flex-col'
+                'group h-full transition-transform duration-300 ease-out',
+                isFeatured && 'xl:col-span-2 xl:row-span-2'
               )}
             >
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    <CardTitle className="truncate text-lg sm:text-base">{space.name}</CardTitle>
-                    <CardDescription className="text-xs sm:text-sm">{membership.role} Access</CardDescription>
+              <Card className="relative h-full overflow-hidden border border-zinc-200 bg-white/90 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-zinc-300 hover:shadow-xl dark:border-zinc-800 dark:bg-zinc-950/95 dark:hover:border-zinc-700">
+                <CardHeader className="space-y-2 pb-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <CardTitle className="truncate text-xl font-semibold text-foreground">
+                        {space.name}
+                      </CardTitle>
+                      <CardDescription className="text-sm text-zinc-500 dark:text-zinc-400">
+                        {membership.role} access
+                      </CardDescription>
+                    </div>
+                    <div className="rounded-full bg-zinc-100 dark:bg-zinc-900 px-3 py-1 text-xs font-medium text-zinc-600 dark:text-zinc-300">
+                      {membership.role}
+                    </div>
                   </div>
-                </div>
-              </CardHeader>
 
-              <CardContent className="flex-1 flex flex-col gap-3">
-                {/* Stats */}
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div className="bg-zinc-100 dark:bg-zinc-800 rounded p-2">
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">Members</p>
-                    <p className="text-lg font-semibold">{membership.memberCount}</p>
+                  <div className="text-sm text-zinc-500 dark:text-zinc-400">
+                    Created {new Date(space.created_at).toLocaleDateString()} · {membership.memberCount} members · {membership.docCount} docs
                   </div>
-                  <div className="bg-zinc-100 dark:bg-zinc-800 rounded p-2">
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">Documents</p>
-                    <p className="text-lg font-semibold">{membership.docCount}</p>
-                  </div>
-                </div>
+                </CardHeader>
 
-                {/* Actions */}
-                <div className="flex flex-col gap-2 pt-2">
-                  <Link href={`/spaces/${space.id}/chat`} className="w-full">
-                    <Button 
-                      variant="default" 
-                      className="w-full justify-center gap-2" 
-                      size="sm"
-                    >
-                      <MessageSquare className="h-4 w-4" />
-                      <span>Chat</span>
-                    </Button>
-                  </Link>
-                  {membership.role !== 'VIEWER' && (
-                    <Link href={`/spaces/${space.id}/documents`} className="w-full">
-                      <Button 
-                        variant="outline" 
-                        className="w-full justify-center gap-2" 
-                        size="sm"
-                      >
-                        <FileText className="h-4 w-4" />
-                        <span>Documents</span>
+                <CardContent className="flex flex-col justify-between gap-4 pb-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-2xl bg-zinc-100 dark:bg-zinc-950 p-3">
+                      <p className="text-xs uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">Members</p>
+                      <p className="mt-2 text-2xl font-semibold text-foreground">{membership.memberCount}</p>
+                    </div>
+                    <div className="rounded-2xl bg-zinc-100 dark:bg-zinc-950 p-3">
+                      <p className="text-xs uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">Documents</p>
+                      <p className="mt-2 text-2xl font-semibold text-foreground">{membership.docCount}</p>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <div className="sm:col-span-1">
+                      <Button asChild variant="default" className="w-full" size="sm" aria-label={`Open chat for ${space.name}`}>
+                        <a href={`/spaces/${space.id}/chat`}>
+                          <MessageSquare className="mr-2 h-4 w-4" />
+                          Chat
+                        </a>
                       </Button>
-                    </Link>
-                  )}
-                  {(membership.role === 'OWNER' || membership.role === 'ADMIN') && (
-                    <Link href={`/spaces/${space.id}/settings`} className="w-full">
-                      <Button 
-                        variant="outline" 
-                        className="w-full justify-center gap-2" 
-                        size="sm"
-                      >
-                        <Settings className="h-4 w-4" />
-                        <span>Settings</span>
-                      </Button>
-                    </Link>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+                    </div>
+
+                    {membership.role !== 'VIEWER' ? (
+                      <div className="sm:col-span-1">
+                        <Button asChild variant="outline" className="w-full" size="sm" aria-label={`View documents for ${space.name}`}>
+                          <a href={`/spaces/${space.id}/documents`}>
+                            <FileText className="mr-2 h-4 w-4" />
+                            Docs
+                          </a>
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="sm:col-span-1" />
+                    )}
+
+                    {(membership.role === 'OWNER' || membership.role === 'ADMIN') && (
+                      <div className="sm:col-span-1">
+                        <Button asChild variant="outline" className="w-full" size="sm" aria-label={`Open settings for ${space.name}`}>
+                          <a href={`/spaces/${space.id}/settings`}>
+                            <Settings className="mr-2 h-4 w-4" />
+                            Manage
+                          </a>
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.article>
           );
         })}
-      </div>
-    </>
+      </motion.div>
+    </section>
   );
 }

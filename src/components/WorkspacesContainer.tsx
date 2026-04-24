@@ -1,11 +1,14 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { WorkspaceGrid } from './WorkspaceGrid';
+import { WorkspacesBentoGrid } from './WorkspaceGrid';
 import { WorkspacesTable } from './WorkspacesTable';
 import { Grid3x3, Table2, ChevronDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 type Membership = {
   role: string;
@@ -71,14 +74,34 @@ export function WorkspacesContainer({ memberships }: WorkspacesContainerProps) {
     return result;
   }, [memberships, search, roleFilter, sortBy]);
 
+  const prefersReducedMotion = useReducedMotion();
+
+  const panelVariants = {
+    hidden: { opacity: 0, y: 10 },
+    visible: { opacity: 1, y: 0, transition: { duration: prefersReducedMotion ? 0 : 0.35, ease: 'easeOut' as const } },
+  };
+
+  const viewVariants = {
+    hidden: { opacity: 0, y: 12 },
+    visible: { opacity: 1, y: 0, transition: { duration: prefersReducedMotion ? 0 : 0.35, ease: 'easeOut' as const } },
+    exit: { opacity: 0, y: -8, transition: { duration: prefersReducedMotion ? 0 : 0.25 } },
+  };
+
   return (
-    <div className="w-full space-y-4 px-0 sm:px-0">
+    <motion.div className="w-full space-y-4 px-0 sm:px-0" variants={panelVariants} initial="hidden" animate="visible" layout>
       {/* Controls */}
-      <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+      <motion.div
+        className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between"
+        variants={panelVariants}
+        initial="hidden"
+        animate="visible"
+        layout
+      >
         {/* Left: Search & Filters */}
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           <Input
             placeholder="Search workspaces..."
+            aria-label="Search workspaces"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full sm:w-48 cursor-text"
@@ -90,14 +113,18 @@ export function WorkspacesContainer({ memberships }: WorkspacesContainerProps) {
               variant="outline"
               size="sm"
               onClick={() => setShowRoleMenu(!showRoleMenu)}
+              aria-haspopup="true"
+              aria-expanded={showRoleMenu}
+              aria-controls="role-menu"
               className="w-full sm:w-auto cursor-pointer"
             >
               {roleFilter ? `Role: ${roleFilter}` : 'All Roles'}
               <ChevronDown className="ml-1 h-4 w-4" />
             </Button>
             {showRoleMenu && (
-              <div className="absolute top-full left-0 mt-1 z-50 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded shadow-lg">
+              <div id="role-menu" className="absolute top-full left-0 mt-1 z-50 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded shadow-lg">
                 <button
+                  type="button"
                   className="w-full px-3 py-2 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
                   onClick={() => {
                     setRoleFilter(null);
@@ -109,6 +136,7 @@ export function WorkspacesContainer({ memberships }: WorkspacesContainerProps) {
                 {availableRoles.map(role => (
                   <button
                     key={role}
+                    type="button"
                     className="w-full px-3 py-2 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
                     onClick={() => {
                       setRoleFilter(role);
@@ -128,13 +156,16 @@ export function WorkspacesContainer({ memberships }: WorkspacesContainerProps) {
               variant="outline"
               size="sm"
               onClick={() => setShowSortMenu(!showSortMenu)}
+              aria-haspopup="true"
+              aria-expanded={showSortMenu}
+              aria-controls="sort-menu"
               className="w-full sm:w-auto cursor-pointer"
             >
               Sort: {sortBy === 'created' ? 'Date' : sortBy === 'members' ? 'Members' : sortBy === 'documents' ? 'Documents' : 'Name'}
               <ChevronDown className="ml-1 h-4 w-4" />
             </Button>
             {showSortMenu && (
-              <div className="absolute top-full right-0 mt-1 z-50 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded shadow-lg min-w-[140px]">
+              <div id="sort-menu" className="absolute top-full right-0 mt-1 z-50 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded shadow-lg min-w-[140px]">
                 {[
                   { value: 'name', label: 'Name' },
                   { value: 'created', label: 'Date Created' },
@@ -143,6 +174,7 @@ export function WorkspacesContainer({ memberships }: WorkspacesContainerProps) {
                 ].map(({ value, label }) => (
                   <button
                     key={value}
+                    type="button"
                     className="w-full px-3 py-2 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
                     onClick={() => {
                       setSortBy(value as any);
@@ -158,48 +190,82 @@ export function WorkspacesContainer({ memberships }: WorkspacesContainerProps) {
         </div>
 
         {/* Right: View Toggle */}
-        <div className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-900 rounded-lg p-1">
-          <Button
-            size="sm"
-            variant={viewMode === 'grid' ? 'default' : 'ghost'}
-            className="h-8 w-8 p-0"
-            onClick={() => setViewMode('grid')}
-            title="Grid view"
-            aria-label="Grid view"
-          >
-            <Grid3x3 className="h-4 w-4" />
-          </Button>
-          <Button
-            size="sm"
-            variant={viewMode === 'table' ? 'default' : 'ghost'}
-            className="h-8 w-8 p-0"
-            onClick={() => setViewMode('table')}
-            title="Table view"
-            aria-label="Table view"
-          >
-            <Table2 className="h-4 w-4" />
-          </Button>
+        <div className="flex items-center gap-1 bg-zinc-100/50 dark:bg-zinc-900/50 rounded-lg p-1 border border-zinc-200 dark:border-zinc-800">
+          {(['grid', 'table'] as const).map((mode) => (
+            <button
+              key={mode}
+              onClick={() => setViewMode(mode)}
+              className={cn(
+                "relative h-8 w-8 flex items-center justify-center rounded-md transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+                viewMode === mode 
+                  ? "text-foreground" 
+                  : "text-muted-foreground hover:text-foreground hover:bg-zinc-200/50 dark:hover:bg-zinc-800/50"
+              )}
+              title={`${mode.charAt(0).toUpperCase() + mode.slice(1)} view`}
+              aria-label={`${mode.charAt(0).toUpperCase() + mode.slice(1)} view`}
+            >
+              {viewMode === mode && (
+                <motion.div
+                  layoutId="view-mode-pill"
+                  className="absolute inset-0 bg-white dark:bg-zinc-800 shadow-sm rounded-md"
+                  transition={{ type: "spring", bounce: 0.15, duration: 0.4 }}
+                />
+              )}
+              {mode === 'grid' ? (
+                <Grid3x3 className="h-4 w-4 relative z-10" />
+              ) : (
+                <Table2 className="h-4 w-4 relative z-10" />
+              )}
+            </button>
+          ))}
         </div>
-      </div>
+      </motion.div>
 
       {/* Results count */}
-      <div className="text-sm text-zinc-600 dark:text-zinc-400">
+      <motion.div className="text-sm text-zinc-600 dark:text-zinc-400" variants={panelVariants} layout>
         Showing {filtered.length} of {memberships.length} workspace{memberships.length !== 1 ? 's' : ''}
-      </div>
+      </motion.div>
 
       {/* View */}
-      {filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <p className="text-lg font-semibold">No workspaces found</p>
-          <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
-            {search || roleFilter ? 'Try adjusting your filters or search' : 'Create your first workspace to get started'}
-          </p>
-        </div>
-      ) : viewMode === 'grid' ? (
-        <WorkspaceGrid memberships={filtered} />
-      ) : (
-        <WorkspacesTable memberships={filtered} />
-      )}
-    </div>
+      <AnimatePresence mode="wait">
+        {filtered.length === 0 ? (
+          <motion.div
+            key="empty"
+            variants={viewVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            className="flex flex-col items-center justify-center py-12 text-center"
+          >
+            <p className="text-lg font-semibold">No workspaces found</p>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
+              {search || roleFilter ? 'Try adjusting your filters or search' : 'Create your first workspace to get started'}
+            </p>
+          </motion.div>
+        ) : viewMode === 'grid' ? (
+          <motion.div
+            key="grid"
+            variants={viewVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            layout
+          >
+            <WorkspacesBentoGrid memberships={filtered} />
+          </motion.div>
+        ) : (
+          <motion.div
+            key="table"
+            variants={viewVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            layout
+          >
+            <WorkspacesTable memberships={filtered} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }

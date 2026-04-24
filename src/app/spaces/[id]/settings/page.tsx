@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import WorkspaceNav from '@/components/workspace-settings/WorkspaceNav';
 import {
   fetchWorkspaceMembers,
   addWorkspaceMember,
@@ -174,18 +175,12 @@ export default function WorkspaceSettingsPage({
   if (isLoading) {
     return (
       <div className="container max-w-4xl mx-auto p-6 space-y-8">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col gap-3 mb-8">
           <div className="space-y-2">
-            <h1 className="text-3xl font-bold tracking-tight">
-              Workspace Settings
-            </h1>
-            <p className="text-muted-foreground">
-              Manage members and workspace settings
-            </p>
+            <h1 className="text-3xl font-bold tracking-tight">Workspace Settings</h1>
+            <p className="text-muted-foreground">Manage members and workspace settings</p>
           </div>
-          <Link href={`/spaces/${workspaceId}/documents`}>
-            <Button variant="outline">Back to Workspace</Button>
-          </Link>
+          <WorkspaceNav workspaceId={workspaceId} currentSection="settings" />
         </div>
         <div className="text-center py-8">Loading...</div>
       </div>
@@ -195,18 +190,17 @@ export default function WorkspaceSettingsPage({
   return (
     <div className="container max-w-4xl mx-auto p-6 space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">
-            Workspace Settings
-          </h1>
-          <p className="text-muted-foreground">
-            Manage members and workspace settings
-          </p>
+      <div className="flex flex-col gap-3 mb-8">
+        <div className="flex items-center justify-between gap-3">
+          <div className="space-y-2">
+            <h1 className="text-3xl font-bold tracking-tight">Workspace Settings</h1>
+            <p className="text-muted-foreground">Manage members and workspace settings</p>
+          </div>
+          <Link href={`/spaces/${workspaceId}/documents`}>
+            <Button variant="outline">Back to Workspace</Button>
+          </Link>
         </div>
-        <Link href={`/spaces/${workspaceId}/documents`}>
-          <Button variant="outline">Back to Workspace</Button>
-        </Link>
+        <WorkspaceNav workspaceId={workspaceId} currentSection="settings" />
       </div>
 
       {/* Error Message */}

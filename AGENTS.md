@@ -19,7 +19,9 @@ This document helps agents understand the **Sylo** knowledge library application
 - **Frontend & Backend**: Next.js 16.2.4 (App Router)
 - **Auth & Database**: Supabase (PostgreSQL + pgvector for embeddings)
 - **AI System**: Vercel AI SDK with provider-agnostic LLM core (Google, Ollama)
-- **UI**: TailwindCSS + Shadcn components
+- **Styling**: Tailwind CSS v4 (Standard)
+- **Base Components**: shadcn/ui (Radix Primitives)
+- **Interactive & Advanced UI**: Kokonut UI
 - **Key Features**:
   - Document management with tagging and search
   - RAG-powered chatbot with vector similarity retrieval
@@ -44,7 +46,6 @@ npm install
 npm run dev              # Start dev server on :3000
 npm run build            # Production build
 npm run lint             # Run ESLint
-npm run regenerate:embeddings  # Regenerate document embeddings
 ```
 
 **Database**: Supabase CLI for migrations
@@ -266,6 +267,32 @@ See `src/app/api/chat/route.ts` for reference.
 
 ---
 
+## UI Implementation Rules (shadcn/ui & Kokonut UI)
+
+This project follows a "Registry-First" UI architecture. Agents must NOT write complex UI components or raw CSS animations from scratch if a library equivalent exists.
+
+### 1. Component Discovery
+
+- **Base Elements**: Use **shadcn/ui** for primitive components (Buttons, Inputs, Dialogs).
+- **Advanced/Animated Elements**: Use **Kokonut UI** for Bento grids, Hero sections, and complex SaaS widgets.
+
+### 2. Installation Protocol
+
+Do not manually create files in `src/components/ui`. Use the respective CLIs to ensure all hooks and dependencies are wired correctly.
+
+- **shadcn**: `npx shadcn@latest add <component-name>`
+- **Kokonut UI**: `npx shadcn@latest add https://kokonutui.com/<component-name>.json`
+
+### 3. Technical Constraints
+
+- **Animation**: Kokonut UI requires **Framer Motion**. Verify `framer-motion` is in `package.json` before implementation.
+- **Styling**:
+  - Use **Tailwind v4** conventions.
+  - Always use the `cn()` utility (from `src/lib/utils.ts`) for conditional class merging.
+  - Never write raw `.css` files; keep all styles within Tailwind classes.
+
+---
+
 ## Security & Performance Checklist
 
 **Before merging any code:**
@@ -300,5 +327,5 @@ See `src/app/api/chat/route.ts` for reference.
 ---
 
 **Last Updated**: April 2026  
-**Maintained By**: Knowledge Library Team  
+**Maintained By**: juanlinuz
 **Status**: Production-Ready MVP (in active development)

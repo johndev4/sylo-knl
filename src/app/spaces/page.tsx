@@ -1,7 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { CreateWorkspaceDialog } from "@/components/CreateWorkspaceDialog";
 import { WorkspacesContainer } from "@/components/WorkspacesContainer";
+import { WorkspaceSummaryHero } from "@/components/kokonutui/WorkspaceSummaryHero";
 
 export default async function SpacesPage() {
   const supabase = await createClient();
@@ -64,42 +66,72 @@ export default async function SpacesPage() {
 
   return (
     <div className="container mx-auto p-6 max-w-6xl">
-      {/* Header */}
-      <div className="flex justify-between items-start mb-8">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold tracking-tight mb-1">Your Workspaces</h1>
-          <p className="text-sm text-muted-foreground">Manage your knowledge bases and documents</p>
+          <p className="text-sm text-muted-foreground">Manage your knowledge bases, documents, and AI chat hubs.</p>
         </div>
         <CreateWorkspaceDialog size="sm" variant="outline" />
       </div>
 
-      {/* Empty state or container */}
       {memberships.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 text-center gap-4">
-          <div className="rounded-full bg-muted p-5">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-10 w-10 text-muted-foreground"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={1.5}
-              aria-hidden="true"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 7.5a2.5 2.5 0 012.5-2.5h13A2.5 2.5 0 0121 7.5v9a2.5 2.5 0 01-2.5 2.5h-13A2.5 2.5 0 013 16.5v-9z" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18" />
-            </svg>
+        <div className="grid gap-6 lg:grid-cols-[1.8fr_1fr] items-start">
+          <div className="rounded-3xl border border-zinc-200 bg-white/80 p-10 text-center shadow-lg shadow-slate-900/5 dark:border-zinc-800 dark:bg-zinc-950/90">
+            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-8 w-8"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={1.5}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M3 7.5a2.5 2.5 0 012.5-2.5h13A2.5 2.5 0 0121 7.5v9a2.5 2.5 0 01-2.5 2.5h-13A2.5 2.5 0 013 16.5v-9z" />
+                <path d="M3 10h18" />
+              </svg>
+            </div>
+            <p className="text-lg font-semibold">You have no workspaces yet</p>
+            <p className="mt-2 text-sm text-muted-foreground">Create your first workspace to start organizing your knowledge and interacting with AI on your own documents.</p>
+            <div className="mt-6">
+              <CreateWorkspaceDialog triggerText="Create your first workspace" />
+            </div>
           </div>
-          <div>
-            <p className="text-lg font-semibold">You have no workspaces</p>
-            <p className="text-sm text-muted-foreground mt-1">
-              Create your first workspace to start organizing your knowledge.
-            </p>
+
+          <div className="space-y-4">
+            <Card className="rounded-3xl border border-zinc-200 bg-zinc-50 p-6 dark:border-zinc-800 dark:bg-zinc-950">
+              <CardHeader>
+                <CardTitle>Why Sylo?</CardTitle>
+                <CardDescription>Align teams, reduce repeated onboarding, and keep knowledge searchable.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <p className="text-sm text-muted-foreground">Create structured workspaces for projects, teams, or products. Every doc becomes searchable with AI-powered context.</p>
+                <ul className="space-y-2 text-sm text-foreground">
+                  <li>• Add documents and auto-generate embeddings</li>
+                  <li>• Ask the workspace AI about your content</li>
+                  <li>• Invite teammates and collaborate in shared spaces</li>
+                </ul>
+              </CardContent>
+            </Card>
+            <Card className="rounded-3xl border border-zinc-200 bg-zinc-50 p-6 dark:border-zinc-800 dark:bg-zinc-950">
+              <CardHeader>
+                <CardTitle>Get started fast</CardTitle>
+                <CardDescription>Focus on the knowledge your team needs most.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <p className="text-sm text-muted-foreground">Build a shared library with support docs, policies, team notes, and research summaries.</p>
+                <p className="text-sm text-muted-foreground">Then ask the AI for answers without switching between tools.</p>
+              </CardContent>
+            </Card>
           </div>
-          <CreateWorkspaceDialog triggerText="Create your first workspace" />
         </div>
       ) : (
-        <WorkspacesContainer memberships={memberships} />
+        <>
+          <WorkspaceSummaryHero memberships={memberships} />
+          <WorkspacesContainer memberships={memberships} />
+        </>
       )}
     </div>
   );

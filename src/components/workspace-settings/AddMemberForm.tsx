@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { motion } from 'framer-motion';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -26,6 +28,7 @@ export default function AddMemberForm({
   const [role, setRole] = useState('VIEWER');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const prefersReducedMotion = useReducedMotion();
 
   const isFull = memberCount >= 11;
 
@@ -58,15 +61,27 @@ export default function AddMemberForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded p-3">
+        <motion.div
+          className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded p-3"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: prefersReducedMotion ? 0 : 0.2 }}
+        >
           <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
-        </div>
+        </motion.div>
       )}
 
       {success && (
-        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded p-3">
+        <motion.div
+          className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded p-3"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: prefersReducedMotion ? 0 : 0.2 }}
+        >
           <p className="text-sm text-green-700 dark:text-green-400">{success}</p>
-        </div>
+        </motion.div>
       )}
 
       <div>

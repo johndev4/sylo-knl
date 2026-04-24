@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,6 +20,27 @@ export function DeleteWorkspaceForm({ workspaceId, workspaceName }: DeleteWorksp
   const [confirmName, setConfirmName] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const prefersReducedMotion = useReducedMotion();
+
+  // Animation variants for error message
+  const errorVariants = {
+    hidden: { opacity: 0, y: -10 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: prefersReducedMotion ? 0 : 0.3,
+        ease: 'easeOut' as const,
+      },
+    },
+    exit: {
+      opacity: 0,
+      y: -10,
+      transition: {
+        duration: prefersReducedMotion ? 0 : 0.2,
+      },
+    },
+  };
 
   const handleDelete = async () => {
     if (confirmName !== workspaceName) {
@@ -98,9 +121,15 @@ export function DeleteWorkspaceForm({ workspaceId, workspaceName }: DeleteWorksp
         </div>
 
         {error && (
-          <div className="p-3 bg-red-200 dark:bg-red-900/40 border border-red-300 dark:border-red-900/60 rounded text-sm text-red-700 dark:text-red-400">
+          <motion.div
+            variants={errorVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            className="p-3 bg-red-200 dark:bg-red-900/40 border border-red-300 dark:border-red-900/60 rounded text-sm text-red-700 dark:text-red-400"
+          >
             {error}
-          </div>
+          </motion.div>
         )}
 
         <Button
