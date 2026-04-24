@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { WorkspacesBentoGrid } from './WorkspaceGrid';
 import { WorkspacesTable } from './WorkspacesTable';
 import { Grid3x3, Table2, ChevronDown } from 'lucide-react';
+import { CreateWorkspaceDialog } from './CreateWorkspaceDialog';
 import { cn } from '@/lib/utils';
 
 type Membership = {
@@ -189,35 +190,38 @@ export function WorkspacesContainer({ memberships }: WorkspacesContainerProps) {
           </div>
         </div>
 
-        {/* Right: View Toggle */}
-        <div className="flex items-center gap-1 bg-zinc-100/50 dark:bg-zinc-900/50 rounded-lg p-1 border border-zinc-200 dark:border-zinc-800">
-          {(['grid', 'table'] as const).map((mode) => (
-            <button
-              key={mode}
-              onClick={() => setViewMode(mode)}
-              className={cn(
-                "relative h-8 w-8 flex items-center justify-center rounded-md transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
-                viewMode === mode 
-                  ? "text-foreground" 
-                  : "text-muted-foreground hover:text-foreground hover:bg-zinc-200/50 dark:hover:bg-zinc-800/50"
-              )}
-              title={`${mode.charAt(0).toUpperCase() + mode.slice(1)} view`}
-              aria-label={`${mode.charAt(0).toUpperCase() + mode.slice(1)} view`}
-            >
-              {viewMode === mode && (
-                <motion.div
-                  layoutId="view-mode-pill"
-                  className="absolute inset-0 bg-white dark:bg-zinc-800 shadow-sm rounded-md"
-                  transition={{ type: "spring", bounce: 0.15, duration: 0.4 }}
-                />
-              )}
-              {mode === 'grid' ? (
-                <Grid3x3 className="h-4 w-4 relative z-10" />
-              ) : (
-                <Table2 className="h-4 w-4 relative z-10" />
-              )}
-            </button>
-          ))}
+        {/* Right: View Toggle + Create */}
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 bg-zinc-100/50 dark:bg-zinc-900/50 rounded-lg p-1 border border-zinc-200 dark:border-zinc-800">
+            {(['grid', 'table'] as const).map((mode) => (
+              <button
+                key={mode}
+                onClick={() => setViewMode(mode)}
+                className={cn(
+                  "relative h-8 w-8 flex items-center justify-center rounded-md transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+                  viewMode === mode
+                    ? "text-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-zinc-200/50 dark:hover:bg-zinc-800/50"
+                )}
+                title={`${mode.charAt(0).toUpperCase() + mode.slice(1)} view`}
+                aria-label={`${mode.charAt(0).toUpperCase() + mode.slice(1)} view`}
+              >
+                {viewMode === mode && (
+                  <motion.div
+                    layoutId="view-mode-pill"
+                    className="absolute inset-0 bg-white dark:bg-zinc-800 shadow-sm rounded-md"
+                    transition={{ type: "spring", bounce: 0.15, duration: 0.4 }}
+                  />
+                )}
+                {mode === 'grid' ? (
+                  <Grid3x3 className="h-4 w-4 relative z-10" />
+                ) : (
+                  <Table2 className="h-4 w-4 relative z-10" />
+                )}
+              </button>
+            ))}
+          </div>
+          <CreateWorkspaceDialog size="sm" variant="outline" />
         </div>
       </motion.div>
 

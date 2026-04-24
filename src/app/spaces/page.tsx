@@ -24,7 +24,7 @@ export default async function SpacesPage() {
 
   // Fetch member counts and document counts for each workspace
   const workspaceIds = (spaceMemberships || []).map((m: any) => m.workspace.id);
-  
+
   let memberCounts: Record<string, number> = {};
   let docCounts: Record<string, number> = {};
 
@@ -34,7 +34,7 @@ export default async function SpacesPage() {
       .from("workspace_members")
       .select("workspace_id")
       .in("workspace_id", workspaceIds);
-    
+
     memberCounts = (memberCountData || []).reduce((acc: Record<string, number>, item: any) => {
       acc[item.workspace_id] = (acc[item.workspace_id] || 0) + 1;
       return acc;
@@ -45,7 +45,7 @@ export default async function SpacesPage() {
       .from("documents")
       .select("workspace_id")
       .in("workspace_id", workspaceIds);
-    
+
     docCounts = (docCountData || []).reduce((acc: Record<string, number>, item: any) => {
       acc[item.workspace_id] = (acc[item.workspace_id] || 0) + 1;
       return acc;
@@ -71,7 +71,6 @@ export default async function SpacesPage() {
           <h1 className="text-3xl font-bold tracking-tight mb-1">Your Workspaces</h1>
           <p className="text-sm text-muted-foreground">Manage your knowledge bases, documents, and AI chat hubs.</p>
         </div>
-        <CreateWorkspaceDialog size="sm" variant="outline" />
       </div>
 
       {memberships.length === 0 ? (
