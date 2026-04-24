@@ -56,29 +56,25 @@ export function WorkspacesBentoGrid({ memberships }: WorkspaceGridProps) {
   return (
     <section aria-label="Workspace dashboard" className="w-full">
       <motion.div
-        className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4 xl:auto-rows-fr"
+        className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
       >
-        {memberships.map((membership, index) => {
+        {memberships.map((membership) => {
           const space = membership.workspace;
-          const isFeatured = index === 0;
 
           return (
             <motion.article
               key={space.id}
               variants={cardVariants}
               whileHover="hover"
-              className={cn(
-                'group h-full transition-transform duration-300 ease-out',
-                isFeatured && 'xl:col-span-2 xl:row-span-2'
-              )}
+              className="group h-full transition-transform duration-300 ease-out"
             >
-              <Card className="relative h-full overflow-hidden border border-zinc-200 bg-white/90 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-zinc-300 hover:shadow-xl dark:border-zinc-800 dark:bg-zinc-950/95 dark:hover:border-zinc-700">
+              <Card className="relative flex h-full flex-col overflow-hidden border border-zinc-200 bg-white/90 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-zinc-300 hover:shadow-xl dark:border-zinc-800 dark:bg-zinc-950/95 dark:hover:border-zinc-700">
                 <CardHeader className="space-y-2 pb-4">
                   <div className="flex items-center justify-between gap-3">
-                    <div>
+                    <div className="flex-1 overflow-hidden">
                       <CardTitle className="truncate text-xl font-semibold text-foreground">
                         {space.name}
                       </CardTitle>
@@ -86,7 +82,7 @@ export function WorkspacesBentoGrid({ memberships }: WorkspaceGridProps) {
                         {membership.role} access
                       </CardDescription>
                     </div>
-                    <div className="rounded-full bg-zinc-100 dark:bg-zinc-900 px-3 py-1 text-xs font-medium text-zinc-600 dark:text-zinc-300">
+                    <div className="shrink-0 rounded-full bg-zinc-100 dark:bg-zinc-900 px-3 py-1 text-xs font-medium text-zinc-600 dark:text-zinc-300">
                       {membership.role}
                     </div>
                   </div>
@@ -96,50 +92,46 @@ export function WorkspacesBentoGrid({ memberships }: WorkspaceGridProps) {
                   </div>
                 </CardHeader>
 
-                <CardContent className="flex flex-col justify-between gap-4 pb-4">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="rounded-2xl bg-zinc-100 dark:bg-zinc-950 p-3">
+                <CardContent className="flex flex-1 flex-col justify-between gap-6 pb-6">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="rounded-2xl bg-zinc-100 dark:bg-zinc-950 p-4">
                       <p className="text-xs uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">Members</p>
                       <p className="mt-2 text-2xl font-semibold text-foreground">{membership.memberCount}</p>
                     </div>
-                    <div className="rounded-2xl bg-zinc-100 dark:bg-zinc-950 p-3">
+                    <div className="rounded-2xl bg-zinc-100 dark:bg-zinc-950 p-4">
                       <p className="text-xs uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">Documents</p>
                       <p className="mt-2 text-2xl font-semibold text-foreground">{membership.docCount}</p>
                     </div>
                   </div>
 
-                  <div className="grid gap-3 sm:grid-cols-3">
-                    <div className="sm:col-span-1">
-                      <Button asChild variant="default" className="w-full" size="sm" aria-label={`Open chat for ${space.name}`}>
-                        <a href={`/spaces/${space.id}/chat`}>
-                          <MessageSquare className="mr-2 h-4 w-4" />
-                          Chat
-                        </a>
-                      </Button>
-                    </div>
+                  <div className="grid grid-cols-3 gap-2 mt-auto">
+                    <Button asChild variant="default" className="w-full" size="sm" aria-label={`Open chat for ${space.name}`}>
+                      <a href={`/spaces/${space.id}/chat`}>
+                        <MessageSquare className="mr-2 h-4 w-4" />
+                        Chat
+                      </a>
+                    </Button>
 
                     {membership.role !== 'VIEWER' ? (
-                      <div className="sm:col-span-1">
-                        <Button asChild variant="outline" className="w-full" size="sm" aria-label={`View documents for ${space.name}`}>
-                          <a href={`/spaces/${space.id}/documents`}>
-                            <FileText className="mr-2 h-4 w-4" />
-                            Docs
-                          </a>
-                        </Button>
-                      </div>
+                      <Button asChild variant="outline" className="w-full" size="sm" aria-label={`View documents for ${space.name}`}>
+                        <a href={`/spaces/${space.id}/documents`}>
+                          <FileText className="mr-2 h-4 w-4" />
+                          Docs
+                        </a>
+                      </Button>
                     ) : (
-                      <div className="sm:col-span-1" />
+                      <div />
                     )}
 
-                    {(membership.role === 'OWNER' || membership.role === 'ADMIN') && (
-                      <div className="sm:col-span-1">
-                        <Button asChild variant="outline" className="w-full" size="sm" aria-label={`Open settings for ${space.name}`}>
-                          <a href={`/spaces/${space.id}/settings`}>
-                            <Settings className="mr-2 h-4 w-4" />
-                            Manage
-                          </a>
-                        </Button>
-                      </div>
+                    {(membership.role === 'OWNER' || membership.role === 'ADMIN') ? (
+                      <Button asChild variant="outline" className="w-full" size="sm" aria-label={`Open settings for ${space.name}`}>
+                        <a href={`/spaces/${space.id}/settings`}>
+                          <Settings className="mr-2 h-4 w-4" />
+                          Manage
+                        </a>
+                      </Button>
+                    ) : (
+                      <div />
                     )}
                   </div>
                 </CardContent>
