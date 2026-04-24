@@ -118,6 +118,8 @@ The hook is configured in `hooks.json` to run on the `sessionEnd` event:
 | `JWT_TOKEN` | medium | `eyJhbGci...` |
 | `INTERNAL_IP_PORT` | medium | `192.168.1.1:8080` |
 
+> **Note**: Example values in this documentation are placeholders for demonstration purposes only. They do not represent real credentials.
+
 See the full list in `scan-secrets.sh`.
 
 ## Example Output

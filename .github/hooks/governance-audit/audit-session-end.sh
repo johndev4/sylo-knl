@@ -8,7 +8,8 @@ if [[ "${SKIP_GOVERNANCE_AUDIT:-}" == "true" ]]; then
   exit 0
 fi
 
-INPUT=$(cat)
+# Read stdin to prevent broken pipe if called without input
+cat > /dev/null
 
 mkdir -p logs/copilot/governance
 

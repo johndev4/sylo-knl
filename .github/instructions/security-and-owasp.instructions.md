@@ -48,6 +48,8 @@ const unsafeResult = await db.query(`SELECT * FROM users WHERE id = ${userId}`);
 const safeResult = await db.query('SELECT * FROM users WHERE id = $1', [userId]);
 ```
 
+> **Note**: Example values in this documentation are placeholders for demonstration purposes only.
+
 ### I2: NoSQL Injection (MongoDB Operator Injection)
 
 - **Severity**: CRITICAL
@@ -257,13 +259,15 @@ res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'strict' })
 - **OWASP**: A04
 
 ```typescript
-// BAD — fast hash, no salt
+// BAD
 const sha256Hash = crypto.createHash('sha256').update(password).digest('hex');
 
 // GOOD — Argon2id (OWASP recommended)
 import { hash as argon2Hash, argon2id } from 'argon2';
 const hashed = await argon2Hash(password, { type: argon2id, memoryCost: 65536, timeCost: 3 });
 ```
+
+> **Note**: Example values in this documentation are placeholders for demonstration purposes only.
 
 ### AU5: Missing Brute-Force Protection on Login
 

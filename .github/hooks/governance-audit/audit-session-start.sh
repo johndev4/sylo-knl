@@ -8,13 +8,14 @@ if [[ "${SKIP_GOVERNANCE_AUDIT:-}" == "true" ]]; then
   exit 0
 fi
 
-INPUT=$(cat)
-
 mkdir -p logs/copilot/governance
 
 TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 CWD=$(pwd)
 LEVEL="${GOVERNANCE_LEVEL:-standard}"
+
+# Read stdin to prevent broken pipe if called without input
+cat > /dev/null
 
 jq -Rn \
   --arg timestamp "$TIMESTAMP" \
