@@ -124,6 +124,7 @@ All agents MUST follow the GitHub instructions referenced below. These are injec
 - **[nextjs.instructions.md](.github/instructions/nextjs.instructions.md)** — Next.js 16+ App Router best practices
 - **[nextjs-tailwind.instructions.md](.github/instructions/nextjs-tailwind.instructions.md)** — Tailwind + Shadcn conventions
 - **[nodejs-javascript-vitest.instructions.md](.github/instructions/nodejs-javascript-vitest.instructions.md)** — Node.js / JS best practices
+- **[oop-design-patterns.instructions.md](.github/instructions/oop-design-patterns.instructions.md)** — OOP design patterns (Factory, Strategy, etc.)
 - **[sql-sp-generation.instructions.md](.github/instructions/sql-sp-generation.instructions.md)** — SQL & stored procedure patterns
 
 ---
