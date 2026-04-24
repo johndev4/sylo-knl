@@ -46,6 +46,7 @@ npm install
 npm run dev              # Start dev server on :3000
 npm run build            # Production build
 npm run lint             # Run ESLint
+npm run test:e2e         # Run Playwright end-to-end tests
 ```
 
 **Database**: Supabase CLI for migrations
@@ -54,6 +55,11 @@ npm run lint             # Run ESLint
 supabase migration new <name>   # Create new migration
 supabase db pull                # Sync schema changes
 ```
+
+**End-to-End Testing**
+
+- `playwright.config.ts` contains Playwright configuration.
+- `tests/e2e` contains browser-based smoke tests for public auth and workspace flows.
 
 **Key Non-Obvious Tools**
 
@@ -104,6 +110,8 @@ supabase db pull                # Sync schema changes
 | `src/lib/supabase/`          | Supabase client (server/client modes)                      |
 | `src/lib/themes/`            | Auth UI theming                                            |
 | `components/`                | Reusable React components                                  |
+| `playwright.config.ts`       | Playwright E2E configuration                               |
+| `tests/e2e/`                 | End-to-end browser tests                                   |
 
 ---
 
