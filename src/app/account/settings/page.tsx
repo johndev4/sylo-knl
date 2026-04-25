@@ -222,7 +222,7 @@ export default function AccountSettingsPage() {
           {/* Header */}
           <div className="mb-8">
             <button
-              onClick={() => router.push('/spaces')}
+              onClick={() => router.push('/workspaces')}
               className="text-sm text-muted-foreground hover:text-foreground mb-4 flex items-center gap-1"
             >
               ← Back

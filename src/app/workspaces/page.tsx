@@ -5,7 +5,7 @@ import { CreateWorkspaceDialog } from "@/components/CreateWorkspaceDialog";
 import { WorkspacesContainer } from "@/components/WorkspacesContainer";
 import { WorkspaceSummaryHero } from "@/components/kokonutui/WorkspaceSummaryHero";
 
-export default async function SpacesPage() {
+export default async function WorkspacesPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 

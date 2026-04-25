@@ -14,7 +14,7 @@ A complete workspace member management system allowing OWNER and ADMIN users to:
 ## 📂 Key Files
 
 ### User-Facing Pages
-- **Settings Page**: `/spaces/[id]/settings` - Full member management UI
+- **Settings Page**: `/workspaces/[id]/settings` - Full member management UI
 
 ### API Endpoints
 - **GET** `/api/workspaces/[id]/members` - List members
@@ -36,7 +36,7 @@ A complete workspace member management system allowing OWNER and ADMIN users to:
 
 ### 1. Add Link to Settings
 ```tsx
-<Link href={`/spaces/${workspaceId}/settings`}>
+<Link href={`/workspaces/${workspaceId}/settings`}>
   <Button>Workspace Settings</Button>
 </Link>
 ```

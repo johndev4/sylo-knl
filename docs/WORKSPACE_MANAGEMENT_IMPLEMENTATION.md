@@ -48,7 +48,7 @@ src/components/ui/checkbox.tsx                        - Checkbox input component
 
 ### Pages (New)
 ```
-src/app/spaces/[id]/settings/page.tsx - Workspace settings page
+src/app/workspaces/[id]/settings/page.tsx - Workspace settings page
 ```
 
 ### Hooks (New)
@@ -116,7 +116,7 @@ supabase/migrations/20260418223650_init_pure_schema.sql
 
 ## 🎨 UI/UX Features
 
-### Workspace Settings Page (`/spaces/[id]/settings`)
+### Workspace Settings Page (`/workspaces/[id]/settings`)
 
 1. **Add Member Form**
    - Email input with validation
@@ -217,7 +217,7 @@ The settings page should be accessible from:
 
 Add this link to your workspace navigation:
 ```tsx
-<Link href={`/spaces/${workspaceId}/settings`}>Settings</Link>
+<Link href={`/workspaces/${workspaceId}/settings`}>Settings</Link>
 ```
 
 ### For Supabase

@@ -14,7 +14,6 @@ interface WorkspaceSummaryHeroProps {
 export function WorkspaceSummaryHero({ memberships }: WorkspaceSummaryHeroProps) {
   const totalWorkspaces = memberships.length;
   const totalDocs = memberships.reduce((sum, membership) => sum + membership.docCount, 0);
-  const totalMembers = memberships.reduce((sum, membership) => sum + membership.memberCount, 0);
 
   return (
     <section className="grid gap-4 xl:grid-cols-[1.8fr_1fr] mb-8">
@@ -37,10 +36,6 @@ export function WorkspaceSummaryHero({ memberships }: WorkspaceSummaryHeroProps)
               <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Documents</p>
               <p className="mt-3 text-3xl font-semibold">{totalDocs}</p>
             </div>
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
-              <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Members</p>
-              <p className="mt-3 text-3xl font-semibold">{totalMembers}</p>
-            </div>
           </div>
         </CardContent>
       </Card>
@@ -54,11 +49,15 @@ export function WorkspaceSummaryHero({ memberships }: WorkspaceSummaryHeroProps)
           <CardContent className="grid gap-3">
             <div className="rounded-3xl bg-zinc-100 dark:bg-zinc-950 p-4">
               <p className="text-sm font-medium">Fast context retrieval</p>
-              <p className="mt-2 text-sm text-muted-foreground">Every document is embedded and indexed for precise results.</p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Every document is embedded and indexed for precise results.
+              </p>
             </div>
             <div className="rounded-3xl bg-zinc-100 dark:bg-zinc-950 p-4">
               <p className="text-sm font-medium">Collaborative knowledge</p>
-              <p className="mt-2 text-sm text-muted-foreground">Invite teammates, share workspaces, and reduce duplicated onboarding.</p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Invite teammates, share workspaces, and reduce duplicated onboarding.
+              </p>
             </div>
           </CardContent>
         </Card>

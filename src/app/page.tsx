@@ -8,6 +8,6 @@ export default async function Home() {
   if (!user) {
     redirect("/login");
   } else {
-    redirect("/spaces");
+    redirect("/workspaces");
   }
 }

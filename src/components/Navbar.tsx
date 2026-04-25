@@ -26,7 +26,7 @@ export function Navbar() {
           )}
         >
           <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center border border-zinc-200 dark:border-zinc-800">
-            <span className="text-xs font-bold">SL</span>
+            <span className="text-xs font-bold">Sy</span>
           </div>
           <span className="hidden sm:inline">Sylo</span>
         </Link>

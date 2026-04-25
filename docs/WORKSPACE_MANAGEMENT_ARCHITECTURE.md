@@ -8,7 +8,7 @@
 │                                                                       │
 │  ┌──────────────────────────────────────────────────────────────┐  │
 │  │           Workspace Settings Page                           │  │
-│  │         (/spaces/[id]/settings/page.tsx)                   │  │
+│  │         (/workspaces/[id]/settings/page.tsx)                   │  │
 │  │                                                              │  │
 │  │  ┌─────────────────┐  ┌──────────────────────────────────┐ │  │
 │  │  │ AddMemberForm   │  │    MemberTable                   │ │  │

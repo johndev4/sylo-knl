@@ -149,11 +149,11 @@ export function WorkspacesTable({ memberships }: WorkspacesTableProps) {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <Link href={`/spaces/${space.id}/chat`}>
+                        <Link href={`/workspaces/${space.id}/chat`}>
                           <Button size="sm" variant="default">Chat</Button>
                         </Link>
                         {isOwner && (
-                          <Link href={`/spaces/${space.id}/settings`}>
+                          <Link href={`/workspaces/${space.id}/settings`}>
                             <button
                               className="p-2 rounded-md text-zinc-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-colors cursor-pointer"
                               aria-label={`Manage settings for ${space.name}`}

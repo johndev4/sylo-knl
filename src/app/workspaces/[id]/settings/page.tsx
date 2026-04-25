@@ -196,7 +196,7 @@ export default function WorkspaceSettingsPage({
             <h1 className="text-3xl font-bold tracking-tight">Workspace Settings</h1>
             <p className="text-muted-foreground">Manage members and workspace settings</p>
           </div>
-          <Link href={`/spaces/${workspaceId}/documents`}>
+          <Link href={`/workspaces/${workspaceId}/documents`}>
             <Button variant="outline">Back to Workspace</Button>
           </Link>
         </div>

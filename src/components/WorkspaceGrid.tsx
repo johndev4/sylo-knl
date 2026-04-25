@@ -106,7 +106,7 @@ export function WorkspacesBentoGrid({ memberships }: WorkspaceGridProps) {
 
                   <div className="grid grid-cols-3 gap-2 mt-auto">
                     <Button asChild variant="default" className="w-full" size="sm" aria-label={`Open chat for ${space.name}`}>
-                      <a href={`/spaces/${space.id}/chat`}>
+                      <a href={`/workspaces/${space.id}/chat`}>
                         <MessageSquare className="mr-2 h-4 w-4" />
                         Chat
                       </a>
@@ -114,7 +114,7 @@ export function WorkspacesBentoGrid({ memberships }: WorkspaceGridProps) {
 
                     {membership.role !== 'VIEWER' ? (
                       <Button asChild variant="outline" className="w-full" size="sm" aria-label={`View documents for ${space.name}`}>
-                        <a href={`/spaces/${space.id}/documents`}>
+                        <a href={`/workspaces/${space.id}/documents`}>
                           <FileText className="mr-2 h-4 w-4" />
                           Docs
                         </a>
@@ -125,7 +125,7 @@ export function WorkspacesBentoGrid({ memberships }: WorkspaceGridProps) {
 
                     {(membership.role === 'OWNER' || membership.role === 'ADMIN') ? (
                       <Button asChild variant="outline" className="w-full" size="sm" aria-label={`Open settings for ${space.name}`}>
-                        <a href={`/spaces/${space.id}/settings`}>
+                        <a href={`/workspaces/${space.id}/settings`}>
                           <Settings className="mr-2 h-4 w-4" />
                           Manage
                         </a>

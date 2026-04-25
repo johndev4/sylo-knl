@@ -49,7 +49,7 @@ export default function DocumentsPage(props: { params: Promise<{ id: string }> }
       
       // Let user view it or navigate back
       setTimeout(() => {
-        router.push(`/spaces/${params.id}/chat`);
+        router.push(`/workspaces/${params.id}/chat`);
       }, 2000);
       
     } catch (err: any) {
@@ -67,7 +67,7 @@ export default function DocumentsPage(props: { params: Promise<{ id: string }> }
     <div className="container mx-auto p-6 max-w-4xl">
       <div className="mb-6">
         <Button asChild variant="ghost" size="sm" className="mb-4">
-          <a href={`/spaces`}>
+          <a href={`/workspaces`}>
             <ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard
           </a>
         </Button>
@@ -147,7 +147,7 @@ export default function DocumentsPage(props: { params: Promise<{ id: string }> }
               <p className="text-sm text-muted-foreground">Every document is automatically chunked and embedded for fast retrieval.</p>
               <div className="mt-4 flex flex-col gap-3">
                 <Button variant="outline" onClick={handleScrollToForm}>Focus upload form</Button>
-                <Button variant="default" onClick={() => router.push(`/spaces/${params.id}/chat`)}>Go to chat</Button>
+                <Button variant="default" onClick={() => router.push(`/workspaces/${params.id}/chat`)}>Go to chat</Button>
               </div>
             </CardContent>
           </Card>

@@ -182,7 +182,7 @@ All agents MUST follow the GitHub instructions referenced below. These are injec
 
 **Responsibilities**:
 
-- Build React components and pages (`src/components/`, `src/app/spaces/`)
+- Build React components and pages (`src/components/`, `src/app/workspaces/`)
 - Integrate Supabase Auth UI
 - Manage form state and validation
 - Implement search/filter/pagination UI
@@ -194,7 +194,7 @@ All agents MUST follow the GitHub instructions referenced below. These are injec
 
 - `src/components/` — Reusable UI components
 - `src/app/(auth)/` — Auth flow pages
-- `src/app/spaces/` — Workspace & chat pages
+- `src/app/workspaces/` — Workspace & chat pages
 
 ---
 
@@ -263,7 +263,7 @@ See `src/app/api/documents/route.ts` for reference.
 3. Show loading/error states
 4. Render with proper accessibility (labels, roles, ARIA)
 
-See `src/app/spaces/[id]/documents/page.tsx` for reference.
+See `src/app/workspaces/[id]/documents/page.tsx` for reference.
 
 ### RAG Chat Pattern
 

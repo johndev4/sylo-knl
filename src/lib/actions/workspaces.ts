@@ -34,7 +34,7 @@ export async function createWorkspace(name: string) {
 
   const workspace = data as { id: string, name: string };
 
-  revalidatePath('/spaces');
+  revalidatePath('/workspaces');
   return workspace;
 }
 
@@ -52,7 +52,7 @@ export async function deleteWorkspace(workspaceId: string) {
 
   if (error) throw new Error(error.message || "Failed to delete workspace");
 
-  revalidatePath('/spaces');
+  revalidatePath('/workspaces');
   return { success: true };
 }
 
@@ -72,7 +72,7 @@ export async function deleteWorkspaces(ids: string[]) {
 
   if (error) throw new Error(error.message || "Failed to delete workspaces");
 
-  revalidatePath('/spaces');
+  revalidatePath('/workspaces');
   return { success: true };
 }
 
@@ -190,7 +190,7 @@ export async function addWorkspaceMember(
     throw new Error('Failed to add member');
   }
 
-  revalidatePath(`/spaces/${workspaceId}`);
+  revalidatePath(`/workspaces/${workspaceId}`);
   return newMember;
 }
 
@@ -260,7 +260,7 @@ export async function updateWorkspaceMemberRole(
     throw new Error('Failed to update member role');
   }
 
-  revalidatePath(`/spaces/${workspaceId}`);
+  revalidatePath(`/workspaces/${workspaceId}`);
   return updatedMember;
 }
 
@@ -320,7 +320,7 @@ export async function removeWorkspaceMember(
     throw new Error('Failed to remove member');
   }
 
-  revalidatePath(`/spaces/${workspaceId}`);
+  revalidatePath(`/workspaces/${workspaceId}`);
   return { success: true };
 }
 
@@ -337,7 +337,7 @@ export async function removeMultipleWorkspaceMembers(
     throw new Error(`Failed to remove ${failed.length} member(s)`);
   }
 
-  revalidatePath(`/spaces/${workspaceId}`);
+  revalidatePath(`/workspaces/${workspaceId}`);
   return { success: true, removedCount: userIds.length };
 }
 
@@ -370,7 +370,7 @@ export async function leaveWorkspace(workspaceId: string) {
 
   if (error) throw new Error(error.message || "Failed to leave workspace");
 
-  revalidatePath('/spaces');
+  revalidatePath('/workspaces');
   return { success: true };
 }
 
@@ -402,7 +402,7 @@ export async function updateWorkspaceName(workspaceId: string, newName: string) 
     throw new Error(error.message || 'Failed to update workspace name');
   }
 
-  revalidatePath(`/spaces/${workspaceId}/settings`);
-  revalidatePath('/spaces');
+  revalidatePath(`/workspaces/${workspaceId}/settings`);
+  revalidatePath('/workspaces');
   return { success: true };
 }

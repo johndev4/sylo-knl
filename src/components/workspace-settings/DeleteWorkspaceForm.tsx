@@ -53,7 +53,7 @@ export function DeleteWorkspaceForm({ workspaceId, workspaceName }: DeleteWorksp
 
     try {
       await deleteWorkspace(workspaceId);
-      router.push('/spaces');
+      router.push('/workspaces');
     } catch (err: any) {
       setError(err.message || 'Failed to delete workspace. Please try again.');
       setIsDeleting(false);

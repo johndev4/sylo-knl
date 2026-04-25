@@ -20,7 +20,7 @@ I have successfully implemented a **complete workspace member management system*
 - ✅ `DELETE /api/workspaces/[id]/members/[userId]` - Remove member
 
 ### 3. **Frontend Components**
-- ✅ Workspace settings page (`/spaces/[id]/settings`)
+- ✅ Workspace settings page (`/workspaces/[id]/settings`)
 - ✅ Add member form with email and role selection
 - ✅ Member table with inline role editing
 - ✅ Bulk member selection and deletion
@@ -54,7 +54,7 @@ I have successfully implemented a **complete workspace member management system*
    src/components/ui/checkbox.tsx
 
 ✅ Pages
-   src/app/spaces/[id]/settings/page.tsx
+   src/app/workspaces/[id]/settings/page.tsx
 
 ✅ Validation
    src/lib/validation/workspace.schema.ts
@@ -104,7 +104,7 @@ I have successfully implemented a **complete workspace member management system*
 #### Add Settings Link to Navigation
 ```tsx
 // In your workspace header/navigation component
-<Link href={`/spaces/${workspaceId}/settings`}>
+<Link href={`/workspaces/${workspaceId}/settings`}>
   <Button variant="outline">Workspace Settings</Button>
 </Link>
 ```
@@ -148,7 +148,7 @@ await removeWorkspaceMember(workspaceId, userId);
 
 #### ✅ Test 1: Add a Member
 1. Login as workspace OWNER
-2. Navigate to `/spaces/[workspace-id]/settings`
+2. Navigate to `/workspaces/[workspace-id]/settings`
 3. Enter a team member's email
 4. Select "EDITOR" role
 5. Click "Add Member"

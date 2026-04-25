@@ -23,17 +23,17 @@ export default function WorkspaceNav({
 
   const navItems = [
     {
-      href: `/spaces/${workspaceId}/documents`,
+      href: `/workspaces/${workspaceId}/documents`,
       label: 'Documents',
       id: 'documents',
     },
     {
-      href: `/spaces/${workspaceId}/chat`,
+      href: `/workspaces/${workspaceId}/chat`,
       label: 'Chat',
       id: 'chat',
     },
     {
-      href: `/spaces/${workspaceId}/settings`,
+      href: `/workspaces/${workspaceId}/settings`,
       label: 'Settings',
       id: 'settings',
     },

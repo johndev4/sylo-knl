@@ -153,10 +153,10 @@ export default function ChatPage(props: { params: Promise<{ id: string }> }) {
           </div>
           <div className="flex gap-2">
             <Button asChild variant="outline" size="sm">
-              <a href={`/spaces/${params.id}/documents`}>Manage Documents</a>
+              <a href={`/workspaces/${params.id}/documents`}>Manage Documents</a>
             </Button>
             <Button asChild variant="ghost" size="sm">
-              <a href="/spaces">Back to Dashboard</a>
+              <a href="/workspaces">Back to Dashboard</a>
             </Button>
           </div>
         </div>

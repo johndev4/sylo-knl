@@ -51,7 +51,7 @@ export function CreateWorkspaceDialog({
       setIsOpen(false);
       setName('');
       setError(null);
-      router.push('/spaces');
+      router.push('/workspaces');
     } catch (err: any) {
       setError(err.message || 'Failed to create workspace');
     } finally {
