@@ -48,8 +48,8 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { messages, spaceId } = body;
-    console.log('[CHAT] SpaceID:', spaceId);
+    const { messages, libraryId } = body;
+    console.log('[CHAT] LibraryID:', libraryId);
 
     // Validate request body
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
@@ -59,20 +59,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!spaceId) {
-      return NextResponse.json({ error: 'spaceId is required' }, { status: 400 });
+    if (!libraryId) {
+      return NextResponse.json({ error: 'libraryId is required' }, { status: 400 });
     }
 
-    // Check workspace exists and user has access
+    // Check library exists and user has access
     let hasAccess = false;
     
-    if (spaceId === user.id) {
+    if (libraryId === user.id) {
       hasAccess = true;
     } else {
       const { data: membership } = await supabase
-        .from('workspace_members')
-        .select('workspace_id')
-        .eq('workspace_id', spaceId)
+        .from('library_members')
+        .select('library_id')
+        .eq('library_id', libraryId)
         .eq('user_id', user.id)
         .single();
       
@@ -87,7 +87,7 @@ export async function POST(req: NextRequest) {
     const latestMessage = messages[messages.length - 1];
 
     // Execute RAG pipeline: embed → retrieve → context → stream
-    const chunks = executeRAGChat(latestMessage.content, spaceId, messages);
+    const chunks = executeRAGChat(latestMessage.content, libraryId, messages);
     const stream = streamChunksToResponse(chunks);
 
     return new NextResponse(stream, {

@@ -25,7 +25,7 @@ This document helps agents understand the **Sylo** knowledge library application
 - **Key Features**:
   - Document management with tagging and search
   - RAG-powered chatbot with vector similarity retrieval
-  - Workspace-based RBAC system
+  - Library-based RBAC system
   - Multi-provider LLM support
 
 ### The WHY
@@ -34,7 +34,7 @@ The application solves the problem of knowledge fragmentation by providing:
 
 1. **Unified Knowledge Store**: Single source of truth for all knowledge
 2. **Intelligent Retrieval**: RAG system provides accurate context to AI
-3. **Multi-tenant Safety**: Workspace isolation with RLS policies
+3. **Multi-tenant Safety**: Library isolation with RLS policies
 4. **Flexible AI**: Provider-agnostic LLM core allows switching between providers
 
 ### The HOW
@@ -59,7 +59,7 @@ supabase db pull                # Sync schema changes
 **End-to-End Testing**
 
 - `playwright.config.ts` contains Playwright configuration.
-- `tests/e2e` contains browser-based smoke tests for public auth and workspace flows.
+- `tests/e2e` contains browser-based smoke tests for public auth and library flows.
 
 **Key Non-Obvious Tools**
 
@@ -74,7 +74,7 @@ supabase db pull                # Sync schema changes
 ### 1. Data Ingestion Flow
 
 1. User uploads documents via web interface → `src/app/api/documents/route.ts`
-2. Documents stored in Supabase with metadata (tags, title, spaceId)
+2. Documents stored in Supabase with metadata (tags, title, libraryId)
 3. Document chunked and embedded → `src/lib/ai/chunking.ts` + `src/lib/ai/embeddings.ts`
 4. Embeddings stored in pgvector column for similarity search
 
@@ -86,13 +86,13 @@ supabase db pull                # Sync schema changes
 4. Retrieved chunks used as context → `src/lib/ai/rag/context-builder.ts`
 5. LLM streams response using context → `src/lib/ai/core/llm.ts`
 
-### 3. RBAC & Workspace System
+### 3. RBAC & Library System
 
-- 5 database models: User, Space, SpaceMember, Document, DocumentChunk
+- 5 database models: User, Library, LibraryMember, Document, DocumentChunk
 - 4 roles: VIEWER (0) < EDITOR (1) < ADMIN (2) < OWNER (3)
 - RLS policies enforce row-level security at database layer
 - Role checks at API layer via middleware
-- See [workspace-system-implementation.md](/memories/repo/workspace-system-implementation.md) for details
+- See [library-system-implementation.md](/memories/repo/library-system-implementation.md) for details
 
 ---
 
@@ -103,7 +103,7 @@ supabase db pull                # Sync schema changes
 | `src/app/`                   | Next.js routes & API handlers                              |
 | `src/app/api/chat/`          | RAG chat endpoint (streaming)                              |
 | `src/app/api/documents/`     | Document CRUD endpoints                                    |
-| `src/app/api/workspaces/`    | Workspace & member management                              |
+| `src/app/api/libraries/`    | Library & member management                              |
 | `src/lib/ai/`                | LLM core, providers, RAG pipeline                          |
 | `src/lib/ai/rag/pipeline.ts` | Full RAG orchestration (query → embed → retrieve → stream) |
 | `src/lib/ai/core/llm.ts`     | Provider-agnostic LLM interface                            |
@@ -163,7 +163,7 @@ All agents MUST follow the GitHub instructions referenced below. These are injec
 - Implement role-based access control checks
 - Write Zod validation schemas
 - Handle Supabase auth and session management
-- Enforce business constraints (max workspaces, document limits)
+- Enforce business constraints (max libraries, document limits)
 
 **Skills to Activate**: `supabase`
 
@@ -182,7 +182,7 @@ All agents MUST follow the GitHub instructions referenced below. These are injec
 
 **Responsibilities**:
 
-- Build React components and pages (`src/components/`, `src/app/workspaces/`)
+- Build React components and pages (`src/components/`, `src/app/hub/`)
 - Integrate Supabase Auth UI
 - Manage form state and validation
 - Implement search/filter/pagination UI
@@ -194,7 +194,7 @@ All agents MUST follow the GitHub instructions referenced below. These are injec
 
 - `src/components/` — Reusable UI components
 - `src/app/(auth)/` — Auth flow pages
-- `src/app/workspaces/` — Workspace & chat pages
+- `src/app/hub/` — Library chat pages
 
 ---
 
@@ -263,7 +263,7 @@ See `src/app/api/documents/route.ts` for reference.
 3. Show loading/error states
 4. Render with proper accessibility (labels, roles, ARIA)
 
-See `src/app/workspaces/[id]/documents/page.tsx` for reference.
+See `src/app/hub/[id]/documents/page.tsx` for reference.
 
 ### RAG Chat Pattern
 

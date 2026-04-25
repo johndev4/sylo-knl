@@ -8,7 +8,7 @@ import { z } from 'zod'
 const ingestSchema = z.object({
   title: z.string().min(1, "Title is required"),
   content: z.string().min(10, "Content is too short"),
-  spaceId: z.string().uuid("Invalid Space ID"),
+  libraryId: z.string().uuid("Invalid Library ID"),
 })
 
 export async function POST(req: NextRequest) {
@@ -21,29 +21,29 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { title, content, spaceId } = ingestSchema.parse(body)
+    const { title, content, libraryId } = ingestSchema.parse(body)
 
     // No need to manually sync user, handled by Postgres Trigger
 
-    // Check workspace exists and user has access
+    // Check library exists and user has access
     let hasAccess = false;
     
-    // Legacy Personal Space Check vs New Workspace Check
-    if (spaceId === user.id) {
-      // In the new schema, personal workspaces are just workspaces created by the user
-      // If none match `spaceId = user.id`, we'll need to create a dedicated personal space, but for MVP
-      // let's create a workspace literally with id = user.id if it doesn't exist
-      const { data: existingSpace } = await supabase.from('workspaces').select('id').eq('id', user.id).single();
+    // Legacy Personal Space Check vs New Library Check
+    if (libraryId === user.id) {
+      // In the new schema, personal libraries are just libraries created by the user
+      // If none match `libraryId = user.id`, we'll need to create a dedicated personal library, but for MVP
+      // let's create a library literally with id = user.id if it doesn't exist
+      const { data: existingSpace } = await supabase.from('libraries').select('id').eq('id', user.id).single();
       if (!existingSpace) {
-        await supabase.from('workspaces').insert({ id: user.id, name: 'Personal Knowledge Base' });
-        await supabase.from('workspace_members').insert({ workspace_id: user.id, user_id: user.id, role: 'OWNER' });
+        await supabase.from('libraries').insert({ id: user.id, name: 'Personal Knowledge Base' });
+        await supabase.from('library_members').insert({ library_id: user.id, user_id: user.id, role: 'OWNER' });
       }
       hasAccess = true;
     } else {
       const { data: membership } = await supabase
-        .from('workspace_members')
-        .select('workspace_id')
-        .eq('workspace_id', spaceId)
+        .from('library_members')
+        .select('library_id')
+        .eq('library_id', libraryId)
         .eq('user_id', user.id)
         .single();
       
@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
       .insert({
         title,
         content,
-        workspace_id: spaceId
+        library_id: libraryId
       })
       .select('id')
       .single()

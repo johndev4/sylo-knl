@@ -15,7 +15,7 @@ import { buildPromptContext, buildSystemPrompt } from './context-builder';
  */
 export async function* executeRAGChat(
   userQuery: string,
-  spaceId: string,
+  libraryId: string,
   userMessages: Array<{ role: 'user' | 'assistant'; content: string }>,
 ): AsyncIterable<StreamChunk> {
   try {
@@ -24,7 +24,7 @@ export async function* executeRAGChat(
     console.log('[RAG] Query embedding generated, dimension:', queryEmbedding.length);
 
     // Step 2: Retrieve relevant chunks
-    const chunks = await retrieveRelevantChunks(queryEmbedding, spaceId, 5);
+    const chunks = await retrieveRelevantChunks(queryEmbedding, libraryId, 5);
     console.log('[RAG] Retrieved chunks:', chunks.length);
 
     // Step 3: Build context from chunks

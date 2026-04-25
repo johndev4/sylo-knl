@@ -19,14 +19,14 @@ export function LoginHero({ children }: LoginHeroProps) {
             className="space-y-8"
           >
             <div className="inline-flex rounded-full bg-sky-100 px-4 py-1 text-sm font-semibold text-sky-700 shadow-sm dark:bg-sky-900/20 dark:text-sky-200">
-              AI-powered knowledge workspace
+              AI-powered knowledge library
             </div>
             <div className="max-w-2xl space-y-6">
               <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-                Turn your documents into searchable workspace answers.
+                Turn your documents into searchable library answers.
               </h1>
               <p className="max-w-xl text-base text-slate-600 dark:text-slate-300">
-                Upload documents, organize workspaces, and get accurate AI responses based on your own knowledge base. Built for teams that need fast, reliable access to shared information.
+                Upload documents, organize libraries, and get accurate AI responses based on your own knowledge base. Built for teams that need fast, reliable access to shared information.
               </p>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -36,7 +36,7 @@ export function LoginHero({ children }: LoginHeroProps) {
               </div>
               <div className="rounded-3xl border border-zinc-200 bg-white/90 p-5 shadow-sm backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/80">
                 <p className="text-xs uppercase tracking-[0.24em] text-zinc-500 dark:text-zinc-400">Secure access</p>
-                <p className="mt-3 text-base font-semibold text-slate-950 dark:text-white">Manage workspaces, roles, and protected knowledge.</p>
+                <p className="mt-3 text-base font-semibold text-slate-950 dark:text-white">Manage libraries, roles, and protected knowledge.</p>
               </div>
             </div>
           </motion.div>

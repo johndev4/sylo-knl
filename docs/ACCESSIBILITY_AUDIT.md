@@ -53,8 +53,8 @@
 ### Dialogs & Modals
 | Component | Status | Notes |
 |-----------|--------|-------|
-| CreateWorkspaceDialog | ✅ PASS | shadcn/ui Dialog, built-in focus management, Escape closes |
-| DeleteWorkspaceForm | ✅ PASS | AlertDialog with proper semantics, Escape support |
+| CreateLibraryDialog | ✅ PASS | shadcn/ui Dialog, built-in focus management, Escape closes |
+| DeleteLibraryForm | ✅ PASS | AlertDialog with proper semantics, Escape support |
 | AccountDropdown | ✅ PASS | DropdownMenu with full keyboard nav (Arrow keys, Escape) |
 | ThemeSubmenu | ✅ PASS | Radio group pattern, keyboard accessible |
 
@@ -69,8 +69,8 @@
 ### Content & Data Display
 | Component | Status | Notes |
 |-----------|--------|-------|
-| WorkspacesTable | ✅ PASS | `<table>` with `<thead>`/`<tbody>`, proper headers |
-| WorkspaceGrid | ✅ PASS | Cards with proper heading hierarchy, animations respect motion prefs |
+| LibrariesTable | ✅ PASS | `<table>` with `<thead>`/`<tbody>`, proper headers |
+| LibraryGrid | ✅ PASS | Cards with proper heading hierarchy, animations respect motion prefs |
 | ChatPage messages | ✅ PASS | User/bot icons have `aria-label`, message content semantic |
 | Markdown rendering | ⚠️ CHECK | ReactMarkdown output should be scanned for headings/links |
 
@@ -78,7 +78,7 @@
 | Feature | Status | Notes |
 |-----------|--------|-------|
 | useReducedMotion hook | ✅ PASS | Detects `prefers-reduced-motion`, sets durations to 0 |
-| WorkspaceGrid animations | ✅ PASS | Respects motion prefs, no flashing |
+| LibraryGrid animations | ✅ PASS | Respects motion prefs, no flashing |
 | ChatPage animations | ✅ PASS | Smooth slide-in, respects motion prefs |
 | Dialog animations | ✅ PASS | Tailwind `animate-in` classes + motion respects |
 | Form feedback animations | ✅ PASS | Error/success alerts respect motion prefs |
@@ -117,7 +117,7 @@
 ## Keyboard Navigation Verification
 
 ### Tab Order
-- [x] Home page: Logo → Create Workspace button → Workspace cards → Settings
+- [x] Home page: Logo → Create Library button → Library cards → Settings
 - [x] Dialog: First input → buttons (Cancel/Create) → back to trigger
 - [x] Dropdown: Trigger → menu items → back to trigger
 - [x] Escape key closes all overlays

@@ -16,26 +16,26 @@ CREATE TABLE public.users (
   created_at timestamptz DEFAULT now()
 );
 
--- Workspaces
-CREATE TABLE public.workspaces (
+-- Libraries
+CREATE TABLE public.libraries (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   name text NOT NULL,
   created_at timestamptz DEFAULT now()
 );
 
--- Workspace Members
-CREATE TABLE public.workspace_members (
-  workspace_id uuid REFERENCES public.workspaces ON DELETE CASCADE NOT NULL,
+-- Library Members
+CREATE TABLE public.library_members (
+  library_id uuid REFERENCES public.libraries ON DELETE CASCADE NOT NULL,
   user_id uuid REFERENCES public.users ON DELETE CASCADE NOT NULL,
   role user_role DEFAULT 'VIEWER'::user_role NOT NULL,
   created_at timestamptz DEFAULT now(),
-  PRIMARY KEY (workspace_id, user_id)
+  PRIMARY KEY (library_id, user_id)
 );
 
 -- Documents
 CREATE TABLE public.documents (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  workspace_id uuid REFERENCES public.workspaces ON DELETE CASCADE NOT NULL,
+  library_id uuid REFERENCES public.libraries ON DELETE CASCADE NOT NULL,
   title text NOT NULL,
   content text NOT NULL,
   tags text[] DEFAULT '{}'::text[],
@@ -53,39 +53,39 @@ CREATE TABLE public.document_chunks (
 );
 
 -- Indexes for performance
-CREATE INDEX idx_workspace_members_user ON public.workspace_members(user_id);
+CREATE INDEX idx_library_members_user ON public.library_members(user_id);
 CREATE INDEX idx_documents_tags ON public.documents USING GIN (tags);
-CREATE INDEX idx_documents_workspace ON public.documents(workspace_id);
+CREATE INDEX idx_documents_library ON public.documents(library_id);
 
 -- Constraints Enforcement (Triggers)
 
--- 1. Max 11 members per workspace (including owner)
-CREATE OR REPLACE FUNCTION check_workspace_member_limit_trg()
+-- 1. Max 11 members per library (including owner)
+CREATE OR REPLACE FUNCTION check_library_member_limit_trg()
 RETURNS TRIGGER AS $$
 DECLARE
   member_count INT;
 BEGIN
-  SELECT count(*) INTO member_count FROM public.workspace_members WHERE workspace_id = NEW.workspace_id;
+  SELECT count(*) INTO member_count FROM public.library_members WHERE library_id = NEW.library_id;
   IF member_count >= 11 THEN
-    RAISE EXCEPTION 'Workspace has reached maximum member limit of 11 (MVP Limit).';
+    RAISE EXCEPTION 'Library has reached maximum member limit of 11 (MVP Limit).';
   END IF;
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER enforce_workspace_member_limit
-BEFORE INSERT ON public.workspace_members
-FOR EACH ROW EXECUTE FUNCTION check_workspace_member_limit_trg();
+CREATE TRIGGER enforce_library_member_limit
+BEFORE INSERT ON public.library_members
+FOR EACH ROW EXECUTE FUNCTION check_library_member_limit_trg();
 
--- 2. Max 500 documents per workspace
+-- 2. Max 500 documents per library
 CREATE OR REPLACE FUNCTION check_document_limit_trg()
 RETURNS TRIGGER AS $$
 DECLARE
   doc_count INT;
 BEGIN
-  SELECT count(*) INTO doc_count FROM public.documents WHERE workspace_id = NEW.workspace_id;
+  SELECT count(*) INTO doc_count FROM public.documents WHERE library_id = NEW.library_id;
   IF doc_count >= 500 THEN
-    RAISE EXCEPTION 'Workspace reached exact limit of 500 documents (MVP Limit).';
+    RAISE EXCEPTION 'Library reached exact limit of 500 documents (MVP Limit).';
   END IF;
   RETURN NEW;
 END;
@@ -118,8 +118,8 @@ CREATE OR REPLACE TRIGGER on_auth_user_created
 -- ROW LEVEL SECURITY (RLS)
 
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.workspaces ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.workspace_members ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.libraries ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.library_members ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.documents ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.document_chunks ENABLE ROW LEVEL SECURITY;
 
@@ -127,15 +127,15 @@ ALTER TABLE public.document_chunks ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can view all users" ON public.users FOR SELECT USING (true);
 CREATE POLICY "Users can update their own profile" ON public.users FOR UPDATE USING (auth.uid() = id);
 
--- Helper to check user's role in a given workspace
-CREATE OR REPLACE FUNCTION get_user_workspace_role(w_id UUID)
+-- Helper to check user's role in a given library
+CREATE OR REPLACE FUNCTION get_user_library_role(w_id UUID)
 RETURNS user_role AS $$
-  SELECT role FROM public.workspace_members 
-  WHERE workspace_id = w_id AND user_id = auth.uid();
+  SELECT role FROM public.library_members 
+  WHERE library_id = w_id AND user_id = auth.uid();
 $$ LANGUAGE sql SECURITY DEFINER;
 
--- Workspace Creation RPC
-CREATE OR REPLACE FUNCTION public.create_workspace_with_owner(w_name TEXT)
+-- Library Creation RPC
+CREATE OR REPLACE FUNCTION public.create_library_with_owner(w_name TEXT)
 RETURNS JSONB AS $$
 DECLARE
   new_w_id UUID;
@@ -145,53 +145,53 @@ BEGIN
   END IF;
 
   IF w_name IS NULL OR length(trim(w_name)) = 0 THEN
-    RAISE EXCEPTION 'Workspace name is required';
+    RAISE EXCEPTION 'Library name is required';
   END IF;
 
-  INSERT INTO public.workspaces (name)
+  INSERT INTO public.libraries (name)
   VALUES (w_name)
   RETURNING id INTO new_w_id;
 
-  INSERT INTO public.workspace_members (workspace_id, user_id, role)
+  INSERT INTO public.library_members (library_id, user_id, role)
   VALUES (new_w_id, auth.uid(), 'OWNER');
 
   RETURN jsonb_build_object('id', new_w_id, 'name', w_name);
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Workspaces Policy
-CREATE POLICY "Users view workspaces they belong to" 
-ON public.workspaces FOR SELECT 
-USING (get_user_workspace_role(id) IS NOT NULL);
+-- Libraries Policy
+CREATE POLICY "Users view libraries they belong to" 
+ON public.libraries FOR SELECT 
+USING (get_user_library_role(id) IS NOT NULL);
 
-CREATE POLICY "Users can create workspaces"
-ON public.workspaces FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
+CREATE POLICY "Users can create libraries"
+ON public.libraries FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
 
-CREATE POLICY "Owners and Admins can update workspaces"
-ON public.workspaces FOR UPDATE
-USING (get_user_workspace_role(id) IN ('OWNER', 'ADMIN'));
+CREATE POLICY "Owners and Admins can update libraries"
+ON public.libraries FOR UPDATE
+USING (get_user_library_role(id) IN ('OWNER', 'ADMIN'));
 
-CREATE POLICY "Owners can delete workspaces"
-ON public.workspaces FOR DELETE
-USING (get_user_workspace_role(id) = 'OWNER');
+CREATE POLICY "Owners can delete libraries"
+ON public.libraries FOR DELETE
+USING (get_user_library_role(id) = 'OWNER');
 
 
--- Workspace Members Policy
-CREATE POLICY "Users view members of their workspaces"
-ON public.workspace_members FOR SELECT 
-USING (get_user_workspace_role(workspace_id) IS NOT NULL);
+-- Library Members Policy
+CREATE POLICY "Users view members of their libraries"
+ON public.library_members FOR SELECT 
+USING (get_user_library_role(library_id) IS NOT NULL);
 
 CREATE POLICY "Owners and Admins can view and manage members"
-ON public.workspace_members FOR SELECT
-USING (get_user_workspace_role(workspace_id) IN ('OWNER', 'ADMIN'));
+ON public.library_members FOR SELECT
+USING (get_user_library_role(library_id) IN ('OWNER', 'ADMIN'));
 
-CREATE POLICY "Owners and Admins can add members to workspace"
-ON public.workspace_members FOR INSERT
+CREATE POLICY "Owners and Admins can add members to library"
+ON public.library_members FOR INSERT
 WITH CHECK (
   auth.uid() IS NOT NULL 
   AND (
     -- Allow owner/admin to add members
-    (SELECT get_user_workspace_role(workspace_id)) IN ('OWNER', 'ADMIN')
+    (SELECT get_user_library_role(library_id)) IN ('OWNER', 'ADMIN')
     OR
     -- Allow users to add themselves during space creation
     user_id = auth.uid()
@@ -199,26 +199,26 @@ WITH CHECK (
 );
 
 CREATE POLICY "Owners and Admins can update member roles"
-ON public.workspace_members FOR UPDATE
+ON public.library_members FOR UPDATE
 USING (
-  get_user_workspace_role(workspace_id) IN ('OWNER', 'ADMIN')
+  get_user_library_role(library_id) IN ('OWNER', 'ADMIN')
 );
 
 CREATE POLICY "Owners and Admins can remove members"
-ON public.workspace_members FOR DELETE
+ON public.library_members FOR DELETE
 USING (
-  get_user_workspace_role(workspace_id) IN ('OWNER', 'ADMIN')
+  get_user_library_role(library_id) IN ('OWNER', 'ADMIN')
 );
 
 
 -- Documents Policy
-CREATE POLICY "Users view documents in their workspaces"
+CREATE POLICY "Users view documents in their libraries"
 ON public.documents FOR SELECT
-USING (get_user_workspace_role(workspace_id) IS NOT NULL);
+USING (get_user_library_role(library_id) IS NOT NULL);
 
 CREATE POLICY "Editors/Admins/Owners can manage documents"
 ON public.documents FOR ALL
-USING (get_user_workspace_role(workspace_id) IN ('OWNER', 'ADMIN', 'EDITOR'));
+USING (get_user_library_role(library_id) IN ('OWNER', 'ADMIN', 'EDITOR'));
 
 
 -- Chunks Policy
@@ -227,21 +227,21 @@ ON public.document_chunks FOR SELECT
 USING (EXISTS (
   SELECT 1 FROM public.documents d
   WHERE d.id = document_chunks.document_id 
-  AND get_user_workspace_role(d.workspace_id) IS NOT NULL
+  AND get_user_library_role(d.library_id) IS NOT NULL
 ));
 
 CREATE POLICY "Editors/Admins/Owners manage chunks"
 ON public.document_chunks FOR ALL
 USING (EXISTS (
   SELECT 1 FROM public.documents d
-  WHERE d.id = document_chunks.document_id AND get_user_workspace_role(d.workspace_id) IN ('OWNER', 'ADMIN', 'EDITOR')
+  WHERE d.id = document_chunks.document_id AND get_user_library_role(d.library_id) IN ('OWNER', 'ADMIN', 'EDITOR')
 ));
 
 -- RAG Retrieval RPC
 CREATE OR REPLACE FUNCTION match_document_chunks (
   query_embedding extensions.vector,
   match_count int DEFAULT 10,
-  filter_workspace_id UUID DEFAULT NULL
+  filter_library_id UUID DEFAULT NULL
 ) RETURNS TABLE (
   id uuid,
   document_id uuid,
@@ -260,7 +260,7 @@ BEGIN
     1 - (dc.embedding <=> query_embedding) AS similarity
   FROM document_chunks dc
   JOIN documents d ON dc.document_id = d.id
-  WHERE (filter_workspace_id IS NULL OR d.workspace_id = filter_workspace_id)
+  WHERE (filter_library_id IS NULL OR d.library_id = filter_library_id)
   ORDER BY dc.embedding <=> query_embedding
   LIMIT match_count;
 END;

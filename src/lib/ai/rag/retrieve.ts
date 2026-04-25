@@ -22,7 +22,7 @@ export interface RetrievedChunk {
  */
 export async function retrieveRelevantChunks(
   queryEmbedding: number[],
-  spaceId: string,
+  libraryId: string,
   limit: number = 5,
 ): Promise<RetrievedChunk[]> {
   const supabase = await createClient();
@@ -33,7 +33,7 @@ export async function retrieveRelevantChunks(
   const { data: chunks, error } = await supabase.rpc('match_document_chunks', {
     query_embedding: embeddingString,
     match_count: limit,
-    filter_workspace_id: spaceId
+    filter_library_id: libraryId
   });
 
   if (error) {
