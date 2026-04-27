@@ -13,7 +13,9 @@ export function buildPromptContext(chunks: RetrievedChunk[]): string {
     return 'No relevant documents found.';
   }
 
-  return chunks.map((chunk) => `[Source: ${chunk.title}]\n${chunk.content}`).join('\n\n');
+  return chunks
+    .map((chunk) => `[Source: ${chunk.title}]\n${chunk.content}`)
+    .join('\n\n');
 }
 
 /**

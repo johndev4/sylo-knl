@@ -19,7 +19,9 @@ export async function generateEmbedding(value: string): Promise<number[]> {
 /**
  * Generate embeddings for multiple text chunks efficiently
  */
-export async function generateEmbeddings(values: string[]): Promise<number[][]> {
+export async function generateEmbeddings(
+  values: string[]
+): Promise<number[][]> {
   const provider = getEmbeddingProvider();
   return provider.embedMany(values);
 }

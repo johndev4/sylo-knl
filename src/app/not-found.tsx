@@ -12,9 +12,11 @@ export default function NotFound() {
   useEffect(() => {
     // Read theme from localStorage or system preference
     const stored = localStorage.getItem('app-theme');
-    const isDarkMode = stored === 'dark' || 
-      (stored !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    
+    const isDarkMode =
+      stored === 'dark' ||
+      (stored !== 'light' &&
+        window.matchMedia('(prefers-color-scheme: dark)').matches);
+
     setIsDark(isDarkMode);
     setMounted(true);
 
@@ -33,22 +35,26 @@ export default function NotFound() {
   return (
     <div
       className={cn(
-        'min-h-screen flex items-center justify-center',
+        'flex min-h-screen items-center justify-center',
         'bg-background text-foreground transition-colors'
       )}
     >
-      <div className="text-center space-y-6 px-4">
+      <div className="space-y-6 px-4 text-center">
         <div>
-          <h1 className="text-6xl font-bold mb-2 text-foreground">404</h1>
-          <p className="text-lg text-muted-foreground">This page could not be found.</p>
+          <h1 className="text-foreground mb-2 text-6xl font-bold">404</h1>
+          <p className="text-muted-foreground text-lg">
+            This page could not be found.
+          </p>
         </div>
 
         <div className="space-y-3">
-          <p className="text-sm text-foreground/70">
+          <p className="text-foreground/70 text-sm">
             The page you're looking for doesn't exist or has been moved.
           </p>
           <Link href="/">
-            <Button size="lg" className="gap-2">Go Home</Button>
+            <Button size="lg" className="gap-2">
+              Go Home
+            </Button>
           </Link>
         </div>
       </div>

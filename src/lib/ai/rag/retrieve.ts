@@ -23,17 +23,17 @@ export interface RetrievedChunk {
 export async function retrieveRelevantChunks(
   queryEmbedding: number[],
   libraryId: string,
-  limit: number = 5,
+  limit: number = 5
 ): Promise<RetrievedChunk[]> {
   const supabase = await createClient();
-  
+
   // Format embedding as string representation for pgvector
   const embeddingString = `[${queryEmbedding.join(',')}]`;
-  
+
   const { data: chunks, error } = await supabase.rpc('match_document_chunks', {
     query_embedding: embeddingString,
     match_count: limit,
-    filter_library_id: libraryId
+    filter_library_id: libraryId,
   });
 
   if (error) {

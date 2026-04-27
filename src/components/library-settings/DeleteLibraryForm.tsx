@@ -6,7 +6,13 @@ import { motion } from 'framer-motion';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { AlertTriangle, Loader2 } from 'lucide-react';
 import { deleteLibrary } from '@/lib/actions/libraries';
 
@@ -15,7 +21,10 @@ interface DeleteLibraryFormProps {
   libraryName: string;
 }
 
-export function DeleteLibraryForm({ libraryId, libraryName }: DeleteLibraryFormProps) {
+export function DeleteLibraryForm({
+  libraryId,
+  libraryName,
+}: DeleteLibraryFormProps) {
   const router = useRouter();
   const [confirmName, setConfirmName] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
@@ -62,14 +71,16 @@ export function DeleteLibraryForm({ libraryId, libraryName }: DeleteLibraryFormP
   const canDelete = confirmName === libraryName && !isDeleting;
 
   return (
-    <Card className="border-red-200 dark:border-red-900/30 bg-red-50 dark:bg-red-950/20">
+    <Card className="border-red-200 bg-red-50 dark:border-red-900/30 dark:bg-red-950/20">
       <CardHeader>
         <div className="flex items-start gap-3">
-          <div className="rounded-full bg-red-100 dark:bg-red-900/40 p-2.5">
+          <div className="rounded-full bg-red-100 p-2.5 dark:bg-red-900/40">
             <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
           </div>
           <div>
-            <CardTitle className="text-red-700 dark:text-red-400">Danger Zone</CardTitle>
+            <CardTitle className="text-red-700 dark:text-red-400">
+              Danger Zone
+            </CardTitle>
             <CardDescription className="text-red-600 dark:text-red-500">
               Permanently delete this library
             </CardDescription>
@@ -82,7 +93,7 @@ export function DeleteLibraryForm({ libraryId, libraryName }: DeleteLibraryFormP
           <p className="text-sm text-red-700 dark:text-red-400">
             Deleting this library will:
           </p>
-          <ul className="text-sm text-red-600 dark:text-red-500 space-y-1 ml-4">
+          <ul className="ml-4 space-y-1 text-sm text-red-600 dark:text-red-500">
             <li className="flex items-start gap-2">
               <span className="mt-1.5">•</span>
               <span>Permanently delete all documents in this library</span>
@@ -99,7 +110,10 @@ export function DeleteLibraryForm({ libraryId, libraryName }: DeleteLibraryFormP
         </div>
 
         <div className="space-y-2 pt-2">
-          <label htmlFor="confirm-name" className="text-sm font-medium text-red-700 dark:text-red-400">
+          <label
+            htmlFor="confirm-name"
+            className="text-sm font-medium text-red-700 dark:text-red-400"
+          >
             Type the library name to confirm deletion:
           </label>
           <Input
@@ -111,11 +125,12 @@ export function DeleteLibraryForm({ libraryId, libraryName }: DeleteLibraryFormP
               setConfirmName(e.target.value);
               setError(null);
             }}
-            className="font-mono text-sm cursor-text"
+            className="cursor-text font-mono text-sm"
             disabled={isDeleting}
           />
           <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            Enter <span className="font-semibold">"{libraryName}"</span> to enable the delete button
+            Enter <span className="font-semibold">"{libraryName}"</span> to
+            enable the delete button
           </p>
         </div>
 
@@ -125,7 +140,7 @@ export function DeleteLibraryForm({ libraryId, libraryName }: DeleteLibraryFormP
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="p-3 bg-red-200 dark:bg-red-900/40 border border-red-300 dark:border-red-900/60 rounded text-sm text-red-700 dark:text-red-400"
+            className="rounded border border-red-300 bg-red-200 p-3 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-900/40 dark:text-red-400"
           >
             {error}
           </motion.div>
@@ -133,7 +148,7 @@ export function DeleteLibraryForm({ libraryId, libraryName }: DeleteLibraryFormP
 
         <Button
           variant="destructive"
-          className="w-full bg-red-600 text-white hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700 cursor-pointer"
+          className="w-full cursor-pointer bg-red-600 text-white hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700"
           onClick={handleDelete}
           disabled={!canDelete}
         >

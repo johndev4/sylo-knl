@@ -10,9 +10,7 @@ export default function AuthLayout({
 }) {
   return (
     <ThemeProvider>
-      <Suspense fallback={null}>
-        {children}
-      </Suspense>
+      <Suspense fallback={null}>{children}</Suspense>
     </ThemeProvider>
   );
 }

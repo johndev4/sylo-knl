@@ -11,7 +11,7 @@ export function LoginHero({ children }: LoginHeroProps) {
     <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-zinc-950 dark:text-slate-100">
       <div className="relative overflow-hidden">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(56,189,248,0.18),_transparent_30%),radial-gradient(circle_at_bottom_right,_rgba(16,185,129,0.14),_transparent_35%)]" />
-        <div className="relative mx-auto grid min-h-screen max-w-7xl items-center gap-12 px-4 py-12 sm:px-6 lg:px-8 lg:grid-cols-[1.4fr_1fr]">
+        <div className="relative mx-auto grid min-h-screen max-w-7xl items-center gap-12 px-4 py-12 sm:px-6 lg:grid-cols-[1.4fr_1fr] lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
@@ -26,17 +26,27 @@ export function LoginHero({ children }: LoginHeroProps) {
                 Turn your documents into searchable library answers.
               </h1>
               <p className="max-w-xl text-base text-slate-600 dark:text-slate-300">
-                Upload documents, organize libraries, and get accurate AI responses based on your own knowledge base. Built for teams that need fast, reliable access to shared information.
+                Upload documents, organize libraries, and get accurate AI
+                responses based on your own knowledge base. Built for teams that
+                need fast, reliable access to shared information.
               </p>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="rounded-3xl border border-zinc-200 bg-white/90 p-5 shadow-sm backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/80">
-                <p className="text-xs uppercase tracking-[0.24em] text-zinc-500 dark:text-zinc-400">Search faster</p>
-                <p className="mt-3 text-base font-semibold text-slate-950 dark:text-white">Find answers inside documents instantly.</p>
+                <p className="text-xs tracking-[0.24em] text-zinc-500 uppercase dark:text-zinc-400">
+                  Search faster
+                </p>
+                <p className="mt-3 text-base font-semibold text-slate-950 dark:text-white">
+                  Find answers inside documents instantly.
+                </p>
               </div>
               <div className="rounded-3xl border border-zinc-200 bg-white/90 p-5 shadow-sm backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/80">
-                <p className="text-xs uppercase tracking-[0.24em] text-zinc-500 dark:text-zinc-400">Secure access</p>
-                <p className="mt-3 text-base font-semibold text-slate-950 dark:text-white">Manage libraries, roles, and protected knowledge.</p>
+                <p className="text-xs tracking-[0.24em] text-zinc-500 uppercase dark:text-zinc-400">
+                  Secure access
+                </p>
+                <p className="mt-3 text-base font-semibold text-slate-950 dark:text-white">
+                  Manage libraries, roles, and protected knowledge.
+                </p>
               </div>
             </div>
           </motion.div>

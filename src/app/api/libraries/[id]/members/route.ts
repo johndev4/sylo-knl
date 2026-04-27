@@ -16,13 +16,12 @@ export async function GET(
   try {
     const { id: libraryId } = await context.params;
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Check if user is member of library
@@ -43,13 +42,15 @@ export async function GET(
     // Fetch all members with user details
     const { data: members, error } = await supabase
       .from('library_members')
-      .select(`
+      .select(
+        `
         library_id,
         user_id,
         role,
         created_at,
         user:user_id(id, name, email, avatar_url)
-      `)
+      `
+      )
       .eq('library_id', libraryId)
       .order('created_at', { ascending: true });
 
@@ -95,13 +96,12 @@ export async function POST(
 
     const { email, role } = validationResult.data;
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Check if user is OWNER or ADMIN of library
@@ -178,13 +178,15 @@ export async function POST(
         user_id: newMemberId,
         role: role,
       })
-      .select(`
+      .select(
+        `
         library_id,
         user_id,
         role,
         created_at,
         user:user_id(id, name, email, avatar_url)
-      `)
+      `
+      )
       .single();
 
     if (error) {

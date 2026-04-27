@@ -34,12 +34,12 @@ function formatRelativeDate(dateString: string): string {
   const date = new Date(dateString);
   const now = new Date();
   const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-  
+
   if (seconds < 60) return 'Just now';
   if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
   if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
   if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
-  
+
   return date.toLocaleDateString();
 }
 
@@ -54,8 +54,19 @@ export function LibrariesTable({ memberships }: LibrariesTableProps) {
 
   const rowVariants = {
     hidden: { opacity: 0, y: 14 },
-    visible: { opacity: 1, y: 0, transition: { duration: prefersReducedMotion ? 0 : 0.35, ease: 'easeOut' as const } },
-    exit: { opacity: 0, y: -10, transition: { duration: prefersReducedMotion ? 0 : 0.25 } },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: prefersReducedMotion ? 0 : 0.35,
+        ease: 'easeOut' as const,
+      },
+    },
+    exit: {
+      opacity: 0,
+      y: -10,
+      transition: { duration: prefersReducedMotion ? 0 : 0.25 },
+    },
   };
 
   const handleLeaveConfirm = async () => {
@@ -109,10 +120,10 @@ export function LibrariesTable({ memberships }: LibrariesTableProps) {
   /* ── Leave confirmation alert dialog ── */
   return (
     <>
-      <div className="w-full overflow-x-auto border border-zinc-200 dark:border-zinc-800 rounded-lg">
+      <div className="w-full overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-800">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50">
+            <tr className="border-b border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900/50">
               <th className="px-4 py-3 text-left font-semibold">Library</th>
               <th className="px-4 py-3 text-left font-semibold">Your Role</th>
               <th className="px-4 py-3 text-center font-semibold">Members</th>
@@ -134,28 +145,36 @@ export function LibrariesTable({ memberships }: LibrariesTableProps) {
                     animate="visible"
                     exit="exit"
                     layout
-                    className="border-b border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors"
+                    className="border-b border-zinc-200 transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900/50"
                   >
                     <td className="px-4 py-3 font-medium">{library.name}</td>
                     <td className="px-4 py-3">
-                      <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium ${getRoleBadgeColor(membership.role)}`}>
+                      <span
+                        className={`inline-block rounded-full px-2.5 py-1 text-xs font-medium ${getRoleBadgeColor(membership.role)}`}
+                      >
                         {membership.role}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-center text-zinc-600 dark:text-zinc-400">{membership.memberCount}</td>
-                    <td className="px-4 py-3 text-center text-zinc-600 dark:text-zinc-400">{membership.docCount}</td>
-                    <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400 text-xs">
+                    <td className="px-4 py-3 text-center text-zinc-600 dark:text-zinc-400">
+                      {membership.memberCount}
+                    </td>
+                    <td className="px-4 py-3 text-center text-zinc-600 dark:text-zinc-400">
+                      {membership.docCount}
+                    </td>
+                    <td className="px-4 py-3 text-xs text-zinc-600 dark:text-zinc-400">
                       {formatRelativeDate(space.created_at)}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <Link href={`/hub/${library.id}/chat`}>
-                          <Button size="sm" variant="default">Chat</Button>
+                          <Button size="sm" variant="default">
+                            Chat
+                          </Button>
                         </Link>
                         {isOwner && (
                           <Link href={`/hub/${library.id}/settings`}>
                             <button
-                              className="p-2 rounded-md text-zinc-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-colors cursor-pointer"
+                              className="cursor-pointer rounded-md p-2 text-zinc-400 transition-colors hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950/40"
                               aria-label={`Manage settings for ${library.name}`}
                             >
                               <Settings className="h-4 w-4" />
@@ -164,8 +183,10 @@ export function LibrariesTable({ memberships }: LibrariesTableProps) {
                         )}
                         {!isOwner && (
                           <button
-                            onClick={() => handleOpenLeaveDialog(library.id, library.name)}
-                            className="p-2 rounded-md text-zinc-400 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-950/40 transition-colors cursor-pointer"
+                            onClick={() =>
+                              handleOpenLeaveDialog(library.id, library.name)
+                            }
+                            className="cursor-pointer rounded-md p-2 text-zinc-400 transition-colors hover:bg-orange-50 hover:text-orange-600 dark:hover:bg-orange-950/40"
                             aria-label={`Leave ${space.name}`}
                           >
                             <LogOut className="h-4 w-4" />
@@ -190,17 +211,19 @@ export function LibrariesTable({ memberships }: LibrariesTableProps) {
             </div>
             <AlertDialogTitle>Leave Library?</AlertDialogTitle>
             <AlertDialogDescription>
-              You will no longer have access to <span className="font-semibold text-foreground">"{leaveName}"</span>. This action cannot be undone.
+              You will no longer have access to{' '}
+              <span className="text-foreground font-semibold">
+                "{leaveName}"
+              </span>
+              . This action cannot be undone.
             </AlertDialogDescription>
             {leaveError && (
-              <p className="text-xs font-medium text-red-600 dark:text-red-400 pt-2">
+              <p className="pt-2 text-xs font-medium text-red-600 dark:text-red-400">
                 {leaveError}
               </p>
             )}
           </AlertDialogHeader>
-          <AlertDialogCancel disabled={isLeaving}>
-            Cancel
-          </AlertDialogCancel>
+          <AlertDialogCancel disabled={isLeaving}>Cancel</AlertDialogCancel>
           <AlertDialogAction
             onClick={handleLeaveConfirm}
             disabled={isLeaving}

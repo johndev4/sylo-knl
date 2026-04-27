@@ -1,11 +1,17 @@
-"use client";
+'use client';
 
-import { createClient } from "@/lib/supabase/client";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useEffect, useState } from "react";
-import { Auth } from "@supabase/auth-ui-react";
-import { getAuthTheme } from "@/lib/themes/authTheme";
-import { LoginHero } from "@/components/kokonutui/LoginHero";
+import { createClient } from '@/lib/supabase/client';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { useEffect, useState } from 'react';
+import { Auth } from '@supabase/auth-ui-react';
+import { getAuthTheme } from '@/lib/themes/authTheme';
+import { LoginHero } from '@/components/kokonutui/LoginHero';
 
 export default function LoginPage() {
   const supabase = createClient();
@@ -22,7 +28,10 @@ export default function LoginPage() {
     setMounted(true);
 
     const observer = new MutationObserver(updateTheme);
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    });
     return () => observer.disconnect();
   }, []);
 
@@ -30,7 +39,7 @@ export default function LoginPage() {
 
   return (
     <LoginHero>
-      <Card className="border-none shadow-none bg-transparent">
+      <Card className="border-none bg-transparent shadow-none">
         <CardHeader>
           <CardTitle className="text-3xl">Login</CardTitle>
           <CardDescription>
@@ -41,9 +50,9 @@ export default function LoginPage() {
           <Auth
             supabaseClient={supabase}
             appearance={{ theme: getAuthTheme(theme === 'dark') }}
-            providers={["google"]}
+            providers={['google']}
             onlyThirdPartyProviders={true}
-            redirectTo={`${typeof window !== "undefined" ? window.location.origin : ""}/auth/callback`}
+            redirectTo={`${typeof window !== 'undefined' ? window.location.origin : ''}/auth/callback`}
           />
         </CardContent>
       </Card>

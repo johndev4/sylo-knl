@@ -29,13 +29,12 @@ export async function PATCH(
 
     const { role: newRole } = validationResult.data;
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Check if requester is OWNER or ADMIN of library
@@ -119,13 +118,15 @@ export async function PATCH(
       .update({ role: newRole })
       .eq('library_id', libraryId)
       .eq('user_id', userId)
-      .select(`
+      .select(
+        `
         library_id,
         user_id,
         role,
         created_at,
         user:user_id(id, name, email, avatar_url)
-      `)
+      `
+      )
       .single();
 
     if (error) {
@@ -159,13 +160,12 @@ export async function DELETE(
   try {
     const { id: libraryId, userId } = await context.params;
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Check if requester is OWNER or ADMIN of library

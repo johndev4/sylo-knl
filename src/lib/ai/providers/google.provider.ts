@@ -21,7 +21,7 @@ function initializeGoogleAI() {
   const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
   if (!apiKey) {
     throw new ProviderConfigError(
-      'GOOGLE_GENERATIVE_AI_API_KEY environment variable is not set',
+      'GOOGLE_GENERATIVE_AI_API_KEY environment variable is not set'
     );
   }
 
@@ -61,7 +61,7 @@ export class GoogleLLMProvider implements LLMProvider {
     } catch (error: any) {
       throw new ProviderError(
         `Google LLM generation failed: ${error.message}`,
-        error.status,
+        error.status
       );
     }
   }
@@ -101,7 +101,9 @@ export class GoogleEmbeddingProvider implements EmbeddingProvider {
   name = 'google';
   dimension = 3072;
   private googleAI = initializeGoogleAI();
-  private embeddingModel = this.googleAI.textEmbeddingModel('gemini-embedding-001');
+  private embeddingModel = this.googleAI.textEmbeddingModel(
+    'gemini-embedding-001'
+  );
 
   async embed(text: string): Promise<number[]> {
     try {
@@ -114,7 +116,7 @@ export class GoogleEmbeddingProvider implements EmbeddingProvider {
     } catch (error: any) {
       throw new ProviderError(
         `Google embedding generation failed: ${error.message}`,
-        error.status,
+        error.status
       );
     }
   }
@@ -130,7 +132,7 @@ export class GoogleEmbeddingProvider implements EmbeddingProvider {
     } catch (error: any) {
       throw new ProviderError(
         `Google batch embedding generation failed: ${error.message}`,
-        error.status,
+        error.status
       );
     }
   }

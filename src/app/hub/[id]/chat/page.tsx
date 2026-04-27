@@ -1,15 +1,21 @@
-"use client";
+'use client';
 
-import { use, useState, useRef, useEffect } from "react";
-import { motion } from "framer-motion";
-import { useReducedMotion } from "@/hooks/useReducedMotion";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Bot, User, ArrowUp, Loader2 } from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import LibraryNav from "@/components/library-settings/LibraryNav";
+import { use, useState, useRef, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@/components/ui/card';
+import { Bot, User, ArrowUp, Loader2 } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import LibraryNav from '@/components/library-settings/LibraryNav';
 import ReactMarkdown from 'react-markdown';
 
 interface Message {
@@ -22,7 +28,7 @@ export default function ChatPage(props: { params: Promise<{ id: string }> }) {
   const params = use(props.params);
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -54,12 +60,12 @@ export default function ChatPage(props: { params: Promise<{ id: string }> }) {
   };
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   const handleNewChat = () => {
     setMessages([]);
-    setInput("");
+    setInput('');
     inputRef.current?.focus();
   };
 
@@ -77,8 +83,8 @@ export default function ChatPage(props: { params: Promise<{ id: string }> }) {
       content: input,
     };
 
-    setMessages(prev => [...prev, userMessage]);
-    setInput("");
+    setMessages((prev) => [...prev, userMessage]);
+    setInput('');
     setIsLoading(true);
 
     try {
@@ -111,7 +117,7 @@ export default function ChatPage(props: { params: Promise<{ id: string }> }) {
         content: '',
       };
 
-      setMessages(prev => [...prev, assistantMessage]);
+      setMessages((prev) => [...prev, assistantMessage]);
 
       while (true) {
         const { done, value } = await reader.read();
@@ -119,9 +125,9 @@ export default function ChatPage(props: { params: Promise<{ id: string }> }) {
 
         const chunk = decoder.decode(value);
         assistantContent += chunk;
-        
+
         // Update the assistant message with streaming content
-        setMessages(prev => {
+        setMessages((prev) => {
           const updated = [...prev];
           updated[updated.length - 1] = {
             ...updated[updated.length - 1],
@@ -137,19 +143,21 @@ export default function ChatPage(props: { params: Promise<{ id: string }> }) {
         role: 'assistant',
         content: 'Sorry, I encountered an error. Please try again.',
       };
-      setMessages(prev => [...prev, errorMessage]);
+      setMessages((prev) => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex flex-col h-screen max-h-screen bg-background">
-      <header className="flex flex-col gap-3 px-4 py-3 border-b border-zinc-200 dark:border-zinc-800/50 bg-white dark:bg-zinc-950/80 shadow-soft-xs">
+    <div className="bg-background flex h-screen max-h-screen flex-col">
+      <header className="shadow-soft-xs flex flex-col gap-3 border-b border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800/50 dark:bg-zinc-950/80">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h1 className="font-semibold text-lg">AI Knowledge Chat</h1>
-            <p className="text-sm text-muted-foreground">Explore answers pulled from your library documents.</p>
+            <h1 className="text-lg font-semibold">AI Knowledge Chat</h1>
+            <p className="text-muted-foreground text-sm">
+              Explore answers pulled from your library documents.
+            </p>
           </div>
           <div className="flex gap-2">
             <Button asChild variant="outline" size="sm">
@@ -164,28 +172,39 @@ export default function ChatPage(props: { params: Promise<{ id: string }> }) {
         <LibraryNav libraryId={params.id} currentSection="chat" />
       </header>
 
-      <main className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
-        <div className="max-w-3xl mx-auto space-y-6">
+      <main className="flex-1 space-y-6 overflow-y-auto p-4 md:p-6">
+        <div className="mx-auto max-w-3xl space-y-6">
           {messages.length === 0 ? (
-            <div className="space-y-6 text-center text-muted-foreground mt-20">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <div className="text-muted-foreground mt-20 space-y-6 text-center">
+              <div className="bg-primary/10 text-primary mx-auto flex h-16 w-16 items-center justify-center rounded-full">
                 <Bot className="h-10 w-10" />
               </div>
               <div className="space-y-3">
-                <h2 className="text-xl font-medium">Welcome to your Knowledge Base</h2>
-                <p className="max-w-xl mx-auto">Ask a question, and the AI will answer strictly based on your uploaded documents.</p>
+                <h2 className="text-xl font-medium">
+                  Welcome to your Knowledge Base
+                </h2>
+                <p className="mx-auto max-w-xl">
+                  Ask a question, and the AI will answer strictly based on your
+                  uploaded documents.
+                </p>
               </div>
               <div className="grid gap-4 md:grid-cols-2">
                 <Card className="rounded-3xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
                   <CardHeader>
                     <CardTitle>Upload more context</CardTitle>
-                    <CardDescription>Bring the library up to date by adding recent documentation.</CardDescription>
+                    <CardDescription>
+                      Bring the library up to date by adding recent
+                      documentation.
+                    </CardDescription>
                   </CardHeader>
                 </Card>
                 <Card className="rounded-3xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
                   <CardHeader>
                     <CardTitle>Start a fresh chat</CardTitle>
-                    <CardDescription>Clear the current conversation and ask a new question anytime.</CardDescription>
+                    <CardDescription>
+                      Clear the current conversation and ask a new question
+                      anytime.
+                    </CardDescription>
                   </CardHeader>
                 </Card>
               </div>
@@ -206,20 +225,25 @@ export default function ChatPage(props: { params: Promise<{ id: string }> }) {
                   className={`flex gap-3 ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
                   {m.role === 'assistant' && (
-                    <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center shrink-0 border border-zinc-200 dark:border-zinc-800">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-900">
                       <Bot size={18} className="text-foreground" />
                     </div>
                   )}
-                  
-                  <div className={`max-w-[85%] rounded-lg p-3 shadow-soft-sm ${m.role === 'user' ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950' : 'bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800'}`}>
+
+                  <div
+                    className={`shadow-soft-sm max-w-[85%] rounded-lg p-3 ${m.role === 'user' ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950' : 'border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900'}`}
+                  >
                     <div className="prose prose-sm dark:prose-invert max-w-none">
                       <ReactMarkdown>{m.content}</ReactMarkdown>
                     </div>
                   </div>
 
                   {m.role === 'user' && (
-                    <div className="w-8 h-8 rounded-lg bg-zinc-900 dark:bg-zinc-100 flex items-center justify-center shrink-0">
-                      <User size={18} className="text-white dark:text-zinc-950" />
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-zinc-900 dark:bg-zinc-100">
+                      <User
+                        size={18}
+                        className="text-white dark:text-zinc-950"
+                      />
                     </div>
                   )}
                 </motion.div>
@@ -230,26 +254,30 @@ export default function ChatPage(props: { params: Promise<{ id: string }> }) {
         </div>
       </main>
 
-      <footer className="p-4 bg-white dark:bg-zinc-950/80 border-t border-zinc-200 dark:border-zinc-800/50 shadow-soft-xs">
-        <form onSubmit={handleSubmit} className="max-w-3xl mx-auto flex gap-2">
+      <footer className="shadow-soft-xs border-t border-zinc-200 bg-white p-4 dark:border-zinc-800/50 dark:bg-zinc-950/80">
+        <form onSubmit={handleSubmit} className="mx-auto flex max-w-3xl gap-2">
           <Input
             ref={inputRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask about your knowledge base..."
-            className="flex-1 rounded-lg focus-visible:ring-2 transition-smooth"
+            className="transition-smooth flex-1 rounded-lg focus-visible:ring-2"
             disabled={isLoading}
           />
-          <Button 
-            size="icon" 
-            type="submit" 
-            disabled={isLoading || !input.trim()} 
-            className="rounded-lg h-9 w-9"
+          <Button
+            size="icon"
+            type="submit"
+            disabled={isLoading || !input.trim()}
+            className="h-9 w-9 rounded-lg"
           >
-            {isLoading ? <Loader2 size={16} className="animate-spin" /> : <ArrowUp size={16} />}
+            {isLoading ? (
+              <Loader2 size={16} className="animate-spin" />
+            ) : (
+              <ArrowUp size={16} />
+            )}
           </Button>
         </form>
-        <div className="text-center mt-3 text-xs text-muted-foreground">
+        <div className="text-muted-foreground mt-3 text-center text-xs">
           AI can make mistakes. Verify answers with source documents.
         </div>
       </footer>

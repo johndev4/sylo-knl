@@ -8,7 +8,8 @@ export type UserRole = z.infer<typeof UserRoleEnum>;
 export const AddLibraryMemberSchema = z.object({
   email: z.string().email('Invalid email address'),
   role: UserRoleEnum.refine((role) => role !== 'OWNER', {
-    message: 'Cannot assign OWNER role when adding members. Only library creator can be OWNER.',
+    message:
+      'Cannot assign OWNER role when adding members. Only library creator can be OWNER.',
   }),
 });
 export type AddLibraryMemberInput = z.infer<typeof AddLibraryMemberSchema>;
@@ -37,12 +38,14 @@ export const LibraryMemberSchema = z.object({
   user_id: z.string().uuid(),
   role: UserRoleEnum,
   created_at: z.string().datetime().or(z.date()),
-  user: z.object({
-    id: z.string().uuid(),
-    name: z.string().nullable(),
-    email: z.string().email(),
-    avatar_url: z.string().nullable(),
-  }).optional(),
+  user: z
+    .object({
+      id: z.string().uuid(),
+      name: z.string().nullable(),
+      email: z.string().email(),
+      avatar_url: z.string().nullable(),
+    })
+    .optional(),
 });
 export type LibraryMember = z.infer<typeof LibraryMemberSchema>;
 

@@ -55,19 +55,20 @@ export default function MemberTable({
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
-        <thead className="border-b border-border">
+        <thead className="border-border border-b">
           <tr>
             {canManageMembers && (
-              <th className="text-left py-3 px-4 font-medium">
+              <th className="px-4 py-3 text-left font-medium">
                 <Checkbox
                   checked={
                     members.length > 0 &&
-                    selectedMembers.size === members.filter(m => m.role !== 'OWNER').length
+                    selectedMembers.size ===
+                      members.filter((m) => m.role !== 'OWNER').length
                   }
                   onChange={() => {
                     if (
                       selectedMembers.size ===
-                      members.filter(m => m.role !== 'OWNER').length
+                      members.filter((m) => m.role !== 'OWNER').length
                     ) {
                       // Deselect all
                       selectedMembers.forEach((id) => {
@@ -76,7 +77,10 @@ export default function MemberTable({
                     } else {
                       // Select all non-owner members
                       members.forEach((m) => {
-                        if (m.role !== 'OWNER' && !selectedMembers.has(m.user_id)) {
+                        if (
+                          m.role !== 'OWNER' &&
+                          !selectedMembers.has(m.user_id)
+                        ) {
                           onSelectMember(m.user_id);
                         }
                       });
@@ -86,12 +90,12 @@ export default function MemberTable({
                 />
               </th>
             )}
-            <th className="text-left py-3 px-4 font-medium">Name</th>
-            <th className="text-left py-3 px-4 font-medium">Email</th>
-            <th className="text-left py-3 px-4 font-medium">Role</th>
-            <th className="text-left py-3 px-4 font-medium">Joined</th>
+            <th className="px-4 py-3 text-left font-medium">Name</th>
+            <th className="px-4 py-3 text-left font-medium">Email</th>
+            <th className="px-4 py-3 text-left font-medium">Role</th>
+            <th className="px-4 py-3 text-left font-medium">Joined</th>
             {canManageMembers && (
-              <th className="text-left py-3 px-4 font-medium">Actions</th>
+              <th className="px-4 py-3 text-left font-medium">Actions</th>
             )}
           </tr>
         </thead>
@@ -99,10 +103,10 @@ export default function MemberTable({
           {members.map((member) => (
             <tr
               key={member.user_id}
-              className="border-b border-border hover:bg-muted/50 transition-colors"
+              className="border-border hover:bg-muted/50 border-b transition-colors"
             >
               {canManageMembers && (
-                <td className="py-3 px-4">
+                <td className="px-4 py-3">
                   <Checkbox
                     checked={selectedMembers.has(member.user_id)}
                     onChange={() => onSelectMember(member.user_id)}
@@ -111,13 +115,13 @@ export default function MemberTable({
                   />
                 </td>
               )}
-              <td className="py-3 px-4">
+              <td className="px-4 py-3">
                 <div className="flex items-center gap-2">
                   {member.user?.avatar_url && (
                     <img
                       src={member.user.avatar_url}
                       alt={member.user?.name || 'Avatar'}
-                      className="w-8 h-8 rounded-full"
+                      className="h-8 w-8 rounded-full"
                     />
                   )}
                   <span className="font-medium">
@@ -125,17 +129,17 @@ export default function MemberTable({
                   </span>
                 </div>
               </td>
-              <td className="py-3 px-4 text-muted-foreground">
+              <td className="text-muted-foreground px-4 py-3">
                 {member.user?.email}
               </td>
-              <td className="py-3 px-4">
+              <td className="px-4 py-3">
                 {canManageMembers && member.role !== 'OWNER' ? (
                   <select
                     value={member.role}
                     onChange={(e) =>
                       handleRoleChange(member.user_id, e.target.value)
                     }
-                    className="px-2 py-1 border border-input rounded text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="border-input bg-background focus:ring-ring rounded border px-2 py-1 text-sm focus:ring-2 focus:outline-none"
                     aria-label={`Role for ${member.user?.email}`}
                   >
                     {roleOptions.map((role) => (
@@ -148,18 +152,18 @@ export default function MemberTable({
                   <div>
                     <span className="font-medium">{member.role}</span>
                     {member.role === 'OWNER' && (
-                      <p className="text-xs text-muted-foreground mt-1">
+                      <p className="text-muted-foreground mt-1 text-xs">
                         Library creator
                       </p>
                     )}
                   </div>
                 )}
               </td>
-              <td className="py-3 px-4 text-muted-foreground text-xs">
+              <td className="text-muted-foreground px-4 py-3 text-xs">
                 {new Date(member.created_at).toLocaleDateString()}
               </td>
               {canManageMembers && (
-                <td className="py-3 px-4">
+                <td className="px-4 py-3">
                   {member.role !== 'OWNER' && (
                     <Button
                       variant="ghost"

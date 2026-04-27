@@ -15,7 +15,7 @@ export async function generateAnswer(
   options?: {
     maxTokens?: number;
     temperature?: number;
-  },
+  }
 ): Promise<string> {
   const provider = getLLMProvider();
 
@@ -40,7 +40,7 @@ export async function* streamAnswer(
   options?: {
     maxTokens?: number;
     temperature?: number;
-  },
+  }
 ): AsyncIterable<StreamChunk> {
   const provider = getLLMProvider();
 

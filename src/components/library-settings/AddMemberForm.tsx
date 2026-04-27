@@ -62,7 +62,7 @@ export default function AddMemberForm({
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
         <motion.div
-          className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded p-3"
+          className="rounded border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-900/20"
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
@@ -74,13 +74,15 @@ export default function AddMemberForm({
 
       {success && (
         <motion.div
-          className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded p-3"
+          className="rounded border border-green-200 bg-green-50 p-3 dark:border-green-800 dark:bg-green-900/20"
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
           transition={{ duration: prefersReducedMotion ? 0 : 0.2 }}
         >
-          <p className="text-sm text-green-700 dark:text-green-400">{success}</p>
+          <p className="text-sm text-green-700 dark:text-green-400">
+            {success}
+          </p>
         </motion.div>
       )}
 
@@ -109,7 +111,7 @@ export default function AddMemberForm({
           value={role}
           onChange={(e) => setRole(e.target.value)}
           disabled={isFull || isLoading}
-          className="w-full mt-1 px-3 py-2 border border-input rounded-md bg-background text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus:ring-ring mt-1 w-full rounded-md border px-3 py-2 text-sm focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
           aria-label="Member role"
         >
           {roleOptions.map((option) => (
@@ -126,12 +128,17 @@ export default function AddMemberForm({
         className="w-full"
         aria-busy={isLoading}
       >
-        {isLoading ? 'Adding member...' : isFull ? 'Library is full' : 'Add Member'}
+        {isLoading
+          ? 'Adding member...'
+          : isFull
+            ? 'Library is full'
+            : 'Add Member'}
       </Button>
 
       {isFull && (
         <p className="text-sm text-amber-600 dark:text-amber-500">
-          Library has reached maximum member limit of 11. Remove a member to add new ones.
+          Library has reached maximum member limit of 11. Remove a member to add
+          new ones.
         </p>
       )}
     </form>

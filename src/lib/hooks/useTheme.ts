@@ -25,7 +25,7 @@ export function useTheme() {
     if (!mounted || theme !== 'system') return;
 
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    
+
     const handleChange = () => {
       applyTheme('system');
     };
@@ -46,8 +46,10 @@ export function useTheme() {
 
 function applyTheme(theme: Theme) {
   const html = document.documentElement;
-  const isDark = theme === 'dark' || 
-    (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const isDark =
+    theme === 'dark' ||
+    (theme === 'system' &&
+      window.matchMedia('(prefers-color-scheme: dark)').matches);
 
   if (isDark) {
     html.classList.add(DARK_CLASS);
@@ -58,7 +60,9 @@ function applyTheme(theme: Theme) {
 
 export function getEffectiveTheme(theme: Theme): 'light' | 'dark' {
   if (theme === 'system') {
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches
+      ? 'dark'
+      : 'light';
   }
   return theme;
 }

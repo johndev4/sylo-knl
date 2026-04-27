@@ -1,26 +1,36 @@
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { CreateLibraryDialog } from "@/components/CreateLibraryDialog";
-import { LibrariesContainer } from "@/components/LibrariesContainer";
-import { LibrarySummaryHero } from "@/components/kokonutui/LibrarySummaryHero";
+import { createClient } from '@/lib/supabase/server';
+import { redirect } from 'next/navigation';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { CreateLibraryDialog } from '@/components/CreateLibraryDialog';
+import { LibrariesContainer } from '@/components/LibrariesContainer';
+import { LibrarySummaryHero } from '@/components/kokonutui/LibrarySummaryHero';
 
 export default async function LibrariesPage() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/login");
+    redirect('/login');
   }
 
   // Fetch libraries user is a member of with counts
   const { data: spaceMemberships } = await supabase
-    .from("library_members")
-    .select(`
+    .from('library_members')
+    .select(
+      `
       role,
       library:libraries ( id, name, created_at )
-    `)
-    .eq("user_id", user.id);
+    `
+    )
+    .eq('user_id', user.id);
 
   // Fetch member counts and document counts for each library
   const libraryIds = (spaceMemberships || []).map((m: any) => m.library.id);
@@ -31,25 +41,31 @@ export default async function LibrariesPage() {
   if (libraryIds.length > 0) {
     // Get member counts
     const { data: memberCountData } = await supabase
-      .from("library_members")
-      .select("library_id")
-      .in("library_id", libraryIds);
+      .from('library_members')
+      .select('library_id')
+      .in('library_id', libraryIds);
 
-    memberCounts = (memberCountData || []).reduce((acc: Record<string, number>, item: any) => {
-      acc[item.library_id] = (acc[item.library_id] || 0) + 1;
-      return acc;
-    }, {});
+    memberCounts = (memberCountData || []).reduce(
+      (acc: Record<string, number>, item: any) => {
+        acc[item.library_id] = (acc[item.library_id] || 0) + 1;
+        return acc;
+      },
+      {}
+    );
 
     // Get document counts
     const { data: docCountData } = await supabase
-      .from("documents")
-      .select("library_id")
-      .in("library_id", libraryIds);
+      .from('documents')
+      .select('library_id')
+      .in('library_id', libraryIds);
 
-    docCounts = (docCountData || []).reduce((acc: Record<string, number>, item: any) => {
-      acc[item.library_id] = (acc[item.library_id] || 0) + 1;
-      return acc;
-    }, {});
+    docCounts = (docCountData || []).reduce(
+      (acc: Record<string, number>, item: any) => {
+        acc[item.library_id] = (acc[item.library_id] || 0) + 1;
+        return acc;
+      },
+      {}
+    );
   }
 
   const memberships = (spaceMemberships || []).map((m: any) => ({
@@ -65,18 +81,22 @@ export default async function LibrariesPage() {
   }>;
 
   return (
-    <div className="container mx-auto p-6 max-w-6xl">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between mb-8">
+    <div className="container mx-auto max-w-6xl p-6">
+      <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight mb-1">Your Libraries</h1>
-          <p className="text-sm text-muted-foreground">Manage your knowledge bases, documents, and AI chat hubs.</p>
+          <h1 className="mb-1 text-3xl font-bold tracking-tight">
+            Your Libraries
+          </h1>
+          <p className="text-muted-foreground text-sm">
+            Manage your knowledge bases, documents, and AI chat hubs.
+          </p>
         </div>
       </div>
 
       {memberships.length === 0 ? (
-        <div className="grid gap-6 lg:grid-cols-[1.8fr_1fr] items-start">
+        <div className="grid items-start gap-6 lg:grid-cols-[1.8fr_1fr]">
           <div className="rounded-3xl border border-zinc-200 bg-white/80 p-10 text-center shadow-lg shadow-slate-900/5 dark:border-zinc-800 dark:bg-zinc-950/90">
-            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <div className="bg-primary/10 text-primary mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-8 w-8"
@@ -93,7 +113,10 @@ export default async function LibrariesPage() {
               </svg>
             </div>
             <p className="text-lg font-semibold">You have no libraries yet</p>
-            <p className="mt-2 text-sm text-muted-foreground">Create your first library to start organizing your knowledge and interacting with AI on your own documents.</p>
+            <p className="text-muted-foreground mt-2 text-sm">
+              Create your first library to start organizing your knowledge and
+              interacting with AI on your own documents.
+            </p>
             <div className="mt-6">
               <CreateLibraryDialog triggerText="Create your first library" />
             </div>
@@ -103,11 +126,17 @@ export default async function LibrariesPage() {
             <Card className="rounded-3xl border border-zinc-200 bg-zinc-50 p-6 dark:border-zinc-800 dark:bg-zinc-950">
               <CardHeader>
                 <CardTitle>Why Sylo?</CardTitle>
-                <CardDescription>Align teams, reduce repeated onboarding, and keep knowledge searchable.</CardDescription>
+                <CardDescription>
+                  Align teams, reduce repeated onboarding, and keep knowledge
+                  searchable.
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
-                <p className="text-sm text-muted-foreground">Create structured libraries for projects, teams, or products. Every doc becomes searchable with AI-powered context.</p>
-                <ul className="space-y-2 text-sm text-foreground">
+                <p className="text-muted-foreground text-sm">
+                  Create structured libraries for projects, teams, or products.
+                  Every doc becomes searchable with AI-powered context.
+                </p>
+                <ul className="text-foreground space-y-2 text-sm">
                   <li>• Add documents and auto-generate embeddings</li>
                   <li>• Ask the library AI about your content</li>
                   <li>• Invite teammates and collaborate in shared spaces</li>
@@ -117,11 +146,18 @@ export default async function LibrariesPage() {
             <Card className="rounded-3xl border border-zinc-200 bg-zinc-50 p-6 dark:border-zinc-800 dark:bg-zinc-950">
               <CardHeader>
                 <CardTitle>Get started fast</CardTitle>
-                <CardDescription>Focus on the knowledge your team needs most.</CardDescription>
+                <CardDescription>
+                  Focus on the knowledge your team needs most.
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
-                <p className="text-sm text-muted-foreground">Build a shared library with support docs, policies, team notes, and research summaries.</p>
-                <p className="text-sm text-muted-foreground">Then ask the AI for answers without switching between tools.</p>
+                <p className="text-muted-foreground text-sm">
+                  Build a shared library with support docs, policies, team
+                  notes, and research summaries.
+                </p>
+                <p className="text-muted-foreground text-sm">
+                  Then ask the AI for answers without switching between tools.
+                </p>
               </CardContent>
             </Card>
           </div>

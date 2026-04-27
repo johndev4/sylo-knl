@@ -15,11 +15,15 @@ export default function LibraryNav({
   currentSection,
 }: LibraryNavProps) {
   const pathname = usePathname();
-  
+
   // More robust way to determine active section from pathname
   const segments = pathname?.split('/') || [];
   const lastSegment = segments[segments.length - 1];
-  const activeSection = currentSection ?? (['documents', 'chat', 'settings'].includes(lastSegment) ? lastSegment : 'documents');
+  const activeSection =
+    currentSection ??
+    (['documents', 'chat', 'settings'].includes(lastSegment)
+      ? lastSegment
+      : 'documents');
 
   const navItems = [
     {
@@ -40,8 +44,11 @@ export default function LibraryNav({
   ];
 
   return (
-    <div className="overflow-x-auto no-scrollbar py-1">
-      <nav aria-label="Library sections" className="inline-flex items-center p-1 bg-muted/40 rounded-xl border border-border/50 backdrop-blur-sm min-w-max">
+    <div className="no-scrollbar overflow-x-auto py-1">
+      <nav
+        aria-label="Library sections"
+        className="bg-muted/40 border-border/50 inline-flex min-w-max items-center rounded-xl border p-1 backdrop-blur-sm"
+      >
         {navItems.map((item) => {
           const isActive = activeSection === item.id;
           return (
@@ -50,17 +57,17 @@ export default function LibraryNav({
               href={item.href}
               aria-current={isActive ? 'page' : undefined}
               className={cn(
-                "relative px-6 py-2 text-sm font-medium transition-all duration-300 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
-                isActive 
-                  ? "text-foreground" 
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/20"
+                'focus-visible:ring-ring relative rounded-lg px-6 py-2 text-sm font-medium transition-all duration-300 outline-none focus-visible:ring-2 focus-visible:ring-offset-1',
+                isActive
+                  ? 'text-foreground'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/20'
               )}
             >
               {isActive && (
                 <motion.div
                   layoutId="active-tab-pill"
-                  className="absolute inset-0 bg-background shadow-soft-sm rounded-lg border border-border/10"
-                  transition={{ type: "spring", bounce: 0.15, duration: 0.5 }}
+                  className="bg-background shadow-soft-sm border-border/10 absolute inset-0 rounded-lg border"
+                  transition={{ type: 'spring', bounce: 0.15, duration: 0.5 }}
                 />
               )}
               <span className="relative z-10">{item.label}</span>

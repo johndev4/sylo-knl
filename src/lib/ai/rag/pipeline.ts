@@ -16,12 +16,15 @@ import { buildPromptContext, buildSystemPrompt } from './context-builder';
 export async function* executeRAGChat(
   userQuery: string,
   libraryId: string,
-  userMessages: Array<{ role: 'user' | 'assistant'; content: string }>,
+  userMessages: Array<{ role: 'user' | 'assistant'; content: string }>
 ): AsyncIterable<StreamChunk> {
   try {
     // Step 1: Generate embedding for query
     const queryEmbedding = await generateEmbedding(userQuery);
-    console.log('[RAG] Query embedding generated, dimension:', queryEmbedding.length);
+    console.log(
+      '[RAG] Query embedding generated, dimension:',
+      queryEmbedding.length
+    );
 
     // Step 2: Retrieve relevant chunks
     const chunks = await retrieveRelevantChunks(queryEmbedding, libraryId, 5);

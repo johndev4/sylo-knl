@@ -8,19 +8,17 @@ export const maxDuration = 60; // allow longer timeout for RAG
  * Convert provider-agnostic StreamChunk to HTTP streaming format
  */
 function streamChunksToResponse(
-  chunks: AsyncIterable<any>,
+  chunks: AsyncIterable<any>
 ): ReadableStream<Uint8Array> {
   return new ReadableStream({
     async start(controller) {
       try {
         for await (const chunk of chunks) {
           if (chunk.type === 'text') {
-            controller.enqueue(
-              new TextEncoder().encode(chunk.content || ''),
-            );
+            controller.enqueue(new TextEncoder().encode(chunk.content || ''));
           } else if (chunk.type === 'error') {
             controller.enqueue(
-              new TextEncoder().encode(`[ERROR] ${chunk.error}`),
+              new TextEncoder().encode(`[ERROR] ${chunk.error}`)
             );
             controller.close();
             break;
@@ -55,17 +53,20 @@ export async function POST(req: NextRequest) {
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return NextResponse.json(
         { error: 'messages must be a non-empty array' },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
     if (!libraryId) {
-      return NextResponse.json({ error: 'libraryId is required' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'libraryId is required' },
+        { status: 400 }
+      );
     }
 
     // Check library exists and user has access
     let hasAccess = false;
-    
+
     if (libraryId === user.id) {
       hasAccess = true;
     } else {
@@ -75,7 +76,7 @@ export async function POST(req: NextRequest) {
         .eq('library_id', libraryId)
         .eq('user_id', user.id)
         .single();
-      
+
       hasAccess = !!membership;
     }
 
@@ -114,13 +115,16 @@ export async function POST(req: NextRequest) {
           error: 'Invalid database input (Vector or UUID format)',
           details: error.message,
         },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
     if (error.name === 'SyntaxError' && error.message?.includes('JSON')) {
       // Invalid JSON in request body
-      return NextResponse.json({ error: 'Invalid JSON in request body' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Invalid JSON in request body' },
+        { status: 400 }
+      );
     }
 
     if (error.code === '23505' || error.meta?.code === '23505') {
@@ -133,7 +137,7 @@ export async function POST(req: NextRequest) {
         error: 'Internal Server Error',
         details: error.message,
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

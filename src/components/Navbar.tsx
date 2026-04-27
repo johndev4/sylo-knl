@@ -11,21 +11,21 @@ export function Navbar() {
       className={cn(
         'sticky top-0 z-40 w-full',
         'border-b border-zinc-200 dark:border-zinc-800/50',
-        'bg-white/80 dark:bg-zinc-950/80 backdrop-blur-sm',
+        'bg-white/80 backdrop-blur-sm dark:bg-zinc-950/80',
         'shadow-soft-xs dark:shadow-soft-sm'
       )}
     >
-      <div className="max-w-full px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div className="flex h-16 max-w-full items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo / Brand */}
         <Link
           href="/"
           className={cn(
-            'flex items-center gap-2 font-bold text-lg',
+            'flex items-center gap-2 text-lg font-bold',
             'text-foreground',
-            'hover:text-zinc-700 dark:hover:text-zinc-300 transition-smooth'
+            'transition-smooth hover:text-zinc-700 dark:hover:text-zinc-300'
           )}
         >
-          <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center border border-zinc-200 dark:border-zinc-800">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-200 bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-900">
             <span className="text-xs font-bold">Sy</span>
           </div>
           <span className="hidden sm:inline">Sylo</span>

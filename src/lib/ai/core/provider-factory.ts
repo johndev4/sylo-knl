@@ -23,7 +23,7 @@ export function getLLMProvider(): LLMProvider {
       return createOllamaProvider().llm;
     default:
       throw new ProviderConfigError(
-        `Invalid LLM_PROVIDER: ${providerName}. Supported: 'google', 'ollama'`,
+        `Invalid LLM_PROVIDER: ${providerName}. Supported: 'google', 'ollama'`
       );
   }
 }
@@ -33,11 +33,9 @@ export function getLLMProvider(): LLMProvider {
  * Falls back to LLM_PROVIDER if EMBEDDING_PROVIDER is not set.
  */
 export function getEmbeddingProvider(): EmbeddingProvider {
-  const providerName = (
-    process.env.EMBEDDING_PROVIDER ||
+  const providerName = (process.env.EMBEDDING_PROVIDER ||
     process.env.LLM_PROVIDER ||
-    'google'
-  ) as ProviderType;
+    'google') as ProviderType;
 
   switch (providerName) {
     case 'google':
@@ -46,7 +44,7 @@ export function getEmbeddingProvider(): EmbeddingProvider {
       return createOllamaProvider().embedding;
     default:
       throw new ProviderConfigError(
-        `Invalid EMBEDDING_PROVIDER: ${providerName}. Supported: 'google', 'ollama'`,
+        `Invalid EMBEDDING_PROVIDER: ${providerName}. Supported: 'google', 'ollama'`
       );
   }
 }
@@ -61,15 +59,17 @@ export function getProviderInfo() {
   return {
     llm: {
       name: llmProvider.name,
-      model: process.env.LLM_PROVIDER === 'ollama' 
-        ? process.env.OLLAMA_LLM_MODEL || 'mistral'
-        : 'gemini-2.5-flash',
+      model:
+        process.env.LLM_PROVIDER === 'ollama'
+          ? process.env.OLLAMA_LLM_MODEL || 'mistral'
+          : 'gemini-2.5-flash',
     },
     embedding: {
       name: embeddingProvider.name,
-      model: process.env.EMBEDDING_PROVIDER === 'ollama' 
-        ? process.env.OLLAMA_EMBEDDING_MODEL || 'nomic-embed-text'
-        : 'gemini-embedding-001',
+      model:
+        process.env.EMBEDDING_PROVIDER === 'ollama'
+          ? process.env.OLLAMA_EMBEDDING_MODEL || 'nomic-embed-text'
+          : 'gemini-embedding-001',
       dimension: embeddingProvider.dimension,
     },
   };

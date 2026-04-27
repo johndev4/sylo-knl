@@ -2,7 +2,13 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -26,13 +32,37 @@ interface FormError {
 
 const VALID_TIMEZONES = [
   'UTC',
-  'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles',
-  'Europe/London', 'Europe/Paris', 'Europe/Berlin', 'Europe/Amsterdam', 'Europe/Brussels',
-  'Europe/Vienna', 'Europe/Prague', 'Europe/Warsaw', 'Europe/Moscow', 'Europe/Istanbul',
-  'Asia/Dubai', 'Asia/Kolkata', 'Asia/Bangkok', 'Asia/Hong_Kong', 'Asia/Shanghai',
-  'Asia/Tokyo', 'Asia/Seoul', 'Asia/Singapore', 'Asia/Manila', 'Asia/Jakarta',
-  'Australia/Sydney', 'Australia/Melbourne', 'Australia/Brisbane', 'Australia/Perth',
-  'Pacific/Auckland', 'Pacific/Fiji', 'Pacific/Honolulu',
+  'America/New_York',
+  'America/Chicago',
+  'America/Denver',
+  'America/Los_Angeles',
+  'Europe/London',
+  'Europe/Paris',
+  'Europe/Berlin',
+  'Europe/Amsterdam',
+  'Europe/Brussels',
+  'Europe/Vienna',
+  'Europe/Prague',
+  'Europe/Warsaw',
+  'Europe/Moscow',
+  'Europe/Istanbul',
+  'Asia/Dubai',
+  'Asia/Kolkata',
+  'Asia/Bangkok',
+  'Asia/Hong_Kong',
+  'Asia/Shanghai',
+  'Asia/Tokyo',
+  'Asia/Seoul',
+  'Asia/Singapore',
+  'Asia/Manila',
+  'Asia/Jakarta',
+  'Australia/Sydney',
+  'Australia/Melbourne',
+  'Australia/Brisbane',
+  'Australia/Perth',
+  'Pacific/Auckland',
+  'Pacific/Fiji',
+  'Pacific/Honolulu',
 ];
 
 export default function AccountSettingsPage() {
@@ -79,7 +109,12 @@ export default function AccountSettingsPage() {
       });
     } catch (error) {
       console.error('Error fetching profile:', error);
-      setErrors([{ field: 'general', message: 'Failed to load profile. Please try again.' }]);
+      setErrors([
+        {
+          field: 'general',
+          message: 'Failed to load profile. Please try again.',
+        },
+      ]);
     } finally {
       setLoading(false);
     }
@@ -102,23 +137,27 @@ export default function AccountSettingsPage() {
   const canSave = isDirty && isValid && !submitting;
 
   const getSaveButtonDescription = () => {
-    if (submitting) return "Saving your changes...";
-    if (saveSuccess) return "Changes saved successfully!";
-    if (!profile) return "";
-    if (!isDirty) return "No changes have been made to your profile yet.";
-    if (!isValid) return "Required fields are missing. Please provide a name.";
-    return "Click to save your profile changes.";
+    if (submitting) return 'Saving your changes...';
+    if (saveSuccess) return 'Changes saved successfully!';
+    if (!profile) return '';
+    if (!isDirty) return 'No changes have been made to your profile yet.';
+    if (!isValid) return 'Required fields are missing. Please provide a name.';
+    return 'Click to save your profile changes.';
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
     const { name, value, type } = e.target;
     const checked = (e.target as HTMLInputElement).checked;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
     }));
     // Clear errors for this field when user starts typing
-    setErrors(prev => prev.filter(e => e.field !== name));
+    setErrors((prev) => prev.filter((e) => e.field !== name));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -147,7 +186,12 @@ export default function AccountSettingsPage() {
         if (response.status === 400 && data.details) {
           setErrors(data.details);
         } else {
-          setErrors([{ field: 'general', message: data.error || 'Failed to update profile' }]);
+          setErrors([
+            {
+              field: 'general',
+              message: data.error || 'Failed to update profile',
+            },
+          ]);
         }
         return;
       }
@@ -166,14 +210,16 @@ export default function AccountSettingsPage() {
       }, 3000);
     } catch (error) {
       console.error('Error updating profile:', error);
-      setErrors([{ field: 'general', message: 'An error occurred. Please try again.' }]);
+      setErrors([
+        { field: 'general', message: 'An error occurred. Please try again.' },
+      ]);
     } finally {
       setSubmitting(false);
     }
   };
 
   const getFieldError = (field: string) => {
-    return errors.find(e => e.field === field)?.message;
+    return errors.find((e) => e.field === field)?.message;
   };
 
   const getInitials = (displayName: string | null, email: string): string => {
@@ -189,7 +235,7 @@ export default function AccountSettingsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
           <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent" />
           <p className="mt-4">Loading profile...</p>
@@ -200,7 +246,7 @@ export default function AccountSettingsPage() {
 
   if (!profile) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex min-h-screen items-center justify-center">
         <Card className="max-w-md">
           <CardHeader>
             <CardTitle>Error</CardTitle>
@@ -216,32 +262,34 @@ export default function AccountSettingsPage() {
   const initials = getInitials(profile.name, profile.email);
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto py-8 px-4">
+    <div className="bg-background min-h-screen">
+      <div className="container mx-auto px-4 py-8">
         <div className="max-w-2xl">
           {/* Header */}
           <div className="mb-8">
             <button
               onClick={() => router.push('/hub')}
-              className="text-sm text-muted-foreground hover:text-foreground mb-4 flex items-center gap-1"
+              className="text-muted-foreground hover:text-foreground mb-4 flex items-center gap-1 text-sm"
             >
               ← Back
             </button>
             <h1 className="text-3xl font-bold">Account Settings</h1>
-            <p className="text-muted-foreground mt-2">Manage your profile information</p>
+            <p className="text-muted-foreground mt-2">
+              Manage your profile information
+            </p>
           </div>
 
           {/* Alerts */}
-          {errors.some(e => e.field === 'general') && (
-            <div className="mb-6 p-4 bg-destructive/10 text-destructive rounded-lg border border-destructive/20">
-              {errors.find(e => e.field === 'general')?.message}
+          {errors.some((e) => e.field === 'general') && (
+            <div className="bg-destructive/10 text-destructive border-destructive/20 mb-6 rounded-lg border p-4">
+              {errors.find((e) => e.field === 'general')?.message}
             </div>
           )}
 
           {successMessage && (
-            <div className="mb-6 p-4 bg-green-500/10 text-green-700 dark:text-green-400 rounded-lg border border-green-500/20 flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
-              <div className="bg-green-500/20 p-1 rounded-full">
-                <Check className="w-4 h-4" />
+            <div className="animate-in fade-in slide-in-from-top-2 mb-6 flex items-center gap-3 rounded-lg border border-green-500/20 bg-green-500/10 p-4 text-green-700 duration-300 dark:text-green-400">
+              <div className="rounded-full bg-green-500/20 p-1">
+                <Check className="h-4 w-4" />
               </div>
               <p className="text-sm font-medium">{successMessage}</p>
             </div>
@@ -251,13 +299,15 @@ export default function AccountSettingsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Profile Information</CardTitle>
-              <CardDescription>Update your profile details. Your email cannot be changed.</CardDescription>
+              <CardDescription>
+                Update your profile details. Your email cannot be changed.
+              </CardDescription>
             </CardHeader>
 
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Read-only fields */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div>
                     <Label htmlFor="email">Email</Label>
                     <Input
@@ -265,26 +315,35 @@ export default function AccountSettingsPage() {
                       type="email"
                       value={profile.email}
                       disabled
-                      className="mt-1 opacity-60 cursor-not-allowed"
+                      className="mt-1 cursor-not-allowed opacity-60"
                     />
-                    <p className="text-xs text-muted-foreground mt-1">Email cannot be changed</p>
+                    <p className="text-muted-foreground mt-1 text-xs">
+                      Email cannot be changed
+                    </p>
                   </div>
                 </div>
 
                 {/* Avatar Display Section */}
                 {profile.avatarUrl && (
-                  <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 bg-zinc-50/50 dark:bg-zinc-900/50">
-                    <Label className="mb-4 block text-sm font-semibold tracking-tight">Avatar Display</Label>
+                  <div className="rounded-xl border border-zinc-200 bg-zinc-50/50 p-6 dark:border-zinc-800 dark:bg-zinc-900/50">
+                    <Label className="mb-4 block text-sm font-semibold tracking-tight">
+                      Avatar Display
+                    </Label>
                     <div className="flex flex-wrap gap-4">
                       {/* Google Picture Option */}
                       <button
                         type="button"
-                        onClick={() => setFormData(prev => ({ ...prev, useAvatarUrl: true }))}
+                        onClick={() =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            useAvatarUrl: true,
+                          }))
+                        }
                         className={cn(
-                          "relative flex flex-col items-center gap-3 p-4 rounded-2xl transition-all duration-200 border-2",
+                          'relative flex flex-col items-center gap-3 rounded-2xl border-2 p-4 transition-all duration-200',
                           formData.useAvatarUrl
-                            ? "border-primary bg-primary/5 shadow-sm"
-                            : "border-transparent bg-white dark:bg-zinc-950 hover:border-zinc-300 dark:hover:border-zinc-700"
+                            ? 'border-primary bg-primary/5 shadow-sm'
+                            : 'border-transparent bg-white hover:border-zinc-300 dark:bg-zinc-950 dark:hover:border-zinc-700'
                         )}
                       >
                         <div className="relative">
@@ -292,18 +351,22 @@ export default function AccountSettingsPage() {
                             src={profile.avatarUrl}
                             alt="Google avatar"
                             referrerPolicy="no-referrer"
-                            className="w-20 h-20 rounded-full object-cover shadow-sm bg-zinc-100 dark:bg-zinc-800"
+                            className="h-20 w-20 rounded-full bg-zinc-100 object-cover shadow-sm dark:bg-zinc-800"
                           />
                           {formData.useAvatarUrl && (
-                            <div className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full p-1 shadow-md ring-2 ring-background">
-                              <Check className="w-3.5 h-3.5" />
+                            <div className="bg-primary text-primary-foreground ring-background absolute -top-1 -right-1 rounded-full p-1 shadow-md ring-2">
+                              <Check className="h-3.5 w-3.5" />
                             </div>
                           )}
                         </div>
-                        <span className={cn(
-                          "text-xs font-semibold uppercase tracking-wider",
-                          formData.useAvatarUrl ? "text-primary" : "text-muted-foreground"
-                        )}>
+                        <span
+                          className={cn(
+                            'text-xs font-semibold tracking-wider uppercase',
+                            formData.useAvatarUrl
+                              ? 'text-primary'
+                              : 'text-muted-foreground'
+                          )}
+                        >
                           Google Picture
                         </span>
                       </button>
@@ -311,33 +374,44 @@ export default function AccountSettingsPage() {
                       {/* Initials Option */}
                       <button
                         type="button"
-                        onClick={() => setFormData(prev => ({ ...prev, useAvatarUrl: false }))}
+                        onClick={() =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            useAvatarUrl: false,
+                          }))
+                        }
                         className={cn(
-                          "relative flex flex-col items-center gap-3 p-4 rounded-2xl transition-all duration-200 border-2",
+                          'relative flex flex-col items-center gap-3 rounded-2xl border-2 p-4 transition-all duration-200',
                           !formData.useAvatarUrl
-                            ? "border-primary bg-primary/5 shadow-sm"
-                            : "border-transparent bg-white dark:bg-zinc-950 hover:border-zinc-300 dark:hover:border-zinc-700"
+                            ? 'border-primary bg-primary/5 shadow-sm'
+                            : 'border-transparent bg-white hover:border-zinc-300 dark:bg-zinc-950 dark:hover:border-zinc-700'
                         )}
                       >
                         <div className="relative">
-                          <div className={cn(
-                            "w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold shadow-sm",
-                            !formData.useAvatarUrl
-                              ? "bg-primary/10 text-primary"
-                              : "bg-zinc-200 dark:bg-zinc-800 text-foreground"
-                          )}>
+                          <div
+                            className={cn(
+                              'flex h-20 w-20 items-center justify-center rounded-full text-2xl font-bold shadow-sm',
+                              !formData.useAvatarUrl
+                                ? 'bg-primary/10 text-primary'
+                                : 'text-foreground bg-zinc-200 dark:bg-zinc-800'
+                            )}
+                          >
                             {initials}
                           </div>
                           {!formData.useAvatarUrl && (
-                            <div className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full p-1 shadow-md ring-2 ring-background">
-                              <Check className="w-3.5 h-3.5" />
+                            <div className="bg-primary text-primary-foreground ring-background absolute -top-1 -right-1 rounded-full p-1 shadow-md ring-2">
+                              <Check className="h-3.5 w-3.5" />
                             </div>
                           )}
                         </div>
-                        <span className={cn(
-                          "text-xs font-semibold uppercase tracking-wider",
-                          !formData.useAvatarUrl ? "text-primary" : "text-muted-foreground"
-                        )}>
+                        <span
+                          className={cn(
+                            'text-xs font-semibold tracking-wider uppercase',
+                            !formData.useAvatarUrl
+                              ? 'text-primary'
+                              : 'text-muted-foreground'
+                          )}
+                        >
                           Initials
                         </span>
                       </button>
@@ -364,7 +438,9 @@ export default function AccountSettingsPage() {
                       maxLength={200}
                     />
                     {getFieldError('name') && (
-                      <p className="text-xs text-destructive mt-1">{getFieldError('name')}</p>
+                      <p className="text-destructive mt-1 text-xs">
+                        {getFieldError('name')}
+                      </p>
                     )}
                   </div>
 
@@ -377,19 +453,24 @@ export default function AccountSettingsPage() {
                       value={formData.bio}
                       onChange={handleChange}
                       disabled={submitting}
-                      className={`mt-1 w-full px-3 py-2 border border-input rounded-md bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed ${getFieldError('bio') ? 'border-destructive' : ''
-                        }`}
+                      className={`border-input bg-background placeholder:text-muted-foreground focus:ring-ring mt-1 w-full rounded-md border px-3 py-2 text-sm focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
+                        getFieldError('bio') ? 'border-destructive' : ''
+                      }`}
                       rows={4}
                       maxLength={500}
                     />
-                    <div className="flex justify-between items-center mt-1">
-                      <p className="text-xs text-muted-foreground">Max 500 characters</p>
-                      <p className="text-xs text-muted-foreground">
+                    <div className="mt-1 flex items-center justify-between">
+                      <p className="text-muted-foreground text-xs">
+                        Max 500 characters
+                      </p>
+                      <p className="text-muted-foreground text-xs">
                         {formData.bio.length}/500
                       </p>
                     </div>
                     {getFieldError('bio') && (
-                      <p className="text-xs text-destructive mt-1">{getFieldError('bio')}</p>
+                      <p className="text-destructive mt-1 text-xs">
+                        {getFieldError('bio')}
+                      </p>
                     )}
                   </div>
 
@@ -401,38 +482,45 @@ export default function AccountSettingsPage() {
                       value={formData.timezone}
                       onChange={handleChange}
                       disabled={submitting}
-                      className={`mt-1 w-full px-3 py-2 border border-input rounded-md bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed ${getFieldError('timezone') ? 'border-destructive' : ''
-                        }`}
+                      className={`border-input bg-background focus:ring-ring mt-1 w-full rounded-md border px-3 py-2 text-sm focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
+                        getFieldError('timezone') ? 'border-destructive' : ''
+                      }`}
                     >
                       <option value="">Select timezone (optional)</option>
-                      {VALID_TIMEZONES.map(tz => (
+                      {VALID_TIMEZONES.map((tz) => (
                         <option key={tz} value={tz}>
                           {tz}
                         </option>
                       ))}
                     </select>
                     {getFieldError('timezone') && (
-                      <p className="text-xs text-destructive mt-1">{getFieldError('timezone')}</p>
+                      <p className="text-destructive mt-1 text-xs">
+                        {getFieldError('timezone')}
+                      </p>
                     )}
                   </div>
                 </div>
 
                 {/* Submit Button Section */}
-                <div className="flex flex-col sm:flex-row items-center justify-end gap-4 pt-4 border-t border-border">
+                <div className="border-border flex flex-col items-center justify-end gap-4 border-t pt-4 sm:flex-row">
                   {/* Accessibility Hint (Visible only when needed or for screen readers) */}
                   <p
                     id="save-hint"
                     className={cn(
-                      "text-xs font-medium transition-opacity duration-200",
-                      isDirty && !isValid ? "text-destructive opacity-100" : "text-muted-foreground opacity-70",
-                      !isDirty && !submitting && !saveSuccess ? "sm:block hidden" : ""
+                      'text-xs font-medium transition-opacity duration-200',
+                      isDirty && !isValid
+                        ? 'text-destructive opacity-100'
+                        : 'text-muted-foreground opacity-70',
+                      !isDirty && !submitting && !saveSuccess
+                        ? 'hidden sm:block'
+                        : ''
                     )}
                     aria-live="polite"
                   >
                     {getSaveButtonDescription()}
                   </p>
 
-                  <div className="flex gap-3 w-full sm:w-auto">
+                  <div className="flex w-full gap-3 sm:w-auto">
                     <Button
                       type="button"
                       variant="outline"
@@ -456,9 +544,12 @@ export default function AccountSettingsPage() {
                       aria-describedby="save-hint"
                       disabled={submitting} // Native disabled only during active submission
                       className={cn(
-                        "flex-1 sm:min-w-[140px] transition-all duration-200",
-                        !canSave && !submitting && "opacity-50 cursor-not-allowed contrast-more:opacity-70",
-                        saveSuccess && "bg-green-600 hover:bg-green-600 border-green-600"
+                        'flex-1 transition-all duration-200 sm:min-w-[140px]',
+                        !canSave &&
+                          !submitting &&
+                          'cursor-not-allowed opacity-50 contrast-more:opacity-70',
+                        saveSuccess &&
+                          'border-green-600 bg-green-600 hover:bg-green-600'
                       )}
                       onClick={(e) => {
                         // Prevent click if aria-disabled
@@ -475,7 +566,7 @@ export default function AccountSettingsPage() {
                         </div>
                       ) : saveSuccess ? (
                         <div className="flex items-center gap-2">
-                          <Check className="w-4 h-4" />
+                          <Check className="h-4 w-4" />
                           <span>Saved!</span>
                         </div>
                       ) : (

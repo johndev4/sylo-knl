@@ -32,7 +32,9 @@ export function AccountDropdown() {
     const fetchUserProfile = async () => {
       try {
         const supabase = createClient();
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
 
         if (!user) {
           setIsLoading(false);
@@ -58,7 +60,7 @@ export function AccountDropdown() {
 
     // Listen for profile updates from other components (like Settings page)
     window.addEventListener('profile-updated', fetchUserProfile);
-    
+
     return () => {
       window.removeEventListener('profile-updated', fetchUserProfile);
     };
@@ -86,8 +88,11 @@ export function AccountDropdown() {
       .slice(0, 2);
   };
 
-  const initials = userProfile ? getInitials(userProfile.name, userProfile.email) : '??';
-  const shouldUseAvatarUrl = userProfile?.useAvatarUrl && userProfile?.avatarUrl;
+  const initials = userProfile
+    ? getInitials(userProfile.name, userProfile.email)
+    : '??';
+  const shouldUseAvatarUrl =
+    userProfile?.useAvatarUrl && userProfile?.avatarUrl;
 
   // Don't render if user is not authenticated
   if (!isLoading && !userProfile) {
@@ -99,7 +104,7 @@ export function AccountDropdown() {
       <DropdownMenuTrigger asChild>
         <button
           className={cn(
-            'flex items-center gap-2 px-3 py-2 rounded-lg',
+            'flex items-center gap-2 rounded-lg px-3 py-2',
             'bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-900 dark:hover:bg-zinc-800',
             'border border-zinc-200 dark:border-zinc-800',
             'transition-smooth outline-none',
@@ -113,13 +118,13 @@ export function AccountDropdown() {
               src={userProfile.avatarUrl ?? undefined}
               alt={userProfile.name || 'User avatar'}
               referrerPolicy="no-referrer"
-              className="w-8 h-8 rounded-full object-cover"
+              className="h-8 w-8 rounded-full object-cover"
             />
           ) : (
             <div
               className={cn(
-                'w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium',
-                'bg-zinc-200 dark:bg-zinc-800 text-foreground'
+                'flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium',
+                'text-foreground bg-zinc-200 dark:bg-zinc-800'
               )}
             >
               {initials}
@@ -128,7 +133,7 @@ export function AccountDropdown() {
 
           {/* Display Name (hidden on mobile) */}
           {!isLoading && userProfile && (
-            <span className="text-sm text-foreground/80 hidden sm:inline max-w-[150px] truncate">
+            <span className="text-foreground/80 hidden max-w-[150px] truncate text-sm sm:inline">
               {userProfile.name || userProfile.email}
             </span>
           )}
@@ -141,10 +146,10 @@ export function AccountDropdown() {
         <div className="px-3 py-2">
           {userProfile && (
             <>
-              <p className="text-sm font-semibold text-foreground truncate">
+              <p className="text-foreground truncate text-sm font-semibold">
                 {userProfile.name || 'User'}
               </p>
-              <p className="text-xs text-foreground/60 truncate">
+              <p className="text-foreground/60 truncate text-xs">
                 {userProfile.email}
               </p>
             </>
@@ -154,8 +159,10 @@ export function AccountDropdown() {
         <DropdownMenuSeparator />
 
         {/* Account Settings */}
-        <DropdownMenuItem onClick={() => window.location.href = '/account/settings'}>
-          <Settings className="w-4 h-4" />
+        <DropdownMenuItem
+          onClick={() => (window.location.href = '/account/settings')}
+        >
+          <Settings className="h-4 w-4" />
           <span>Account Settings</span>
         </DropdownMenuItem>
 
@@ -171,7 +178,7 @@ export function AccountDropdown() {
           className="text-destructive focus:bg-destructive/10"
           onClick={handleLogout}
         >
-          <LogOut className="w-4 h-4" />
+          <LogOut className="h-4 w-4" />
           <span>Logout</span>
         </DropdownMenuItem>
       </DropdownMenuContent>

@@ -56,7 +56,7 @@ export class OllamaLLMProvider implements LLMProvider {
     } catch (error: any) {
       throw new ProviderError(
         `Ollama LLM generation failed: ${error.message}`,
-        error.status,
+        error.status
       );
     }
   }
@@ -97,7 +97,8 @@ export class OllamaLLMProvider implements LLMProvider {
 export class OllamaEmbeddingProvider implements EmbeddingProvider {
   name = 'ollama';
   dimension = 1536; // Default for most Ollama embedding models; can be overridden
-  private embeddingModel = process.env.OLLAMA_EMBEDDING_MODEL || 'nomic-embed-text';
+  private embeddingModel =
+    process.env.OLLAMA_EMBEDDING_MODEL || 'nomic-embed-text';
   private provider = createOllama({
     baseURL: getOllamaBaseUrl(),
   });
@@ -129,10 +130,10 @@ export class OllamaEmbeddingProvider implements EmbeddingProvider {
         cause: error.cause,
         errorType: error.constructor.name,
       });
-      
+
       throw new ProviderError(
         `Ollama embedding generation failed: ${error.message}. Make sure Ollama is running at ${getOllamaBaseUrl()} and model "${this.embeddingModel}" is available.`,
-        error.status,
+        error.status
       );
     }
   }
@@ -158,10 +159,10 @@ export class OllamaEmbeddingProvider implements EmbeddingProvider {
         cause: error.cause,
         errorType: error.constructor.name,
       });
-      
+
       throw new ProviderError(
         `Ollama batch embedding generation failed: ${error.message}. Make sure Ollama is running at ${getOllamaBaseUrl()} and model "${this.embeddingModel}" is available (e.g., pull it with: ollama pull ${this.embeddingModel})`,
-        error.status,
+        error.status
       );
     }
   }

@@ -15,23 +15,27 @@ export function ThemeToggle() {
 
   if (!mounted) {
     return (
-      <div className={cn(
-        'inline-flex items-center gap-2 px-3 py-2 rounded-lg',
-        'border border-zinc-300 dark:border-zinc-700',
-        'bg-white dark:bg-zinc-900'
-      )} />
+      <div
+        className={cn(
+          'inline-flex items-center gap-2 rounded-lg px-3 py-2',
+          'border border-zinc-300 dark:border-zinc-700',
+          'bg-white dark:bg-zinc-900'
+        )}
+      />
     );
   }
 
-  const isDark = theme === 'dark' || 
-    (theme === 'system' && typeof window !== 'undefined' && 
-     window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const isDark =
+    theme === 'dark' ||
+    (theme === 'system' &&
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-color-scheme: dark)').matches);
 
   return (
     <button
       onClick={() => setTheme(isDark ? 'light' : 'dark')}
       className={cn(
-        'inline-flex items-center gap-2 px-3 py-2 rounded-lg',
+        'inline-flex items-center gap-2 rounded-lg px-3 py-2',
         'border border-zinc-300 dark:border-zinc-700',
         'bg-white dark:bg-zinc-900',
         'hover:bg-zinc-50 dark:hover:bg-zinc-800',
@@ -40,11 +44,7 @@ export function ThemeToggle() {
       )}
       aria-label="Toggle theme"
     >
-      {isDark ? (
-        <Moon className="w-4 h-4" />
-      ) : (
-        <Sun className="w-4 h-4" />
-      )}
+      {isDark ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
     </button>
   );
 }

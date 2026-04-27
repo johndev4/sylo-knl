@@ -45,12 +45,12 @@ export interface EmbedInput {
  */
 export interface LLMProvider {
   name: string;
-  
+
   /**
    * Generate text response (non-streaming)
    */
   generate(input: GenerateInput): Promise<GenerateOutput>;
-  
+
   /**
    * Generate text response with streaming
    */
@@ -62,17 +62,17 @@ export interface LLMProvider {
  */
 export interface EmbeddingProvider {
   name: string;
-  
+
   /**
    * Dimension of returned embeddings (e.g., 3072 for Google, 1536 for some Ollama models)
    */
   dimension: number;
-  
+
   /**
    * Generate single embedding
    */
   embed(text: string): Promise<number[]>;
-  
+
   /**
    * Generate multiple embeddings in batch
    */
@@ -95,7 +95,7 @@ export class ProviderConfigError extends Error {
 export class ProviderError extends Error {
   constructor(
     message: string,
-    public statusCode?: number,
+    public statusCode?: number
   ) {
     super(message);
     this.name = 'ProviderError';

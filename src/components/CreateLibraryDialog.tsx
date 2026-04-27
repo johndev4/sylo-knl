@@ -21,16 +21,22 @@ import { cn } from '@/lib/utils';
 
 interface CreateLibraryDialogProps {
   triggerClassName?: string;
-  variant?: 'default' | 'outline' | 'secondary' | 'ghost' | 'destructive' | 'link';
+  variant?:
+    | 'default'
+    | 'outline'
+    | 'secondary'
+    | 'ghost'
+    | 'destructive'
+    | 'link';
   size?: 'default' | 'sm' | 'lg' | 'icon';
   triggerText?: string;
 }
 
-export function CreateLibraryDialog({ 
-  triggerClassName, 
+export function CreateLibraryDialog({
+  triggerClassName,
   variant = 'default',
   size = 'default',
-  triggerText = 'New Library'
+  triggerText = 'New Library',
 }: CreateLibraryDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [name, setName] = useState('');
@@ -72,16 +78,12 @@ export function CreateLibraryDialog({
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button 
-          variant={variant}
-          size={size}
-          className={triggerClassName}
-        >
-          <Plus className={cn("h-4 w-4", triggerText ? "mr-2" : "")} />
+        <Button variant={variant} size={size} className={triggerClassName}>
+          <Plus className={cn('h-4 w-4', triggerText ? 'mr-2' : '')} />
           {triggerText}
         </Button>
       </DialogTrigger>
-      
+
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Create New Library</DialogTitle>
@@ -110,7 +112,7 @@ export function CreateLibraryDialog({
             />
             {error && (
               <motion.p
-                className="text-xs font-medium text-destructive"
+                className="text-destructive text-xs font-medium"
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
@@ -125,7 +127,10 @@ export function CreateLibraryDialog({
             className="flex gap-3 pt-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : 0.1 }}
+            transition={{
+              duration: prefersReducedMotion ? 0 : 0.3,
+              delay: prefersReducedMotion ? 0 : 0.1,
+            }}
           >
             <Button
               type="button"
@@ -136,8 +141,8 @@ export function CreateLibraryDialog({
             >
               Cancel
             </Button>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="flex-1"
               disabled={isLoading || !name.trim()}
             >

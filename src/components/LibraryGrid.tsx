@@ -3,7 +3,13 @@
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { MessageSquare, FileText, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -75,37 +81,53 @@ export function LibrariesBentoGrid({ memberships }: LibraryGridProps) {
                 <CardHeader className="space-y-2 pb-4">
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex-1 overflow-hidden">
-                      <CardTitle className="truncate text-xl font-semibold text-foreground">
+                      <CardTitle className="text-foreground truncate text-xl font-semibold">
                         {space.name}
                       </CardTitle>
                       <CardDescription className="text-sm text-zinc-500 dark:text-zinc-400">
                         {membership.role} access
                       </CardDescription>
                     </div>
-                    <div className="shrink-0 rounded-full bg-zinc-100 dark:bg-zinc-900 px-3 py-1 text-xs font-medium text-zinc-600 dark:text-zinc-300">
+                    <div className="shrink-0 rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-600 dark:bg-zinc-900 dark:text-zinc-300">
                       {membership.role}
                     </div>
                   </div>
 
                   <div className="text-sm text-zinc-500 dark:text-zinc-400">
-                    Created {new Date(space.created_at).toLocaleDateString()} · {membership.memberCount} members · {membership.docCount} docs
+                    Created {new Date(space.created_at).toLocaleDateString()} ·{' '}
+                    {membership.memberCount} members · {membership.docCount}{' '}
+                    docs
                   </div>
                 </CardHeader>
 
                 <CardContent className="flex flex-1 flex-col justify-between gap-6 pb-6">
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="rounded-2xl bg-zinc-100 dark:bg-zinc-950 p-4">
-                      <p className="text-xs uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">Members</p>
-                      <p className="mt-2 text-2xl font-semibold text-foreground">{membership.memberCount}</p>
+                    <div className="rounded-2xl bg-zinc-100 p-4 dark:bg-zinc-950">
+                      <p className="text-xs tracking-[0.2em] text-zinc-500 uppercase dark:text-zinc-400">
+                        Members
+                      </p>
+                      <p className="text-foreground mt-2 text-2xl font-semibold">
+                        {membership.memberCount}
+                      </p>
                     </div>
-                    <div className="rounded-2xl bg-zinc-100 dark:bg-zinc-950 p-4">
-                      <p className="text-xs uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">Documents</p>
-                      <p className="mt-2 text-2xl font-semibold text-foreground">{membership.docCount}</p>
+                    <div className="rounded-2xl bg-zinc-100 p-4 dark:bg-zinc-950">
+                      <p className="text-xs tracking-[0.2em] text-zinc-500 uppercase dark:text-zinc-400">
+                        Documents
+                      </p>
+                      <p className="text-foreground mt-2 text-2xl font-semibold">
+                        {membership.docCount}
+                      </p>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-2 mt-auto">
-                    <Button asChild variant="default" className="w-full" size="sm" aria-label={`Open chat for ${space.name}`}>
+                  <div className="mt-auto grid grid-cols-3 gap-2">
+                    <Button
+                      asChild
+                      variant="default"
+                      className="w-full"
+                      size="sm"
+                      aria-label={`Open chat for ${space.name}`}
+                    >
                       <a href={`/hub/${space.id}/chat`}>
                         <MessageSquare className="mr-2 h-4 w-4" />
                         Chat
@@ -113,7 +135,13 @@ export function LibrariesBentoGrid({ memberships }: LibraryGridProps) {
                     </Button>
 
                     {membership.role !== 'VIEWER' ? (
-                      <Button asChild variant="outline" className="w-full" size="sm" aria-label={`View documents for ${space.name}`}>
+                      <Button
+                        asChild
+                        variant="outline"
+                        className="w-full"
+                        size="sm"
+                        aria-label={`View documents for ${space.name}`}
+                      >
                         <a href={`/hub/${space.id}/documents`}>
                           <FileText className="mr-2 h-4 w-4" />
                           Docs
@@ -123,8 +151,15 @@ export function LibrariesBentoGrid({ memberships }: LibraryGridProps) {
                       <div />
                     )}
 
-                    {(membership.role === 'OWNER' || membership.role === 'ADMIN') ? (
-                      <Button asChild variant="outline" className="w-full" size="sm" aria-label={`Open settings for ${space.name}`}>
+                    {membership.role === 'OWNER' ||
+                    membership.role === 'ADMIN' ? (
+                      <Button
+                        asChild
+                        variant="outline"
+                        className="w-full"
+                        size="sm"
+                        aria-label={`Open settings for ${space.name}`}
+                      >
                         <a href={`/hub/${space.id}/settings`}>
                           <Settings className="mr-2 h-4 w-4" />
                           Manage

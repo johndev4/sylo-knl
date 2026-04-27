@@ -5,30 +5,59 @@ import { z } from 'zod';
 // Valid IANA timezone identifiers (curated list)
 const VALID_TIMEZONES = [
   'UTC',
-  'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles',
-  'Europe/London', 'Europe/Paris', 'Europe/Berlin', 'Europe/Amsterdam', 'Europe/Brussels',
-  'Europe/Vienna', 'Europe/Prague', 'Europe/Warsaw', 'Europe/Moscow', 'Europe/Istanbul',
-  'Asia/Dubai', 'Asia/Kolkata', 'Asia/Bangkok', 'Asia/Hong_Kong', 'Asia/Shanghai',
-  'Asia/Tokyo', 'Asia/Seoul', 'Asia/Singapore', 'Asia/Manila', 'Asia/Jakarta',
-  'Australia/Sydney', 'Australia/Melbourne', 'Australia/Brisbane', 'Australia/Perth',
-  'Pacific/Auckland', 'Pacific/Fiji', 'Pacific/Honolulu',
+  'America/New_York',
+  'America/Chicago',
+  'America/Denver',
+  'America/Los_Angeles',
+  'Europe/London',
+  'Europe/Paris',
+  'Europe/Berlin',
+  'Europe/Amsterdam',
+  'Europe/Brussels',
+  'Europe/Vienna',
+  'Europe/Prague',
+  'Europe/Warsaw',
+  'Europe/Moscow',
+  'Europe/Istanbul',
+  'Asia/Dubai',
+  'Asia/Kolkata',
+  'Asia/Bangkok',
+  'Asia/Hong_Kong',
+  'Asia/Shanghai',
+  'Asia/Tokyo',
+  'Asia/Seoul',
+  'Asia/Singapore',
+  'Asia/Manila',
+  'Asia/Jakarta',
+  'Australia/Sydney',
+  'Australia/Melbourne',
+  'Australia/Brisbane',
+  'Australia/Perth',
+  'Pacific/Auckland',
+  'Pacific/Fiji',
+  'Pacific/Honolulu',
 ];
 
 const updateProfileSchema = z.object({
   name: z.string().min(1).max(200).trim().optional(),
   bio: z.string().max(500).trim().optional(),
-  timezone: z.union([
-    z.enum(VALID_TIMEZONES as [string, ...string[]]),
-    z.literal(""),
-    z.null()
-  ]).optional().transform(v => (v === "" || v === null) ? null : v),
+  timezone: z
+    .union([
+      z.enum(VALID_TIMEZONES as [string, ...string[]]),
+      z.literal(''),
+      z.null(),
+    ])
+    .optional()
+    .transform((v) => (v === '' || v === null ? null : v)),
   useAvatarUrl: z.boolean().optional(),
 });
 
 export async function GET() {
   try {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -42,7 +71,10 @@ export async function GET() {
       .single();
 
     if (error || !userProfile) {
-      return NextResponse.json({ error: 'User profile not found' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'User profile not found' },
+        { status: 404 }
+      );
     }
 
     // Map DB snake_case to frontend camelCase expectations
@@ -59,14 +91,19 @@ export async function GET() {
     return NextResponse.json(mappedProfile);
   } catch (error) {
     console.error('Failed to fetch user profile:', error);
-    return NextResponse.json({ error: 'Failed to fetch profile' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to fetch profile' },
+      { status: 500 }
+    );
   }
 }
 
 export async function PUT(request: NextRequest) {
   try {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -78,8 +115,10 @@ export async function PUT(request: NextRequest) {
     const updateData: any = {};
     if (parsedData.name) updateData.name = parsedData.name;
     if (parsedData.bio !== undefined) updateData.bio = parsedData.bio;
-    if (parsedData.timezone !== undefined) updateData.timezone = parsedData.timezone;
-    if (parsedData.useAvatarUrl !== undefined) updateData.use_avatar_url = parsedData.useAvatarUrl;
+    if (parsedData.timezone !== undefined)
+      updateData.timezone = parsedData.timezone;
+    if (parsedData.useAvatarUrl !== undefined)
+      updateData.use_avatar_url = parsedData.useAvatarUrl;
 
     const { data: updatedUser, error } = await supabase
       .from('users')
@@ -108,7 +147,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json(
         {
           error: 'Validation failed',
-          details: error.issues.map(e => ({
+          details: error.issues.map((e) => ({
             field: e.path.join('.'),
             message: e.message,
           })),
@@ -118,6 +157,9 @@ export async function PUT(request: NextRequest) {
     }
 
     console.error('Failed to update user profile:', error);
-    return NextResponse.json({ error: 'Failed to update profile' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to update profile' },
+      { status: 500 }
+    );
   }
 }

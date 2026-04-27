@@ -29,7 +29,7 @@ export function RenameLibraryForm({
     e.preventDefault();
     setError('');
     setSuccess('');
-    
+
     const trimmedName = name.trim();
     if (!trimmedName || trimmedName === originalName) return;
 
@@ -54,14 +54,15 @@ export function RenameLibraryForm({
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
           <h2 className="text-xl font-semibold">Library Name</h2>
-          <p className="text-sm text-muted-foreground">
-            Change the name of your library. This will be visible to all members.
+          <p className="text-muted-foreground text-sm">
+            Change the name of your library. This will be visible to all
+            members.
           </p>
         </div>
 
         {error && (
           <motion.div
-            className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded p-3"
+            className="rounded border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-900/20"
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
@@ -73,16 +74,18 @@ export function RenameLibraryForm({
 
         {success && (
           <motion.div
-            className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded p-3"
+            className="rounded border border-green-200 bg-green-50 p-3 dark:border-green-800 dark:bg-green-900/20"
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: prefersReducedMotion ? 0 : 0.2 }}
           >
-            <p className="text-sm text-green-700 dark:text-green-400">{success}</p>
+            <p className="text-sm text-green-700 dark:text-green-400">
+              {success}
+            </p>
           </motion.div>
         )}
-        
+
         <div className="space-y-2">
           <Label htmlFor="library-name">Name</Label>
           <div className="flex gap-2">
@@ -95,15 +98,12 @@ export function RenameLibraryForm({
               maxLength={50}
               className="max-w-md"
             />
-            <Button 
-              type="submit" 
-              disabled={!isDirty || isUpdating}
-            >
+            <Button type="submit" disabled={!isDirty || isUpdating}>
               {isUpdating ? 'Saving...' : 'Save Changes'}
             </Button>
           </div>
           {!isDirty && name.trim().length === 0 && (
-             <p className="text-xs text-red-500">Name cannot be empty</p>
+            <p className="text-xs text-red-500">Name cannot be empty</p>
           )}
         </div>
       </form>

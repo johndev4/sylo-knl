@@ -1,24 +1,24 @@
-import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
-import Script from "next/script";
-import "./globals.css";
-import { Suspense } from "react";
-import { ThemeProvider } from "@/components/providers/ThemeProvider";
-import { Navbar } from "@/components/Navbar";
+import type { Metadata } from 'next';
+import { Inter, JetBrains_Mono } from 'next/font/google';
+import Script from 'next/script';
+import './globals.css';
+import { Suspense } from 'react';
+import { ThemeProvider } from '@/components/providers/ThemeProvider';
+import { Navbar } from '@/components/Navbar';
 
 const inter = Inter({
-  variable: "--font-sans",
-  subsets: ["latin"],
+  variable: '--font-sans',
+  subsets: ['latin'],
 });
 
 const jetbrainsMono = JetBrains_Mono({
-  variable: "--font-mono",
-  subsets: ["latin"],
+  variable: '--font-mono',
+  subsets: ['latin'],
 });
 
 export const metadata: Metadata = {
-  title: "Sylo",
-  description: "An AI-powered knowledge library",
+  title: 'Sylo',
+  description: 'An AI-powered knowledge library',
 };
 
 export default function RootLayout({
@@ -33,7 +33,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head />
-      <body className="min-h-full flex flex-col bg-background text-foreground">
+      <body className="bg-background text-foreground flex min-h-full flex-col">
         <Script
           id="theme-script"
           strategy="beforeInteractive"
@@ -52,9 +52,7 @@ export default function RootLayout({
         />
         <ThemeProvider>
           <Navbar />
-          <Suspense fallback={null}>
-            {children}
-          </Suspense>
+          <Suspense fallback={null}>{children}</Suspense>
         </ThemeProvider>
       </body>
     </html>

@@ -45,7 +45,9 @@ export default function LibrarySettingsPage({
   const [libraryName, setLibraryName] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string>('');
-  const [selectedMembers, setSelectedMembers] = useState<Set<string>>(new Set());
+  const [selectedMembers, setSelectedMembers] = useState<Set<string>>(
+    new Set()
+  );
   const [isAddingMember, setIsAddingMember] = useState(false);
   const router = useRouter();
   const { user } = useAuth();
@@ -73,7 +75,7 @@ export default function LibrarySettingsPage({
           (m: LibraryMember) => m.user_id === user.id
         );
         setCurrentUserRole(currentMember?.role || '');
-        
+
         // Extract library name from the first member if available
         // In a real scenario, you'd want to fetch the library directly
         // For now, we'll fetch it from Supabase client
@@ -84,7 +86,7 @@ export default function LibrarySettingsPage({
           .select('name')
           .eq('id', libraryId)
           .single();
-        
+
         if (libraryData?.name) {
           setLibraryName(libraryData.name);
         }
@@ -164,9 +166,7 @@ export default function LibrarySettingsPage({
       setMembers(updatedMembers);
       setSelectedMembers(new Set());
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'Failed to remove members'
-      );
+      setError(err instanceof Error ? err.message : 'Failed to remove members');
     }
   };
 
@@ -174,27 +174,35 @@ export default function LibrarySettingsPage({
 
   if (isLoading) {
     return (
-      <div className="container max-w-4xl mx-auto p-6 space-y-8">
-        <div className="flex flex-col gap-3 mb-8">
+      <div className="container mx-auto max-w-4xl space-y-8 p-6">
+        <div className="mb-8 flex flex-col gap-3">
           <div className="space-y-2">
-            <h1 className="text-3xl font-bold tracking-tight">Library Settings</h1>
-            <p className="text-muted-foreground">Manage members and library settings</p>
+            <h1 className="text-3xl font-bold tracking-tight">
+              Library Settings
+            </h1>
+            <p className="text-muted-foreground">
+              Manage members and library settings
+            </p>
           </div>
           <LibraryNav libraryId={libraryId} currentSection="settings" />
         </div>
-        <div className="text-center py-8">Loading...</div>
+        <div className="py-8 text-center">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="container max-w-4xl mx-auto p-6 space-y-8">
+    <div className="container mx-auto max-w-4xl space-y-8 p-6">
       {/* Header */}
-      <div className="flex flex-col gap-3 mb-8">
+      <div className="mb-8 flex flex-col gap-3">
         <div className="flex items-center justify-between gap-3">
           <div className="space-y-2">
-            <h1 className="text-3xl font-bold tracking-tight">Library Settings</h1>
-            <p className="text-muted-foreground">Manage members and library settings</p>
+            <h1 className="text-3xl font-bold tracking-tight">
+              Library Settings
+            </h1>
+            <p className="text-muted-foreground">
+              Manage members and library settings
+            </p>
           </div>
           <Link href={`/hub/${libraryId}/documents`}>
             <Button variant="outline">Back to Library</Button>
@@ -205,11 +213,11 @@ export default function LibrarySettingsPage({
 
       {/* Error Message */}
       {error && (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
           <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
           <button
             onClick={() => setError('')}
-            className="text-xs mt-2 underline text-red-600 dark:text-red-500"
+            className="mt-2 text-xs text-red-600 underline dark:text-red-500"
           >
             Dismiss
           </button>
@@ -218,18 +226,15 @@ export default function LibrarySettingsPage({
 
       {/* Library Renaming Section */}
       {canManageMembers && (
-        <RenameLibraryForm 
-          libraryId={libraryId} 
-          initialName={libraryName} 
-        />
+        <RenameLibraryForm libraryId={libraryId} initialName={libraryName} />
       )}
 
       {/* Add Member Section */}
       {canManageMembers && (
-        <Card className="p-6 space-y-4">
+        <Card className="space-y-4 p-6">
           <div className="space-y-2">
             <h2 className="text-xl font-semibold">Add Member</h2>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               Invite new members to your library
             </p>
           </div>
@@ -242,12 +247,12 @@ export default function LibrarySettingsPage({
       )}
 
       {/* Members List Section */}
-      <Card className="p-6 space-y-4">
+      <Card className="space-y-4 p-6">
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl font-semibold">Members</h2>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 {members.length} of 11 members
               </p>
             </div>
@@ -264,7 +269,7 @@ export default function LibrarySettingsPage({
         </div>
 
         {members.length === 0 ? (
-          <div className="text-center py-8">
+          <div className="py-8 text-center">
             <p className="text-muted-foreground">No members yet</p>
           </div>
         ) : (
@@ -291,29 +296,21 @@ export default function LibrarySettingsPage({
       </Card>
 
       {/* Library Information */}
-      <Card className="p-6 space-y-4">
+      <Card className="space-y-4 p-6">
         <div className="space-y-2">
           <h2 className="text-xl font-semibold">Library Information</h2>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             View important library details
           </p>
         </div>
         <div className="space-y-4">
           <div>
             <Label className="text-sm font-medium">Library ID</Label>
-            <Input
-              value={libraryId}
-              disabled
-              className="mt-1 text-sm"
-            />
+            <Input value={libraryId} disabled className="mt-1 text-sm" />
           </div>
           <div>
             <Label className="text-sm font-medium">Your Role</Label>
-            <Input
-              value={currentUserRole}
-              disabled
-              className="mt-1 text-sm"
-            />
+            <Input value={currentUserRole} disabled className="mt-1 text-sm" />
           </div>
           <div>
             <Label className="text-sm font-medium">Member Limit</Label>
@@ -328,8 +325,8 @@ export default function LibrarySettingsPage({
 
       {/* Delete Library Section - Owner Only */}
       {currentUserRole === 'OWNER' && (
-        <DeleteLibraryForm 
-          libraryId={libraryId} 
+        <DeleteLibraryForm
+          libraryId={libraryId}
           libraryName={libraryName || 'this library'}
         />
       )}
