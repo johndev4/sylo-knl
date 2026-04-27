@@ -46,6 +46,9 @@ npm install
 npm run dev              # Start dev server on :3000
 npm run build            # Production build
 npm run lint             # Run ESLint
+npm run lint:fix         # Run ESLint with auto-fix
+npm run format           # Format src/**/*.{ts,tsx} with Prettier
+npm run format:check     # Check formatting without writing
 npm run test:e2e         # Run Playwright end-to-end tests
 ```
 
@@ -112,6 +115,16 @@ supabase db pull                # Sync schema changes
 | `components/`                | Reusable React components                                  |
 | `playwright.config.ts`       | Playwright E2E configuration                               |
 | `tests/e2e/`                 | End-to-end browser tests                                   |
+
+---
+
+## Code Style & Formatting
+
+- **Prettier** (`prettier`, `prettier-plugin-tailwindcss`) — enforces consistent formatting. Config in `.prettierrc`.
+- **ESLint** (`eslint@^9`, `eslint-config-next`, `eslint-config-prettier`) — linting via flat config in `eslint.config.mjs`.
+- `eslint-config-prettier` is included last to disable ESLint rules that conflict with Prettier.
+- Always run `npm run format` then `npm run lint:fix` before committing.
+- Remaining non-auto-fixable lint errors (e.g. `no-explicit-any`, `set-state-in-effect`) must be fixed manually in the affected files.
 
 ---
 
