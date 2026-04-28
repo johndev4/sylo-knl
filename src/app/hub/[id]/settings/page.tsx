@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import LibraryNav from '@/components/library-settings/LibraryNav';
 import {
   fetchLibraryMembers,
   addLibraryMember,
@@ -15,10 +14,10 @@ import {
   removeLibraryMember,
   removeMultipleLibraryMembers,
 } from '@/lib/actions/libraries';
-import MemberTable from '@/components/library-settings/MemberTable';
-import AddMemberForm from '@/components/library-settings/AddMemberForm';
-import { DeleteLibraryForm } from '@/components/library-settings/DeleteLibraryForm';
-import { RenameLibraryForm } from '@/components/library-settings/RenameLibraryForm';
+import MemberTable from '@/components/libraries/library-settings/MemberTable';
+import AddMemberForm from '@/components/libraries/library-settings/AddMemberForm';
+import { DeleteLibraryForm } from '@/components/libraries/library-settings/DeleteLibraryForm';
+import { RenameLibraryForm } from '@/components/libraries/library-settings/RenameLibraryForm';
 import { useAuth } from '@/lib/hooks/useAuth';
 
 interface LibraryMember {
@@ -184,7 +183,6 @@ export default function LibrarySettingsPage({
               Manage members and library settings
             </p>
           </div>
-          <LibraryNav libraryId={libraryId} currentSection="settings" />
         </div>
         <div className="py-8 text-center">Loading...</div>
       </div>
@@ -208,7 +206,6 @@ export default function LibrarySettingsPage({
             <Button variant="outline">Back to Library</Button>
           </Link>
         </div>
-        <LibraryNav libraryId={libraryId} currentSection="settings" />
       </div>
 
       {/* Error Message */}

@@ -1,7 +1,7 @@
 'use client';
 
 import { Check, Moon, Sun, Monitor } from 'lucide-react';
-import { useThemeContext } from '@/components/providers/ThemeProvider';
+import { useThemeContext } from '@/components/ThemeProvider';
 import {
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,

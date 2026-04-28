@@ -7,9 +7,9 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { CreateLibraryDialog } from '@/components/CreateLibraryDialog';
-import { LibrariesContainer } from '@/components/LibrariesContainer';
-import { LibrarySummaryHero } from '@/components/kokonutui/LibrarySummaryHero';
+import { CreateLibraryDialog } from '@/components/libraries/CreateLibraryDialog';
+import { LibrariesContainer } from '@/components/libraries/LibrariesContainer';
+import { LibrarySummaryHero } from '@/components/libraries/LibrarySummaryHero';
 
 export default async function LibrariesPage() {
   const supabase = await createClient();

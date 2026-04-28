@@ -162,7 +162,7 @@ export function LibrariesTable({ memberships }: LibrariesTableProps) {
                       {membership.docCount}
                     </td>
                     <td className="px-4 py-3 text-xs text-zinc-600 dark:text-zinc-400">
-                      {formatRelativeDate(space.created_at)}
+                      {formatRelativeDate(library.created_at)}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-2">
@@ -187,7 +187,7 @@ export function LibrariesTable({ memberships }: LibrariesTableProps) {
                               handleOpenLeaveDialog(library.id, library.name)
                             }
                             className="cursor-pointer rounded-md p-2 text-zinc-400 transition-colors hover:bg-orange-50 hover:text-orange-600 dark:hover:bg-orange-950/40"
-                            aria-label={`Leave ${space.name}`}
+                            aria-label={`Leave ${library.name}`}
                           >
                             <LogOut className="h-4 w-4" />
                           </button>

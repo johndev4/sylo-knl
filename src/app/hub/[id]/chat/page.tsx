@@ -15,7 +15,6 @@ import {
 import { Bot, User, ArrowUp, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import LibraryNav from '@/components/library-settings/LibraryNav';
 import ReactMarkdown from 'react-markdown';
 
 interface Message {
@@ -164,12 +163,10 @@ export default function ChatPage(props: { params: Promise<{ id: string }> }) {
               <a href={`/hub/${params.id}/documents`}>Manage Documents</a>
             </Button>
             <Button asChild variant="ghost" size="sm">
-              <a href="/hub">Back to Dashboard</a>
+              <a href="/hub">Back to Library Hub</a>
             </Button>
           </div>
         </div>
-
-        <LibraryNav libraryId={params.id} currentSection="chat" />
       </header>
 
       <main className="flex-1 space-y-6 overflow-y-auto p-4 md:p-6">

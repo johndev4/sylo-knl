@@ -28,8 +28,27 @@ export function Navbar() {
           <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-200 bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-900">
             <span className="text-xs font-bold">Sy</span>
           </div>
-          <span className="hidden sm:inline">Sylo</span>
+          <span className="hidden sm:inline">
+            Sylo{' '}
+            <span className="text-muted-foreground font-normal">
+              / Knowledge Library
+            </span>
+          </span>
         </Link>
+
+        {/* Global Navigation */}
+        <div className="absolute top-1/2 left-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-6 md:flex">
+          <Link
+            href="/hub"
+            className="text-foreground transition-smooth text-sm font-medium hover:text-zinc-700 dark:hover:text-zinc-300"
+          >
+            Library Hub
+          </Link>
+          {/* Chat is temporarily hidden as requested */}
+          {/* <Link href="/chat" className="text-sm font-medium text-foreground hover:text-zinc-700 dark:hover:text-zinc-300 transition-smooth">
+            Chat
+          </Link> */}
+        </div>
 
         {/* Theme Toggle & Account Dropdown */}
         <div className="flex items-center gap-2">

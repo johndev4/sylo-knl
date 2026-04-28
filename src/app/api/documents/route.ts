@@ -9,7 +9,104 @@ const ingestSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   content: z.string().min(10, 'Content is too short'),
   libraryId: z.string().uuid('Invalid Library ID'),
+  tags: z.array(z.string()).optional(),
 });
+
+export async function GET(req: NextRequest) {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const libraryId = searchParams.get('libraryId');
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '10');
+    const search = searchParams.get('search') || '';
+    const tagsParam = searchParams.get('tags');
+
+    if (!libraryId) {
+      return NextResponse.json(
+        { error: 'Library ID is required' },
+        { status: 400 }
+      );
+    }
+
+    // Check RBAC
+    let hasAccess = false;
+    if (libraryId === user.id) {
+      hasAccess = true;
+    } else {
+      const { data: membership } = await supabase
+        .from('library_members')
+        .select('library_id')
+        .eq('library_id', libraryId)
+        .eq('user_id', user.id)
+        .single();
+      hasAccess = !!membership;
+    }
+
+    if (!hasAccess) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    let query = supabase
+      .from('documents')
+      .select(
+        'id, title, tags, author_ids, created_at, updated_at, deleted_at',
+        { count: 'exact' }
+      )
+      .eq('library_id', libraryId)
+      .is('deleted_at', null)
+      .order('updated_at', { ascending: false });
+
+    if (search) {
+      query = query.ilike('title', `%${search}%`);
+    }
+
+    if (tagsParam) {
+      const tags = tagsParam
+        .split(',')
+        .map((t) => t.trim())
+        .filter(Boolean);
+      if (tags.length > 0) {
+        query = query.contains('tags', tags);
+      }
+    }
+
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+    query = query.range(from, to);
+
+    const { data, count, error } = await query;
+
+    if (error) {
+      throw error;
+    }
+
+    return NextResponse.json({
+      data,
+      metadata: {
+        total: count || 0,
+        page,
+        limit,
+        totalPages: Math.ceil((count || 0) / limit),
+      },
+    });
+  } catch (error: any) {
+    console.error('[DOCUMENTS GET ERROR]', error);
+    return NextResponse.json(
+      { error: error.message || 'Internal Server Error' },
+      { status: 500 }
+    );
+  }
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -24,18 +121,12 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { title, content, libraryId } = ingestSchema.parse(body);
-
-    // No need to manually sync user, handled by Postgres Trigger
+    const { title, content, libraryId, tags } = ingestSchema.parse(body);
 
     // Check library exists and user has access
     let hasAccess = false;
 
-    // Legacy Personal Space Check vs New Library Check
     if (libraryId === user.id) {
-      // In the new schema, personal libraries are just libraries created by the user
-      // If none match `libraryId = user.id`, we'll need to create a dedicated personal library, but for MVP
-      // let's create a library literally with id = user.id if it doesn't exist
       const { data: existingSpace } = await supabase
         .from('libraries')
         .select('id')
@@ -90,6 +181,8 @@ export async function POST(req: NextRequest) {
         title,
         content,
         library_id: libraryId,
+        tags: tags || [],
+        author_ids: [user.id],
       })
       .select('id')
       .single();
@@ -97,6 +190,13 @@ export async function POST(req: NextRequest) {
     if (docError || !document) {
       throw new Error(docError?.message || 'Failed to create document');
     }
+
+    // Audit Log
+    await supabase.from('document_edits').insert({
+      document_id: document.id,
+      user_id: user.id,
+      action: 'CREATED',
+    });
 
     // 4. Store Chunks
     const chunkInserts = chunks.map((chunkContent, i) => ({
