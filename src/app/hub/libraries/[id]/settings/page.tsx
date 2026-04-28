@@ -202,7 +202,7 @@ export default function LibrarySettingsPage({
               Manage members and library settings
             </p>
           </div>
-          <Link href={`/hub/${libraryId}/documents`}>
+          <Link href={`/hub/libraries/${libraryId}/documents`}>
             <Button variant="outline">Back to Library</Button>
           </Link>
         </div>

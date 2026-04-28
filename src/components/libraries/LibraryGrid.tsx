@@ -128,7 +128,7 @@ export function LibrariesBentoGrid({ memberships }: LibraryGridProps) {
                       size="sm"
                       aria-label={`Open chat for ${space.name}`}
                     >
-                      <a href={`/hub/${space.id}/chat`}>
+                      <a href={`/hub/libraries/${space.id}/chat`}>
                         <MessageSquare className="mr-2 h-4 w-4" />
                         Chat
                       </a>
@@ -142,7 +142,7 @@ export function LibrariesBentoGrid({ memberships }: LibraryGridProps) {
                         size="sm"
                         aria-label={`View documents for ${space.name}`}
                       >
-                        <a href={`/hub/${space.id}/documents`}>
+                        <a href={`/hub/libraries/${space.id}/documents`}>
                           <FileText className="mr-2 h-4 w-4" />
                           Docs
                         </a>
@@ -160,7 +160,7 @@ export function LibrariesBentoGrid({ memberships }: LibraryGridProps) {
                         size="sm"
                         aria-label={`Open settings for ${space.name}`}
                       >
-                        <a href={`/hub/${space.id}/settings`}>
+                        <a href={`/hub/libraries/${space.id}/settings`}>
                           <Settings className="mr-2 h-4 w-4" />
                           Manage
                         </a>

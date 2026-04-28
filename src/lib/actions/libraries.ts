@@ -202,7 +202,7 @@ export async function addLibraryMember(
     throw new Error('Failed to add member');
   }
 
-  revalidatePath(`/hub/${libraryId}`);
+  revalidatePath(`/hub/libraries/${libraryId}`);
   return newMember;
 }
 
@@ -279,7 +279,7 @@ export async function updateLibraryMemberRole(
     throw new Error('Failed to update member role');
   }
 
-  revalidatePath(`/hub/${libraryId}`);
+  revalidatePath(`/hub/libraries/${libraryId}`);
   return updatedMember;
 }
 
@@ -341,7 +341,7 @@ export async function removeLibraryMember(libraryId: string, userId: string) {
     throw new Error('Failed to remove member');
   }
 
-  revalidatePath(`/hub/${libraryId}`);
+  revalidatePath(`/hub/libraries/${libraryId}`);
   return { success: true };
 }
 
@@ -358,7 +358,7 @@ export async function removeMultipleLibraryMembers(
     throw new Error(`Failed to remove ${failed.length} member(s)`);
   }
 
-  revalidatePath(`/hub/${libraryId}`);
+  revalidatePath(`/hub/libraries/${libraryId}`);
   return { success: true, removedCount: userIds.length };
 }
 
@@ -429,7 +429,7 @@ export async function updateLibraryName(libraryId: string, newName: string) {
     throw new Error(error.message || 'Failed to update library name');
   }
 
-  revalidatePath(`/hub/${libraryId}/settings`);
+  revalidatePath(`/hub/libraries/${libraryId}/settings`);
   revalidatePath('/hub');
   return { success: true };
 }

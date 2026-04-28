@@ -7,15 +7,15 @@ test.describe('Document Management', () => {
   // Setup: since we might not have a real seeded DB in CI, we mock the API responses for the documents endpoints.
   test.beforeEach(async ({ page }) => {
     // Mock user auth
-    await page.route('**/auth/v1/user', async route => {
+    await page.route('**/auth/v1/user', async (route) => {
       await route.fulfill({
         status: 200,
-        json: { id: 'test-user', email: 'test@example.com' }
+        json: { id: 'test-user', email: 'test@example.com' },
       });
     });
 
     // Mock GET documents list
-    await page.route('**/api/documents?*', async route => {
+    await page.route('**/api/documents?*', async (route) => {
       await route.fulfill({
         status: 200,
         json: {
@@ -26,16 +26,16 @@ test.describe('Document Management', () => {
               tags: ['test', 'mock'],
               author_ids: ['test-user'],
               created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            }
+              updated_at: new Date().toISOString(),
+            },
           ],
-          metadata: { total: 1, page: 1, limit: 10, totalPages: 1 }
-        }
+          metadata: { total: 1, page: 1, limit: 10, totalPages: 1 },
+        },
       });
     });
 
     // Mock GET single document
-    await page.route(`**/api/documents/*`, async route => {
+    await page.route(`**/api/documents/*`, async (route) => {
       if (route.request().method() === 'GET') {
         await route.fulfill({
           status: 200,
@@ -49,19 +49,22 @@ test.describe('Document Management', () => {
               library_id: libId,
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString(),
-              authors: [{ id: 'test-user', name: 'Test User' }]
-            }
-          }
+              authors: [{ id: 'test-user', name: 'Test User' }],
+            },
+          },
         });
       } else if (route.request().method() === 'PUT') {
         await route.fulfill({
           status: 200,
-          json: { success: true, document: { updated_at: new Date().toISOString() } }
+          json: {
+            success: true,
+            document: { updated_at: new Date().toISOString() },
+          },
         });
       } else if (route.request().method() === 'DELETE') {
         await route.fulfill({
           status: 200,
-          json: { success: true }
+          json: { success: true },
         });
       } else {
         await route.continue();
@@ -69,11 +72,11 @@ test.describe('Document Management', () => {
     });
 
     // Mock POST create document
-    await page.route('**/api/documents', async route => {
+    await page.route('**/api/documents', async (route) => {
       if (route.request().method() === 'POST') {
         await route.fulfill({
           status: 200,
-          json: { success: true, documentId: 'new-doc-id' }
+          json: { success: true, documentId: 'new-doc-id' },
         });
       } else {
         await route.continue();
@@ -83,15 +86,17 @@ test.describe('Document Management', () => {
 
   test('List existing documents with filters in sidebar', async ({ page }) => {
     // Navigate to documents section
-    await page.goto(`/hub/${libId}/documents`);
-    
+    await page.goto(`/hub/libraries/${libId}/documents`);
+
     // Verify empty state in main area
-    await expect(page.getByRole('heading', { name: 'Select a Document' })).toBeVisible();
-    
+    await expect(
+      page.getByRole('heading', { name: 'Select a Document' })
+    ).toBeVisible();
+
     // Verify document in sidebar list
     const sidebar = page.locator('aside, .transition-all'); // sidebar container
     await expect(page.getByText('Mock Document 1')).toBeVisible();
-    
+
     // Test search filter input in sidebar
     const searchInput = page.getByPlaceholder('Search docs...');
     await expect(searchInput).toBeVisible();
@@ -100,64 +105,70 @@ test.describe('Document Management', () => {
   });
 
   test('Create a new document with all required fields', async ({ page }) => {
-    await page.goto(`/hub/${libId}/documents/new`);
-    
+    await page.goto(`/hub/libraries/${libId}/documents/new`);
+
     // Verify we are on the new document page (title input should be visible)
     await expect(page.getByLabel('Document Title')).toBeVisible();
-    
+
     // Fill title
     await page.getByLabel('Document Title').fill('My New Document');
-    
+
     // Fill content in Novel (which uses ProseMirror)
     const editor = page.locator('.ProseMirror');
     await editor.click();
     await editor.fill('This is the content of my new document.');
-    
+
     // Add tag
     const tagInput = page.getByPlaceholder('Add tag...');
     await tagInput.fill('important');
     await tagInput.press('Enter');
-    
+
     // Submit
     const submitBtn = page.getByRole('button', { name: 'Save' });
     await expect(submitBtn).toBeEnabled();
     await submitBtn.click();
   });
 
-  test('Create a new document with optional fields (no tags)', async ({ page }) => {
-    await page.goto(`/hub/${libId}/documents/new`);
-    
+  test('Create a new document with optional fields (no tags)', async ({
+    page,
+  }) => {
+    await page.goto(`/hub/libraries/${libId}/documents/new`);
+
     // Fill title
     await page.getByLabel('Document Title').fill('Minimal Document');
-    
+
     // Fill content
     const editor = page.locator('.ProseMirror');
     await editor.click();
     await editor.fill('Just the basics.');
-    
+
     // Submit directly
     await page.getByRole('button', { name: 'Save' }).click();
   });
 
   test('View document details', async ({ page }) => {
-    await page.goto(`/hub/${libId}/documents/doc-1`);
-    
+    await page.goto(`/hub/libraries/${libId}/documents/doc-1`);
+
     // Verify details
-    await expect(page.getByRole('heading', { name: 'Mock Document 1' })).toBeVisible();
-    
+    await expect(
+      page.getByRole('heading', { name: 'Mock Document 1' })
+    ).toBeVisible();
+
     // Content is rendered (ReactMarkdown via MarkdownViewer)
     await expect(page.getByText('This is a test.')).toBeVisible();
   });
 
   test('Edit document details', async ({ page }) => {
-    await page.goto(`/hub/${libId}/documents/doc-1/edit`);
-    
+    await page.goto(`/hub/libraries/${libId}/documents/doc-1/edit`);
+
     // Form should be populated
-    await expect(page.getByLabel('Document Title')).toHaveValue('Mock Document 1');
-    
+    await expect(page.getByLabel('Document Title')).toHaveValue(
+      'Mock Document 1'
+    );
+
     // Edit title
     await page.getByLabel('Document Title').fill('Updated Document Title');
-    
+
     // Save
     await page.getByRole('button', { name: 'Save' }).click();
   });

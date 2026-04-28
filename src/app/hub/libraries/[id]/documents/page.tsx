@@ -27,7 +27,7 @@ export default async function DocumentsPage({
         </div>
 
         <Button asChild size="lg" className="shadow-soft-md rounded-full">
-          <Link href={`/hub/${libraryId}/documents/new`}>
+          <Link href={`/hub/libraries/${libraryId}/documents/new`}>
             <Plus className="mr-2 h-5 w-5" />
             Create New Document
           </Link>

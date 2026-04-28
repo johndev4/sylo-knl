@@ -77,7 +77,7 @@ export default function DocumentDetailsPage() {
           size="sm"
           className="rounded-lg px-4 shadow-sm"
         >
-          <Link href={`/hub/${libraryId}/documents/${docId}/edit`}>
+          <Link href={`/hub/libraries/${libraryId}/documents/${docId}/edit`}>
             <Edit className="mr-2 h-4 w-4" /> Edit
           </Link>
         </Button>
