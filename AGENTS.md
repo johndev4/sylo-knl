@@ -106,7 +106,7 @@ supabase db pull                # Sync schema changes
 | `src/app/`                   | Next.js routes & API handlers                              |
 | `src/app/api/chat/`          | RAG chat endpoint (streaming)                              |
 | `src/app/api/documents/`     | Document CRUD endpoints                                    |
-| `src/app/api/libraries/`    | Library & member management                              |
+| `src/app/api/libraries/`     | Library & member management                                |
 | `src/lib/ai/`                | LLM core, providers, RAG pipeline                          |
 | `src/lib/ai/rag/pipeline.ts` | Full RAG orchestration (query → embed → retrieve → stream) |
 | `src/lib/ai/core/llm.ts`     | Provider-agnostic LLM interface                            |
@@ -136,122 +136,19 @@ All agents MUST follow the GitHub instructions referenced below. These are injec
 - **[security-and-owasp.instructions.md](.github/instructions/security-and-owasp.instructions.md)** — OWASP Top 10 2025 (55+ anti-patterns, SQL injection, XSS, CSRF, auth failures)
 - **[nextjs.instructions.md](.github/instructions/nextjs.instructions.md)** — Next.js 16+ App Router best practices
 - **[nextjs-tailwind.instructions.md](.github/instructions/nextjs-tailwind.instructions.md)** — Tailwind + Shadcn conventions
-- **[nodejs-javascript-vitest.instructions.md](.github/instructions/nodejs-javascript-vitest.instructions.md)** — Node.js / JS best practices
-- **[oop-design-patterns.instructions.md](.github/instructions/oop-design-patterns.instructions.md)** — OOP design patterns (Factory, Strategy, etc.)
 - **[sql-sp-generation.instructions.md](.github/instructions/sql-sp-generation.instructions.md)** — SQL & stored procedure patterns
 
 ---
 
 ## Specialized Agent Roles
 
-### 1. **RAG & LLM Engineer**
+Use this quick role map in `AGENTS.md`, and see `.github/agents/roles.md` for full triggers, responsibilities, and file-level guidance.
 
-**Triggers**: Questions about embeddings, vector search, LLM providers, streaming responses, context building
-
-**Responsibilities**:
-
-- Implement embeddings pipeline (`src/lib/ai/embeddings.ts`)
-- Add new LLM providers (`src/lib/ai/providers/`)
-- Optimize retrieval strategy (`src/lib/ai/rag/retrieve.ts`)
-- Debug streaming responses and chunk handling
-- Monitor embedding quality and relevance
-
-**Skills to Activate**: `supabase`, `supabase-postgres-best-practices`
-
-**Key Files**:
-
-- `src/lib/ai/core/llm.ts` — Provider interface
-- `src/lib/ai/rag/pipeline.ts` — RAG orchestration
-- `src/lib/ai/types/provider.types.ts` — Type definitions
-
----
-
-### 2. **Backend & API Engineer**
-
-**Triggers**: API routes, database queries, RBAC, validation, error handling, middleware
-
-**Responsibilities**:
-
-- Build/maintain REST API endpoints (`src/app/api/`)
-- Implement role-based access control checks
-- Write Zod validation schemas
-- Handle Supabase auth and session management
-- Enforce business constraints (max libraries, document limits)
-
-**Skills to Activate**: `supabase`
-
-**Key Files**:
-
-- `src/app/api/` — All route handlers
-- `src/lib/rbac.ts` — Permission checking
-- `src/lib/validation/` — Zod schemas
-- Search `.github/instructions/security-and-owasp.instructions.md` for API anti-patterns
-
----
-
-### 3. **Frontend & React Engineer**
-
-**Triggers**: UI components, state management, client pages, user interactions, styling
-
-**Responsibilities**:
-
-- Build React components and pages (`src/components/`, `src/app/hub/`)
-- Integrate Supabase Auth UI
-- Manage form state and validation
-- Implement search/filter/pagination UI
-- Ensure accessibility (WCAG 2.2 AA)
-
-**Skills to Activate**: None specific (follow instructions)
-
-**Key Files**:
-
-- `src/components/` — Reusable UI components
-- `src/app/(auth)/` — Auth flow pages
-- `src/app/hub/` — Library chat pages
-
----
-
-### 4. **Database & Security Engineer**
-
-**Triggers**: Schema design, migrations, RLS policies, performance, vector indexing, security
-
-**Responsibilities**:
-
-- Design database schema and relationships
-- Write PostgreSQL migrations via Supabase CLI
-- Implement and audit RLS policies
-- Create indexes for performance
-- Validate against OWASP Top 10 (A04 Cryptographic Failures, A05 Injection)
-
-**Skills to Activate**: `supabase`, `supabase-postgres-best-practices`
-
-**Key Files**:
-
-- `supabase/config.toml` — Supabase configuration
-- `supabase/migrations/` — Migration SQL files
-- `prisma/schema.prisma` — ORM schema (reference only)
-
----
-
-### 5. **DevOps & Deployment Engineer**
-
-**Triggers**: Build process, deployment, environment variables, CI/CD, production readiness
-
-**Responsibilities**:
-
-- Manage environment configuration
-- Ensure secrets are not committed
-- Verify build and start scripts work
-- Monitor for NEXT*PUBLIC* leaks
-- Test production builds
-
-**Skills to Activate**: None specific
-
-**Key Files**:
-
-- `.env.example` — Example environment variables
-- `next.config.ts` — Next.js build configuration
-- `package.json` — Build/start commands
+- **RAG & LLM Engineer**: Embeddings, vector retrieval, provider integrations, and streaming chat behavior.
+- **Backend & API Engineer**: Route handlers, RBAC enforcement, validation, and secure Supabase-backed APIs.
+- **Frontend & React Engineer**: UI components, state and interaction flows, and accessibility-compliant experiences.
+- **Database & Security Engineer**: Schema/migrations, RLS policies, indexing/performance, and OWASP-aligned safeguards.
+- **DevOps & Deployment Engineer**: Build/runtime setup, environment hygiene, and production readiness checks.
 
 ---
 
@@ -343,11 +240,9 @@ Do not manually create files in `src/components/ui`. Use the respective CLIs to 
 
 - **Supabase docs**: Reference via [Supabase MCP](https://supabase.com/docs/guides/getting-started/mcp) or web search for docs pages
 - **Next.js docs**: Official [Next.js documentation](https://nextjs.org/docs)
+- **Tailwind CSS docs**: Official [Tailwind documentation](https://tailwindcss.com/docs)
+- **Shadcn UI docs**: [shadcn documentation](https://ui.shadcn.com/docs)
+- **Kokonut UI docs**: [Kokonut UI documentation](https://kokonutui.com/docs)
 - **Vercel AI SDK**: [SDK documentation](https://sdk.vercel.ai/)
 - **GitHub Instructions**: See references above for WCAG, OWASP, and framework best practices
-
----
-
-**Last Updated**: April 2026  
-**Maintained By**: juanlinuz
-**Status**: Production-Ready MVP (in active development)
+- **Finding new skills**: Use the `find-skills` skill — run `npx skills find [query]` or browse [skills.sh](https://skills.sh/) to discover and install additional agent skills
