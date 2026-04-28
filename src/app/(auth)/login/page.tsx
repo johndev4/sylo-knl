@@ -39,7 +39,7 @@ export default function LoginPage() {
 
   return (
     <LoginHero>
-      <Card className="border-none bg-transparent shadow-none">
+      {/* <Card className="border-none bg-transparent shadow-none">
         <CardHeader>
           <CardTitle className="text-3xl">Login</CardTitle>
           <CardDescription>
@@ -55,7 +55,22 @@ export default function LoginPage() {
             redirectTo={`${typeof window !== 'undefined' ? window.location.origin : ''}/auth/callback`}
           />
         </CardContent>
-      </Card>
+      </Card> */}
+      <div>
+        <div className="mb-6">
+          <h2 className="text-3xl font-semibold">Login</h2>
+          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+            Safe and secure sign-in. Your data stays protected.
+          </p>
+        </div>
+        <Auth
+          supabaseClient={supabase}
+          appearance={{ theme: getAuthTheme(theme === 'dark') }}
+          providers={['google']}
+          onlyThirdPartyProviders={true}
+          redirectTo={`${typeof window !== 'undefined' ? window.location.origin : ''}/auth/callback`}
+        />
+      </div>
     </LoginHero>
   );
 }

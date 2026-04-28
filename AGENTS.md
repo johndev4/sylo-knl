@@ -20,8 +20,8 @@ This document helps agents understand the **Sylo** knowledge library application
 - **Auth & Database**: Supabase (PostgreSQL + pgvector for embeddings)
 - **AI System**: Vercel AI SDK with provider-agnostic LLM core (Google, Ollama)
 - **Styling**: Tailwind CSS v4 (Standard)
-- **Base Components**: shadcn/ui (Radix Primitives)
-- **Interactive & Advanced UI**: Kokonut UI
+- **Base Components**: shadcn/ui (Radix UI)
+- **Interactive & Advanced UI**: Kokonut UI (Framer Motion)
 - **Key Features**:
   - Document management with tagging and search
   - RAG-powered chatbot with vector similarity retrieval

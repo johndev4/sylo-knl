@@ -5,11 +5,9 @@ import './globals.css';
 import { Suspense } from 'react';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { Navbar } from '@/components/Navbar';
+import { cn } from "@/lib/utils";
 
-const inter = Inter({
-  variable: '--font-sans',
-  subsets: ['latin'],
-});
+const inter = Inter({subsets:['latin'],variable:'--font-sans'});
 
 const jetbrainsMono = JetBrains_Mono({
   variable: '--font-mono',
@@ -29,7 +27,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
+      className={cn("h-full", "antialiased", jetbrainsMono.variable, "font-sans", inter.variable)}
       suppressHydrationWarning
     >
       <head />
