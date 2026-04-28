@@ -166,13 +166,13 @@ export function LibrariesTable({ memberships }: LibrariesTableProps) {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <Link href={`/hub/${library.id}/chat`}>
+                        <Link href={`/hub/libraries/${library.id}/chat`}>
                           <Button size="sm" variant="default">
                             Chat
                           </Button>
                         </Link>
                         {isOwner && (
-                          <Link href={`/hub/${library.id}/settings`}>
+                          <Link href={`/hub/libraries/${library.id}/settings`}>
                             <button
                               className="cursor-pointer rounded-md p-2 text-zinc-400 transition-colors hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950/40"
                               aria-label={`Manage settings for ${library.name}`}

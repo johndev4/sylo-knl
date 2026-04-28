@@ -35,7 +35,7 @@ const roleDescriptions: Record<string, string> = {
 
 const roleOptions = ['ADMIN', 'EDITOR', 'VIEWER'];
 
-export default function MemberTable({
+export function MemberTable({
   members,
   currentUserRole,
   canManageMembers,

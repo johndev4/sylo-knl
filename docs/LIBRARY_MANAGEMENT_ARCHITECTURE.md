@@ -8,7 +8,7 @@
 │                                                                       │
 │  ┌──────────────────────────────────────────────────────────────┐  │
 │  │           Library Settings Page                           │  │
-│  │         (/librarys/[id]/settings/page.tsx)                   │  │
+│  │         (/hub/libraries/[id]/settings/page.tsx)                   │  │
 │  │                                                              │  │
 │  │  ┌─────────────────┐  ┌──────────────────────────────────┐ │  │
 │  │  │ AddMemberForm   │  │    MemberTable                   │ │  │
@@ -22,7 +22,7 @@
                               ↕ (fetch/POST/PATCH/DELETE)
 ┌─────────────────────────────────────────────────────────────────────┐
 │                       Server Actions Layer                           │
-│              (src/lib/actions/librarys.ts)                         │
+│              (src/lib/actions/libraries.ts)                         │
 │                                                                       │
 │  • fetchLibraryMembers(libraryId)                               │
 │  • addLibraryMember(libraryId, email, role)                     │
@@ -33,28 +33,28 @@
                               ↕ (HTTP API calls)
 ┌─────────────────────────────────────────────────────────────────────┐
 │                        API Routes Layer                              │
-│                   (src/app/api/librarys/...)                       │
+│                   (src/app/api/libraries/...)                       │
 │                                                                       │
-│  GET    /api/librarys/[id]/members                                │
+│  GET    /api/libraries/[id]/members                                │
 │         ├─ Auth check (user must exist)                             │
 │         ├─ Permission check (member of library)                   │
 │         └─ Return: Array of member objects                          │
 │                                                                       │
-│  POST   /api/librarys/[id]/members                                │
+│  POST   /api/libraries/[id]/members                                │
 │         ├─ Auth check                                               │
 │         ├─ Permission check (OWNER or ADMIN)                        │
 │         ├─ Validate input (Zod schema)                              │
 │         ├─ Check member limit (max 11)                              │
 │         └─ Insert member to database                                │
 │                                                                       │
-│  PATCH  /api/librarys/[id]/members/[userId]                      │
+│  PATCH  /api/libraries/[id]/members/[userId]                      │
 │         ├─ Auth check                                               │
 │         ├─ Permission check (OWNER or ADMIN)                        │
 │         ├─ Validate input (Zod schema)                              │
 │         ├─ Check business rules                                     │
 │         └─ Update member role                                       │
 │                                                                       │
-│  DELETE /api/librarys/[id]/members/[userId]                      │
+│  DELETE /api/libraries/[id]/members/[userId]                      │
 │         ├─ Auth check                                               │
 │         ├─ Permission check (OWNER or ADMIN)                        │
 │         ├─ Check if not removing only OWNER                         │
@@ -94,7 +94,7 @@
    ↓
 3. Form calls: addLibraryMember(libraryId, email, role)
    ↓
-4. POST /api/librarys/[id]/members
+4. POST /api/libraries/[id]/members
    {
      "email": "user@example.com",
      "role": "EDITOR"
@@ -123,7 +123,7 @@
    ↓
 2. Calls: updateLibraryMemberRole(libraryId, userId, newRole)
    ↓
-3. PATCH /api/librarys/[id]/members/[userId]
+3. PATCH /api/libraries/[id]/members/[userId]
    {
      "role": "ADMIN"
    }
@@ -151,7 +151,7 @@
    ↓
 4. Calls: removeLibraryMember(libraryId, userId)
    ↓
-5. DELETE /api/librarys/[id]/members/[userId]
+5. DELETE /api/libraries/[id]/members/[userId]
    ↓
 6. API Handler:
    a) Get current user from Supabase auth

@@ -9,18 +9,18 @@ I have successfully implemented a **complete library member management system** 
 ## ✅ What Was Implemented
 
 ### 1. **Database Updates**
-- ✅ Updated max members constraint: from "2 librarys per user" → "11 members per library"
+- ✅ Updated max members constraint: from "2 libraries per user" → "11 members per library"
 - ✅ Enhanced RLS policies for member management operations
 - ✅ Separated RLS policies by operation type (SELECT, INSERT, UPDATE, DELETE)
 
 ### 2. **API Endpoints**
-- ✅ `GET /api/librarys/[id]/members` - List all members
-- ✅ `POST /api/librarys/[id]/members` - Add member by email
-- ✅ `PATCH /api/librarys/[id]/members/[userId]` - Update member role
-- ✅ `DELETE /api/librarys/[id]/members/[userId]` - Remove member
+- ✅ `GET /api/libraries/[id]/members` - List all members
+- ✅ `POST /api/libraries/[id]/members` - Add member by email
+- ✅ `PATCH /api/libraries/[id]/members/[userId]` - Update member role
+- ✅ `DELETE /api/libraries/[id]/members/[userId]` - Remove member
 
 ### 3. **Frontend Components**
-- ✅ Library settings page (`/librarys/[id]/settings`)
+- ✅ Library settings page (`/hub/libraries/[id]/settings`)
 - ✅ Add member form with email and role selection
 - ✅ Member table with inline role editing
 - ✅ Bulk member selection and deletion
@@ -45,16 +45,18 @@ I have successfully implemented a **complete library member management system** 
 
 ```
 ✅ API Routes
-   src/app/api/librarys/[id]/members/route.ts
-   src/app/api/librarys/[id]/members/[userId]/route.ts
+   src/app/api/libraries/[id]/members/route.ts
+   src/app/api/libraries/[id]/members/[userId]/route.ts
 
 ✅ Components
-   src/components/library-settings/AddMemberForm.tsx
-   src/components/library-settings/MemberTable.tsx
+   src/app/hub/_components/libraries/settings/AddMemberForm.tsx
+   src/app/hub/_components/libraries/settings/MemberTable.tsx
+   src/app/hub/_components/libraries/settings/DeleteLibraryForm.tsx
+   src/app/hub/_components/libraries/settings/RenameLibraryForm.tsx
    src/components/ui/checkbox.tsx
 
 ✅ Pages
-   src/app/librarys/[id]/settings/page.tsx
+   src/app/hub/libraries/[id]/settings/page.tsx
 
 ✅ Validation
    src/lib/validation/library.schema.ts
@@ -63,7 +65,7 @@ I have successfully implemented a **complete library member management system** 
    src/lib/hooks/useAuth.ts
 
 ✅ Updated Files
-   src/lib/actions/librarys.ts (added 6 new functions)
+   src/lib/actions/libraries.ts (added 6 new functions)
    supabase/migrations/20260418223650_init_pure_schema.sql (updated constraints & RLS)
 ```
 
@@ -93,8 +95,8 @@ I have successfully implemented a **complete library member management system** 
 ## 🚀 How to Use
 
 ### For Users
-1. Go to any library
-2. Click "Settings" button (you'll need to add this link)
+1. Navigate to any library
+2. Click "Settings" in the library navigation
 3. Use the "Add Member" form to invite teammates
 4. Adjust roles using the dropdown in the member table
 5. Remove members individually or in bulk
@@ -104,7 +106,7 @@ I have successfully implemented a **complete library member management system** 
 #### Add Settings Link to Navigation
 ```tsx
 // In your library header/navigation component
-<Link href={`/librarys/${libraryId}/settings`}>
+<Link href={`/hub/libraries/${libraryId}/settings`}>
   <Button variant="outline">Library Settings</Button>
 </Link>
 ```
@@ -116,7 +118,7 @@ import {
   addLibraryMember,
   updateLibraryMemberRole,
   removeLibraryMember,
-} from '@/lib/actions/librarys';
+} from '@/lib/actions/libraries';
 
 // Example: Add a member
 const member = await addLibraryMember(
@@ -148,7 +150,7 @@ await removeLibraryMember(libraryId, userId);
 
 #### ✅ Test 1: Add a Member
 1. Login as library OWNER
-2. Navigate to `/librarys/[library-id]/settings`
+2. Navigate to `/hub/libraries/[library-id]/settings`
 3. Enter a team member's email
 4. Select "EDITOR" role
 5. Click "Add Member"
@@ -203,7 +205,7 @@ await removeLibraryMember(libraryId, userId);
 
 ## 📊 API Response Examples
 
-### GET /api/librarys/[id]/members
+### GET /api/libraries/[id]/members
 ```json
 {
   "data": [
@@ -223,7 +225,7 @@ await removeLibraryMember(libraryId, userId);
 }
 ```
 
-### POST /api/librarys/[id]/members
+### POST /api/libraries/[id]/members
 ```json
 {
   "data": {
@@ -273,7 +275,7 @@ await removeLibraryMember(libraryId, userId);
    - Email verification before adding
    - Invitation tokens instead of direct email lookup
 
-4. **Pagination**: For large librarys (future feature), add pagination to member list
+4. **Pagination**: For large libraries (future feature), add pagination to member list
 
 5. **Audit Logging**: Consider adding audit logs for member changes
 
@@ -290,7 +292,7 @@ await removeLibraryMember(libraryId, userId);
 - **Accessible**: WCAG 2.2 AA compliant UI
 - **Secure**: Multiple layers of security (RLS, API checks, validation)
 - **User-friendly**: Clear error messages and intuitive UI
-- **Scalable**: Works with any number of librarys and members
+- **Scalable**: Works with any number of libraries and members
 - **Production-ready**: Follows Next.js best practices
 
 ---

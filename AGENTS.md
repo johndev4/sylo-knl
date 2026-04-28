@@ -101,20 +101,50 @@ supabase db pull                # Sync schema changes
 
 ## Critical Folders & Files
 
+### Application Core
+
+| Path                          | Purpose                                             |
+| ----------------------------- | --------------------------------------------------- |
+| `src/app/`                    | Next.js routes & API handlers                       |
+| `src/app/hub/`                | Main application hub (libraries, documents, chat)   |
+| `src/app/hub/_components/`    | Feature-local components (documents, libraries)     |
+| `src/app/hub/libraries/[id]/` | Library-specific routes (chat, documents, settings) |
+| `src/app/api/`                | API route handlers                                  |
+| `src/app/api/chat/`           | RAG chat endpoint (streaming)                       |
+| `src/app/api/documents/`      | Document CRUD endpoints                             |
+| `src/app/api/libraries/`      | Library & member management                         |
+
+### Shared Components
+
+| Path                        | Purpose                                          |
+| --------------------------- | ------------------------------------------------ |
+| `src/components/ui/`        | shadcn/ui & Kokonut UI primitives                |
+| `src/components/layout/`    | App-wide layout components (Navbar, ThemeToggle) |
+| `src/components/providers/` | React context providers (ThemeProvider)          |
+
+### Libraries & Utilities
+
 | Path                         | Purpose                                                    |
 | ---------------------------- | ---------------------------------------------------------- |
-| `src/app/`                   | Next.js routes & API handlers                              |
-| `src/app/api/chat/`          | RAG chat endpoint (streaming)                              |
-| `src/app/api/documents/`     | Document CRUD endpoints                                    |
-| `src/app/api/libraries/`     | Library & member management                                |
 | `src/lib/ai/`                | LLM core, providers, RAG pipeline                          |
 | `src/lib/ai/rag/pipeline.ts` | Full RAG orchestration (query → embed → retrieve → stream) |
 | `src/lib/ai/core/llm.ts`     | Provider-agnostic LLM interface                            |
 | `src/lib/supabase/`          | Supabase client (server/client modes)                      |
+| `src/lib/actions/`           | Server actions for libraries, documents                    |
+| `src/lib/hooks/`             | Custom React hooks (useAuth, useTheme)                     |
+| `src/lib/validation/`        | Zod schemas for input validation                           |
 | `src/lib/themes/`            | Auth UI theming                                            |
-| `components/`                | Reusable React components                                  |
-| `playwright.config.ts`       | Playwright E2E configuration                               |
-| `tests/e2e/`                 | End-to-end browser tests                                   |
+| `src/lib/utils.ts`           | Utility functions (cn helper)                              |
+
+### Configuration & Testing
+
+| Path                   | Purpose                      |
+| ---------------------- | ---------------------------- |
+| `components.json`      | shadcn/ui configuration      |
+| `playwright.config.ts` | Playwright E2E configuration |
+| `tests/e2e/`           | End-to-end browser tests     |
+| `supabase/`            | Supabase config & migrations |
+| `docs/`                | Project documentation        |
 
 ---
 
@@ -164,7 +194,7 @@ Every API endpoint should follow this:
 4. Call service layer
 5. Return typed response (or error)
 
-See `src/app/api/documents/route.ts` for reference.
+**Example:** `src/app/api/documents/route.ts`
 
 ### Frontend Fetch Pattern
 
@@ -173,7 +203,7 @@ See `src/app/api/documents/route.ts` for reference.
 3. Show loading/error states
 4. Render with proper accessibility (labels, roles, ARIA)
 
-See `src/app/hub/[id]/documents/page.tsx` for reference.
+**Example:** `src/app/hub/libraries/[id]/documents/page.tsx`
 
 ### RAG Chat Pattern
 
@@ -182,7 +212,7 @@ See `src/app/hub/[id]/documents/page.tsx` for reference.
 3. Stream chunks back to client
 4. Display streamed response in real-time
 
-See `src/app/api/chat/route.ts` for reference.
+**Example:** `src/app/api/chat/route.ts`
 
 ---
 

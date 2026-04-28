@@ -3,11 +3,11 @@ import { Inter, JetBrains_Mono } from 'next/font/google';
 import Script from 'next/script';
 import './globals.css';
 import { Suspense } from 'react';
-import { ThemeProvider } from '@/components/ThemeProvider';
-import { Navbar } from '@/components/Navbar';
-import { cn } from "@/lib/utils";
+import { ThemeProvider } from '@/components/providers/ThemeProvider';
+import { Navbar } from '@/components/layout/Navbar';
+import { cn } from '@/lib/utils';
 
-const inter = Inter({subsets:['latin'],variable:'--font-sans'});
+const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
 const jetbrainsMono = JetBrains_Mono({
   variable: '--font-mono',
@@ -27,7 +27,13 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={cn("h-full", "antialiased", jetbrainsMono.variable, "font-sans", inter.variable)}
+      className={cn(
+        'h-full',
+        'antialiased',
+        jetbrainsMono.variable,
+        'font-sans',
+        inter.variable
+      )}
       suppressHydrationWarning
     >
       <head />

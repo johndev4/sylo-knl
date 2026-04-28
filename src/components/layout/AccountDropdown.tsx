@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { LogOut, Settings } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
-import { ThemeSubmenu } from '@/components/ThemeSubmenu';
+import { ThemeSubmenu } from '@/components/layout/ThemeSubmenu';
 import {
   DropdownMenu,
   DropdownMenuContent,

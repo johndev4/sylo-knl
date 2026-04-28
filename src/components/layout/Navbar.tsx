@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { AccountDropdown } from '@/components/AccountDropdown';
-import { ThemeToggle } from '@/components/ThemeToggle';
+import { AccountDropdown } from '@/components/layout/AccountDropdown';
+import { ThemeToggle } from '@/components/layout/ThemeToggle';
 import { cn } from '@/lib/utils';
 
 export function Navbar() {

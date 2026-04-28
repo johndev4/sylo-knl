@@ -147,7 +147,7 @@ export function DocumentsSidebar() {
           asChild
           className="w-full justify-center border bg-white text-black shadow-sm hover:bg-zinc-200 dark:bg-zinc-100 dark:text-zinc-900"
         >
-          <Link href={`/hub/${libraryId}/documents/new`}>
+          <Link href={`/hub/libraries/${libraryId}/documents/new`}>
             <Plus className="mr-2 h-4 w-4" /> New Doc
           </Link>
         </Button>
@@ -245,12 +245,14 @@ export function DocumentsSidebar() {
                 ) : (
                   filteredDocuments.map((doc) => {
                     const isActive =
-                      pathname === `/hub/${libraryId}/documents/${doc.id}` ||
-                      pathname === `/hub/${libraryId}/documents/${doc.id}/edit`;
+                      pathname ===
+                        `/hub/libraries/${libraryId}/documents/${doc.id}` ||
+                      pathname ===
+                        `/hub/libraries/${libraryId}/documents/${doc.id}/edit`;
                     return (
                       <Link
                         key={doc.id}
-                        href={`/hub/${libraryId}/documents/${doc.id}`}
+                        href={`/hub/libraries/${libraryId}/documents/${doc.id}`}
                         className={cn(
                           'group relative rounded-md px-6 py-2.5 text-sm transition-all',
                           isActive
@@ -300,7 +302,7 @@ export function DocumentsSidebar() {
           variant="ghost"
           className="text-muted-foreground hover:text-foreground w-full justify-start"
         >
-          <Link href={`/hub/${libraryId}/chat`}>
+          <Link href={`/hub/libraries/${libraryId}/chat`}>
             <MessageSquare className="mr-2 h-4 w-4" /> AI Chat
           </Link>
         </Button>
@@ -309,7 +311,7 @@ export function DocumentsSidebar() {
           variant="ghost"
           className="text-muted-foreground hover:text-foreground w-full justify-start"
         >
-          <Link href={`/hub/${libraryId}/settings`}>
+          <Link href={`/hub/libraries/${libraryId}/settings`}>
             <Settings className="mr-2 h-4 w-4" /> Settings
           </Link>
         </Button>

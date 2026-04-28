@@ -19,7 +19,7 @@ const roleOptions = [
   { value: 'VIEWER', label: 'Viewer - Can view content only' },
 ];
 
-export default function AddMemberForm({
+export function AddMemberForm({
   onAddMember,
   isLoading,
   memberCount,

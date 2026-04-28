@@ -14,21 +14,26 @@ A complete library member management system allowing OWNER and ADMIN users to:
 ## 📂 Key Files
 
 ### User-Facing Pages
-- **Settings Page**: `/librarys/[id]/settings` - Full member management UI
+- **Settings Page**: `/hub/libraries/[id]/settings` - Full member management UI
 
 ### API Endpoints
-- **GET** `/api/librarys/[id]/members` - List members
-- **POST** `/api/librarys/[id]/members` - Add member
-- **PATCH** `/api/librarys/[id]/members/[userId]` - Update role
-- **DELETE** `/api/librarys/[id]/members/[userId]` - Remove member
+- **GET** `/api/libraries/[id]/members` - List members
+- **POST** `/api/libraries/[id]/members` - Add member
+- **PATCH** `/api/libraries/[id]/members/[userId]` - Update role
+- **DELETE** `/api/libraries/[id]/members/[userId]` - Remove member
 
 ### Components
 - `AddMemberForm.tsx` - Form to add new members
 - `MemberTable.tsx` - Table displaying members
-- `LibraryNav.tsx` - Optional navigation component
+- `DeleteLibraryForm.tsx` - Delete library confirmation
+- `RenameLibraryForm.tsx` - Rename library form
+
+**Location:** `src/app/hub/_components/libraries/settings/`
 
 ### Validation
 - `library.schema.ts` - Zod schemas for all operations
+
+**Location:** `src/lib/validation/`
 
 ---
 
@@ -36,7 +41,7 @@ A complete library member management system allowing OWNER and ADMIN users to:
 
 ### 1. Add Link to Settings
 ```tsx
-<Link href={`/librarys/${libraryId}/settings`}>
+<Link href={`/hub/libraries/${libraryId}/settings`}>
   <Button>Library Settings</Button>
 </Link>
 ```
@@ -44,20 +49,20 @@ A complete library member management system allowing OWNER and ADMIN users to:
 ### 2. Test Member Operations
 ```bash
 # Add member
-POST /api/librarys/[id]/members
+POST /api/libraries/[id]/members
 { "email": "user@example.com", "role": "EDITOR" }
 
 # Update role
-PATCH /api/librarys/[id]/members/[userId]
+PATCH /api/libraries/[id]/members/[userId]
 { "role": "ADMIN" }
 
 # Remove member
-DELETE /api/librarys/[id]/members/[userId]
+DELETE /api/libraries/[id]/members/[userId]
 ```
 
 ### 3. Use in Code
 ```typescript
-import { addLibraryMember, fetchLibraryMembers } from '@/lib/actions/librarys';
+import { addLibraryMember, fetchLibraryMembers } from '@/lib/actions/libraries';
 
 // Add member
 await addLibraryMember(libraryId, 'email@example.com', 'EDITOR');
@@ -111,7 +116,7 @@ const members = await fetchLibraryMembers(libraryId);
 
 ## 📊 Database Changes
 
-- Updated trigger: Max 11 members per library (was max 2 librarys)
+- Updated trigger: Max 11 members per library (was max 2 libraries)
 - Enhanced RLS policies for member operations
 - No schema changes needed (existing `library_members` table)
 

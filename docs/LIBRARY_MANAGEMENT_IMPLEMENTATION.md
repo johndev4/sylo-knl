@@ -35,20 +35,22 @@ I have successfully implemented a complete library member management system for 
 
 ### API Routes (New)
 ```
-src/app/api/librarys/[id]/members/route.ts          (GET, POST)
-src/app/api/librarys/[id]/members/[userId]/route.ts (PATCH, DELETE)
+src/app/api/libraries/[id]/members/route.ts          (GET, POST)
+src/app/api/libraries/[id]/members/[userId]/route.ts (PATCH, DELETE)
 ```
 
 ### Components (New)
 ```
-src/components/library-settings/AddMemberForm.tsx  - Form to add new members
-src/components/library-settings/MemberTable.tsx    - Table displaying all members
-src/components/ui/checkbox.tsx                        - Checkbox input component
+src/app/hub/_components/libraries/settings/AddMemberForm.tsx   - Form to add new members
+src/app/hub/_components/libraries/settings/MemberTable.tsx     - Table displaying all members
+src/app/hub/_components/libraries/settings/DeleteLibraryForm.tsx  - Delete library confirmation
+src/app/hub/_components/libraries/settings/RenameLibraryForm.tsx  - Rename library form
+src/components/ui/checkbox.tsx                                 - Checkbox input component
 ```
 
 ### Pages (New)
 ```
-src/app/librarys/[id]/settings/page.tsx - Library settings page
+src/app/hub/libraries/[id]/settings/page.tsx - Library settings page
 ```
 
 ### Hooks (New)
@@ -63,13 +65,13 @@ src/lib/validation/library.schema.ts - Zod schemas for all member operations
 
 ### Actions (Updated)
 ```
-src/lib/actions/librarys.ts - Added member management server actions
+src/lib/actions/libraries.ts - Added member management server actions
 ```
 
 ### Database (Updated)
 ```
 supabase/migrations/20260418223650_init_pure_schema.sql
-- Changed max members constraint from 2 librarys to 11 per library
+- Changed max members constraint from 2 libraries to 11 per library
 - Enhanced RLS policies for proper member management
 ```
 
@@ -77,13 +79,13 @@ supabase/migrations/20260418223650_init_pure_schema.sql
 
 ## 🔌 API Endpoints
 
-### GET /api/librarys/[id]/members
+### GET /api/libraries/[id]/members
 **List all members of a library**
 - **Auth**: Required
 - **Permission**: Must be member of library
 - **Response**: Array of member objects with user details
 
-### POST /api/librarys/[id]/members
+### POST /api/libraries/[id]/members
 **Add a new member to library**
 - **Auth**: Required
 - **Permission**: OWNER or ADMIN
@@ -95,7 +97,7 @@ supabase/migrations/20260418223650_init_pure_schema.sql
   - Cannot exceed 11 member limit
   - Cannot assign OWNER role
 
-### PATCH /api/librarys/[id]/members/[userId]
+### PATCH /api/libraries/[id]/members/[userId]
 **Update member role**
 - **Auth**: Required
 - **Permission**: OWNER or ADMIN
@@ -105,7 +107,7 @@ supabase/migrations/20260418223650_init_pure_schema.sql
   - Cannot demote the only OWNER
   - Cannot demote yourself if you're the only OWNER
 
-### DELETE /api/librarys/[id]/members/[userId]
+### DELETE /api/libraries/[id]/members/[userId]
 **Remove member from library**
 - **Auth**: Required
 - **Permission**: OWNER or ADMIN
@@ -116,7 +118,7 @@ supabase/migrations/20260418223650_init_pure_schema.sql
 
 ## 🎨 UI/UX Features
 
-### Library Settings Page (`/librarys/[id]/settings`)
+### Library Settings Page (`/hub/libraries/[id]/settings`)
 
 1. **Add Member Form**
    - Email input with validation
@@ -143,7 +145,7 @@ supabase/migrations/20260418223650_init_pure_schema.sql
 ## 🔐 Security Implementation
 
 ### Row-Level Security (RLS)
-- ✅ Users can only view members of librarys they belong to
+- ✅ Users can only view members of libraries they belong to
 - ✅ Only OWNER and ADMIN can modify members
 - ✅ RLS policies separated by operation (SELECT, INSERT, UPDATE, DELETE)
 - ✅ Server-side validation prevents unauthorized actions
@@ -217,12 +219,12 @@ The settings page should be accessible from:
 
 Add this link to your library navigation:
 ```tsx
-<Link href={`/librarys/${libraryId}/settings`}>Settings</Link>
+<Link href={`/hub/libraries/${libraryId}/settings`}>Settings</Link>
 ```
 
 ### For Supabase
 The database migration has been updated to:
-1. Change max member constraint from 2 librarys to 11 members per library
+1. Change max member constraint from 2 libraries to 11 members per library
 2. Update RLS policies to properly handle member management operations
 
 You may need to run the migration on your Supabase instance or redeploy the database.
@@ -244,7 +246,7 @@ User (OWNER/ADMIN)
   ↓
 AddMemberForm (validation)
   ↓
-POST /api/librarys/[id]/members
+POST /api/libraries/[id]/members
   ↓
 1. Validate email format
 2. Find user by email
@@ -263,7 +265,7 @@ User (OWNER/ADMIN)
   ↓
 MemberTable (role dropdown)
   ↓
-PATCH /api/librarys/[id]/members/[userId]
+PATCH /api/libraries/[id]/members/[userId]
   ↓
 1. Validate new role
 2. Check permission
@@ -281,7 +283,7 @@ MemberTable (delete button)
   ↓
 Confirmation dialog
   ↓
-DELETE /api/librarys/[id]/members/[userId]
+DELETE /api/libraries/[id]/members/[userId]
   ↓
 1. Check permission
 2. Prevent removing only OWNER

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { DocumentForm } from '@/components/documents/DocumentForm';
+import { DocumentForm } from '@/app/hub/_components/documents/DocumentForm';
 import { Loader2, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 

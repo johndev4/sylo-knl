@@ -11,7 +11,7 @@ import {
 import { useEffect, useState } from 'react';
 import { Auth } from '@supabase/auth-ui-react';
 import { getAuthTheme } from '@/lib/themes/authTheme';
-import { LoginHero } from '@/components/LoginHero';
+import { LoginHero } from '@/app/(auth)/login/_components/LoginHero';
 
 export default function LoginPage() {
   const supabase = createClient();

@@ -98,7 +98,7 @@ export function DocumentForm({ libraryId, initialData }: DocumentFormProps) {
 
       triggerRefresh();
       router.push(
-        `/hub/${libraryId}/documents/${data.documentId || initialData?.id}`
+        `/hub/libraries/${libraryId}/documents/${data.documentId || initialData?.id}`
       );
       router.refresh();
     } catch (err: any) {

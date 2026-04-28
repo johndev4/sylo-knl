@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
-import { DocumentForm } from '@/components/documents/DocumentForm';
+import { DocumentForm } from '@/app/hub/_components/documents/DocumentForm';
 
 export default async function NewDocumentPage(props: {
   params: Promise<{ id: string }>;
