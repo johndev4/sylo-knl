@@ -60,7 +60,7 @@ export async function GET(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    let authors = [];
+    let authors:any = [];
     if (document.author_ids && document.author_ids.length > 0) {
       const { data: usersData } = await supabase
         .from('users')
