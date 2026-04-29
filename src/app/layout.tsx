@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Inter, JetBrains_Mono } from 'next/font/google';
+import { JetBrains_Mono, Geist } from 'next/font/google';
 import Script from 'next/script';
 import './globals.css';
 import { Suspense } from 'react';
@@ -7,7 +7,7 @@ import { ThemeProvider } from '@/components/providers/ThemeProvider';
 import { Navbar } from '@/components/layout/Navbar';
 import { cn } from '@/lib/utils';
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
+const geist = Geist({ subsets: ['latin'], variable: '--font-sans' });
 
 const jetbrainsMono = JetBrains_Mono({
   variable: '--font-mono',
@@ -32,7 +32,8 @@ export default function RootLayout({
         'antialiased',
         jetbrainsMono.variable,
         'font-sans',
-        inter.variable
+        'font-sans',
+        geist.variable
       )}
       suppressHydrationWarning
     >
