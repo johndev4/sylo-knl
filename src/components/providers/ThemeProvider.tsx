@@ -1,32 +1,21 @@
 'use client';
 
-import React, { createContext, useContext } from 'react';
-import { useTheme } from '@/lib/hooks/useTheme';
+import {
+  ThemeProvider as NextThemesProvider,
+  ThemeProviderProps,
+} from 'next-themes';
 
-type Theme = 'light' | 'dark' | 'system';
-
-interface ThemeContextType {
-  theme: Theme;
-  setTheme: (theme: Theme) => void;
-  mounted: boolean;
-}
-
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
-
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const { theme, setTheme, mounted } = useTheme();
-
+export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, mounted }}>
+    <NextThemesProvider
+      attribute="class"
+      enableSystem
+      defaultTheme="system"
+      storageKey="app-theme"
+      disableTransitionOnChange
+      {...props}
+    >
       {children}
-    </ThemeContext.Provider>
+    </NextThemesProvider>
   );
-}
-
-export function useThemeContext() {
-  const context = useContext(ThemeContext);
-  if (context === undefined) {
-    throw new Error('useThemeContext must be used within ThemeProvider');
-  }
-  return context;
 }

@@ -1,12 +1,13 @@
 'use client';
 
-import { Sun, Moon } from 'lucide-react';
-import { useThemeContext } from '@/components/providers/ThemeProvider';
+import { useTheme } from '@/lib/hooks/useTheme';
+import { Button } from '../ui/button';
 import { cn } from '@/lib/utils';
-import { useEffect, useState } from 'react';
+import { Moon, Sun } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 export function ThemeToggle() {
-  const { theme, setTheme } = useThemeContext();
+  const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -32,19 +33,14 @@ export function ThemeToggle() {
       window.matchMedia('(prefers-color-scheme: dark)').matches);
 
   return (
-    <button
+    <Button
       onClick={() => setTheme(isDark ? 'light' : 'dark')}
-      className={cn(
-        'inline-flex items-center gap-2 rounded-lg px-3 py-2',
-        'border border-zinc-300 dark:border-zinc-700',
-        'bg-white dark:bg-zinc-900',
-        'hover:bg-zinc-50 dark:hover:bg-zinc-800',
-        'transition-smooth',
-        'text-foreground'
-      )}
+      variant={'outline'}
+      size={'icon'}
+      className="rounded-full"
       aria-label="Toggle theme"
     >
       {isDark ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
-    </button>
+    </Button>
   );
 }

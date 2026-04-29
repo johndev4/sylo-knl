@@ -1,13 +1,12 @@
 'use client';
 
-import { Check, Moon, Sun, Monitor } from 'lucide-react';
-import { useThemeContext } from '@/components/providers/ThemeProvider';
+import { Sun, Moon, Monitor } from 'lucide-react';
+import { useTheme } from 'next-themes';
 import {
+  DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
-  DropdownMenuLabel,
-} from '@/components/ui/dropdown-menu';
-import { cn } from '@/lib/utils';
+} from '../ui/dropdown-menu';
 
 type Theme = 'light' | 'dark' | 'system';
 
@@ -18,7 +17,7 @@ const THEME_OPTIONS: { id: Theme; label: string; icon: React.ReactNode }[] = [
 ];
 
 export function ThemeSubmenu() {
-  const { theme, setTheme } = useThemeContext();
+  const { theme, setTheme } = useTheme();
 
   return (
     <>
