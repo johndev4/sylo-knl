@@ -265,6 +265,8 @@ await removeLibraryMember(libraryId, userId);
 ---
 
 ## 📝 Notes for Developers
+ 
+ 1. **shadcn/ui for Forms**: Always use **shadcn/ui** primitives (`Input`, `Select`, `Textarea`, `Label`, etc.) instead of raw HTML elements for all form implementations.
 
 1. **Database Migration**: The schema change updates the trigger constraint. Make sure to run this on production.
 

@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Card,
   CardContent,
@@ -110,12 +111,12 @@ export function DeleteLibraryForm({
         </div>
 
         <div className="space-y-2 pt-2">
-          <label
+          <Label
             htmlFor="confirm-name"
             className="text-sm font-medium text-red-700 dark:text-red-400"
           >
             Type the library name to confirm deletion:
-          </label>
+          </Label>
           <Input
             id="confirm-name"
             type="text"

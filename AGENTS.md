@@ -235,6 +235,7 @@ Do not manually create files in `src/components/ui`. Use the respective CLIs to 
 **Before merging any code:**
 
 - [ ] No hardcoded secrets (check `.env` rules in security instructions)
+- [ ] Use shadcn/ui components for all form elements (`Input`, `Textarea`, `Select`, `Checkbox`, `Label`, etc.) instead of raw HTML elements
 - [ ] Zod validation on all inputs
 - [ ] RBAC check on sensitive endpoints
 - [ ] RLS policy audit (for DB changes)

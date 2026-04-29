@@ -6,6 +6,13 @@ import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface AddMemberFormProps {
   onAddMember: (email: string, role: string) => Promise<void>;
@@ -106,20 +113,22 @@ export function AddMemberForm({
         <Label htmlFor="role" className="text-sm font-medium">
           Role
         </Label>
-        <select
-          id="role"
+        <Select
           value={role}
-          onChange={(e) => setRole(e.target.value)}
+          onValueChange={(value) => setRole(value)}
           disabled={isFull || isLoading}
-          className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus:ring-ring mt-1 w-full rounded-md border px-3 py-2 text-sm focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-          aria-label="Member role"
         >
-          {roleOptions.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger id="role" className="mt-1" aria-label="Member role">
+            <SelectValue placeholder="Select a role" />
+          </SelectTrigger>
+          <SelectContent>
+            {roleOptions.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <Button

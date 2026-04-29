@@ -2,6 +2,13 @@
 
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface LibraryMember {
   library_id: string;
@@ -134,20 +141,26 @@ export function MemberTable({
               </td>
               <td className="px-4 py-3">
                 {canManageMembers && member.role !== 'OWNER' ? (
-                  <select
+                  <Select
                     value={member.role}
-                    onChange={(e) =>
-                      handleRoleChange(member.user_id, e.target.value)
+                    onValueChange={(value) =>
+                      handleRoleChange(member.user_id, value)
                     }
-                    className="border-input bg-background focus:ring-ring rounded border px-2 py-1 text-sm focus:ring-2 focus:outline-none"
-                    aria-label={`Role for ${member.user?.email}`}
                   >
-                    {roleOptions.map((role) => (
-                      <option key={role} value={role}>
-                        {role}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger
+                      className="h-8 w-[110px]"
+                      aria-label={`Role for ${member.user?.email}`}
+                    >
+                      <SelectValue placeholder="Select role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {roleOptions.map((role) => (
+                        <SelectItem key={role} value={role}>
+                          {role}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 ) : (
                   <div>
                     <span className="font-medium">{member.role}</span>

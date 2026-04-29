@@ -12,6 +12,14 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { Check } from 'lucide-react';
 
@@ -446,14 +454,14 @@ export default function AccountSettingsPage() {
 
                   <div>
                     <Label htmlFor="bio">Bio</Label>
-                    <textarea
+                    <Textarea
                       id="bio"
                       name="bio"
                       placeholder="Tell us about yourself (optional)"
                       value={formData.bio}
                       onChange={handleChange}
                       disabled={submitting}
-                      className={`border-input bg-background placeholder:text-muted-foreground focus:ring-ring mt-1 w-full rounded-md border px-3 py-2 text-sm focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
+                      className={`mt-1 ${
                         getFieldError('bio') ? 'border-destructive' : ''
                       }`}
                       rows={4}
@@ -476,23 +484,35 @@ export default function AccountSettingsPage() {
 
                   <div>
                     <Label htmlFor="timezone">Timezone</Label>
-                    <select
-                      id="timezone"
-                      name="timezone"
+                    <Select
                       value={formData.timezone}
-                      onChange={handleChange}
+                      onValueChange={(value) => {
+                        setFormData((prev) => ({
+                          ...prev,
+                          timezone: value,
+                        }));
+                        setErrors((prev) =>
+                          prev.filter((e) => e.field !== 'timezone')
+                        );
+                      }}
                       disabled={submitting}
-                      className={`border-input bg-background focus:ring-ring mt-1 w-full rounded-md border px-3 py-2 text-sm focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
-                        getFieldError('timezone') ? 'border-destructive' : ''
-                      }`}
                     >
-                      <option value="">Select timezone (optional)</option>
-                      {VALID_TIMEZONES.map((tz) => (
-                        <option key={tz} value={tz}>
-                          {tz}
-                        </option>
-                      ))}
-                    </select>
+                      <SelectTrigger
+                        id="timezone"
+                        className={`mt-1 ${
+                          getFieldError('timezone') ? 'border-destructive' : ''
+                        }`}
+                      >
+                        <SelectValue placeholder="Select timezone (optional)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {VALID_TIMEZONES.map((tz) => (
+                          <SelectItem key={tz} value={tz}>
+                            {tz}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     {getFieldError('timezone') && (
                       <p className="text-destructive mt-1 text-xs">
                         {getFieldError('timezone')}

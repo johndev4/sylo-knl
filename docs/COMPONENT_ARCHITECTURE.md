@@ -241,6 +241,10 @@ Is this component a shadcn/Kokonut primitive?
 ---
 
 ## Anti-Patterns to Avoid
+ 
+ ### ❌ Don't Use Raw HTML Form Elements
+ 
+ Always use **shadcn/ui** primitives (`Input`, `Select`, `Textarea`, `Label`, etc.) instead of raw HTML elements to ensure accessibility and consistent styling.
 
 ### ❌ Don't Mix Concerns
 
