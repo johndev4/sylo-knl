@@ -170,18 +170,6 @@ All agents MUST follow the GitHub instructions referenced below. These are injec
 
 ---
 
-## Specialized Agent Roles
-
-Use this quick role map in `AGENTS.md`, and see `.github/agents/roles.md` for full triggers, responsibilities, and file-level guidance.
-
-- **RAG & LLM Engineer**: Embeddings, vector retrieval, provider integrations, and streaming chat behavior.
-- **Backend & API Engineer**: Route handlers, RBAC enforcement, validation, and secure Supabase-backed APIs.
-- **Frontend & React Engineer**: UI components, state and interaction flows, and accessibility-compliant experiences.
-- **Database & Security Engineer**: Schema/migrations, RLS policies, indexing/performance, and OWASP-aligned safeguards.
-- **DevOps & Deployment Engineer**: Build/runtime setup, environment hygiene, and production readiness checks.
-
----
-
 ## Common Patterns
 
 ### API Route Pattern
