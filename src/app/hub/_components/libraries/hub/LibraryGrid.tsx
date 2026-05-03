@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { useReducedMotion } from '@/lib/hooks/useReducedMotion';
 import {
   Card,
   CardContent,

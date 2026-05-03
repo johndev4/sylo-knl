@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { MessageSquare, Upload, Sparkles } from 'lucide-react';
-import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { useReducedMotion } from '@/lib/hooks/useReducedMotion';
 import { Button } from '@/components/ui/button';
 
 interface LibraryFabProps {

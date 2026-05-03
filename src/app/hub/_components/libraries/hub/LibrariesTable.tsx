@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { useReducedMotion } from '@/lib/hooks/useReducedMotion';
 import { Button } from '@/components/ui/button';
 import { LogOut, Settings, AlertTriangle, Loader2 } from 'lucide-react';
 import { useState } from 'react';

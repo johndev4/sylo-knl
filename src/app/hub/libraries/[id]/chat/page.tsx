@@ -2,7 +2,7 @@
 
 import { use, useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { useReducedMotion } from '@/lib/hooks/useReducedMotion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {

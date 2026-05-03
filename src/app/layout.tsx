@@ -1,12 +1,22 @@
 import type { Metadata } from 'next';
-import { Geist } from 'next/font/google';
+import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { Suspense } from 'react';
 import { ThemeProvider } from 'next-themes';
 import { Navbar } from '@/components/layout/Navbar';
 import { cn } from '@/lib/utils';
 
-const geist = Geist({ subsets: ['latin'], variable: '--font-sans' });
+const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
+
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
 
 export const metadata: Metadata = {
   title: 'Sylo',
@@ -21,7 +31,14 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={cn('scroll-smooth', 'antialiased', geist.variable)}
+      className={cn(
+        "h-full",
+        "antialiased",
+        geistSans.variable,
+        geistMono.variable,
+        "font-sans",
+        geist.variable,
+      )}
       suppressHydrationWarning
     >
       <head />
