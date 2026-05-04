@@ -17,6 +17,9 @@
   "dependencies": {
     "@ai-sdk/google": "^3.0.64",
     "@ai-sdk/react": "^3.0.170",
+    "@blocknote/core": "^0.49.0",
+    "@blocknote/react": "^0.49.0",
+    "@blocknote/shadcn": "^0.49.0",
     "@supabase/auth-ui-react": "^0.4.7",
     "@supabase/auth-ui-shared": "^0.1.8",
     "@supabase/ssr": "^0.10.2",

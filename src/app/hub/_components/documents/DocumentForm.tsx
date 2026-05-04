@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock, Users, X, Save, Loader2 } from 'lucide-react';
 import { useSidebarRefresh } from './SidebarRefreshContext';
+import { BlockEditor } from './block_editor';
 
 interface DocumentFormProps {
   libraryId: string;
@@ -226,11 +227,10 @@ export function DocumentForm({ libraryId, initialData }: DocumentFormProps) {
 
             {/* Novel Editor */}
             <div className="min-h-[500px]">
-              {/* <NovelEditor
-                value={content}
+              <BlockEditor
+                initialContent={content}
                 onChange={setContent}
-                disabled={isLoading}
-              /> */}
+              />
             </div>
           </div>
         </div>

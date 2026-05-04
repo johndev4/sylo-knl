@@ -1,0 +1,11 @@
+@source "../node_modules/@blocknote/shadcn";
+
+.bn-root {
+  /* This maps BlockNote's background variable to your shadcn background */
+  --bn-colors-editor-background: hsl(var(--background)) !important;
+}
+
+/* Optional: Match text color as well */
+.bn-root {
+  --bn-colors-editor-text: hsl(var(--foreground)) !important;
+}
