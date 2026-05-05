@@ -1,95 +1,156 @@
-# Document Management Implementation - Complete Summary
+# Document Management Guide
 
-## 🎉 Overview
+## Overview
 
-I have successfully implemented a **complete document management system** for the Sylo knowledge library application. This system allows users to create, view, edit, and safely delete markdown-based documents within their libraries. It features a rich text editor (Tiptap), syntax highlighting (Shiki), optimistic concurrency control (OCC) to prevent edit conflicts, and robust backend API endpoints.
-
----
-
-## ✅ What Was Implemented
-
-### 1. **Database Updates**
-
-- ✅ Added `author_ids` UUID array to `documents` table to track all contributors.
-- ✅ Added `deleted_at` TIMESTAMPTZ to `documents` table for soft deletions (safe delete).
-- ✅ Created `document_edits` table to audit all document creation and update actions.
-- ✅ Updated the `match_document_chunks` RPC to ignore soft-deleted documents during RAG retrieval.
-
-### 2. **API Endpoints**
-
-- ✅ `GET /api/documents?libraryId=...` - List documents with pagination, title search, and tag filtering.
-- ✅ `POST /api/documents` - Create a new document, tracking the author, generating embeddings, and logging the action.
-- ✅ `GET /api/documents/[docId]` - Fetch a single document's metadata and lazy-loaded content.
-- ✅ `PUT /api/documents/[docId]` - Update a document with Optimistic Concurrency Control (`lastUpdatedAt`), auto-chunking, and embedding regeneration if content changes.
-- ✅ `DELETE /api/documents/[docId]` - Soft delete a document and log the action.
-
-### 3. **Frontend Components**
-
-- ✅ `TiptapEditor.tsx` - A rich text Markdown editor utilizing `@tiptap/starter-kit` and `tiptap-markdown`.
-- ✅ `MarkdownViewer.tsx` - A read-only markdown renderer using `react-markdown` and `shiki` for code highlighting.
-- ✅ `DocumentForm.tsx` - A unified form component for creating and editing documents, handling tags, title, and content.
-
-### 4. **Pages**
-
-- ✅ `src/app/hub/[id]/documents/page.tsx` - The List View displaying documents with pagination, search, and lazy loading.
-- ✅ `src/app/hub/[id]/documents/new/page.tsx` - Dedicated route for document creation.
-- ✅ `src/app/hub/[id]/documents/[docId]/page.tsx` - Dedicated route for viewing a document's details and rendered content.
-- ✅ `src/app/hub/[id]/documents/[docId]/edit/page.tsx` - Dedicated route for editing a document.
-
-### 5. **Testing & Security**
-
-- ✅ Playwright E2E tests covering the complete document lifecycle (create, list, view, edit, delete).
-- ✅ Row-Level Security (RLS) and API-level RBAC checks ensuring only authorized library members can access or modify documents.
-- ✅ Optimistic Concurrency Control prevents multiple authors from overwriting each other's changes.
+Sylo's document management system provides a **unified, BlockNote-powered interface** for creating, editing, and viewing Markdown documents within a library. A single `DocumentManager` component handles all three modes, using BlockNote's `editable` toggle to switch between view and edit states — eliminating the need for separate routes.
 
 ---
 
-## 📂 Files Created & Modified
+## ✅ What Is Implemented
+
+### 1. Database
+
+- ✅ `author_ids` UUID array on `documents` tracks all contributors.
+- ✅ `deleted_at` TIMESTAMPTZ for soft deletions (safe delete).
+- ✅ `document_edits` table for full audit logging.
+- ✅ `preferences` JSONB column on `users` table for per-user settings (e.g. auto-save).
+- ✅ `match_document_chunks` RPC ignores soft-deleted documents.
+
+### 2. API Endpoints
+
+| Method | Route | Purpose |
+|--------|-------|---------|
+| `GET` | `/api/documents?libraryId=...` | List documents (paginated, searchable, tag-filterable) |
+| `POST` | `/api/documents` | Create document, generate embeddings, log action |
+| `GET` | `/api/documents/[docId]` | Fetch single document |
+| `PUT` | `/api/documents/[docId]` | Update document with OCC, re-embed if content changed |
+| `DELETE` | `/api/documents/[docId]` | Soft delete + audit log |
+| `DELETE` | `/api/documents/[docId]` | Soft delete + audit log |
+
+### 3. Frontend Components
+
+| Component | Path | Purpose |
+|-----------|------|---------|
+| `DocumentManager` | `src/app/hub/_components/documents/DocumentManager.tsx` | **Unified** Create/Edit/View component |
+| `Editor` | `src/app/hub/_components/documents/block_editor/Editor.tsx` | BlockNote editor (Markdown in/out, editable toggle) |
+| `DocumentsSidebar` | `src/app/hub/_components/documents/DocumentsSidebar.tsx` | Library sidebar with lazy-loading doc list |
+| `SidebarRefreshContext` | `src/app/hub/_components/documents/SidebarRefreshContext.tsx` | Context to trigger sidebar re-fetch after saves |
+| `useNavigationGuard` | `src/lib/hooks/useNavigationGuard.ts` | Prevents data loss with unsaved changes prompt |
+
+### 4. Pages
+
+| Route | Component | Description |
+|-------|-----------|-------------|
+| `/hub/libraries/[id]/documents` | (layout) | Empty state with sidebar |
+| `/hub/libraries/[id]/documents/new` | `DocumentManager` (isNew=true) | Create new document |
+| `/hub/libraries/[id]/documents/[docId]` | `DocumentManager` | View/Edit document (mode toggled in UI) |
+
+> **Note:** The `/documents/[docId]/edit` route has been **deleted**. All editing is handled inline via the Edit Mode toggle in the `DocumentManager` header.
+
+---
+
+## 🗂️ Files Created & Modified
 
 ```
-✅ API Routes
-   src/app/api/documents/route.ts (Updated GET and POST)
-   src/app/api/documents/[docId]/route.ts (New GET, PUT, DELETE)
-
 ✅ Components
-   src/app/hub/_components/documents/DocumentForm.tsx
+   src/app/hub/_components/documents/DocumentManager.tsx     (new)
+   src/app/hub/_components/documents/DocumentsSidebar.tsx    (updated)
+   src/app/hub/_components/documents/block_editor/Editor.tsx (updated)
 
 ✅ Pages
-   src/app/hub/libraries/[id]/documents/page.tsx (List View)
-   src/app/hub/libraries/[id]/documents/new/page.tsx (Create)
-   src/app/hub/libraries/[id]/documents/[docId]/page.tsx (View Details)
-   src/app/hub/libraries/[id]/documents/[docId]/edit/page.tsx (Edit)
+   src/app/hub/libraries/[id]/documents/new/page.tsx         (updated → uses DocumentManager)
+   src/app/hub/libraries/[id]/documents/[docId]/page.tsx     (updated → uses DocumentManager)
+   src/app/hub/libraries/[id]/documents/[docId]/edit/        (deleted)
 
-✅ Tests
-   tests/e2e/documents.spec.ts
+✅ Hooks
+   src/lib/hooks/useNavigationGuard.ts                       (new)
 
 ✅ Database Migrations
-   supabase/migrations/20260425000000_update_documents_schema.sql
-```
+   supabase/migrations/20260504000000_add_user_preferences.sql
 
-> **Note:** TiptapEditor and MarkdownViewer functionality is implemented inline within DocumentForm and document detail pages. Separate component files can be extracted if reusability is needed.
+✅ Tests
+   tests/e2e/documents.spec.ts                               (updated)
+```
 
 ---
 
 ## 🔑 Key Features
 
+### Unified Edit/View Mode
+
+The `DocumentManager` component renders a single layout for both viewing and editing. The header includes:
+
+- **Title** — always an `<input>` (disabled in view mode, shows full title on hover)
+- **Date Created / Modified** — shown in metadata bar
+- **Authors** — shown if document exists and has author data
+- **Edit Mode Toggle** — visible only when `!isNew` (existing documents)
+- **Save Button** — visible only in edit/create mode
+- **Tags** — always shown in **UPPERCASE**; remove buttons appear only in edit mode
+- **State Reset** — uses `key={docId}` or `key="new"` to force component re-initialization when switching documents.
+- **New Draft Reset** — on `/hub/libraries/[id]/documents/new`, clicking sidebar `+` while already on the new-document page requests a fresh draft reset (title, tags, editor content).
+
+### Navigation Guard
+
+The `useNavigationGuard` hook prevents accidental data loss by prompting the user if they attempt to leave the page with unsaved changes. This guard is active in both "Create" and "Edit" modes and covers:
+
+- **Browser Close/Refresh** — triggers a standard browser confirmation dialog (`beforeunload`).
+- **Internal Navigation** — intercepts clicks on internal links (e.g., sidebar documents, "New Document" button) and shows a `window.confirm` dialog.
+- **Tab/Exit** — prevents closing the browser window without confirmation if changes exist.
+- **Same-page New Draft Action** — clicking sidebar `+` on `/documents/new` prompts to discard unsaved changes before clearing draft fields.
+
+Unsaved changes are detected by comparing the current state (title, content, tags) against the initial data loaded from the server.
+
+### MVP Limits Enforcement
+
+| Limit | Enforcement |
+|-------|-------------|
+| Max 500 documents/library | Sidebar disables the "New Document" button when total ≥ 500 |
+| Max 1000 blocks/document | Editor counts blocks in real-time; shows warning and disables Save |
+| Max 60 characters/title | Title input is limited to 60 characters via `maxLength` |
+
+### Sidebar: Lazy Loading & Tag Filter
+
+- Documents are fetched in pages of **100** via `?limit=100&page=N`.
+- A "Load More" button appends the next page when `totalDocs > documents.length`.
+- Tags are filtered via a **Select dropdown** (not chips), preventing sidebar overflow when many tags are present.
+- Search, tag filter, and library name are pinned in a **fixed header area**; the document list scrolls independently.
+- **Long Title Handling**: Titles are truncated with an ellipsis (`truncate`) and show the full title via a premium **Tooltip** on hover.
+
 ### Conflict Prevention (OCC)
 
-When a user edits a document, their client sends the `lastUpdatedAt` timestamp it originally fetched. If another user has updated the document in the meantime (the DB's `updated_at` is newer), the API rejects the request with a `409 Conflict` error, preventing accidental overwrites.
-
-### Audit Logging
-
-Every creation, update, and deletion is recorded in the `document_edits` table, tracking the `user_id`, `document_id`, and the exact `action` performed, fulfilling the requirement for a complete edit audit trail.
+The PUT endpoint validates `lastUpdatedAt`. If another user has saved the document since the client loaded it, the API returns `409 Conflict`.
 
 ---
 
 ## 🧪 Testing Guide
 
-To verify these changes:
+```bash
+npm run test:e2e               # Run all Playwright tests
+npx playwright show-report     # View last HTML report
+```
 
-1. Run `npm run test:e2e` to execute the Playwright test suite for Document Management.
-2. Manually test the conflict prevention by opening the same document in two different browser tabs. Edit and save in the first tab, then try to edit and save in the second tab. The second tab should present a conflict error.
+### Test Coverage
 
-**Implementation Date**: April 25, 2026  
-**Status**: ✅ Complete  
-**Framework**: Next.js 16.2.4 + Supabase + Tiptap + Playwright
+| Test | Description |
+|------|-------------|
+| List documents & filters | Sidebar shows docs, search input works, tag dropdown visible |
+| Create with all fields | Title + BlockNote content + tag → Save button click |
+| Create without tags | Minimal required fields only |
+| View document details | Title input shows in disabled state, Edit Mode button visible, Save hidden |
+| Switch to edit mode | Toggle edit mode → title editable → Save button → click |
+| Unsaved changes prompt | Typing → try to click sidebar link → confirmation dialog |
+| New draft reset (cancel) | Dirty `/documents/new` + sidebar `+` + cancel prompt → draft stays intact |
+| New draft reset (confirm) | Dirty `/documents/new` + sidebar `+` + confirm prompt → title/tags/content reset |
+| New draft reset (clean) | Clean `/documents/new` + sidebar `+` → reset happens without prompt |
+
+### Manual Testing Tips
+
+1. **Conflict prevention**: Open the same document in two tabs. Edit and save in Tab 1. Then try saving in Tab 2 — expect a 409 conflict error.
+2. **Limit enforcement**: Create 500 documents in a library and confirm the "+" button in the sidebar is disabled.
+3. **Block limit**: Paste 1000+ blocks into the editor and confirm the warning appears and Save is disabled.
+
+---
+
+**Last Updated**: May 4, 2026
+**Status**: ✅ Active
+**Framework**: Next.js 16.2.4 + Supabase + BlockNote + Playwright

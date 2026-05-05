@@ -22,8 +22,10 @@ This document helps agents understand the **Sylo** knowledge library application
 - **Styling**: Tailwind CSS v4 (Standard)
 - **Base Components**: shadcn/ui (Radix UI)
 - **Interactive & Advanced UI**: Kokonut UI (Framer Motion)
+- **Block Editor**: BlockNote (Markdown-in/out, `editable` toggle for view/edit)
 - **Key Features**:
-  - Document management with tagging and search
+  - Document management with uppercase tagging, search, and navigation guard for unsaved changes
+  - Unified Create/Edit/View mode via `DocumentManager` component
   - RAG-powered chatbot with vector similarity retrieval
   - Library-based RBAC system
   - Multi-provider LLM support
@@ -103,16 +105,18 @@ supabase db pull                # Sync schema changes
 
 ### Application Core
 
-| Path                          | Purpose                                             |
-| ----------------------------- | --------------------------------------------------- |
-| `src/app/`                    | Next.js routes & API handlers                       |
-| `src/app/hub/`                | Main application hub (libraries, documents, chat)   |
-| `src/app/hub/_components/`    | Feature-local components (documents, libraries)     |
-| `src/app/hub/libraries/[id]/` | Library-specific routes (chat, documents, settings) |
-| `src/app/api/`                | API route handlers                                  |
-| `src/app/api/chat/`           | RAG chat endpoint (streaming)                       |
-| `src/app/api/documents/`      | Document CRUD endpoints                             |
-| `src/app/api/libraries/`      | Library & member management                         |
+| Path                                                    | Purpose                                             |
+| ------------------------------------------------------- | --------------------------------------------------- |
+| `src/app/`                                              | Next.js routes & API handlers                       |
+| `src/app/hub/`                                          | Main application hub (libraries, documents, chat)   |
+| `src/app/hub/_components/`                              | Feature-local components (documents, libraries)     |
+| `src/app/hub/_components/documents/DocumentManager.tsx` | Unified Create/Edit/View document component         |
+| `src/app/hub/libraries/[id]/`                           | Library-specific routes (chat, documents, settings) |
+| `src/app/api/`                                          | API route handlers                                  |
+| `src/app/api/chat/`                                     | RAG chat endpoint (streaming)                       |
+| `src/app/api/documents/`                                | Document CRUD endpoints                             |
+| `src/app/api/libraries/`                                | Library & member management                         |
+| `src/app/api/user/preferences/`                         | User preference persistence (auto-save setting)     |
 
 ### Shared Components
 
@@ -124,17 +128,18 @@ supabase db pull                # Sync schema changes
 
 ### Libraries & Utilities
 
-| Path                         | Purpose                                                    |
-| ---------------------------- | ---------------------------------------------------------- |
-| `src/lib/ai/`                | LLM core, providers, RAG pipeline                          |
-| `src/lib/ai/rag/pipeline.ts` | Full RAG orchestration (query → embed → retrieve → stream) |
-| `src/lib/ai/core/llm.ts`     | Provider-agnostic LLM interface                            |
-| `src/lib/supabase/`          | Supabase client (server/client modes)                      |
-| `src/lib/actions/`           | Server actions for libraries, documents                    |
-| `src/lib/hooks/`             | Custom React hooks (useAuth, useTheme)                     |
-| `src/lib/validation/`        | Zod schemas for input validation                           |
-| `src/lib/themes/`            | Auth UI theming                                            |
-| `src/lib/utils.ts`           | Utility functions (cn helper)                              |
+| Path                                  | Purpose                                                    |
+| ------------------------------------- | ---------------------------------------------------------- |
+| `src/lib/ai/`                         | LLM core, providers, RAG pipeline                          |
+| `src/lib/ai/rag/pipeline.ts`          | Full RAG orchestration (query → embed → retrieve → stream) |
+| `src/lib/ai/core/llm.ts`              | Provider-agnostic LLM interface                            |
+| `src/lib/supabase/`                   | Supabase client (server/client modes)                      |
+| `src/lib/actions/`                    | Server actions for libraries, documents                    |
+| `src/lib/hooks/`                      | Custom React hooks (useAuth, useTheme, useAutoSave)        |
+| `src/lib/hooks/useNavigationGuard.ts` | Prevents data loss with unsaved changes prompt             |
+| `src/lib/validation/`                 | Zod schemas for input validation                           |
+| `src/lib/themes/`                     | Auth UI theming                                            |
+| `src/lib/utils.ts`                    | Utility functions (cn helper)                              |
 
 ### Configuration & Testing
 
@@ -191,7 +196,7 @@ Every API endpoint should follow this:
 3. Show loading/error states
 4. Render with proper accessibility (labels, roles, ARIA)
 
-**Example:** `src/app/hub/libraries/[id]/documents/page.tsx`
+**Example:** `src/app/hub/libraries/[id]/documents/[docId]/page.tsx`
 
 ### RAG Chat Pattern
 
@@ -248,10 +253,10 @@ Do not manually create files in `src/components/ui`. Use the respective CLIs to 
 
 ## Known Limitations & TODOs
 
-1. **Auto-save**: Currently manual Save button (future: auto-save on delay)
-2. **Real-time**: No live collaboration yet (future: Supabase Realtime)
-3. **Versioning**: No document history (future: soft-delete + timestamps)
-4. **Email-to-userId**: Not automated (manual for now)
+1. **Real-time**: No live collaboration yet (future: Supabase Realtime)
+2. **Versioning**: No document history (future: soft-delete + timestamps)
+3. **Email-to-userId**: Not automated (manual for now)
+4. **Preferences migration**: `users.preferences` column is no longer used for auto-save.
 
 ---
 

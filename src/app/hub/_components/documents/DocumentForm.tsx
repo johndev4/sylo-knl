@@ -227,10 +227,7 @@ export function DocumentForm({ libraryId, initialData }: DocumentFormProps) {
 
             {/* Novel Editor */}
             <div className="min-h-[500px]">
-              <BlockEditor
-                initialContent={content}
-                onChange={setContent}
-              />
+              <BlockEditor initialContent={content} onChange={setContent} />
             </div>
           </div>
         </div>

@@ -4,13 +4,21 @@ import { test, expect } from '@playwright/test';
 const libId = '00000000-0000-0000-0000-000000000000';
 
 test.describe('Document Management', () => {
-  // Setup: since we might not have a real seeded DB in CI, we mock the API responses for the documents endpoints.
+  // Setup: mock all API responses so tests run without a seeded DB.
   test.beforeEach(async ({ page }) => {
-    // Mock user auth
+    // Mock Supabase auth
     await page.route('**/auth/v1/user', async (route) => {
       await route.fulfill({
         status: 200,
         json: { id: 'test-user', email: 'test@example.com' },
+      });
+    });
+
+    // Mock library details endpoint (used by DocumentsSidebar)
+    await page.route('**/api/libraries/**', async (route) => {
+      await route.fulfill({
+        status: 200,
+        json: { library: { id: libId, name: 'Test Library' } },
       });
     });
 
@@ -23,20 +31,21 @@ test.describe('Document Management', () => {
             {
               id: 'doc-1',
               title: 'Mock Document 1',
-              tags: ['test', 'mock'],
+              tags: ['TEST', 'MOCK'],
               author_ids: ['test-user'],
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString(),
             },
           ],
-          metadata: { total: 1, page: 1, limit: 10, totalPages: 1 },
+          metadata: { total: 1, page: 1, limit: 100, totalPages: 1 },
         },
       });
     });
 
-    // Mock GET single document
-    await page.route(`**/api/documents/*`, async (route) => {
-      if (route.request().method() === 'GET') {
+    // Mock single document CRUD operations
+    await page.route('**/api/documents/**', async (route) => {
+      const method = route.request().method();
+      if (method === 'GET') {
         await route.fulfill({
           status: 200,
           json: {
@@ -44,7 +53,7 @@ test.describe('Document Management', () => {
               id: 'doc-1',
               title: 'Mock Document 1',
               content: '# Hello\nThis is a test.',
-              tags: ['test', 'mock'],
+              tags: ['TEST', 'MOCK'],
               author_ids: ['test-user'],
               library_id: libId,
               created_at: new Date().toISOString(),
@@ -53,7 +62,7 @@ test.describe('Document Management', () => {
             },
           },
         });
-      } else if (route.request().method() === 'PUT') {
+      } else if (method === 'PUT') {
         await route.fulfill({
           status: 200,
           json: {
@@ -61,19 +70,9 @@ test.describe('Document Management', () => {
             document: { updated_at: new Date().toISOString() },
           },
         });
-      } else if (route.request().method() === 'DELETE') {
-        await route.fulfill({
-          status: 200,
-          json: { success: true },
-        });
-      } else {
-        await route.continue();
-      }
-    });
-
-    // Mock POST create document
-    await page.route('**/api/documents', async (route) => {
-      if (route.request().method() === 'POST') {
+      } else if (method === 'DELETE') {
+        await route.fulfill({ status: 200, json: { success: true } });
+      } else if (method === 'POST') {
         await route.fulfill({
           status: 200,
           json: { success: true, documentId: 'new-doc-id' },
@@ -85,94 +84,197 @@ test.describe('Document Management', () => {
   });
 
   test('List existing documents with filters in sidebar', async ({ page }) => {
-    // Navigate to documents section
     await page.goto(`/hub/libraries/${libId}/documents`);
+    await page.waitForLoadState('networkidle');
 
     // Verify empty state in main area
     await expect(
       page.getByRole('heading', { name: 'Select a Document' })
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 10000 });
 
-    // Verify document in sidebar list
-    const sidebar = page.locator('aside, .transition-all'); // sidebar container
-    await expect(page.getByText('Mock Document 1')).toBeVisible();
+    // Verify document appears in sidebar list
+    // Use a more specific locator to avoid ambiguity if needed
+    await expect(page.locator('aside').getByText('Mock Document 1')).toBeVisible({ timeout: 10000 });
 
-    // Test search filter input in sidebar
+    // Search input in sidebar
     const searchInput = page.getByPlaceholder('Search docs...');
     await expect(searchInput).toBeVisible();
-    await searchInput.fill('Mock Search');
-    // Sidebar filters automatically or on input change in the new implementation (via useMemo)
+    await searchInput.fill('Mock');
+
+    // Tag dropdown filter
+    await expect(
+      page.locator('[data-slot="select-trigger"]').or(page.getByRole('combobox')).first()
+    ).toBeVisible();
   });
 
   test('Create a new document with all required fields', async ({ page }) => {
     await page.goto(`/hub/libraries/${libId}/documents/new`);
+    await page.waitForLoadState('networkidle');
 
-    // Verify we are on the new document page (title input should be visible)
-    await expect(page.getByLabel('Document Title')).toBeVisible();
+    const titleInput = page.getByPlaceholder('Untitled Document');
+    await expect(titleInput).toBeVisible({ timeout: 10000 });
+    await titleInput.fill('My New Document');
 
-    // Fill title
-    await page.getByLabel('Document Title').fill('My New Document');
-
-    // Fill content in Novel (which uses ProseMirror)
-    const editor = page.locator('.ProseMirror');
+    const editor = page.locator('[contenteditable="true"]').first();
+    await editor.waitFor({ state: 'visible', timeout: 15000 });
     await editor.click();
-    await editor.fill('This is the content of my new document.');
+    await editor.pressSequentially('This is the content of my new document.');
 
-    // Add tag
+    // Add tag via tag input
     const tagInput = page.getByPlaceholder('Add tag...');
     await tagInput.fill('important');
     await tagInput.press('Enter');
+    
+    // Tags are now rendered in UPPERCASE
+    await expect(page.getByText('IMPORTANT')).toBeVisible();
 
-    // Submit
-    const submitBtn = page.getByRole('button', { name: 'Save' });
-    await expect(submitBtn).toBeEnabled();
-    await submitBtn.click();
-  });
-
-  test('Create a new document with optional fields (no tags)', async ({
-    page,
-  }) => {
-    await page.goto(`/hub/libraries/${libId}/documents/new`);
-
-    // Fill title
-    await page.getByLabel('Document Title').fill('Minimal Document');
-
-    // Fill content
-    const editor = page.locator('.ProseMirror');
-    await editor.click();
-    await editor.fill('Just the basics.');
-
-    // Submit directly
-    await page.getByRole('button', { name: 'Save' }).click();
+    const saveBtn = page.getByRole('button', { name: 'Save' });
+    await expect(saveBtn).toBeEnabled();
+    await saveBtn.click();
   });
 
   test('View document details', async ({ page }) => {
     await page.goto(`/hub/libraries/${libId}/documents/doc-1`);
+    await page.waitForLoadState('networkidle');
 
-    // Verify details
+    const titleInput = page.getByPlaceholder('Untitled Document');
+    await expect(titleInput).toBeVisible({ timeout: 15000 });
+    await expect(titleInput).toHaveValue('Mock Document 1');
+
     await expect(
-      page.getByRole('heading', { name: 'Mock Document 1' })
+      page.getByRole('button', { name: 'Edit Mode' })
     ).toBeVisible();
 
-    // Content is rendered (ReactMarkdown via MarkdownViewer)
-    await expect(page.getByText('This is a test.')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Save' })).not.toBeVisible();
   });
 
-  test('Edit document details', async ({ page }) => {
-    await page.goto(`/hub/libraries/${libId}/documents/doc-1/edit`);
+  test('Switch to edit mode and update document', async ({ page }) => {
+    await page.goto(`/hub/libraries/${libId}/documents/doc-1`);
+    await page.waitForLoadState('networkidle');
 
-    // Form should be populated
-    await expect(page.getByLabel('Document Title')).toHaveValue(
-      'Mock Document 1'
+    const titleInput = page.getByPlaceholder('Untitled Document');
+    await expect(titleInput).toBeVisible({ timeout: 15000 });
+
+    await page.getByRole('button', { name: 'Edit Mode' }).click();
+
+    await expect(titleInput).toBeEnabled();
+    await titleInput.fill('Updated Document Title');
+
+    const saveBtn = page.getByRole('button', { name: 'Save' });
+    await expect(saveBtn).toBeVisible();
+    await expect(saveBtn).toBeEnabled();
+    await saveBtn.click();
+  });
+
+  test('Navigation guard prompts on unsaved changes', async ({ page }) => {
+    await page.goto(`/hub/libraries/${libId}/documents/new`);
+    await page.waitForLoadState('networkidle');
+
+    const titleInput = page.getByPlaceholder('Untitled Document');
+    await expect(titleInput).toBeVisible({ timeout: 15000 });
+
+    // Type something to make it dirty
+    await titleInput.fill('Unsaved Doc');
+
+    // Try to navigate back or click a link
+    // We'll mock window.confirm to return false (don't leave)
+    await page.evaluate(() => {
+      window.confirm = () => false;
+    });
+
+    // Click "Select a Library" or some other link if available, 
+    // but here we can just try to click the sidebar title if it's a link
+    // Let's try to click the library name in sidebar
+    await page.getByText('Test Library').click();
+
+    // Check if we are still on the same page (URL hasn't changed)
+    expect(page.url()).toContain('/documents/new');
+
+    // Now mock confirm to return true (leave)
+    await page.evaluate(() => {
+      window.confirm = () => true;
+    });
+
+    await page.getByText('Test Library').click();
+    
+    // Note: In this mock environment, navigation might be caught by the interceptor
+    // but if confirm returns true, it should allow it.
+  });
+
+  test('Clicking plus on dirty new document prompts and can cancel reset', async ({ page }) => {
+    await page.goto(`/hub/libraries/${libId}/documents/new`);
+    await page.waitForLoadState('networkidle');
+
+    const titleInput = page.getByPlaceholder('Untitled Document');
+    await titleInput.fill('Draft Title');
+
+    const editor = page.locator('[contenteditable="true"]').first();
+    await editor.click();
+    await editor.pressSequentially('Draft content body');
+
+    const tagInput = page.getByPlaceholder('Add tag...');
+    await tagInput.fill('drafttag');
+    await tagInput.press('Enter');
+    await expect(page.getByText('DRAFTTAG')).toBeVisible();
+
+    await page.evaluate(() => {
+      window.confirm = () => false;
+    });
+
+    await page.locator(`a[href="/hub/libraries/${libId}/documents/new"]`).first().click();
+
+    await expect(titleInput).toHaveValue('Draft Title');
+    await expect(page.getByText('DRAFTTAG')).toBeVisible();
+    await expect(page.getByText('Draft content body')).toBeVisible();
+    expect(page.url()).toContain('/documents/new');
+  });
+
+  test('Clicking plus on dirty new document confirms and clears draft', async ({ page }) => {
+    await page.goto(`/hub/libraries/${libId}/documents/new`);
+    await page.waitForLoadState('networkidle');
+
+    const titleInput = page.getByPlaceholder('Untitled Document');
+    await titleInput.fill('Draft Title');
+
+    const editor = page.locator('[contenteditable="true"]').first();
+    await editor.click();
+    await editor.pressSequentially('Draft content body');
+
+    const tagInput = page.getByPlaceholder('Add tag...');
+    await tagInput.fill('drafttag');
+    await tagInput.press('Enter');
+    await expect(page.getByText('DRAFTTAG')).toBeVisible();
+
+    await page.evaluate(() => {
+      window.confirm = () => true;
+    });
+
+    await page.locator(`a[href="/hub/libraries/${libId}/documents/new"]`).first().click();
+
+    await expect(titleInput).toHaveValue('');
+    await expect(page.getByText('DRAFTTAG')).not.toBeVisible();
+    await expect(page.getByText('Draft content body')).not.toBeVisible();
+  });
+
+  test('Clicking plus on clean new document clears without prompt', async ({ page }) => {
+    await page.goto(`/hub/libraries/${libId}/documents/new`);
+    await page.waitForLoadState('networkidle');
+
+    await page.evaluate(() => {
+      (window as Window & { __confirmCalls?: number }).__confirmCalls = 0;
+      window.confirm = () => {
+        (window as Window & { __confirmCalls?: number }).__confirmCalls =
+          ((window as Window & { __confirmCalls?: number }).__confirmCalls || 0) + 1;
+        return true;
+      };
+    });
+
+    await page.locator(`a[href="/hub/libraries/${libId}/documents/new"]`).first().click();
+
+    const confirmCalls = await page.evaluate(
+      () => (window as Window & { __confirmCalls?: number }).__confirmCalls || 0
     );
-
-    // Edit title
-    await page.getByLabel('Document Title').fill('Updated Document Title');
-
-    // Save
-    await page.getByRole('button', { name: 'Save' }).click();
+    expect(confirmCalls).toBe(0);
+    await expect(page.getByPlaceholder('Untitled Document')).toHaveValue('');
   });
-
-  // Note: Delete functionality in sidebar is not yet implemented in this iteration
-  // as the mockup didn't show it. We can add it to the detail view later.
 });

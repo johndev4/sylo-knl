@@ -5,6 +5,7 @@ import { Suspense } from 'react';
 import { ThemeProvider } from 'next-themes';
 import { Navbar } from '@/components/layout/Navbar';
 import { cn } from '@/lib/utils';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -50,8 +51,10 @@ export default function RootLayout({
           defaultTheme="system"
           disableTransitionOnChange
         >
-          <Navbar />
-          <Suspense fallback={null}>{children}</Suspense>
+          <TooltipProvider>
+            <Navbar />
+            <Suspense fallback={null}>{children}</Suspense>
+          </TooltipProvider>
         </ThemeProvider>
       </body>
     </html>

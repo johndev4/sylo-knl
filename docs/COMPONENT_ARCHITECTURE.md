@@ -16,7 +16,8 @@ Components that are **specific to a feature or route** live inside the `app` fol
 
 **Examples:**
 
-- `src/app/hub/_components/documents/DocumentForm.tsx` - Only used in document management
+- `src/app/hub/_components/documents/DocumentManager.tsx` - Unified Create/Edit/View document component
+- `src/app/hub/_components/documents/DocumentsSidebar.tsx` - Only used in document management
 - `src/app/hub/_components/libraries/settings/AddMemberForm.tsx` - Only used in library settings
 - `src/app/(auth)/_components/LoginHero.tsx` - Only used in auth flow
 
@@ -81,10 +82,13 @@ src/
 │   ├── hub/
 │   │   ├── _components/              # Feature-local components
 │   │   │   ├── documents/
-│   │   │   │   ├── DocumentForm.tsx
+│   │   │   │   ├── DocumentManager.tsx    ← unified create/edit/view
 │   │   │   │   ├── DocumentsSidebar.tsx
 │   │   │   │   ├── SidebarRefreshContext.tsx
-│   │   │   │   └── index.ts          # Barrel export
+│   │   │   │   ├── block_editor/
+│   │   │   │   │   ├── Editor.tsx         ← BlockNote wrapper (Markdown)
+│   │   │   │   │   └── custom-slash-menu-items.ts
+│   │   │   │   └── index.ts              # Barrel export
 │   │   │   └── libraries/
 │   │   │       ├── settings/
 │   │   │       │   ├── AddMemberForm.tsx
@@ -126,6 +130,7 @@ src/
     ├── actions/
     ├── ai/
     ├── hooks/
+    │   └── useAutoSave.ts            ← hybrid draft save hook
     ├── supabase/
     ├── validation/
     └── utils.ts
@@ -140,15 +145,13 @@ src/
 **Within the same feature:**
 
 ```typescript
-import { DocumentForm } from "./DocumentForm";
+import { DocumentManager } from "./DocumentManager";
 ```
 
 **From another feature:**
 
 ```typescript
-import { DocumentForm } from "@/app/hub/_components/documents";
-// or
-import { DocumentForm } from "@/app/hub/_components/documents/DocumentForm";
+import { DocumentManager } from "@/app/hub/_components/documents/DocumentManager";
 ```
 
 ### Importing Shared Components
@@ -165,12 +168,12 @@ Barrel exports (`index.ts`) enable cleaner imports:
 
 ```typescript
 // Instead of:
-import { DocumentForm } from "@/app/hub/_components/documents/DocumentForm";
+import { DocumentManager } from "@/app/hub/_components/documents/DocumentManager";
 import { DocumentsSidebar } from "@/app/hub/_components/documents/DocumentsSidebar";
 
 // Use:
 import {
-  DocumentForm,
+  DocumentManager,
   DocumentsSidebar,
 } from "@/app/hub/_components/documents";
 ```
@@ -250,10 +253,10 @@ Is this component a shadcn/Kokonut primitive?
 
 ```typescript
 // BAD: Feature component in shared folder
-src / components / DocumentForm.tsx; // Only used in hub feature
+src / components / DocumentManager.tsx; // Only used in hub feature
 
 // GOOD
-src / app / hub / _components / documents / DocumentForm.tsx;
+src / app / hub / _components / documents / DocumentManager.tsx;
 ```
 
 ### ❌ Don't Create Deep Nesting
@@ -305,6 +308,7 @@ src / app / hub / _components / libraries / settings / MemberTable.tsx;
 - `src/components/library-settings/` → Now `src/app/hub/_components/libraries/settings/`
 - `src/app/hub/[id]/documents/` → Now `src/app/hub/libraries/[id]/documents/`
 - `src/app/[id]/settings/` → Now `src/app/hub/libraries/[id]/settings/`
+- `src/app/hub/libraries/[id]/documents/[docId]/edit/` → **Deleted** (editing now happens inline in `[docId]/page.tsx` via `DocumentManager`)
 
 ---
 
