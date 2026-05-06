@@ -88,11 +88,6 @@ export default function AccountSettingsPage() {
   const [successMessage, setSuccessMessage] = useState('');
   const [saveSuccess, setSaveSuccess] = useState(false);
 
-  // Fetch user profile on mount
-  useEffect(() => {
-    fetchProfile();
-  }, []);
-
   const fetchProfile = async () => {
     try {
       setLoading(true);
@@ -127,6 +122,11 @@ export default function AccountSettingsPage() {
       setLoading(false);
     }
   };
+
+  // Fetch user profile on mount
+  useEffect(() => {
+    fetchProfile();
+  }, []);
 
   const { isDirty, isValid } = useMemo(() => {
     if (!profile) return { isDirty: false, isValid: false };

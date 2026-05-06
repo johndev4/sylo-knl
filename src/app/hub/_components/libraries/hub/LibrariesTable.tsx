@@ -213,7 +213,7 @@ export function LibrariesTable({ memberships }: LibrariesTableProps) {
             <AlertDialogDescription>
               You will no longer have access to{' '}
               <span className="text-foreground font-semibold">
-                "{leaveName}"
+                &quot;{leaveName}&quot;
               </span>
               . This action cannot be undone.
             </AlertDialogDescription>

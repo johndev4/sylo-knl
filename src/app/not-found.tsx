@@ -49,7 +49,7 @@ export default function NotFound() {
 
         <div className="space-y-3">
           <p className="text-foreground/70 text-sm">
-            The page you're looking for doesn't exist or has been moved.
+            The page you&apos;re looking for doesn&apos;t exist or has been moved.
           </p>
           <Link href="/">
             <Button size="lg" className="gap-2">
