@@ -13,7 +13,20 @@ import {
   Loader2,
   Edit,
   Eye,
+  Trash2,
+  AlertTriangle,
 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { useSidebarRefresh } from './SidebarRefreshContext';
 import dynamic from 'next/dynamic';
 const Editor = dynamic(() => import('./block_editor/Editor'), { ssr: false });
@@ -31,12 +44,14 @@ interface DocumentManagerProps {
     created_at?: string;
     authors?: { id: string; name: string }[];
   };
+  userRole?: string;
 }
 
 export function DocumentManager({
   libraryId,
   isNew = false,
   initialData,
+  userRole: initialUserRole = 'VIEWER',
 }: DocumentManagerProps) {
   const router = useRouter();
   const { triggerRefresh } = useSidebarRefresh();
@@ -51,6 +66,7 @@ export function DocumentManager({
   const [editorResetKey, setEditorResetKey] = useState(0);
 
   const [isLoading, setIsLoading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ignoreNavigationGuard, setIgnoreNavigationGuard] = useState(false);
 
@@ -86,6 +102,27 @@ export function DocumentManager({
       (async () => resetNewDocumentDraft())();
     }
   }, [isNew, resetNewDocumentDraft]);
+
+  const [fetchedRole, setFetchedRole] = useState<string | null>(null);
+  const userRole = fetchedRole || initialUserRole;
+
+  // Fetch role if it's a new document or if the initial role is VIEWER (to verify)
+  useEffect(() => {
+    if (isNew || initialUserRole === 'VIEWER') {
+      const fetchRole = async () => {
+        try {
+          const res = await fetch(`/api/libraries/${libraryId}`);
+          if (res.ok) {
+            const data = await res.json();
+            setFetchedRole(data.role || 'VIEWER');
+          }
+        } catch (error) {
+          console.error('Failed to fetch role:', error);
+        }
+      };
+      fetchRole();
+    }
+  }, [libraryId, isNew, initialUserRole]);
 
   // Re-enable the navigation guard when switching document contexts
   useEffect(() => {
@@ -215,6 +252,33 @@ export function DocumentManager({
     }
   };
 
+  const handleDelete = async () => {
+    if (!initialData?.id) return;
+
+    setIsDeleting(true);
+    setError(null);
+
+    try {
+      const res = await fetch(`/api/documents/${initialData.id}`, {
+        method: 'DELETE',
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to delete document');
+      }
+
+      setIgnoreNavigationGuard(true);
+      triggerRefresh();
+      router.push(`/hub/libraries/${libraryId}/documents`);
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : 'An unknown error occurred';
+      setError(message);
+      setIsDeleting(false);
+    }
+  };
+
   const handleEditorChange = useCallback(
     (markdown: string, blockCount: number) => {
       setContent(markdown);
@@ -287,6 +351,59 @@ export function DocumentManager({
               )}
               Save
             </Button>
+          )}
+
+          {!isNew && userRole !== 'VIEWER' && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={isDeleting}
+                  className="text-destructive hover:bg-destructive/10 border-zinc-200 dark:border-zinc-800"
+                >
+                  {isDeleting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4" />
+                  )}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="flex items-center gap-2">
+                    <AlertTriangle className="text-destructive h-5 w-5" />
+                    Delete Document
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to delete <strong>{title}</strong>?
+                    This action will soft-delete the document and it will no
+                    longer be accessible in the library. This action cannot be
+                    undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={isDeleting}>
+                    Cancel
+                  </AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleDelete();
+                    }}
+                    disabled={isDeleting}
+                    variant="destructive"
+                  >
+                    {isDeleting ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      'Delete Document'
+                    )}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           )}
         </div>
       </div>

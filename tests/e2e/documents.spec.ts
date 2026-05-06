@@ -60,6 +60,7 @@ test.describe('Document Management', () => {
               updated_at: new Date().toISOString(),
               authors: [{ id: 'test-user', name: 'Test User' }],
             },
+            role: 'OWNER',
           },
         });
       } else if (method === 'PUT') {
@@ -286,5 +287,59 @@ test.describe('Document Management', () => {
     );
     expect(confirmCalls).toBe(0);
     await expect(page.getByPlaceholder('Untitled Document')).toHaveValue('');
+  });
+
+  test('Delete an existing document with confirmation', async ({ page }) => {
+    await page.goto(`/hub/libraries/${libId}/documents/doc-1`);
+    await page.waitForLoadState('networkidle');
+
+    // Verify delete button is visible (we mocked role as OWNER)
+    const deleteBtn = page.locator('button').filter({ has: page.locator('svg.lucide-trash2') });
+    await expect(deleteBtn).toBeVisible({ timeout: 15000 });
+
+    await deleteBtn.click();
+
+    // Verify AlertDialog title
+    await expect(page.getByRole('heading', { name: 'Delete Document' })).toBeVisible();
+    await expect(page.getByText('Are you sure you want to delete')).toBeVisible();
+
+    const confirmBtn = page.getByRole('button', { name: 'Delete Document' });
+    await expect(confirmBtn).toBeVisible();
+    
+    // Click confirm
+    await confirmBtn.click();
+
+    // Should redirect to library documents root
+    await expect(page).toHaveURL(new RegExp(`/hub/libraries/${libId}/documents$`));
+  });
+
+  test('Viewer cannot see delete button', async ({ page }) => {
+    // Mock role as VIEWER for this test
+    await page.route('**/api/documents/doc-1', async (route) => {
+      await route.fulfill({
+        status: 200,
+        json: {
+          document: {
+            id: 'doc-1',
+            title: 'Mock Document 1',
+            content: '# Hello\nThis is a test.',
+            tags: ['TEST', 'MOCK'],
+            author_ids: ['test-user'],
+            library_id: libId,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            authors: [{ id: 'test-user', name: 'Test User' }],
+          },
+          role: 'VIEWER',
+        },
+      });
+    });
+
+    await page.goto(`/hub/libraries/${libId}/documents/doc-1`);
+    await page.waitForLoadState('networkidle');
+
+    // Verify delete button is NOT visible
+    const deleteBtn = page.locator('button').filter({ has: page.locator('svg.lucide-trash2') });
+    await expect(deleteBtn).not.toBeVisible();
   });
 });

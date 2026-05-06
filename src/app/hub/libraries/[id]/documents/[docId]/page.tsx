@@ -13,6 +13,7 @@ export default function DocumentDetailsPage() {
   const router = useRouter();
 
   const [document, setDocument] = useState<any>(null);
+  const [role, setRole] = useState<string>('VIEWER');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,6 +32,7 @@ export default function DocumentDetailsPage() {
       }
       const data = await res.json();
       setDocument(data.document);
+      setRole(data.role || 'VIEWER');
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -39,8 +41,12 @@ export default function DocumentDetailsPage() {
   }, [docId]);
 
   useEffect(() => {
+    // Only set loading to true if it's not already true (e.g. on docId change)
+    if (!isLoading) {
+      setIsLoading(true);
+    }
     fetchDocument();
-  }, [fetchDocument]);
+  }, [fetchDocument, docId]); // Added docId to deps for clarity
 
   if (isLoading) {
     return (
@@ -75,6 +81,7 @@ export default function DocumentDetailsPage() {
         updated_at: document.updated_at,
         authors: document.authors,
       }}
+      userRole={role}
     />
   );
 }

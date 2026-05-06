@@ -85,9 +85,18 @@ The `DocumentManager` component renders a single layout for both viewing and edi
 - **Authors** — shown if document exists and has author data
 - **Edit Mode Toggle** — visible only when `!isNew` (existing documents)
 - **Save Button** — visible only in edit/create mode
+- **Delete Button** — visible for existing documents when the user has `EDITOR`, `ADMIN`, or `OWNER` role. Uses a red `Trash2` icon and prompts for confirmation via an `AlertDialog`.
 - **Tags** — always shown in **UPPERCASE**; remove buttons appear only in edit mode
 - **State Reset** — uses `key={docId}` or `key="new"` to force component re-initialization when switching documents.
 - **New Draft Reset** — on `/hub/libraries/[id]/documents/new`, clicking sidebar `+` while already on the new-document page requests a fresh draft reset (title, tags, editor content).
+
+### Document Deletion (Soft Delete)
+
+Users with sufficient permissions can delete documents from the `DocumentManager` header. 
+- **Confirmation**: A shadcn `AlertDialog` prevents accidental deletions.
+- **Backend**: The `DELETE /api/documents/[docId]` endpoint performs a soft delete by setting `deleted_at`.
+- **Redirection**: Upon successful deletion, the user is redirected back to the library's document list, and the sidebar is refreshed.
+- **RBAC**: Viewers cannot see the delete button and are blocked by the API.
 
 ### Navigation Guard
 

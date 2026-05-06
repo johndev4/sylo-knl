@@ -43,21 +43,19 @@ export async function GET(
     }
 
     // Check RBAC
-    let hasAccess = false;
+    let role = 'VIEWER';
     if (document.library_id === user.id) {
-      hasAccess = true;
+      role = 'OWNER';
     } else {
       const { data: membership } = await supabase
         .from('library_members')
-        .select('library_id')
+        .select('role')
         .eq('library_id', document.library_id)
         .eq('user_id', user.id)
         .single();
-      hasAccess = !!membership;
-    }
-
-    if (!hasAccess) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      if (membership) {
+        role = membership.role;
+      }
     }
 
     let authors: any = [];
@@ -69,7 +67,7 @@ export async function GET(
       authors = usersData || [];
     }
 
-    return NextResponse.json({ document: { ...document, authors } });
+    return NextResponse.json({ document: { ...document, authors }, role });
   } catch (error: any) {
     console.error('[DOCUMENT GET ERROR]', error);
     return NextResponse.json(
