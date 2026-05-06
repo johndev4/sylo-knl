@@ -107,6 +107,15 @@ test.describe('Document Management', () => {
     ).toBeVisible();
   });
 
+  test('Shows inline unauthorized component on restricted library page', async ({ page }) => {
+    await page.goto(`/hub/libraries/${libId}/documents`);
+    await page.waitForLoadState('networkidle');
+
+    await expect(page).toHaveURL(`/hub/libraries/${libId}/documents`);
+    await expect(page.getByRole('heading', { name: 'Unauthorized' })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText('You do not have permission to access this page.')).toBeVisible();
+  });
+
   test('Create a new document with all required fields', async ({ page }) => {
     await page.goto(`/hub/libraries/${libId}/documents/new`);
     await page.waitForLoadState('networkidle');

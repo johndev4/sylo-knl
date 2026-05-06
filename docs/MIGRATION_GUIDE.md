@@ -80,3 +80,13 @@ When changing core workflows or infrastructure, update these files:
 - `MIGRATION_GUIDE.md`
 
 If new tools are added, describe them clearly and add any relevant scripts to `package.json`.
+
+---
+
+## Route Guard & RBAC Migration (2026)
+
+- Added `middleware.ts` for global authentication redirects.
+- Added `src/lib/actions/requireLibraryRole.ts` for RBAC checks.
+- All `/hub/libraries/[id]` and document routes now require membership and minimum role.
+- Unauthorized access redirects to `/unauthorized`.
+- Update Playwright E2E tests to cover these scenarios.

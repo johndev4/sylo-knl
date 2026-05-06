@@ -319,6 +319,19 @@ All code follows the patterns documented in your project's `AGENTS.md` file:
 
 ---
 
+## Route Guard & RBAC Enforcement
+
+- All library management pages (including documents, settings, chat) are protected by a server-side RBAC guard.
+- Only library members with the required role can access these pages.
+- Unauthorized users on restricted routes see an inline `Unauthorized` component while staying on the same URL.
+- See `src/lib/actions/requireLibraryRole.ts` for the RBAC utility.
+- See `src/app/hub/libraries/[id]/layout.tsx` for usage.
+
+**Tip:**
+- RBAC checks are enforced server-side for security. Do not rely on client-side guards.
+
+---
+
 **Implementation Date**: April 20, 2026  
 **Status**: ✅ Complete and Ready for Testing  
 **Framework**: Next.js 16.2.4 + Supabase + TypeScript  

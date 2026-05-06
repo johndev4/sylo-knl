@@ -298,6 +298,27 @@ src / app / hub / _components / libraries / settings / MemberTable.tsx;
 
 ---
 
+## Route Guards & RBAC (2026)
+
+### Authentication Guard
+- Implemented in `middleware.ts`.
+- Redirects unauthenticated users from `/hub*` to `/login`.
+- Redirects authenticated users from `/login` to `/hub`.
+
+### Authorization (RBAC) Guard
+- Implemented in `src/app/hub/libraries/[id]/layout.tsx` using `requireLibraryRole()`.
+- All library and document management routes are protected by server-side RBAC checks.
+- Unauthorized users on restricted routes render an inline `Unauthorized` component while keeping the same route URL.
+
+### Unauthorized Page
+- Centralized at `src/app/unauthorized/page.tsx` for consistent UX when directly accessing the unauthorized page.
+
+**Pattern:**
+- Use middleware for global authentication redirects.
+- Use server-side guards for RBAC (library/document membership and roles).
+
+---
+
 ## Migration Notes
 
 ### From Old Structure (Pre-April 2026)
