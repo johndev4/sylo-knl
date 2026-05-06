@@ -39,20 +39,14 @@ export async function GET(req: NextRequest) {
     }
 
     // Check RBAC
-    let hasAccess = false;
-    if (libraryId === user.id) {
-      hasAccess = true;
-    } else {
-      const { data: membership } = await supabase
-        .from('library_members')
-        .select('library_id')
-        .eq('library_id', libraryId)
-        .eq('user_id', user.id)
-        .single();
-      hasAccess = !!membership;
-    }
+    const { data: membership } = await supabase
+      .from('library_members')
+      .select('library_id')
+      .eq('library_id', libraryId)
+      .eq('user_id', user.id)
+      .single();
 
-    if (!hasAccess) {
+    if (!membership) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -124,8 +118,6 @@ export async function POST(req: NextRequest) {
     const { title, content, libraryId, tags } = ingestSchema.parse(body);
 
     // Check library exists and user has access
-    let hasAccess = false;
-
     if (libraryId === user.id) {
       const { data: existingSpace } = await supabase
         .from('libraries')
@@ -140,19 +132,16 @@ export async function POST(req: NextRequest) {
           .from('library_members')
           .insert({ library_id: user.id, user_id: user.id, role: 'OWNER' });
       }
-      hasAccess = true;
-    } else {
-      const { data: membership } = await supabase
-        .from('library_members')
-        .select('library_id')
-        .eq('library_id', libraryId)
-        .eq('user_id', user.id)
-        .single();
-
-      hasAccess = !!membership;
     }
 
-    if (!hasAccess) {
+    const { data: membership } = await supabase
+      .from('library_members')
+      .select('library_id')
+      .eq('library_id', libraryId)
+      .eq('user_id', user.id)
+      .single();
+
+    if (!membership) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

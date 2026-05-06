@@ -43,20 +43,18 @@ export async function GET(
     }
 
     // Check RBAC
-    let role = 'VIEWER';
-    if (document.library_id === user.id) {
-      role = 'OWNER';
-    } else {
-      const { data: membership } = await supabase
-        .from('library_members')
-        .select('role')
-        .eq('library_id', document.library_id)
-        .eq('user_id', user.id)
-        .single();
-      if (membership) {
-        role = membership.role;
-      }
+    const { data: membership } = await supabase
+      .from('library_members')
+      .select('role')
+      .eq('library_id', document.library_id)
+      .eq('user_id', user.id)
+      .single();
+
+    if (!membership) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
+
+    const role = membership.role;
 
     let authors: any = [];
     if (document.author_ids && document.author_ids.length > 0) {
@@ -113,24 +111,18 @@ export async function PUT(
     }
 
     // Check RBAC
-    let role = 'VIEWER';
-    if (currentDoc.library_id === user.id) {
-      role = 'OWNER';
-    } else {
-      const { data: membership } = await supabase
-        .from('library_members')
-        .select('role')
-        .eq('library_id', currentDoc.library_id)
-        .eq('user_id', user.id)
-        .single();
-      if (membership) {
-        role = membership.role;
-      }
-    }
+    const { data: membership } = await supabase
+      .from('library_members')
+      .select('role')
+      .eq('library_id', currentDoc.library_id)
+      .eq('user_id', user.id)
+      .single();
 
-    if (role === 'VIEWER') {
+    if (!membership || membership.role === 'VIEWER') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
+
+    const role = membership.role;
 
     // OCC Check
     if (lastUpdatedAt) {
@@ -258,24 +250,18 @@ export async function DELETE(
     }
 
     // Check RBAC
-    let role = 'VIEWER';
-    if (currentDoc.library_id === user.id) {
-      role = 'OWNER';
-    } else {
-      const { data: membership } = await supabase
-        .from('library_members')
-        .select('role')
-        .eq('library_id', currentDoc.library_id)
-        .eq('user_id', user.id)
-        .single();
-      if (membership) {
-        role = membership.role;
-      }
-    }
+    const { data: membership } = await supabase
+      .from('library_members')
+      .select('role')
+      .eq('library_id', currentDoc.library_id)
+      .eq('user_id', user.id)
+      .single();
 
-    if (role === 'VIEWER') {
+    if (!membership || membership.role === 'VIEWER') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
+
+    const role = membership.role;
 
     const { error: deleteError } = await supabase
       .from('documents')

@@ -65,22 +65,14 @@ export async function POST(req: NextRequest) {
     }
 
     // Check library exists and user has access
-    let hasAccess = false;
+    const { data: membership } = await supabase
+      .from('library_members')
+      .select('library_id')
+      .eq('library_id', libraryId)
+      .eq('user_id', user.id)
+      .single();
 
-    if (libraryId === user.id) {
-      hasAccess = true;
-    } else {
-      const { data: membership } = await supabase
-        .from('library_members')
-        .select('library_id')
-        .eq('library_id', libraryId)
-        .eq('user_id', user.id)
-        .single();
-
-      hasAccess = !!membership;
-    }
-
-    if (!hasAccess) {
+    if (!membership) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
