@@ -86,6 +86,19 @@ export function DocumentManager({
     setEditorResetKey((prev) => prev + 1);
   }, []);
 
+  // Reset form when entering new document mode
+  useEffect(() => {
+    if (isNew) {
+      resetNewDocumentDraft.call({});
+    }
+  }, [isNew, resetNewDocumentDraft]);
+
+  // Re-enable the navigation guard when switching document contexts
+  useEffect(() => {
+    setIgnoreNavigationGuard.call({}, false);
+  }, [isNew, initialData?.id]);
+
+  // Handle reset request from sidebar button when already on new document page
   useEffect(() => {
     if (!isNew) return;
 
