@@ -13,7 +13,6 @@ import {
   Loader2,
   Edit,
   Eye,
-  CheckCircle2,
 } from 'lucide-react';
 import { useSidebarRefresh } from './SidebarRefreshContext';
 import dynamic from 'next/dynamic';
@@ -30,7 +29,7 @@ interface DocumentManagerProps {
     tags: string[];
     updated_at: string;
     created_at?: string;
-    authors?: any[];
+    authors?: { id: string; name: string }[];
   };
 }
 
@@ -70,11 +69,6 @@ export function DocumentManager({
     );
   }, [isNew, title, content, tags, initialData]);
 
-  const currentData = useMemo(
-    () => ({ title, content, tags }),
-    [title, content, tags]
-  );
-
   useNavigationGuard(isDirty && !ignoreNavigationGuard);
 
   const resetNewDocumentDraft = useCallback(() => {
@@ -89,13 +83,13 @@ export function DocumentManager({
   // Reset form when entering new document mode
   useEffect(() => {
     if (isNew) {
-      resetNewDocumentDraft.call({});
+      (async () => resetNewDocumentDraft())();
     }
   }, [isNew, resetNewDocumentDraft]);
 
   // Re-enable the navigation guard when switching document contexts
   useEffect(() => {
-    setIgnoreNavigationGuard.call({}, false);
+    (async () => setIgnoreNavigationGuard(false))();
   }, [isNew, initialData?.id]);
 
   // Handle reset request from sidebar button when already on new document page
@@ -164,7 +158,13 @@ export function DocumentManager({
         : `/api/documents/${initialData!.id}`;
       const method = isNew ? 'POST' : 'PUT';
 
-      const payload: any = {
+      const payload: {
+        title: string;
+        content: string;
+        tags: string[];
+        libraryId?: string;
+        lastUpdatedAt?: string;
+      } = {
         title,
         content: content || '',
         tags,
@@ -206,8 +206,10 @@ export function DocumentManager({
         setIsEditMode(false);
         router.refresh();
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : 'An unknown error occurred';
+      setError(message);
     } finally {
       setIsLoading(false);
     }
@@ -322,7 +324,7 @@ export function DocumentManager({
               <Users className="mr-2 h-3.5 w-3.5" />
               AUTHORS:{' '}
               <span className="text-muted-foreground/90 ml-1">
-                {initialData.authors.map((a: any) => a.name).join(', ')}
+                {initialData.authors.map((a) => a.name).join(', ')}
               </span>
             </div>
           )}

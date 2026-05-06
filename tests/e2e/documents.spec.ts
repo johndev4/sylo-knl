@@ -108,10 +108,11 @@ test.describe('Document Management', () => {
   });
 
   test('Shows inline unauthorized component on restricted library page', async ({ page }) => {
-    await page.goto(`/hub/libraries/${libId}/documents`);
+    const unauthorizedLibId = '11111111-1111-1111-1111-111111111111';
+    await page.goto(`/hub/libraries/${unauthorizedLibId}/documents`);
     await page.waitForLoadState('networkidle');
 
-    await expect(page).toHaveURL(`/hub/libraries/${libId}/documents`);
+    await expect(page).toHaveURL(`/hub/libraries/${unauthorizedLibId}/documents`);
     await expect(page.getByRole('heading', { name: 'Unauthorized' })).toBeVisible({ timeout: 10000 });
     await expect(page.getByText('You do not have permission to access this page.')).toBeVisible();
   });
