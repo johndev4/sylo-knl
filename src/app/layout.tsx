@@ -7,16 +7,16 @@ import { Navbar } from '@/components/layout/Navbar';
 import { cn } from '@/lib/utils';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
-const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
+const geist = Geist({ subsets: ['latin'], variable: '--font-sans' });
 
 const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+  variable: '--font-geist-sans',
+  subsets: ['latin'],
 });
 
 const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  variable: '--font-geist-mono',
+  subsets: ['latin'],
 });
 
 export const metadata: Metadata = {
@@ -33,12 +33,12 @@ export default function RootLayout({
     <html
       lang="en"
       className={cn(
-        "h-full",
-        "antialiased",
+        'h-full',
+        'antialiased',
         geistSans.variable,
         geistMono.variable,
-        "font-sans",
-        geist.variable,
+        'font-sans',
+        geist.variable
       )}
       suppressHydrationWarning
     >

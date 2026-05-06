@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 /**
  * Hook to prevent data loss by prompting the user when they try to leave
  * the page with unsaved changes.
- * 
+ *
  * Covers:
  * 1. Closing tab/browser (beforeunload)
  * 2. Internal Next.js navigation (by intercepting link clicks)
@@ -76,7 +76,7 @@ export function useNavigationGuard(isDirty: boolean) {
 
     // Capture phase to intercept clicks before Next.js Link component handles them
     document.addEventListener('click', handleInternalNavigation, true);
-    
+
     return () => {
       document.removeEventListener('click', handleInternalNavigation, true);
     };
