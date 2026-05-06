@@ -226,7 +226,7 @@ export function DocumentsSidebar() {
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         {/* Fixed Filters Area */}
         <div className="flex shrink-0 flex-col gap-3 border-b border-zinc-200/10 p-4 dark:border-zinc-800/20">
           <div className="relative">
@@ -257,22 +257,25 @@ export function DocumentsSidebar() {
           </Select>
         </div>
 
-        {/* Scrollable Documents List */}
-        <ScrollArea className="flex-1">
-          <div className="px-2 py-4">
-            <button
-              className="text-muted-foreground hover:text-foreground mb-1 flex w-full items-center px-2 py-1 text-xs font-medium transition-colors"
-              onClick={() => setIsDocsOpen(!isDocsOpen)}
-            >
-              {isDocsOpen ? (
-                <ChevronDown className="mr-1 h-3 w-3" />
-              ) : (
-                <ChevronRight className="mr-1 h-3 w-3" />
-              )}
-              <FileText className="mr-2 h-3 w-3" />
-              DOCUMENTS ({totalDocs})
-            </button>
+        {/* Documents Header - Fixed outside scroll */}
+        <div className="shrink-0 px-4 pt-4">
+          <button
+            className="text-muted-foreground hover:text-foreground mb-1 flex w-full items-center px-2 py-1 text-xs font-medium transition-colors"
+            onClick={() => setIsDocsOpen(!isDocsOpen)}
+          >
+            {isDocsOpen ? (
+              <ChevronDown className="mr-1 h-3 w-3" />
+            ) : (
+              <ChevronRight className="mr-1 h-3 w-3" />
+            )}
+            <FileText className="mr-2 h-3 w-3" />
+            DOCUMENTS ({totalDocs})
+          </button>
+        </div>
 
+        {/* Scrollable Documents List */}
+        <ScrollArea className="h-full min-h-0 flex-1">
+          <div className="px-2 py-2">
             <AnimatePresence initial={false}>
               {isDocsOpen && (
                 <motion.div
@@ -323,29 +326,28 @@ export function DocumentsSidebar() {
                       );
                     })
                   )}
+                  {totalDocs > documents.length && (
+                    <div className="mt-4 px-4 pb-4">
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setPage((p) => p + 1);
+                          fetchDocuments(page + 1);
+                        }}
+                        disabled={isLoading}
+                        className="text-muted-foreground/50 hover:text-foreground h-10 w-full rounded-lg border-zinc-200/10 bg-transparent text-[10px] font-bold tracking-widest uppercase transition-all hover:bg-zinc-100/5 dark:border-zinc-800/50"
+                      >
+                        {isLoading ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          `Load More (${totalDocs - documents.length} Left)`
+                        )}
+                      </Button>
+                    </div>
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>
-
-            {totalDocs > documents.length && (
-              <div className="mt-8 px-4 pb-4">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setPage((p) => p + 1);
-                    fetchDocuments(page + 1);
-                  }}
-                  disabled={isLoading}
-                  className="text-muted-foreground/50 hover:text-foreground h-10 w-full rounded-lg border-zinc-200/10 bg-transparent text-[10px] font-bold tracking-widest uppercase transition-all hover:bg-zinc-100/5 dark:border-zinc-800/50"
-                >
-                  {isLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    `Load More (${totalDocs - documents.length} Left)`
-                  )}
-                </Button>
-              </div>
-            )}
           </div>
         </ScrollArea>
       </div>
