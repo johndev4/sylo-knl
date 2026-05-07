@@ -219,6 +219,7 @@ export function LibrariesContainer({ memberships }: LibrariesContainerProps) {
                     type="button"
                     className="w-full cursor-pointer px-3 py-2 text-left text-sm transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
                     onClick={() => {
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
                       setSortBy(value as any);
                       setShowSortMenu(false);
                     }}

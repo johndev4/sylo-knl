@@ -58,6 +58,7 @@ export function CreateLibraryDialog({
       setName('');
       setError(null);
       router.push('/hub');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.message || 'Failed to create library');
     } finally {

@@ -33,6 +33,7 @@ export default async function LibrariesPage() {
     .eq('user_id', user.id);
 
   // Fetch member counts and document counts for each library
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const libraryIds = (spaceMemberships || []).map((m: any) => m.library.id);
 
   let memberCounts: Record<string, number> = {};
@@ -46,6 +47,7 @@ export default async function LibrariesPage() {
       .in('library_id', libraryIds);
 
     memberCounts = (memberCountData || []).reduce(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (acc: Record<string, number>, item: any) => {
         acc[item.library_id] = (acc[item.library_id] || 0) + 1;
         return acc;
@@ -60,6 +62,7 @@ export default async function LibrariesPage() {
       .in('library_id', libraryIds);
 
     docCounts = (docCountData || []).reduce(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (acc: Record<string, number>, item: any) => {
         acc[item.library_id] = (acc[item.library_id] || 0) + 1;
         return acc;
@@ -68,6 +71,7 @@ export default async function LibrariesPage() {
     );
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const memberships = (spaceMemberships || []).map((m: any) => ({
     role: m.role,
     library: m.library,

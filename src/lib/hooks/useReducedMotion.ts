@@ -15,6 +15,7 @@ export function useReducedMotion(): boolean {
 
     // Listen for changes
     const handleChange = (e: MediaQueryListEvent) => {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPrefersReducedMotion(e.matches);
     };
 

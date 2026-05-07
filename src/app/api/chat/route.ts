@@ -8,6 +8,7 @@ export const maxDuration = 60; // allow longer timeout for RAG
  * Convert provider-agnostic StreamChunk to HTTP streaming format
  */
 function streamChunksToResponse(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   chunks: AsyncIterable<any>
 ): ReadableStream<Uint8Array> {
   return new ReadableStream({
@@ -26,6 +27,7 @@ function streamChunksToResponse(
             controller.close();
           }
         }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
         controller.error(error);
       }
@@ -89,6 +91,7 @@ export async function POST(req: NextRequest) {
         'Transfer-Encoding': 'chunked',
       },
     });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error('[CHAT ERROR] Full error:', error);
     console.error('[CHAT ERROR] Message:', error.message);

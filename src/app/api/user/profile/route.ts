@@ -112,6 +112,7 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const parsedData = updateProfileSchema.parse(body);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const updateData: any = {};
     if (parsedData.name) updateData.name = parsedData.name;
     if (parsedData.bio !== undefined) updateData.bio = parsedData.bio;

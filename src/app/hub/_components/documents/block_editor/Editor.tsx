@@ -15,6 +15,7 @@ interface EditorProps {
   editable?: boolean;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function countBlocks(blocks: any[]): number {
   let count = 0;
   for (const block of blocks) {

@@ -58,6 +58,7 @@ export class GoogleLLMProvider implements LLMProvider {
         text: fullText,
         finishReason: 'stop',
       };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       throw new ProviderError(
         `Google LLM generation failed: ${error.message}`,
@@ -85,6 +86,7 @@ export class GoogleLLMProvider implements LLMProvider {
       yield {
         type: 'finish',
       };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       yield {
         type: 'error',
@@ -113,6 +115,7 @@ export class GoogleEmbeddingProvider implements EmbeddingProvider {
       });
 
       return result.embedding;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       throw new ProviderError(
         `Google embedding generation failed: ${error.message}`,
@@ -129,6 +132,7 @@ export class GoogleEmbeddingProvider implements EmbeddingProvider {
       });
 
       return result.embeddings;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       throw new ProviderError(
         `Google batch embedding generation failed: ${error.message}`,

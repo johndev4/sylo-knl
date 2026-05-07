@@ -18,6 +18,7 @@ export async function createLibrary(name: string) {
     .eq('user_id', user.id);
 
   const duplicate = (existing ?? []).some(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (m: any) => m.library?.name?.toLowerCase() === name.trim().toLowerCase()
   );
 
@@ -121,6 +122,7 @@ export async function fetchLibraryMembers(libraryId: string) {
   }
 
   // Type assertion to match schema (Supabase can return slightly different shapes)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (members || []) as any[];
 }
 

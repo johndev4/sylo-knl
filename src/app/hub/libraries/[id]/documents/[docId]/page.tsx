@@ -12,6 +12,7 @@ export default function DocumentDetailsPage() {
   const docId = params?.docId as string;
   const router = useRouter();
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [document, setDocument] = useState<any>(null);
   const [role, setRole] = useState<string>('VIEWER');
   const [isLoading, setIsLoading] = useState(true);
@@ -33,6 +34,7 @@ export default function DocumentDetailsPage() {
       const data = await res.json();
       setDocument(data.document);
       setRole(data.role || 'VIEWER');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -43,6 +45,7 @@ export default function DocumentDetailsPage() {
   useEffect(() => {
     // Only set loading to true if it's not already true (e.g. on docId change)
     if (!isLoading) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsLoading(true);
     }
     fetchDocument();

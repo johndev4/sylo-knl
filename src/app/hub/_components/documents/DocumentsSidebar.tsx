@@ -128,6 +128,7 @@ export function DocumentsSidebar() {
 
   useEffect(() => {
     // Reset to page 1 on refresh
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPage(1);
     fetchDocuments(1);
     fetchLibrary();

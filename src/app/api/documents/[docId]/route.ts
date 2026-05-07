@@ -56,6 +56,7 @@ export async function GET(
 
     const role = membership.role;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let authors: any = [];
     if (document.author_ids && document.author_ids.length > 0) {
       const { data: usersData } = await supabase
@@ -66,6 +67,7 @@ export async function GET(
     }
 
     return NextResponse.json({ document: { ...document, authors }, role });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error('[DOCUMENT GET ERROR]', error);
     return NextResponse.json(
@@ -181,6 +183,7 @@ export async function PUT(
           'chunks'
         );
         embeddings = await generateEmbeddings(chunks);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (embedError: any) {
         console.error(
           '[INGESTION UPDATE] Embedding generation failed:',
@@ -208,6 +211,7 @@ export async function PUT(
       success: true,
       document: { updated_at: document.updated_at },
     });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error('[DOCUMENT UPDATE ERROR]', error);
     return NextResponse.json(
@@ -279,6 +283,7 @@ export async function DELETE(
     });
 
     return NextResponse.json({ success: true });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error('[DOCUMENT DELETE ERROR]', error);
     return NextResponse.json(

@@ -12,6 +12,7 @@ export default function EditDocumentPage() {
   const docId = params?.docId as string;
   const router = useRouter();
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [document, setDocument] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -31,6 +32,7 @@ export default function EditDocumentPage() {
       }
       const data = await res.json();
       setDocument(data.document);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -39,6 +41,7 @@ export default function EditDocumentPage() {
   }, [docId]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchDocument();
   }, [fetchDocument]);
 

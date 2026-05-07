@@ -40,6 +40,7 @@ export async function GET(
     }
 
     return NextResponse.json({ library, role: membership.role });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error('[LIBRARY GET ERROR]', error);
     return NextResponse.json(

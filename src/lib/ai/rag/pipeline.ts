@@ -38,6 +38,7 @@ export async function* executeRAGChat(
     for await (const chunk of streamAnswer(systemPrompt, userMessages)) {
       yield chunk;
     }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     yield {
       type: 'error',

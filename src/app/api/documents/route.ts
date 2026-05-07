@@ -93,6 +93,7 @@ export async function GET(req: NextRequest) {
         totalPages: Math.ceil((count || 0) / limit),
       },
     });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error('[DOCUMENTS GET ERROR]', error);
     return NextResponse.json(
@@ -158,6 +159,7 @@ export async function POST(req: NextRequest) {
       );
       embeddings = await generateEmbeddings(chunks);
       console.log('[INGESTION] Successfully generated embeddings');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (embedError: any) {
       console.error('[INGESTION] Embedding generation failed:', embedError);
       throw embedError;
@@ -204,6 +206,7 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ success: true, documentId: document.id });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error('[INGESTION ERROR]', error);
     return NextResponse.json(

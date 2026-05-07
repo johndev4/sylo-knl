@@ -53,6 +53,7 @@ export class OllamaLLMProvider implements LLMProvider {
         text: fullText,
         finishReason: 'stop',
       };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       throw new ProviderError(
         `Ollama LLM generation failed: ${error.message}`,
@@ -82,6 +83,7 @@ export class OllamaLLMProvider implements LLMProvider {
       yield {
         type: 'finish',
       };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       yield {
         type: 'error',
@@ -120,6 +122,7 @@ export class OllamaEmbeddingProvider implements EmbeddingProvider {
       });
 
       return result.embedding;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       // Log detailed error for debugging
       console.error('[OLLAMA EMBED ERROR]', {
@@ -148,6 +151,7 @@ export class OllamaEmbeddingProvider implements EmbeddingProvider {
       });
 
       return result.embeddings;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       // Log detailed error for debugging
       console.error('[OLLAMA EMBEDMANY ERROR]', {

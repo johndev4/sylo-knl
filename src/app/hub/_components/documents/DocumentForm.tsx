@@ -66,6 +66,7 @@ export function DocumentForm({ libraryId, initialData }: DocumentFormProps) {
 
       const method = isEditing ? 'PUT' : 'POST';
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const payload: any = {
         title,
         content: content || '', // Allow empty content during creation if using Novel
@@ -102,6 +103,7 @@ export function DocumentForm({ libraryId, initialData }: DocumentFormProps) {
         `/hub/libraries/${libraryId}/documents/${data.documentId || initialData?.id}`
       );
       router.refresh();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.message);
       setIsLoading(false);

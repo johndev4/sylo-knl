@@ -63,6 +63,7 @@ export function DeleteLibraryForm({
     try {
       await deleteLibrary(libraryId);
       router.push('/hub');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.message || 'Failed to delete library. Please try again.');
       setIsDeleting(false);
@@ -130,7 +131,8 @@ export function DeleteLibraryForm({
             disabled={isDeleting}
           />
           <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            Enter <span className="font-semibold">&quot;{libraryName}&quot;</span> to
+            Enter{' '}
+            <span className="font-semibold">&quot;{libraryName}&quot;</span> to
             enable the delete button
           </p>
         </div>

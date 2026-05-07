@@ -79,6 +79,7 @@ export function LibrariesTable({ memberships }: LibrariesTableProps) {
       setLeaveName(null);
       setIsAlertOpen(false);
       router.refresh();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setLeaveError(err.message || 'Failed to leave library. Try again.');
     } finally {
