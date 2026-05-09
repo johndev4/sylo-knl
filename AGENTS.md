@@ -256,7 +256,15 @@ Do not manually create files in `src/components/ui`. Use the respective CLIs to 
 1. **Real-time**: No live collaboration yet (future: Supabase Realtime)
 2. **Versioning**: No document history (future: soft-delete + timestamps)
 3. **Email-to-userId**: Not automated (manual for now)
-4. **Preferences migration**: `users.preferences` column is no longer used for auto-save.
+
+---
+
+## Sylo MVP application has the following hard limits to prevent abuse and ensure performance:
+
+1. A user can have maximum of **5 owned libraries**
+2. A user can be a member to a maximum of **5 shared libraries**
+3. A library can have maximum of **500 documents**
+4. A document can have a maximum of **1000 blocks**
 
 ---
 
