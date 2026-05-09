@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -64,6 +64,10 @@ export function DocumentManager({
   );
   const [tagInput, setTagInput] = useState('');
   const [editorResetKey, setEditorResetKey] = useState(0);
+
+  // Track the most recently saved updated_at so the OCC check
+  // always sends the current server timestamp (not the stale prop).
+  const latestUpdatedAt = useRef<string>(initialData?.updated_at || '');
 
   const [isLoading, setIsLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -210,7 +214,9 @@ export function DocumentManager({
       if (isNew) {
         payload.libraryId = libraryId;
       } else {
-        payload.lastUpdatedAt = initialData!.updated_at;
+        // Use the ref so repeated saves always send the latest timestamp,
+        // not the stale initialData prop from the initial server render.
+        payload.lastUpdatedAt = latestUpdatedAt.current;
       }
 
       const res = await fetch(url, {
@@ -232,7 +238,6 @@ export function DocumentManager({
         throw new Error(data.error || 'Failed to save document');
       }
 
-      // clearDraft(); // removed auto-save
       triggerRefresh();
 
       if (isNew) {
@@ -240,6 +245,11 @@ export function DocumentManager({
         router.push(`/hub/libraries/${libraryId}/documents/${data.documentId}`);
         router.refresh();
       } else {
+        // Capture the new updated_at returned by the server so that the
+        // next save sends the correct timestamp for the OCC check.
+        if (data?.document?.updated_at) {
+          latestUpdatedAt.current = data.document.updated_at;
+        }
         setIsEditMode(false);
         router.refresh();
       }
@@ -488,8 +498,20 @@ export function DocumentManager({
       {/* Dedicated Scrollable Editor Area */}
       <div className="relative flex-1 overflow-hidden">
         {error && (
-          <div className="bg-destructive/10 text-destructive border-destructive/20 absolute top-2 left-1/2 z-10 w-[90%] max-w-lg -translate-x-1/2 rounded-lg border p-3 text-xs font-medium shadow-sm">
-            {error}
+          <div
+            role="alert"
+            className="bg-destructive text-destructive-foreground absolute top-3 left-1/2 z-30 flex w-[92%] max-w-xl -translate-x-1/2 items-start gap-3 rounded-lg px-4 py-3 text-sm font-medium shadow-lg"
+          >
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+            <span className="flex-1">{error}</span>
+            <button
+              type="button"
+              aria-label="Dismiss error"
+              onClick={() => setError(null)}
+              className="transition-opacity hover:opacity-70"
+            >
+              <X className="h-4 w-4" />
+            </button>
           </div>
         )}
         <div className="h-full px-8 py-6">
