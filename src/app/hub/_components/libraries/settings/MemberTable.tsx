@@ -1,5 +1,7 @@
 'use client';
 
+import Image from 'next/image';
+
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -33,18 +35,10 @@ interface MemberTableProps {
   onUpdateRole: (userId: string, newRole: string) => Promise<void>;
 }
 
-const roleDescriptions: Record<string, string> = {
-  OWNER: 'Full control over library',
-  ADMIN: 'Can manage members and settings',
-  EDITOR: 'Can create and edit content',
-  VIEWER: 'Can view content only',
-};
-
 const roleOptions = ['ADMIN', 'EDITOR', 'VIEWER'];
 
 export function MemberTable({
   members,
-  currentUserRole,
   canManageMembers,
   selectedMembers,
   onSelectMember,
@@ -125,9 +119,12 @@ export function MemberTable({
               <td className="px-4 py-3">
                 <div className="flex items-center gap-2">
                   {member.user?.avatar_url && (
-                    <img
+                    <Image
                       src={member.user.avatar_url}
                       alt={member.user?.name || 'Avatar'}
+                      width={32}
+                      height={32}
+                      unoptimized
                       className="h-8 w-8 rounded-full"
                     />
                   )}

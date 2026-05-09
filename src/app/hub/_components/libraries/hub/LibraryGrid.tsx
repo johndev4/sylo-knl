@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { useReducedMotion } from '@/lib/hooks/useReducedMotion';
 import {
@@ -12,7 +11,6 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { MessageSquare, FileText, Settings } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 type Membership = {
   role: string;

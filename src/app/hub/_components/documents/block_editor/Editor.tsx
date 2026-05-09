@@ -1,7 +1,7 @@
 'use client';
 
 import '@blocknote/core/fonts/inter.css';
-import { BlockNoteEditor, PartialBlock } from '@blocknote/core';
+import { BlockNoteEditor } from '@blocknote/core';
 import { SuggestionMenuController, useCreateBlockNote } from '@blocknote/react';
 import { BlockNoteView } from '@blocknote/shadcn';
 import '@blocknote/shadcn/style.css';

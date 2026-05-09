@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { chunkText } from '@/lib/ai/chunking';
 import { generateEmbeddings } from '@/lib/ai/embeddings';
-import { getEmbeddingProvider } from '@/lib/ai/core/provider-factory';
 import { z } from 'zod';
 
 const ingestSchema = z.object({

@@ -43,13 +43,9 @@ export default function DocumentDetailsPage() {
   }, [docId]);
 
   useEffect(() => {
-    // Only set loading to true if it's not already true (e.g. on docId change)
-    if (!isLoading) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setIsLoading(true);
-    }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchDocument();
-  }, [fetchDocument, docId]); // Added docId to deps for clarity
+  }, [fetchDocument]);
 
   if (isLoading) {
     return (

@@ -1,5 +1,7 @@
 'use client';
 
+import Image from 'next/image';
+
 import { useEffect, useState } from 'react';
 import { LogOut, Settings } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
@@ -114,10 +116,12 @@ export function AccountDropdown() {
         >
           {/* Avatar */}
           {shouldUseAvatarUrl ? (
-            <img
+            <Image
               src={userProfile.avatarUrl ?? undefined}
               alt={userProfile.name || 'User avatar'}
-              referrerPolicy="no-referrer"
+              width={32}
+              height={32}
+              unoptimized
               className="h-8 w-8 rounded-full object-cover"
             />
           ) : (

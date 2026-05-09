@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -48,7 +47,6 @@ export default function LibrarySettingsPage({
     new Set()
   );
   const [isAddingMember, setIsAddingMember] = useState(false);
-  const router = useRouter();
   const { user } = useAuth();
 
   useEffect(() => {

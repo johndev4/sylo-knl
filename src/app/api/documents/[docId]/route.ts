@@ -124,8 +124,6 @@ export async function PUT(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const role = membership.role;
-
     // OCC Check
     if (lastUpdatedAt) {
       const currentUpdated = new Date(currentDoc.updated_at).getTime();
@@ -264,8 +262,6 @@ export async function DELETE(
     if (!membership || membership.role === 'VIEWER') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
-
-    const role = membership.role;
 
     const { error: deleteError } = await supabase
       .from('documents')

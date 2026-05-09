@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import Link from 'next/link';
-import { useParams, usePathname, useRouter } from 'next/navigation';
+import { useParams, usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plus,
@@ -73,7 +73,6 @@ export function DocumentsSidebar() {
   const params = useParams();
   const libraryId = params?.id as string;
   const pathname = usePathname();
-  const router = useRouter();
 
   const [isOpen, setIsOpen] = useState(true);
   const [documents, setDocuments] = useState<Document[]>([]);

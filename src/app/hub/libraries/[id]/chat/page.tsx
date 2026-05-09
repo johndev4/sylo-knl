@@ -7,14 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
   Card,
-  CardContent,
   CardHeader,
   CardTitle,
   CardDescription,
 } from '@/components/ui/card';
 import { Bot, User, ArrowUp, Loader2 } from 'lucide-react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 
 interface Message {
@@ -25,7 +22,6 @@ interface Message {
 
 export default function ChatPage(props: { params: Promise<{ id: string }> }) {
   const params = use(props.params);
-  const router = useRouter();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
@@ -60,12 +56,6 @@ export default function ChatPage(props: { params: Promise<{ id: string }> }) {
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  const handleNewChat = () => {
-    setMessages([]);
-    setInput('');
-    inputRef.current?.focus();
   };
 
   useEffect(() => {

@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import {
   Card,
   CardContent,
@@ -88,7 +89,7 @@ export default function AccountSettingsPage() {
   const [successMessage, setSuccessMessage] = useState('');
   const [saveSuccess, setSaveSuccess] = useState(false);
 
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch('/api/user/profile');
@@ -121,13 +122,13 @@ export default function AccountSettingsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [router]);
 
   // Fetch user profile on mount
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchProfile();
-  }, []);
+  }, [fetchProfile]);
 
   const { isDirty, isValid } = useMemo(() => {
     if (!profile) return { isDirty: false, isValid: false };
@@ -356,10 +357,12 @@ export default function AccountSettingsPage() {
                         )}
                       >
                         <div className="relative">
-                          <img
+                          <Image
                             src={profile.avatarUrl}
                             alt="Google avatar"
-                            referrerPolicy="no-referrer"
+                            width={80}
+                            height={80}
+                            unoptimized
                             className="h-20 w-20 rounded-full bg-zinc-100 object-cover shadow-sm dark:bg-zinc-800"
                           />
                           {formData.useAvatarUrl && (

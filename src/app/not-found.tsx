@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 export default function NotFound() {
-  const [isDark, setIsDark] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -18,7 +17,6 @@ export default function NotFound() {
         window.matchMedia('(prefers-color-scheme: dark)').matches);
 
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setIsDark(isDarkMode);
     setMounted(true);
 
     // Apply theme class to html

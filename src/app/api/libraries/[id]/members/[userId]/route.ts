@@ -75,7 +75,6 @@ export async function PATCH(
     }
 
     const targetRole = targetMembership.role as string;
-    const newRoleStr = newRole as string;
 
     // Prevent demoting the only OWNER
     if (targetRole === 'OWNER') {

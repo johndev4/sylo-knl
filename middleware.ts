@@ -5,7 +5,6 @@ import { createServerClient } from '@supabase/ssr';
 // Define routes that require authentication
 const AUTHENTICATED_PATHS = ['/hub'];
 const LOGIN_PATH = '/login';
-const UNAUTHORIZED_PATH = '/unauthorized';
 
 function isAuthenticatedPath(pathname: string) {
   return AUTHENTICATED_PATHS.some((prefix) => pathname.startsWith(prefix));
