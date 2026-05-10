@@ -117,7 +117,7 @@ export function AccountDropdown() {
           {/* Avatar */}
           {shouldUseAvatarUrl ? (
             <Image
-              src={userProfile.avatarUrl ?? undefined}
+              src={userProfile.avatarUrl!}
               alt={userProfile.name || 'User avatar'}
               width={32}
               height={32}
