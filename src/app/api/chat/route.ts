@@ -1,8 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { executeRAGChat } from '@/lib/ai/rag/pipeline';
+import { z } from 'zod';
 
 export const maxDuration = 60; // allow longer timeout for RAG
+
+const chatRequestSchema = z.object({
+  messages: z
+    .array(
+      z.object({ role: z.enum(['user', 'assistant']), content: z.string() })
+    )
+    .min(1, 'messages must be a non-empty array'),
+  libraryIds: z
+    .array(z.string().uuid())
+    .min(1, 'At least one libraryId is required'),
+});
 
 /**
  * Convert provider-agnostic StreamChunk to HTTP streaming format
@@ -48,41 +60,54 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { messages, libraryId } = body;
-    console.log('[CHAT] LibraryID:', libraryId);
 
-    // Validate request body
-    if (!messages || !Array.isArray(messages) || messages.length === 0) {
+    // Validate request body with Zod
+    const parsed = chatRequestSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: 'messages must be a non-empty array' },
+        { error: parsed.error.errors[0]?.message ?? 'Invalid request body' },
         { status: 400 }
       );
     }
 
-    if (!libraryId) {
-      return NextResponse.json(
-        { error: 'libraryId is required' },
-        { status: 400 }
-      );
-    }
+    const { messages, libraryIds } = parsed.data;
+    console.log('[CHAT] LibraryIDs:', libraryIds);
 
-    // Check library exists and user has access
-    const { data: membership } = await supabase
+    // Fetch all libraries the current user has access to
+    const { data: memberships, error: membershipError } = await supabase
       .from('library_members')
       .select('library_id')
-      .eq('library_id', libraryId)
       .eq('user_id', user.id)
-      .single();
+      .in('library_id', libraryIds);
 
-    if (!membership) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    if (membershipError) {
+      console.error('[CHAT] Membership lookup error:', membershipError);
+      return NextResponse.json(
+        { error: 'Failed to verify library access' },
+        { status: 500 }
+      );
+    }
+
+    const authorizedIds = (memberships ?? []).map((m) => m.library_id);
+
+    // Reject if any requested library is not authorized
+    const unauthorized = libraryIds.filter((id) => !authorizedIds.includes(id));
+    if (unauthorized.length > 0) {
+      return NextResponse.json(
+        { error: 'Forbidden: access denied to one or more libraries' },
+        { status: 403 }
+      );
     }
 
     // Get the latest user message for embedding
     const latestMessage = messages[messages.length - 1];
 
-    // Execute RAG pipeline: embed → retrieve → context → stream
-    const chunks = executeRAGChat(latestMessage.content, libraryId, messages);
+    // Execute RAG pipeline: embed → retrieve (multi-library) → context → stream
+    const chunks = executeRAGChat(
+      latestMessage.content,
+      authorizedIds,
+      messages
+    );
     const stream = streamChunksToResponse(chunks);
 
     return new NextResponse(stream, {
@@ -98,13 +123,18 @@ export async function POST(req: NextRequest) {
     console.error('[CHAT ERROR] Code:', error.code);
     console.error('[CHAT ERROR] Meta:', error.meta);
 
-    // Handle specific error types
+    if (error.name === 'SyntaxError' && error.message?.includes('JSON')) {
+      return NextResponse.json(
+        { error: 'Invalid JSON in request body' },
+        { status: 400 }
+      );
+    }
+
     if (
       error.code === 'P2V001' ||
       error.meta?.code === '22P02' ||
       error.message?.includes('22P02')
     ) {
-      // Vector embedding not found or invalid
       return NextResponse.json(
         {
           error: 'Invalid database input (Vector or UUID format)',
@@ -112,19 +142,6 @@ export async function POST(req: NextRequest) {
         },
         { status: 400 }
       );
-    }
-
-    if (error.name === 'SyntaxError' && error.message?.includes('JSON')) {
-      // Invalid JSON in request body
-      return NextResponse.json(
-        { error: 'Invalid JSON in request body' },
-        { status: 400 }
-      );
-    }
-
-    if (error.code === '23505' || error.meta?.code === '23505') {
-      // Unique constraint violation
-      return NextResponse.json({ error: 'Duplicate entry' }, { status: 409 });
     }
 
     return NextResponse.json(

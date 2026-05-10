@@ -104,9 +104,13 @@ src/
 │   │   │           ├── LibraryGrid.tsx
 │   │   │           ├── LibrarySummaryHero.tsx
 │   │   │           └── index.ts      # Barrel export
+│   │   ├── chat/
+│   │   │   ├── _components/
+│   │   │   │   └── ChatClient.tsx     ← unified multi-library chat UI
+│   │   │   └── page.tsx               ← fetches libraries, pre-selects from ?libraryId=
 │   │   ├── libraries/
 │   │   │   └── [id]/
-│   │   │       ├── chat/
+│   │   │       ├── chat/              ← redirects to /hub/chat?libraryId=[id]
 │   │   │       ├── documents/
 │   │   │       └── settings/
 │   │   └── page.tsx
@@ -116,10 +120,12 @@ src/
 │   │   └── login/
 │   └── api/
 ├── components/                        # Shared components
-│   ├── ui/                           # shadcn/Kokonut primitives
+│   ├── ui/                           # shadcn primitives
 │   │   ├── button.tsx
 │   │   ├── dialog.tsx
 │   │   └── ...
+│   ├── kokonutui/                    # Kokonut UI components
+│   │   └── ai-text-loading.tsx       ← animated loading text for chat
 │   ├── layout/                       # App-wide layouts
 │   │   ├── Navbar.tsx
 │   │   ├── AccountDropdown.tsx

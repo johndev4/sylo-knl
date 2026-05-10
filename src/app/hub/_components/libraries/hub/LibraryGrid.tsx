@@ -126,7 +126,7 @@ export function LibrariesBentoGrid({ memberships }: LibraryGridProps) {
                       size="sm"
                       aria-label={`Open chat for ${space.name}`}
                     >
-                      <a href={`/hub/libraries/${space.id}/chat`}>
+                      <a href={`/hub/chat?libraryId=${space.id}`}>
                         <MessageSquare className="mr-2 h-4 w-4" />
                         Chat
                       </a>

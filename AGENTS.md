@@ -85,9 +85,9 @@ supabase db pull                # Sync schema changes
 
 ### 2. Retrieval Flow (RAG)
 
-1. User query via `/api/chat/route.ts`
+1. User query via `/api/chat/route.ts` with `libraryIds` array
 2. Query embedding generated → `src/lib/ai/embeddings.ts`
-3. Vector similarity search → `src/lib/ai/rag/retrieve.ts`
+3. Multi-library vector similarity search → `src/lib/ai/rag/retrieve.ts` (uses `match_document_chunks_multi` RPC)
 4. Retrieved chunks used as context → `src/lib/ai/rag/context-builder.ts`
 5. LLM streams response using context → `src/lib/ai/core/llm.ts`
 
@@ -105,41 +105,45 @@ supabase db pull                # Sync schema changes
 
 ### Application Core
 
-| Path                                                    | Purpose                                             |
-| ------------------------------------------------------- | --------------------------------------------------- |
-| `src/app/`                                              | Next.js routes & API handlers                       |
-| `src/app/hub/`                                          | Main application hub (libraries, documents, chat)   |
-| `src/app/hub/_components/`                              | Feature-local components (documents, libraries)     |
-| `src/app/hub/_components/documents/DocumentManager.tsx` | Unified Create/Edit/View document component         |
-| `src/app/hub/libraries/[id]/`                           | Library-specific routes (chat, documents, settings) |
-| `src/app/api/`                                          | API route handlers                                  |
-| `src/app/api/chat/`                                     | RAG chat endpoint (streaming)                       |
-| `src/app/api/documents/`                                | Document CRUD endpoints                             |
-| `src/app/api/libraries/`                                | Library & member management                         |
-| `src/app/api/user/preferences/`                         | User preference persistence (auto-save setting)     |
+| Path                                                    | Purpose                                           |
+| ------------------------------------------------------- | ------------------------------------------------- |
+| `src/app/`                                              | Next.js routes & API handlers                     |
+| `src/app/hub/`                                          | Main application hub (libraries, documents, chat) |
+| `src/app/hub/_components/`                              | Feature-local components (documents, libraries)   |
+| `src/app/hub/_components/documents/DocumentManager.tsx` | Unified Create/Edit/View document component       |
+| `src/app/hub/chat/page.tsx`                             | **Unified multi-library chat page**               |
+| `src/app/hub/chat/_components/ChatClient.tsx`           | Interactive chat UI with library multi-select     |
+| `src/app/hub/libraries/[id]/`                           | Library-specific routes (documents, settings)     |
+| `src/app/hub/libraries/[id]/chat/page.tsx`              | Redirects to `/hub/chat?libraryId=[id]`           |
+| `src/app/api/`                                          | API route handlers                                |
+| `src/app/api/chat/`                                     | RAG chat endpoint — accepts `libraryIds[]` array  |
+| `src/app/api/documents/`                                | Document CRUD endpoints                           |
+| `src/app/api/libraries/`                                | Library & member management                       |
 
 ### Shared Components
 
 | Path                        | Purpose                                          |
 | --------------------------- | ------------------------------------------------ |
-| `src/components/ui/`        | shadcn/ui & Kokonut UI primitives                |
+| `src/components/ui/`        | shadcn/ui primitives                             |
+| `src/components/kokonutui/` | Kokonut UI components (`ai-text-loading`, etc.)  |
 | `src/components/layout/`    | App-wide layout components (Navbar, ThemeToggle) |
 | `src/components/providers/` | React context providers (ThemeProvider)          |
 
 ### Libraries & Utilities
 
-| Path                                  | Purpose                                                    |
-| ------------------------------------- | ---------------------------------------------------------- |
-| `src/lib/ai/`                         | LLM core, providers, RAG pipeline                          |
-| `src/lib/ai/rag/pipeline.ts`          | Full RAG orchestration (query → embed → retrieve → stream) |
-| `src/lib/ai/core/llm.ts`              | Provider-agnostic LLM interface                            |
-| `src/lib/supabase/`                   | Supabase client (server/client modes)                      |
-| `src/lib/actions/`                    | Server actions for libraries, documents                    |
-| `src/lib/hooks/`                      | Custom React hooks (useAuth, useTheme, useAutoSave)        |
-| `src/lib/hooks/useNavigationGuard.ts` | Prevents data loss with unsaved changes prompt             |
-| `src/lib/validation/`                 | Zod schemas for input validation                           |
-| `src/lib/themes/`                     | Auth UI theming                                            |
-| `src/lib/utils.ts`                    | Utility functions (cn helper)                              |
+| Path                                  | Purpose                                                         |
+| ------------------------------------- | --------------------------------------------------------------- |
+| `src/lib/ai/`                         | LLM core, providers, RAG pipeline                               |
+| `src/lib/ai/rag/pipeline.ts`          | Full RAG orchestration (query → embed → retrieve → stream)      |
+| `src/lib/ai/rag/retrieve.ts`          | Multi-library retrieval using `match_document_chunks_multi` RPC |
+| `src/lib/ai/core/llm.ts`              | Provider-agnostic LLM interface                                 |
+| `src/lib/supabase/`                   | Supabase client (server/client modes)                           |
+| `src/lib/actions/libraries.ts`        | Server actions for libraries (incl. `getUserLibraries`)         |
+| `src/lib/hooks/`                      | Custom React hooks (useAuth, useReducedMotion)                  |
+| `src/lib/hooks/useNavigationGuard.ts` | Prevents data loss with unsaved changes prompt                  |
+| `src/lib/validation/`                 | Zod schemas for input validation                                |
+| `src/lib/themes/`                     | Auth UI theming                                                 |
+| `src/lib/utils.ts`                    | Utility functions (cn helper)                                   |
 
 ### Configuration & Testing
 
@@ -223,7 +227,7 @@ This project follows a "Registry-First" UI architecture. Agents must NOT write c
 Do not manually create files in `src/components/ui`. Use the respective CLIs to ensure all hooks and dependencies are wired correctly.
 
 - **shadcn**: `npx shadcn@latest add <component-name>`
-- **Kokonut UI**: `npx shadcn@latest add https://kokonutui.com/<component-name>.json`
+- **Kokonut UI**: `npx shadcn@latest add @kokonutui/<component-name>`
 
 ### 3. Technical Constraints
 

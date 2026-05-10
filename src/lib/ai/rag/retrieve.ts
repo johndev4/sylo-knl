@@ -13,6 +13,7 @@ export interface RetrievedChunk {
   document_id: string;
   content: string;
   title: string;
+  library_name: string;
   similarity: number;
 }
 
@@ -22,7 +23,7 @@ export interface RetrievedChunk {
  */
 export async function retrieveRelevantChunks(
   queryEmbedding: number[],
-  libraryId: string,
+  libraryIds: string[],
   limit: number = 5
 ): Promise<RetrievedChunk[]> {
   const supabase = await createClient();
@@ -30,11 +31,14 @@ export async function retrieveRelevantChunks(
   // Format embedding as string representation for pgvector
   const embeddingString = `[${queryEmbedding.join(',')}]`;
 
-  const { data: chunks, error } = await supabase.rpc('match_document_chunks', {
-    query_embedding: embeddingString,
-    match_count: limit,
-    filter_library_id: libraryId,
-  });
+  const { data: chunks, error } = await supabase.rpc(
+    'match_document_chunks_multi',
+    {
+      query_embedding: embeddingString,
+      match_count: limit,
+      filter_library_ids: libraryIds.length > 0 ? libraryIds : null,
+    }
+  );
 
   if (error) {
     console.error('[RETRIEVE ERROR]', error);

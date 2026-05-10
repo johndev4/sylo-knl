@@ -14,7 +14,10 @@ export function buildPromptContext(chunks: RetrievedChunk[]): string {
   }
 
   return chunks
-    .map((chunk) => `[Source: ${chunk.title}]\n${chunk.content}`)
+    .map(
+      (chunk) =>
+        `[Source: ${chunk.title} (Library: ${chunk.library_name})]\n${chunk.content}`
+    )
     .join('\n\n');
 }
 

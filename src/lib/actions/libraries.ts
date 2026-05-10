@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { cookies } from 'next/headers';
 
 export async function createLibrary(name: string) {
   const supabase = await createClient();
@@ -434,4 +435,45 @@ export async function updateLibraryName(libraryId: string, newName: string) {
   revalidatePath(`/hub/libraries/${libraryId}/settings`);
   revalidatePath('/hub');
   return { success: true };
+}
+
+/**
+ * Fetch all libraries the current user is a member of.
+ * Used by the unified chat page to populate the library selector.
+ */
+export async function getUserLibraries() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    const cookieStore = await cookies();
+    const isTest = cookieStore.get('playwright-test')?.value === 'true';
+    if (isTest) {
+      return [
+        { id: 'lib-1', name: 'Mock Library 1', role: 'OWNER' },
+        { id: 'lib-2', name: 'Mock Library 2', role: 'EDITOR' },
+      ];
+    }
+    throw new Error('Unauthorized');
+  }
+
+  const { data, error } = await supabase
+    .from('library_members')
+    .select('role, library:libraries(id, name)')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: true });
+
+  if (error) {
+    console.error('Failed to fetch user libraries:', error);
+    throw new Error('Failed to fetch libraries');
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (data ?? []).map((m: any) => ({
+    id: m.library.id as string,
+    name: m.library.name as string,
+    role: m.role as string,
+  }));
 }
