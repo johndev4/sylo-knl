@@ -22,7 +22,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useSidebarRefresh } from './SidebarRefreshContext';
+import { useSidebarRefresh } from './sidebar-refresh-context';
 import {
   Select,
   SelectContent,

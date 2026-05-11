@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { requireLibraryRole } from '@/lib/actions/requireLibraryRole';
+import { requireLibraryRole } from '@/lib/actions/require-library-role';
 import { Unauthorized } from '@/app/unauthorized/page';
 
 export default async function LibraryLayout({

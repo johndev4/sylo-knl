@@ -16,10 +16,10 @@ Components that are **specific to a feature or route** live inside the `app` fol
 
 **Examples:**
 
-- `src/app/hub/_components/documents/DocumentManager.tsx` - Unified Create/Edit/View document component
-- `src/app/hub/_components/documents/DocumentsSidebar.tsx` - Only used in document management
-- `src/app/hub/_components/libraries/settings/AddMemberForm.tsx` - Only used in library settings
-- `src/app/(auth)/_components/LoginHero.tsx` - Only used in auth flow
+- `src/app/hub/_components/documents/document-manager.tsx` - Unified Create/Edit/View document component
+- `src/app/hub/_components/documents/documents-sidebar.tsx` - Only used in document management
+- `src/app/hub/_components/libraries/settings/add-member-form.tsx` - Only used in library settings
+- `src/app/(auth)/_components/login-hero.tsx` - Only used in auth flow
 
 **When to use:**
 
@@ -52,9 +52,9 @@ Components that provide **app-wide layout and navigation**.
 
 **Examples:**
 
-- `src/components/layout/Navbar.tsx`
-- `src/components/layout/AccountDropdown.tsx`
-- `src/components/layout/ThemeToggle.tsx`
+- `src/components/layout/navbar.tsx`
+- `src/components/layout/account-dropdown.tsx`
+- `src/components/layout/theme-toggle.tsx`
 
 **When to use:**
 
@@ -70,7 +70,7 @@ React context providers and HOCs.
 
 **Examples:**
 
-- `src/components/providers/ThemeProvider.tsx`
+- `src/components/providers/theme-provider.tsx`
 
 ---
 
@@ -82,31 +82,31 @@ src/
 │   ├── hub/
 │   │   ├── _components/              # Feature-local components
 │   │   │   ├── documents/
-│   │   │   │   ├── DocumentManager.tsx    ← unified create/edit/view
-│   │   │   │   ├── DocumentsSidebar.tsx
-│   │   │   │   ├── SidebarRefreshContext.tsx
+│   │   │   │   ├── document-manager.tsx    ← unified create/edit/view
+│   │   │   │   ├── documents-sidebar.tsx
+│   │   │   │   ├── sidebar-refresh-context.tsx
 │   │   │   │   ├── block_editor/
-│   │   │   │   │   ├── Editor.tsx         ← BlockNote wrapper (Markdown)
+│   │   │   │   │   ├── editor.tsx         ← BlockNote wrapper (Markdown)
 │   │   │   │   │   └── custom-slash-menu-items.ts
 │   │   │   │   └── index.ts              # Barrel export
 │   │   │   └── libraries/
 │   │   │       ├── settings/
-│   │   │       │   ├── AddMemberForm.tsx
-│   │   │       │   ├── MemberTable.tsx
-│   │   │       │   ├── DeleteLibraryForm.tsx
-│   │   │       │   ├── RenameLibraryForm.tsx
+│   │   │       │   ├── add-member-form.tsx
+│   │   │       │   ├── member-table.tsx
+│   │   │       │   ├── delete-library-form.tsx
+│   │   │       │   ├── rename-library-form.tsx
 │   │   │       │   └── index.ts      # Barrel export
 │   │   │       └── hub/
-│   │   │           ├── CreateLibraryDialog.tsx
-│   │   │           ├── LibrariesContainer.tsx
-│   │   │           ├── LibrariesTable.tsx
-│   │   │           ├── LibraryFab.tsx
-│   │   │           ├── LibraryGrid.tsx
-│   │   │           ├── LibrarySummaryHero.tsx
+│   │   │           ├── create-library-dialog.tsx
+│   │   │           ├── libraries-container.tsx
+│   │   │           ├── libraries-table.tsx
+│   │   │           ├── library-fab.tsx
+│   │   │           ├── library-grid.tsx
+│   │   │           ├── library-summary-hero.tsx
 │   │   │           └── index.ts      # Barrel export
 │   │   ├── chat/
 │   │   │   ├── _components/
-│   │   │   │   └── ChatClient.tsx     ← unified multi-library chat UI
+│   │   │   │   └── chat-client.tsx     ← unified multi-library chat UI
 │   │   │   └── page.tsx               ← fetches libraries, pre-selects from ?libraryId=
 │   │   ├── libraries/
 │   │   │   └── [id]/
@@ -116,7 +116,7 @@ src/
 │   │   └── page.tsx
 │   ├── (auth)/
 │   │   ├── _components/
-│   │   │   └── LoginHero.tsx
+│   │   │   └── login-hero.tsx
 │   │   └── login/
 │   └── api/
 ├── components/                        # Shared components
@@ -127,11 +127,11 @@ src/
 │   ├── kokonutui/                    # Kokonut UI components
 │   │   └── ai-text-loading.tsx       ← animated loading text for chat
 │   ├── layout/                       # App-wide layouts
-│   │   ├── Navbar.tsx
-│   │   ├── AccountDropdown.tsx
+│   │   ├── navbar.tsx
+│   │   ├── account-dropdown.tsx
 │   │   └── ...
 │   └── providers/                    # Context providers
-│       └── ThemeProvider.tsx
+│       └── theme-provider.tsx
 └── lib/                              # Utilities, hooks, actions
     ├── actions/
     ├── ai/
@@ -217,15 +217,13 @@ export * from "./ComponentA";
 
 ### File Names
 
-- **PascalCase** for components: `DocumentForm.tsx`, `MemberTable.tsx`
-- **camelCase** for hooks: `useSidebarRefresh.ts`, `useAuth.ts`
-- **kebab-case** for utilities: `format-date.ts` (if separate files)
+- **kebab-case** for ALL files: `document-form.tsx`, `member-table.tsx`, `use-auth.ts`, `format-date.ts`
 
 ### Component Names
 
-- Match the filename: `DocumentForm.tsx` exports `DocumentForm`
-- Use descriptive names: `AddMemberForm` not `MemberForm`
-- Prefix hooks with `use`: `useSidebarRefresh`
+- **PascalCase** for React components: `DocumentForm`, `MemberTable`
+- **camelCase** for React hooks: `useAuth`, `useSidebarRefresh`
+- **Descriptive Names**: `AddMemberForm` not `MemberForm`
 
 ---
 
@@ -259,10 +257,10 @@ Is this component a shadcn/Kokonut primitive?
 
 ```typescript
 // BAD: Feature component in shared folder
-src / components / DocumentManager.tsx; // Only used in hub feature
+src / components / document-manager.tsx; // Only used in hub feature
 
 // GOOD
-src / app / hub / _components / documents / DocumentManager.tsx;
+src / app / hub / _components / documents / document-manager.tsx;
 ```
 
 ### ❌ Don't Create Deep Nesting
@@ -296,10 +294,10 @@ import { AddMemberForm } from "@/app/hub/_components/libraries/settings";
 
 ```typescript
 // BAD: Shared component with feature-specific logic
-src / components / MemberTable.tsx; // Contains library-specific RBAC
+src / components / member-table.tsx; // Contains library-specific RBAC
 
 // GOOD
-src / app / hub / _components / libraries / settings / MemberTable.tsx;
+src / app / hub / _components / libraries / settings / member-table.tsx;
 ```
 
 ---

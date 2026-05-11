@@ -2,8 +2,8 @@
 
 import { createClient } from '@/lib/supabase/client';
 import { Auth } from '@supabase/auth-ui-react';
-import { getAuthTheme } from '@/lib/themes/authTheme';
-import { LoginHero } from '@/app/(auth)/login/_components/LoginHero';
+import { getAuthTheme } from '@/lib/themes/auth-theme';
+import { LoginHero } from '@/app/(auth)/login/_components/login-hero';
 import { useTheme } from 'next-themes';
 
 export default function LoginPage() {

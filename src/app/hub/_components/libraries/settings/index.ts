@@ -1,5 +1,5 @@
 // Barrel export for library settings components
-export { AddMemberForm } from './AddMemberForm';
-export { MemberTable } from './MemberTable';
-export { DeleteLibraryForm } from './DeleteLibraryForm';
-export { RenameLibraryForm } from './RenameLibraryForm';
+export { AddMemberForm } from './add-member-form';
+export { MemberTable } from './member-table';
+export { DeleteLibraryForm } from './delete-library-form';
+export { RenameLibraryForm } from './rename-library-form';

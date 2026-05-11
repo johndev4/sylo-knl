@@ -110,9 +110,9 @@ supabase db pull                # Sync schema changes
 | `src/app/`                                              | Next.js routes & API handlers                     |
 | `src/app/hub/`                                          | Main application hub (libraries, documents, chat) |
 | `src/app/hub/_components/`                              | Feature-local components (documents, libraries)   |
-| `src/app/hub/_components/documents/DocumentManager.tsx` | Unified Create/Edit/View document component       |
+| `src/app/hub/_components/documents/document-manager.tsx` | Unified Create/Edit/View document component       |
 | `src/app/hub/chat/page.tsx`                             | **Unified multi-library chat page**               |
-| `src/app/hub/chat/_components/ChatClient.tsx`           | Interactive chat UI with library multi-select     |
+| `src/app/hub/chat/_components/chat-client.tsx`           | Interactive chat UI with library multi-select     |
 | `src/app/hub/libraries/[id]/`                           | Library-specific routes (documents, settings)     |
 | `src/app/hub/libraries/[id]/chat/page.tsx`              | Redirects to `/hub/chat?libraryId=[id]`           |
 | `src/app/api/`                                          | API route handlers                                |
@@ -139,8 +139,8 @@ supabase db pull                # Sync schema changes
 | `src/lib/ai/core/llm.ts`              | Provider-agnostic LLM interface                                 |
 | `src/lib/supabase/`                   | Supabase client (server/client modes)                           |
 | `src/lib/actions/libraries.ts`        | Server actions for libraries (incl. `getUserLibraries`)         |
-| `src/lib/hooks/`                      | Custom React hooks (useAuth, useReducedMotion)                  |
-| `src/lib/hooks/useNavigationGuard.ts` | Prevents data loss with unsaved changes prompt                  |
+| `src/lib/hooks/`                      | Custom React hooks (e.g. `use-auth.ts`)         |
+| `src/lib/hooks/use-navigation-guard.ts` | Prevents data loss with unsaved changes prompt                  |
 | `src/lib/validation/`                 | Zod schemas for input validation                                |
 | `src/lib/themes/`                     | Auth UI theming                                                 |
 | `src/lib/utils.ts`                    | Utility functions (cn helper)                                   |
@@ -164,6 +164,12 @@ supabase db pull                # Sync schema changes
 - `eslint-config-prettier` is included last to disable ESLint rules that conflict with Prettier.
 - Always run `npm run format` then `npm run lint:fix` before committing.
 - Remaining non-auto-fixable lint errors (e.g. `no-explicit-any`, `set-state-in-effect`) must be fixed manually in the affected files.
+
+### File Naming Conventions
+
+- **Files:** kebab-case (e.g., `chat-client.tsx`, `use-auth.ts`)
+- **Components:** PascalCase (e.g., `ChatClient`)
+- **Hooks:** camelCase in kebab-case files (e.g., `useAuth` in `use-auth.ts`)
 
 ---
 

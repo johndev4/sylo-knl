@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useReducedMotion } from '@/lib/hooks/useReducedMotion';
+import { useReducedMotion } from '@/lib/hooks/use-reduced-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -14,7 +14,7 @@ import AITextLoading from '@/components/kokonutui/ai-text-loading';
 import ReactMarkdown from 'react-markdown';
 import { cn } from '@/lib/utils';
 import { Bot, User, ArrowUp, Trash2 } from 'lucide-react';
-import { ChatSidebar } from './ChatSidebar';
+import { ChatSidebar } from './chat-sidebar';
 
 interface Library {
   id: string;

@@ -11,8 +11,8 @@ import type {
   StreamChunk,
   EmbeddingProvider,
   LLMProvider,
-} from '../types/provider.types';
-import { ProviderConfigError, ProviderError } from '../types/provider.types';
+} from '../types/provider-types';
+import { ProviderConfigError, ProviderError } from '../types/provider-types';
 
 /**
  * Initialize Google AI client

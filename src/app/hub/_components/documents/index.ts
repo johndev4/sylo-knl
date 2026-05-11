@@ -1,7 +1,7 @@
 // Barrel export for document management components
-export { DocumentForm } from './DocumentForm';
-export { DocumentsSidebar } from './DocumentsSidebar';
+export { DocumentForm } from './document-form';
+export { DocumentsSidebar } from './documents-sidebar';
 export {
   SidebarRefreshProvider,
   useSidebarRefresh,
-} from './SidebarRefreshContext';
+} from './sidebar-refresh-context';

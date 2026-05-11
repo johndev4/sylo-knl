@@ -386,7 +386,7 @@ LibrarySettingsPage (page.tsx)
 
 | File | Purpose |
 |------|---------|
-| `library.schema.ts` | Zod validation schemas |
+| `library-schema.ts` | Zod validation schemas |
 | `library.service.ts` | Business logic services |
 | `rbac.ts` | Role-based access control |
 | `supabase/server.ts` | Supabase server client |

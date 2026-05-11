@@ -5,7 +5,7 @@
 
 import { generateEmbedding } from '@/lib/ai/embeddings';
 import { streamAnswer } from '@/lib/ai/core/llm';
-import type { StreamChunk } from '@/lib/ai/types/provider.types';
+import type { StreamChunk } from '@/lib/ai/types/provider-types';
 import { retrieveRelevantChunks } from './retrieve';
 import { buildPromptContext, buildSystemPrompt } from './context-builder';
 

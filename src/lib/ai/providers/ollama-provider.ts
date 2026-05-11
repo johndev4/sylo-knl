@@ -11,8 +11,8 @@ import type {
   StreamChunk,
   EmbeddingProvider,
   LLMProvider,
-} from '../types/provider.types';
-import { ProviderError } from '../types/provider.types';
+} from '../types/provider-types';
+import { ProviderError } from '../types/provider-types';
 
 /**
  * Get Ollama base URL from environment or use default

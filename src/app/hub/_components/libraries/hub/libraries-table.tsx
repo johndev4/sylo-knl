@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useReducedMotion } from '@/lib/hooks/useReducedMotion';
+import { useReducedMotion } from '@/lib/hooks/use-reduced-motion';
 import {
   LogOut,
   Settings,

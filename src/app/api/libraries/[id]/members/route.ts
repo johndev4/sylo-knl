@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { AddLibraryMemberSchema } from '@/lib/validation/library.schema';
+import { AddLibraryMemberSchema } from '@/lib/validation/library-schema';
 
 /**
  * GET /api/hub/[id]/members

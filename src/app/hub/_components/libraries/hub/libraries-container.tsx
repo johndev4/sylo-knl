@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useReducedMotion } from '@/lib/hooks/useReducedMotion';
+import { useReducedMotion } from '@/lib/hooks/use-reduced-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -11,10 +11,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LibrariesBentoGrid } from './LibraryGrid';
-import { LibrariesTable } from './LibrariesTable';
+import { LibrariesBentoGrid } from './library-grid';
+import { LibrariesTable } from './libraries-table';
 import { Grid3x3, Table2, ChevronDown } from 'lucide-react';
-import { CreateLibraryDialog } from './CreateLibraryDialog';
+import { CreateLibraryDialog } from './create-library-dialog';
 import { cn } from '@/lib/utils';
 
 type Membership = {

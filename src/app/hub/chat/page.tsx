@@ -1,5 +1,5 @@
 import { getUserLibraries } from '@/lib/actions/libraries';
-import ChatClient from './_components/ChatClient';
+import ChatClient from './_components/chat-client';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';

@@ -27,10 +27,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { useSidebarRefresh } from './SidebarRefreshContext';
+import { useSidebarRefresh } from './sidebar-refresh-context';
 import dynamic from 'next/dynamic';
-const Editor = dynamic(() => import('./block_editor/Editor'), { ssr: false });
-import { useNavigationGuard } from '@/lib/hooks/useNavigationGuard';
+const Editor = dynamic(() => import('./block_editor/editor'), { ssr: false });
+import { useNavigationGuard } from '@/lib/hooks/use-navigation-guard';
 
 interface DocumentManagerProps {
   libraryId: string;

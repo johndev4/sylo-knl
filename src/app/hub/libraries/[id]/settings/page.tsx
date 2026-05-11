@@ -14,10 +14,10 @@ import {
   removeMultipleLibraryMembers,
 } from '@/lib/actions/libraries';
 import { MemberTable } from '@/app/hub/_components/libraries/settings';
-import { AddMemberForm } from '@/app/hub/_components/libraries/settings/AddMemberForm';
-import { DeleteLibraryForm } from '@/app/hub/_components/libraries/settings/DeleteLibraryForm';
-import { RenameLibraryForm } from '@/app/hub/_components/libraries/settings/RenameLibraryForm';
-import { useAuth } from '@/lib/hooks/useAuth';
+import { AddMemberForm } from '@/app/hub/_components/libraries/settings/add-member-form';
+import { DeleteLibraryForm } from '@/app/hub/_components/libraries/settings/delete-library-form';
+import { RenameLibraryForm } from '@/app/hub/_components/libraries/settings/rename-library-form';
+import { useAuth } from '@/lib/hooks/use-auth';
 
 interface LibraryMember {
   library_id: string;

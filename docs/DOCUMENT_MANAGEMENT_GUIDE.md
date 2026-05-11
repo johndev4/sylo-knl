@@ -31,11 +31,11 @@ Sylo's document management system provides a **unified, BlockNote-powered interf
 
 | Component | Path | Purpose |
 |-----------|------|---------|
-| `DocumentManager` | `src/app/hub/_components/documents/DocumentManager.tsx` | **Unified** Create/Edit/View component |
-| `Editor` | `src/app/hub/_components/documents/block_editor/Editor.tsx` | BlockNote editor (Markdown in/out, editable toggle) |
-| `DocumentsSidebar` | `src/app/hub/_components/documents/DocumentsSidebar.tsx` | Library sidebar with lazy-loading doc list |
-| `SidebarRefreshContext` | `src/app/hub/_components/documents/SidebarRefreshContext.tsx` | Context to trigger sidebar re-fetch after saves |
-| `useNavigationGuard` | `src/lib/hooks/useNavigationGuard.ts` | Prevents data loss with unsaved changes prompt |
+| `DocumentManager` | `src/app/hub/_components/documents/document-manager.tsx` | **Unified** Create/Edit/View component |
+| `Editor` | `src/app/hub/_components/documents/block_editor/editor.tsx` | BlockNote editor (Markdown in/out, editable toggle) |
+| `DocumentsSidebar` | `src/app/hub/_components/documents/documents-sidebar.tsx` | Library sidebar with lazy-loading doc list |
+| `SidebarRefreshContext` | `src/app/hub/_components/documents/sidebar-refresh-context.tsx` | Context to trigger sidebar re-fetch after saves |
+| `use-navigation-guard` | `src/lib/hooks/use-navigation-guard.ts` | Prevents data loss with unsaved changes prompt |
 
 ### 4. Pages
 
@@ -53,9 +53,9 @@ Sylo's document management system provides a **unified, BlockNote-powered interf
 
 ```
 ✅ Components
-   src/app/hub/_components/documents/DocumentManager.tsx     (new)
-   src/app/hub/_components/documents/DocumentsSidebar.tsx    (updated)
-   src/app/hub/_components/documents/block_editor/Editor.tsx (updated)
+   src/app/hub/_components/documents/document-manager.tsx     (new)
+   src/app/hub/_components/documents/documents-sidebar.tsx    (updated)
+   src/app/hub/_components/documents/block_editor/editor.tsx (updated)
 
 ✅ Pages
    src/app/hub/libraries/[id]/documents/new/page.tsx         (updated → uses DocumentManager)
@@ -63,7 +63,7 @@ Sylo's document management system provides a **unified, BlockNote-powered interf
    src/app/hub/libraries/[id]/documents/[docId]/edit/        (deleted)
 
 ✅ Hooks
-   src/lib/hooks/useNavigationGuard.ts                       (new)
+   src/lib/hooks/use-navigation-guard.ts                       (new)
 
 ✅ Database Migrations
    supabase/migrations/20260504000000_add_user_preferences.sql
@@ -100,7 +100,7 @@ Users with sufficient permissions can delete documents from the `DocumentManager
 
 ### Navigation Guard
 
-The `useNavigationGuard` hook prevents accidental data loss by prompting the user if they attempt to leave the page with unsaved changes. This guard is active in both "Create" and "Edit" modes and covers:
+The `use-navigation-guard` hook prevents accidental data loss by prompting the user if they attempt to leave the page with unsaved changes. This guard is active in both "Create" and "Edit" modes and covers:
 
 - **Browser Close/Refresh** — triggers a standard browser confirmation dialog (`beforeunload`).
 - **Internal Navigation** — intercepts clicks on internal links (e.g., sidebar documents, "New Document" button) and shows a `window.confirm` dialog.

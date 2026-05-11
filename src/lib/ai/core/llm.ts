@@ -3,7 +3,7 @@
  * All LLM calls should go through these functions, which delegate to the active provider.
  */
 
-import type { GenerateInput, StreamChunk } from '../types/provider.types';
+import type { GenerateInput, StreamChunk } from '../types/provider-types';
 import { getLLMProvider } from './provider-factory';
 
 /**

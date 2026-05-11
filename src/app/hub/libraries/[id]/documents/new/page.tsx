@@ -1,4 +1,4 @@
-import { DocumentManager } from '@/app/hub/_components/documents/DocumentManager';
+import { DocumentManager } from '@/app/hub/_components/documents/document-manager';
 
 export default async function NewDocumentPage(props: {
   params: Promise<{ id: string }>;

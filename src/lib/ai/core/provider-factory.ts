@@ -3,10 +3,10 @@
  * Dynamically instantiates the correct provider based on environment variables.
  */
 
-import type { LLMProvider, EmbeddingProvider } from '../types/provider.types';
-import { ProviderConfigError } from '../types/provider.types';
-import { createGoogleProvider } from '../providers/google.provider';
-import { createOllamaProvider } from '../providers/ollama.provider';
+import type { LLMProvider, EmbeddingProvider } from '../types/provider-types';
+import { ProviderConfigError } from '../types/provider-types';
+import { createGoogleProvider } from '../providers/google-provider';
+import { createOllamaProvider } from '../providers/ollama-provider';
 
 type ProviderType = 'google' | 'ollama';
 

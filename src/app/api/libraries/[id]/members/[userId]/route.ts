@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { UpdateLibraryMemberRoleSchema } from '@/lib/validation/library.schema';
+import { UpdateLibraryMemberRoleSchema } from '@/lib/validation/library-schema';
 
 /**
  * PATCH /api/hub/[id]/members/[userId]

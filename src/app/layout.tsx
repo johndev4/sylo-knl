@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { Suspense } from 'react';
 import { ThemeProvider } from 'next-themes';
-import { Navbar } from '@/components/layout/Navbar';
+import { Navbar } from '@/components/layout/navbar';
 import { cn } from '@/lib/utils';
 import { TooltipProvider } from '@/components/ui/tooltip';
 

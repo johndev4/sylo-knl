@@ -49,20 +49,20 @@ I have successfully implemented a **complete library member management system** 
    src/app/api/libraries/[id]/members/[userId]/route.ts
 
 ✅ Components
-   src/app/hub/_components/libraries/settings/AddMemberForm.tsx
-   src/app/hub/_components/libraries/settings/MemberTable.tsx
-   src/app/hub/_components/libraries/settings/DeleteLibraryForm.tsx
-   src/app/hub/_components/libraries/settings/RenameLibraryForm.tsx
+   src/app/hub/_components/libraries/settings/add-member-form.tsx
+   src/app/hub/_components/libraries/settings/member-table.tsx
+   src/app/hub/_components/libraries/settings/delete-library-form.tsx
+   src/app/hub/_components/libraries/settings/rename-library-form.tsx
    src/components/ui/checkbox.tsx
 
 ✅ Pages
    src/app/hub/libraries/[id]/settings/page.tsx
 
 ✅ Validation
-   src/lib/validation/library.schema.ts
+   src/lib/validation/library-schema.ts
 
 ✅ Hooks
-   src/lib/hooks/useAuth.ts
+   src/lib/hooks/use-auth.ts
 
 ✅ Updated Files
    src/lib/actions/libraries.ts (added 6 new functions)

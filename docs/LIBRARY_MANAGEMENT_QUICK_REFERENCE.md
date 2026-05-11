@@ -23,15 +23,15 @@ A complete library member management system allowing OWNER and ADMIN users to:
 - **DELETE** `/api/libraries/[id]/members/[userId]` - Remove member
 
 ### Components
-- `AddMemberForm.tsx` - Form to add new members
-- `MemberTable.tsx` - Table displaying members
-- `DeleteLibraryForm.tsx` - Delete library confirmation
-- `RenameLibraryForm.tsx` - Rename library form
+- `add-member-form.tsx` - Form to add new members
+- `member-table.tsx` - Table displaying members
+- `delete-library-form.tsx` - Delete library confirmation
+- `rename-library-form.tsx` - Rename library form
 
 **Location:** `src/app/hub/_components/libraries/settings/`
 
 ### Validation
-- `library.schema.ts` - Zod schemas for all operations
+- `library-schema.ts` - Zod schemas for all operations
 
 **Location:** `src/lib/validation/`
 

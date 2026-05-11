@@ -46,7 +46,7 @@
 ### Navigation & Layout
 | Component | Status | Notes |
 |-----------|--------|-------|
-| Navbar.tsx | ✅ PASS | Has semantic `<nav>`, skip link to main, keyboard nav works |
+| navbar.tsx | ✅ PASS | Has semantic `<nav>`, skip link to main, keyboard nav works |
 | Sidebar/Navigation | ✅ PASS | Uses Radix primitives, keyboard accessible |
 | Breadcrumbs | ⚠️ TBD | Need to verify if present and properly marked |
 
@@ -77,7 +77,7 @@
 ### Animations & Motion
 | Feature | Status | Notes |
 |-----------|--------|-------|
-| useReducedMotion hook | ✅ PASS | Detects `prefers-reduced-motion`, sets durations to 0 |
+| use-reduced-motion hook | ✅ PASS | Detects `prefers-reduced-motion`, sets durations to 0 |
 | LibraryGrid animations | ✅ PASS | Respects motion prefs, no flashing |
 | ChatPage animations | ✅ PASS | Smooth slide-in, respects motion prefs |
 | Dialog animations | ✅ PASS | Tailwind `animate-in` classes + motion respects |

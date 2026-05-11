@@ -41,10 +41,10 @@ src/app/api/libraries/[id]/members/[userId]/route.ts (PATCH, DELETE)
 
 ### Components (New)
 ```
-src/app/hub/_components/libraries/settings/AddMemberForm.tsx   - Form to add new members
-src/app/hub/_components/libraries/settings/MemberTable.tsx     - Table displaying all members
-src/app/hub/_components/libraries/settings/DeleteLibraryForm.tsx  - Delete library confirmation
-src/app/hub/_components/libraries/settings/RenameLibraryForm.tsx  - Rename library form
+src/app/hub/_components/libraries/settings/add-member-form.tsx   - Form to add new members
+src/app/hub/_components/libraries/settings/member-table.tsx     - Table displaying all members
+src/app/hub/_components/libraries/settings/delete-library-form.tsx  - Delete library confirmation
+src/app/hub/_components/libraries/settings/rename-library-form.tsx  - Rename library form
 src/components/ui/checkbox.tsx                                 - Checkbox input component
 ```
 
@@ -55,12 +55,12 @@ src/app/hub/libraries/[id]/settings/page.tsx - Library settings page
 
 ### Hooks (New)
 ```
-src/lib/hooks/useAuth.ts - Hook to get current authenticated user
+src/lib/hooks/use-auth.ts - Hook to get current authenticated user
 ```
 
 ### Validation (New)
 ```
-src/lib/validation/library.schema.ts - Zod schemas for all member operations
+src/lib/validation/library-schema.ts - Zod schemas for all member operations
 ```
 
 ### Actions (Updated)

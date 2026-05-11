@@ -1,7 +1,7 @@
 'use client';
 
-import { DocumentsSidebar } from '@/app/hub/_components/documents/DocumentsSidebar';
-import { SidebarRefreshProvider } from '@/app/hub/_components/documents/SidebarRefreshContext';
+import { DocumentsSidebar } from '@/app/hub/_components/documents/documents-sidebar';
+import { SidebarRefreshProvider } from '@/app/hub/_components/documents/sidebar-refresh-context';
 
 export default function DocumentsLayout({
   children,

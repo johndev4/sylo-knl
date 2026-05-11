@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock, Users, X, Save, Loader2 } from 'lucide-react';
-import { useSidebarRefresh } from './SidebarRefreshContext';
+import { useSidebarRefresh } from './sidebar-refresh-context';
 import { BlockEditor } from './block_editor';
 
 interface DocumentFormProps {
