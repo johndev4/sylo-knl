@@ -6,11 +6,12 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardHeader,
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { MessageSquare, FileText, Settings } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 type Membership = {
   role: string;
@@ -24,6 +25,7 @@ interface LibraryGridProps {
 }
 
 export function LibrariesBentoGrid({ memberships }: LibraryGridProps) {
+  const router = useRouter();
   const prefersReducedMotion = useReducedMotion();
 
   const containerVariants = {
@@ -76,19 +78,34 @@ export function LibrariesBentoGrid({ memberships }: LibraryGridProps) {
               className="group h-full transition-transform duration-300 ease-out"
             >
               <Card className="relative flex h-full flex-col overflow-hidden border border-zinc-200 bg-white/90 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-zinc-300 hover:shadow-xl dark:border-zinc-800 dark:bg-zinc-950/95 dark:hover:border-zinc-700">
-                <CardHeader className="space-y-2 pb-4">
+                <CardContent className="space-y-2 pb-4">
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex-1 overflow-hidden">
                       <CardTitle className="text-foreground truncate text-xl font-semibold">
                         {space.name}
                       </CardTitle>
                       <CardDescription className="text-sm text-zinc-500 dark:text-zinc-400">
-                        {membership.role} access
+                        <div className="w-fit shrink-0 rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-600 dark:bg-zinc-900 dark:text-zinc-300">
+                          {membership.role}
+                        </div>
                       </CardDescription>
                     </div>
-                    <div className="shrink-0 rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-600 dark:bg-zinc-900 dark:text-zinc-300">
-                      {membership.role}
-                    </div>
+                    {membership.role === 'OWNER' ||
+                    membership.role === 'ADMIN' ? (
+                      <button
+                        className="rounded-md p-2 text-zinc-400 transition-colors hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950/40"
+                        aria-label={`Open settings for ${space.name}`}
+                      >
+                        <Link
+                          href={`/hub/libraries/${space.id}/settings`}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Settings className="h-4 w-4" />
+                        </Link>
+                      </button>
+                    ) : (
+                      <div />
+                    )}
                   </div>
 
                   <div className="text-sm text-zinc-500 dark:text-zinc-400">
@@ -96,28 +113,6 @@ export function LibrariesBentoGrid({ memberships }: LibraryGridProps) {
                     {membership.memberCount} members · {membership.docCount}{' '}
                     docs
                   </div>
-                </CardHeader>
-
-                <CardContent className="flex flex-1 flex-col justify-between gap-6 pb-6">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="rounded-2xl bg-zinc-100 p-4 dark:bg-zinc-950">
-                      <p className="text-xs tracking-[0.2em] text-zinc-500 uppercase dark:text-zinc-400">
-                        Members
-                      </p>
-                      <p className="text-foreground mt-2 text-2xl font-semibold">
-                        {membership.memberCount}
-                      </p>
-                    </div>
-                    <div className="rounded-2xl bg-zinc-100 p-4 dark:bg-zinc-950">
-                      <p className="text-xs tracking-[0.2em] text-zinc-500 uppercase dark:text-zinc-400">
-                        Documents
-                      </p>
-                      <p className="text-foreground mt-2 text-2xl font-semibold">
-                        {membership.docCount}
-                      </p>
-                    </div>
-                  </div>
-
                   <div className="mt-auto grid grid-cols-3 gap-2">
                     <Button
                       asChild
@@ -125,11 +120,12 @@ export function LibrariesBentoGrid({ memberships }: LibraryGridProps) {
                       className="w-full"
                       size="sm"
                       aria-label={`Open chat for ${space.name}`}
+                      onClick={(e) => e.stopPropagation()}
                     >
-                      <a href={`/hub/chat?libraryId=${space.id}`}>
+                      <Link href={`/hub/chat?libraryId=${space.id}`}>
                         <MessageSquare className="mr-2 h-4 w-4" />
                         Chat
-                      </a>
+                      </Link>
                     </Button>
 
                     {membership.role !== 'VIEWER' ? (
@@ -139,29 +135,12 @@ export function LibrariesBentoGrid({ memberships }: LibraryGridProps) {
                         className="w-full"
                         size="sm"
                         aria-label={`View documents for ${space.name}`}
+                        onClick={(e) => e.stopPropagation()}
                       >
-                        <a href={`/hub/libraries/${space.id}/documents`}>
+                        <Link href={`/hub/libraries/${space.id}/documents`}>
                           <FileText className="mr-2 h-4 w-4" />
                           Docs
-                        </a>
-                      </Button>
-                    ) : (
-                      <div />
-                    )}
-
-                    {membership.role === 'OWNER' ||
-                    membership.role === 'ADMIN' ? (
-                      <Button
-                        asChild
-                        variant="outline"
-                        className="w-full"
-                        size="sm"
-                        aria-label={`Open settings for ${space.name}`}
-                      >
-                        <a href={`/hub/libraries/${space.id}/settings`}>
-                          <Settings className="mr-2 h-4 w-4" />
-                          Manage
-                        </a>
+                        </Link>
                       </Button>
                     ) : (
                       <div />

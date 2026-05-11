@@ -151,7 +151,7 @@ export function DeleteLibraryForm({
 
         <Button
           variant="destructive"
-          className="w-full cursor-pointer bg-red-600 text-white hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700"
+          className="w-full bg-red-600 text-white hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700"
           onClick={handleDelete}
           disabled={!canDelete}
         >

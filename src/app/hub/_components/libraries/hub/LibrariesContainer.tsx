@@ -5,6 +5,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useReducedMotion } from '@/lib/hooks/useReducedMotion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { LibrariesBentoGrid } from './LibraryGrid';
 import { LibrariesTable } from './LibrariesTable';
 import { Grid3x3, Table2, ChevronDown } from 'lucide-react';
@@ -29,8 +35,6 @@ export function LibrariesContainer({ memberships }: LibrariesContainerProps) {
   const [sortBy, setSortBy] = useState<
     'name' | 'created' | 'members' | 'documents'
   >('name');
-  const [showRoleMenu, setShowRoleMenu] = useState(false);
-  const [showSortMenu, setShowSortMenu] = useState(false);
 
   // Get unique roles
   const availableRoles = useMemo(() => {
@@ -137,99 +141,63 @@ export function LibrariesContainer({ memberships }: LibrariesContainerProps) {
           />
 
           {/* Role Filter */}
-          <div className="relative">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowRoleMenu(!showRoleMenu)}
-              aria-haspopup="true"
-              aria-expanded={showRoleMenu}
-              aria-controls="role-menu"
-              className="w-full cursor-pointer sm:w-auto"
-            >
-              {roleFilter ? `Role: ${roleFilter}` : 'All Roles'}
-              <ChevronDown className="ml-1 h-4 w-4" />
-            </Button>
-            {showRoleMenu && (
-              <div
-                id="role-menu"
-                className="absolute top-full left-0 z-50 mt-1 rounded border border-zinc-200 bg-white shadow-lg dark:border-zinc-800 dark:bg-zinc-950"
-              >
-                <button
-                  type="button"
-                  className="w-full cursor-pointer px-3 py-2 text-left text-sm transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                  onClick={() => {
-                    setRoleFilter(null);
-                    setShowRoleMenu(false);
-                  }}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="w-full sm:w-auto">
+                {roleFilter ? `Role: ${roleFilter}` : 'All Roles'}
+                <ChevronDown className="ml-1 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              <DropdownMenuItem onSelect={() => setRoleFilter(null)}>
+                All Roles
+              </DropdownMenuItem>
+              {availableRoles.map((role) => (
+                <DropdownMenuItem
+                  key={role}
+                  onSelect={() => setRoleFilter(role)}
                 >
-                  All Roles
-                </button>
-                {availableRoles.map((role) => (
-                  <button
-                    key={role}
-                    type="button"
-                    className="w-full cursor-pointer px-3 py-2 text-left text-sm transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                    onClick={() => {
-                      setRoleFilter(role);
-                      setShowRoleMenu(false);
-                    }}
-                  >
-                    {role}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+                  {role}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           {/* Sort By */}
-          <div className="relative">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowSortMenu(!showSortMenu)}
-              aria-haspopup="true"
-              aria-expanded={showSortMenu}
-              aria-controls="sort-menu"
-              className="w-full cursor-pointer sm:w-auto"
-            >
-              Sort:{' '}
-              {sortBy === 'created'
-                ? 'Date'
-                : sortBy === 'members'
-                  ? 'Members'
-                  : sortBy === 'documents'
-                    ? 'Documents'
-                    : 'Name'}
-              <ChevronDown className="ml-1 h-4 w-4" />
-            </Button>
-            {showSortMenu && (
-              <div
-                id="sort-menu"
-                className="absolute top-full right-0 z-50 mt-1 min-w-[140px] rounded border border-zinc-200 bg-white shadow-lg dark:border-zinc-800 dark:bg-zinc-950"
-              >
-                {[
-                  { value: 'name', label: 'Name' },
-                  { value: 'created', label: 'Date Created' },
-                  { value: 'members', label: 'Members' },
-                  { value: 'documents', label: 'Documents' },
-                ].map(({ value, label }) => (
-                  <button
-                    key={value}
-                    type="button"
-                    className="w-full cursor-pointer px-3 py-2 text-left text-sm transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                    onClick={() => {
-                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                      setSortBy(value as any);
-                      setShowSortMenu(false);
-                    }}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="w-full sm:w-auto">
+                Sort:{' '}
+                {sortBy === 'created'
+                  ? 'Date'
+                  : sortBy === 'members'
+                    ? 'Members'
+                    : sortBy === 'documents'
+                      ? 'Documents'
+                      : 'Name'}
+                <ChevronDown className="ml-1 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {[
+                { value: 'name', label: 'Name' },
+                { value: 'created', label: 'Date Created' },
+                { value: 'members', label: 'Members' },
+                { value: 'documents', label: 'Documents' },
+              ].map(({ value, label }) => (
+                <DropdownMenuItem
+                  key={value}
+                  onSelect={() =>
+                    setSortBy(
+                      value as 'name' | 'created' | 'members' | 'documents'
+                    )
+                  }
+                >
+                  {label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {/* Right: View Toggle + Create */}
@@ -273,8 +241,8 @@ export function LibrariesContainer({ memberships }: LibrariesContainerProps) {
         variants={panelVariants}
         layout
       >
-        Showing {filtered.length} of {memberships.length} library
-        {memberships.length !== 1 ? 's' : ''}
+        Showing {filtered.length} of {memberships.length} librar
+        {memberships.length !== 1 ? 'ies' : 'y'}
       </motion.div>
 
       {/* View */}

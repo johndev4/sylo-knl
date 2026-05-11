@@ -4,8 +4,14 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useReducedMotion } from '@/lib/hooks/useReducedMotion';
-import { Button } from '@/components/ui/button';
-import { LogOut, Settings, AlertTriangle, Loader2 } from 'lucide-react';
+import {
+  LogOut,
+  Settings,
+  AlertTriangle,
+  Loader2,
+  FileText,
+  MessageSquare,
+} from 'lucide-react';
 import { useState } from 'react';
 import { leaveLibrary } from '@/lib/actions/libraries';
 import {
@@ -17,6 +23,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
 
 type Membership = {
   role: string;
@@ -103,6 +110,10 @@ export function LibrariesTable({ memberships }: LibrariesTableProps) {
     }
   };
 
+  const handleRowClick = (id: string) => {
+    router.push(`/hub/libraries/${id}/documents`); // navigate to another page
+  };
+
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
       case 'OWNER':
@@ -130,13 +141,14 @@ export function LibrariesTable({ memberships }: LibrariesTableProps) {
               <th className="px-4 py-3 text-center font-semibold">Members</th>
               <th className="px-4 py-3 text-center font-semibold">Documents</th>
               <th className="px-4 py-3 text-left font-semibold">Created</th>
-              <th className="px-4 py-3 text-right font-semibold">Actions</th>
+              <th className="px-4 py-3 text-right font-semibold"></th>
             </tr>
           </thead>
           <tbody>
             <AnimatePresence initial={false}>
               {memberships.map((membership) => {
                 const library = membership.library;
+                const space = library;
                 const isOwner = membership.role === 'OWNER';
                 return (
                   <motion.tr
@@ -167,27 +179,54 @@ export function LibrariesTable({ memberships }: LibrariesTableProps) {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <Link href={`/hub/chat?libraryId=${library.id}`}>
-                          <Button size="sm" variant="default">
+                        <Button
+                          asChild
+                          variant="default"
+                          size="sm"
+                          aria-label={`Open chat for ${space.name}`}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Link href={`/hub/chat?libraryId=${space.id}`}>
+                            <MessageSquare className="mr-2 h-4 w-4" />
                             Chat
+                          </Link>
+                        </Button>
+
+                        {membership.role !== 'VIEWER' ? (
+                          <Button
+                            asChild
+                            variant="outline"
+                            size="sm"
+                            aria-label={`View documents for ${space.name}`}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Link href={`/hub/libraries/${space.id}/documents`}>
+                              <FileText className="mr-2 h-4 w-4" />
+                              Docs
+                            </Link>
                           </Button>
-                        </Link>
+                        ) : (
+                          <div />
+                        )}
                         {isOwner && (
-                          <Link href={`/hub/libraries/${library.id}/settings`}>
-                            <button
-                              className="cursor-pointer rounded-md p-2 text-zinc-400 transition-colors hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950/40"
-                              aria-label={`Manage settings for ${library.name}`}
+                          <button
+                            className="rounded-md p-2 text-zinc-400 transition-colors hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950/40"
+                            aria-label={`Open settings for ${space.name}`}
+                          >
+                            <Link
+                              href={`/hub/libraries/${space.id}/settings`}
+                              onClick={(e) => e.stopPropagation()}
                             >
                               <Settings className="h-4 w-4" />
-                            </button>
-                          </Link>
+                            </Link>
+                          </button>
                         )}
                         {!isOwner && (
                           <button
                             onClick={() =>
                               handleOpenLeaveDialog(library.id, library.name)
                             }
-                            className="cursor-pointer rounded-md p-2 text-zinc-400 transition-colors hover:bg-orange-50 hover:text-orange-600 dark:hover:bg-orange-950/40"
+                            className="rounded-md p-2 text-zinc-400 transition-colors hover:bg-orange-50 hover:text-orange-600 dark:hover:bg-orange-950/40"
                             aria-label={`Leave ${library.name}`}
                           >
                             <LogOut className="h-4 w-4" />
