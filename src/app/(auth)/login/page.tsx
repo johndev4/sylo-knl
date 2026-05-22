@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Auth } from '@supabase/auth-ui-react';
 import { getAuthTheme } from '@/lib/themes/auth-theme';
@@ -7,8 +9,35 @@ import { LoginHero } from '@/app/(auth)/login/_components/login-hero';
 import { useTheme } from 'next-themes';
 
 export default function LoginPage() {
+  const router = useRouter();
   const supabase = createClient();
   const { resolvedTheme } = useTheme();
+
+  useEffect(() => {
+    const authClient = createClient();
+
+    const checkSession = async () => {
+      const {
+        data: { session },
+      } = await authClient.auth.getSession();
+
+      if (session) {
+        router.push('/hub');
+      }
+    };
+
+    checkSession();
+
+    const { data } = authClient.auth.onAuthStateChange((event, session) => {
+      if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
+        router.push('/hub');
+      }
+    });
+
+    return () => {
+      data?.subscription?.unsubscribe();
+    };
+  }, [router]);
 
   return (
     <LoginHero>
@@ -23,7 +52,12 @@ export default function LoginPage() {
           supabaseClient={supabase}
           appearance={{ theme: getAuthTheme(resolvedTheme === 'dark') }}
           providers={['google']}
-          onlyThirdPartyProviders={true}
+          onlyThirdPartyProviders={
+            process.env.NEXT_PUBLIC_TEST_MODE !== 'true' &&
+            !['http://127.0.0.1:54321', 'http://localhost:54321'].includes(
+              process.env.NEXT_PUBLIC_SUPABASE_URL!
+            )
+          }
           redirectTo={`${typeof window !== 'undefined' ? window.location.origin : ''}/auth/callback`}
         />
       </div>

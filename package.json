@@ -56,6 +56,7 @@
     "prettier-plugin-tailwindcss": "^0.8.0",
     "shadcn": "^4.7.0",
     "tailwindcss": "^4.3.0",
-    "typescript": "^6"
+    "typescript": "^6",
+    "dotenv": "^10.0.0"
   }
 }
