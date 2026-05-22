@@ -15,9 +15,10 @@ export function useAuth() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    const supabase = createClient();
+
     const getUser = async () => {
       try {
-        const supabase = createClient();
         const {
           data: { user: authUser },
         } = await supabase.auth.getUser();
@@ -29,6 +30,8 @@ export function useAuth() {
             name: authUser.user_metadata?.full_name,
             avatar_url: authUser.user_metadata?.avatar_url,
           });
+        } else {
+          setUser(null);
         }
       } catch (error) {
         console.error('Error fetching user:', error);
@@ -38,6 +41,26 @@ export function useAuth() {
     };
 
     getUser();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user) {
+        setUser({
+          id: session.user.id,
+          email: session.user.email,
+          name: session.user.user_metadata?.full_name,
+          avatar_url: session.user.user_metadata?.avatar_url,
+        });
+      } else {
+        setUser(null);
+      }
+      setIsLoading(false);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   return { user, isLoading };

@@ -31,14 +31,16 @@ export function AccountDropdown() {
 
   // Fetch user profile on mount
   useEffect(() => {
+    const supabase = createClient();
+
     const fetchUserProfile = async () => {
       try {
-        const supabase = createClient();
         const {
           data: { user },
         } = await supabase.auth.getUser();
 
         if (!user) {
+          setUserProfile(null);
           setIsLoading(false);
           return;
         }
@@ -60,10 +62,22 @@ export function AccountDropdown() {
 
     fetchUserProfile();
 
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user) {
+        fetchUserProfile();
+      } else {
+        setUserProfile(null);
+        setIsLoading(false);
+      }
+    });
+
     // Listen for profile updates from other components (like Settings page)
     window.addEventListener('profile-updated', fetchUserProfile);
 
     return () => {
+      subscription.unsubscribe();
       window.removeEventListener('profile-updated', fetchUserProfile);
     };
   }, []);

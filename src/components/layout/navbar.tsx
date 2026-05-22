@@ -1,9 +1,40 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useAuth } from '@/lib/hooks/use-auth';
 import { AccountDropdown } from '@/components/layout/account-dropdown';
 import { ThemeToggle } from '@/components/layout/theme-toggle';
 import { cn } from '@/lib/utils';
+import { Suspense } from 'react';
+
+function GlobalNav() {
+  const pathname = usePathname();
+  const { user, isLoading } = useAuth();
+
+  const showNav = !isLoading && !!user && pathname !== '/login';
+
+  if (!showNav) return null;
+
+  return (
+    <div className="absolute top-1/2 left-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-6 md:flex">
+      {/* Library Hub Nav Item */}
+      <Link
+        href="/hub"
+        className="text-foreground transition-smooth text-sm font-medium hover:text-zinc-700 dark:hover:text-zinc-300"
+      >
+        Library Hub
+      </Link>
+      {/* Chat Nav Item */}
+      <Link
+        href="/hub/chat"
+        className="text-foreground transition-smooth text-sm font-medium hover:text-zinc-700 dark:hover:text-zinc-300"
+      >
+        Chat
+      </Link>
+    </div>
+  );
+}
 
 export function Navbar() {
   return (
@@ -37,22 +68,9 @@ export function Navbar() {
         </Link>
 
         {/* Global Navigation */}
-        <div className="absolute top-1/2 left-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-6 md:flex">
-          {/* Library Hub Nav Item */}
-          <Link
-            href="/hub"
-            className="text-foreground transition-smooth text-sm font-medium hover:text-zinc-700 dark:hover:text-zinc-300"
-          >
-            Library Hub
-          </Link>
-          {/* Chat Nav Item */}
-          <Link
-            href="/hub/chat"
-            className="text-foreground transition-smooth text-sm font-medium hover:text-zinc-700 dark:hover:text-zinc-300"
-          >
-            Chat
-          </Link>
-        </div>
+        <Suspense fallback={null}>
+          <GlobalNav />
+        </Suspense>
 
         {/* Theme Toggle & Account Dropdown */}
         <div className="flex items-center gap-2">
