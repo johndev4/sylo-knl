@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { MessageSquare, FileText, Settings } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { cn } from '@/lib/utils';
 
 type Membership = {
   role: string;
@@ -67,17 +68,21 @@ export function LibrariesBentoGrid({ memberships }: LibraryGridProps) {
         initial="hidden"
         animate="visible"
       >
-        {memberships.map((membership) => {
+        {memberships.map((membership, index) => {
           const space = membership.library;
+          const isFeatured = index === 0 && memberships.length > 2;
 
           return (
             <motion.article
               key={space.id}
               variants={cardVariants}
               whileHover="hover"
-              className="group h-full transition-transform duration-300 ease-out"
+              className={cn(
+                'group h-full transition-transform duration-300 ease-out',
+                isFeatured ? 'md:col-span-2' : ''
+              )}
             >
-              <Card className="relative flex h-full flex-col overflow-hidden border border-zinc-200 bg-white/90 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-zinc-300 hover:shadow-xl dark:border-zinc-800 dark:bg-zinc-950/95 dark:hover:border-zinc-700">
+              <Card className="relative flex h-full flex-col overflow-hidden border border-zinc-200/50 bg-white/60 shadow-sm backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-zinc-300/50 hover:shadow-lg dark:border-zinc-800/50 dark:bg-zinc-950/60 dark:hover:border-zinc-700/50">
                 <CardContent className="space-y-2 pb-4">
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex-1 overflow-hidden">
@@ -93,7 +98,7 @@ export function LibrariesBentoGrid({ memberships }: LibraryGridProps) {
                     {membership.role === 'OWNER' ||
                     membership.role === 'ADMIN' ? (
                       <button
-                        className="rounded-md p-2 text-zinc-400 transition-colors hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950/40"
+                        className="rounded-md p-2 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
                         aria-label={`Open settings for ${space.name}`}
                       >
                         <Link
@@ -109,11 +114,16 @@ export function LibrariesBentoGrid({ memberships }: LibraryGridProps) {
                   </div>
 
                   <div className="text-sm text-zinc-500 dark:text-zinc-400">
-                    Created {new Date(space.created_at).toLocaleDateString()} ·{' '}
-                    {membership.memberCount} members · {membership.docCount}{' '}
-                    docs
+                    Created {new Date(space.created_at).toLocaleDateString()}{' '}
+                    &middot; {membership.memberCount} members &middot;{' '}
+                    {membership.docCount} docs
                   </div>
-                  <div className="mt-auto grid grid-cols-3 gap-2">
+                  <div
+                    className={cn(
+                      'mt-auto grid gap-2',
+                      isFeatured ? 'grid-cols-2 sm:w-2/3' : 'grid-cols-2'
+                    )}
+                  >
                     <Button
                       asChild
                       variant="default"

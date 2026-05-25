@@ -201,7 +201,9 @@ export default function LibrarySettingsPage({
             </p>
           </div>
           <Link href={`/hub/libraries/${libraryId}/documents`}>
-            <Button variant="outline">Back to Library</Button>
+            <button className="text-muted-foreground hover:text-foreground mb-4 flex items-center gap-1 text-sm">
+              ← Back to Library
+            </button>
           </Link>
         </div>
       </div>

@@ -41,12 +41,12 @@ export function Navbar() {
     <nav
       className={cn(
         'sticky top-0 z-40 w-full',
-        'border-b border-zinc-200 dark:border-zinc-800/50',
-        'bg-white/80 backdrop-blur-sm dark:bg-zinc-950/80',
-        'shadow-soft-xs dark:shadow-soft-sm'
+        'border-b border-zinc-200/50 dark:border-zinc-800/50',
+        'bg-white/80 backdrop-blur-md dark:bg-zinc-950/80',
+        'shadow-sm dark:shadow-none'
       )}
     >
-      <div className="flex h-16 max-w-full items-center justify-between px-4 sm:px-6 lg:px-8">
+      <div className="relative flex h-16 w-full items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo / Brand */}
         <Link
           href="/"

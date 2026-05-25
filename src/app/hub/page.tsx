@@ -99,7 +99,7 @@ export default async function LibrariesPage() {
 
       {memberships.length === 0 ? (
         <div className="grid items-start gap-6 lg:grid-cols-[1.8fr_1fr]">
-          <div className="rounded-3xl border border-zinc-200 bg-white/80 p-10 text-center shadow-lg shadow-slate-900/5 dark:border-zinc-800 dark:bg-zinc-950/90">
+          <div className="rounded-3xl border border-zinc-200/50 bg-white/60 p-10 text-center shadow-lg shadow-slate-900/5 backdrop-blur-md dark:border-zinc-800/50 dark:bg-zinc-950/60">
             <div className="bg-primary/10 text-primary mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -127,7 +127,7 @@ export default async function LibrariesPage() {
           </div>
 
           <div className="space-y-4">
-            <Card className="rounded-3xl border border-zinc-200 bg-zinc-50 p-6 dark:border-zinc-800 dark:bg-zinc-950">
+            <Card className="rounded-3xl border border-zinc-200/50 bg-white/60 p-6 shadow-sm backdrop-blur-md dark:border-zinc-800/50 dark:bg-zinc-950/60">
               <CardHeader>
                 <CardTitle>Why Sylo?</CardTitle>
                 <CardDescription>
@@ -147,7 +147,7 @@ export default async function LibrariesPage() {
                 </ul>
               </CardContent>
             </Card>
-            <Card className="rounded-3xl border border-zinc-200 bg-zinc-50 p-6 dark:border-zinc-800 dark:bg-zinc-950">
+            <Card className="rounded-3xl border border-zinc-200/50 bg-white/60 p-6 shadow-sm backdrop-blur-md dark:border-zinc-800/50 dark:bg-zinc-950/60">
               <CardHeader>
                 <CardTitle>Get started fast</CardTitle>
                 <CardDescription>

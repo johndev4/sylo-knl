@@ -53,7 +53,9 @@ export default function RootLayout({
         >
           <TooltipProvider>
             <Navbar />
-            <Suspense fallback={null}>{children}</Suspense>
+            <main className="flex-1">
+              <Suspense fallback={null}>{children}</Suspense>
+            </main>
           </TooltipProvider>
         </ThemeProvider>
       </body>

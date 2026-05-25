@@ -277,12 +277,6 @@ export default function AccountSettingsPage() {
         <div className="max-w-2xl">
           {/* Header */}
           <div className="mb-8">
-            <button
-              onClick={() => router.push('/hub')}
-              className="text-muted-foreground hover:text-foreground mb-4 flex items-center gap-1 text-sm"
-            >
-              ← Back
-            </button>
             <h1 className="text-3xl font-bold">Account Settings</h1>
             <p className="text-muted-foreground mt-2">
               Manage your profile information
@@ -545,23 +539,6 @@ export default function AccountSettingsPage() {
                   </p>
 
                   <div className="flex w-full gap-3 sm:w-auto">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="flex-1 sm:flex-none"
-                      onClick={() => {
-                        setFormData({
-                          name: profile.name || '',
-                          bio: profile.bio || '',
-                          timezone: profile.timezone || '',
-                          useAvatarUrl: profile.useAvatarUrl ?? true,
-                        });
-                        setErrors([]);
-                      }}
-                      disabled={submitting}
-                    >
-                      Cancel
-                    </Button>
                     <Button
                       type="submit"
                       aria-disabled={!canSave}
