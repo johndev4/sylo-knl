@@ -24,8 +24,8 @@ test.describe('Chat Page UI & Sidebar', () => {
     await expect(footer).toBeVisible();
     
     // Chat history area should have independent scroll
-    const main = page.locator('main');
-    await expect(main).toHaveClass(/overflow-y-auto/);
+    const messagesArea = page.getByLabel('Chat messages');
+    await expect(messagesArea).toHaveClass(/overflow-y-auto/);
   });
 
   test('Sidebar toggling works', async ({ page }) => {
