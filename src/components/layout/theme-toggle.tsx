@@ -16,13 +16,7 @@ export function ThemeToggle() {
 
   if (!mounted) {
     return (
-      <div
-        className={cn(
-          'inline-flex items-center gap-2 rounded-lg px-3 py-2',
-          'border border-zinc-300 dark:border-zinc-700',
-          'bg-white dark:bg-zinc-900'
-        )}
-      />
+      <div className="size-10 animate-pulse rounded-full bg-zinc-100 dark:bg-zinc-800" />
     );
   }
 
@@ -35,12 +29,16 @@ export function ThemeToggle() {
   return (
     <Button
       onClick={() => setTheme(isDark ? 'light' : 'dark')}
-      variant={'outline'}
+      variant={'ghost'}
       size={'icon'}
       className="rounded-full"
       aria-label="Toggle theme"
     >
-      {isDark ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+      {isDark ? (
+        <Moon data-icon="inline-start" />
+      ) : (
+        <Sun data-icon="inline-start" />
+      )}
     </Button>
   );
 }

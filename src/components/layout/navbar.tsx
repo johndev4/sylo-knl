@@ -17,18 +17,29 @@ function GlobalNav() {
   if (!showNav) return null;
 
   return (
-    <div className="absolute top-1/2 left-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-6 md:flex">
+    <div className="ml-4 hidden items-center gap-1 md:flex">
       {/* Library Hub Nav Item */}
       <Link
         href="/hub"
-        className="text-foreground transition-smooth text-sm font-medium hover:text-zinc-700 dark:hover:text-zinc-300"
+        className={cn(
+          'focus-visible:ring-ring rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none',
+          pathname === '/hub' ||
+            (pathname.startsWith('/hub/') && !pathname.startsWith('/hub/chat'))
+            ? 'text-foreground bg-zinc-100 dark:bg-zinc-800/50'
+            : 'text-muted-foreground hover:text-foreground hover:bg-zinc-100/50 dark:hover:bg-zinc-800/30'
+        )}
       >
         Library Hub
       </Link>
       {/* Chat Nav Item */}
       <Link
         href="/hub/chat"
-        className="text-foreground transition-smooth text-sm font-medium hover:text-zinc-700 dark:hover:text-zinc-300"
+        className={cn(
+          'focus-visible:ring-ring rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none',
+          pathname.startsWith('/hub/chat')
+            ? 'text-foreground bg-zinc-100 dark:bg-zinc-800/50'
+            : 'text-muted-foreground hover:text-foreground hover:bg-zinc-100/50 dark:hover:bg-zinc-800/30'
+        )}
       >
         Chat
       </Link>
@@ -42,38 +53,35 @@ export function Navbar() {
       className={cn(
         'sticky top-0 z-40 w-full',
         'border-b border-zinc-200/50 dark:border-zinc-800/50',
-        'bg-white/80 backdrop-blur-md dark:bg-zinc-950/80',
+        'bg-background/80 backdrop-blur-md',
         'shadow-sm dark:shadow-none'
       )}
     >
-      <div className="relative flex h-16 w-full items-center justify-between px-4 sm:px-6 lg:px-8">
-        {/* Logo / Brand */}
-        <Link
-          href="/"
-          className={cn(
-            'flex items-center gap-2 text-lg font-bold',
-            'text-foreground',
-            'transition-smooth hover:text-zinc-700 dark:hover:text-zinc-300'
-          )}
-        >
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-200 bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-900">
-            <span className="text-xs font-bold">Sy</span>
-          </div>
-          <span className="hidden sm:inline">
-            Sylo{' '}
-            <span className="text-muted-foreground font-normal">
-              / Knowledge Library
-            </span>
-          </span>
-        </Link>
+      <div className="flex h-16 w-full items-center justify-between px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center gap-2 md:gap-4">
+          {/* Logo / Brand */}
+          <Link
+            href="/"
+            className={cn(
+              'flex items-center gap-2 text-lg font-bold',
+              'text-foreground',
+              'focus-visible:ring-ring rounded-lg transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:outline-none'
+            )}
+          >
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-zinc-900 text-zinc-50 shadow-sm dark:bg-zinc-100 dark:text-zinc-900">
+              <span className="text-xs font-bold">Sy</span>
+            </div>
+            <span className="hidden tracking-tight sm:inline">Sylo</span>
+          </Link>
 
-        {/* Global Navigation */}
-        <Suspense fallback={null}>
-          <GlobalNav />
-        </Suspense>
+          {/* Global Navigation */}
+          <Suspense fallback={null}>
+            <GlobalNav />
+          </Suspense>
+        </div>
 
         {/* Theme Toggle & Account Dropdown */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <ThemeToggle />
           <AccountDropdown />
         </div>

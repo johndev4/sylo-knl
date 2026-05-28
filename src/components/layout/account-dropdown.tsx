@@ -120,11 +120,10 @@ export function AccountDropdown() {
       <DropdownMenuTrigger asChild>
         <button
           className={cn(
-            'flex items-center gap-2 rounded-lg px-3 py-2',
-            'bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-900 dark:hover:bg-zinc-800',
-            'border border-zinc-200 dark:border-zinc-800',
-            'transition-smooth outline-none',
-            'focus:ring-2 focus:ring-zinc-400/50 dark:focus:ring-zinc-600/50'
+            'flex items-center gap-2 rounded-full py-1.5 pr-3 pl-1.5',
+            'bg-zinc-100/80 hover:bg-zinc-200/80 dark:bg-zinc-800/50 dark:hover:bg-zinc-800',
+            'border border-zinc-200/50 transition-colors outline-none dark:border-zinc-700/50',
+            'focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-1'
           )}
           aria-label="Account menu"
         >
@@ -133,16 +132,16 @@ export function AccountDropdown() {
             <Image
               src={userProfile.avatarUrl!}
               alt={userProfile.name || 'User avatar'}
-              width={32}
-              height={32}
+              width={28}
+              height={28}
               unoptimized
-              className="h-8 w-8 rounded-full object-cover"
+              className="size-7 rounded-full object-cover"
             />
           ) : (
             <div
               className={cn(
-                'flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium',
-                'text-foreground bg-zinc-200 dark:bg-zinc-800'
+                'flex size-7 items-center justify-center rounded-full text-xs font-semibold',
+                'border border-zinc-200/50 bg-white text-zinc-700 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300'
               )}
             >
               {initials}
@@ -151,7 +150,7 @@ export function AccountDropdown() {
 
           {/* Display Name (hidden on mobile) */}
           {!isLoading && userProfile && (
-            <span className="text-foreground/80 hidden max-w-[150px] truncate text-sm sm:inline">
+            <span className="text-foreground hidden max-w-[150px] truncate text-sm font-medium sm:inline">
               {userProfile.name || userProfile.email}
             </span>
           )}
