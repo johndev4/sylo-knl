@@ -4,6 +4,7 @@ import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useTagSuggestions } from '@/lib/hooks/use-tag-suggestions';
 import {
   Calendar,
   Clock,
@@ -63,6 +64,11 @@ export function DocumentManager({
     (initialData?.tags || []).map((t) => t.toUpperCase())
   );
   const [tagInput, setTagInput] = useState('');
+  const { suggestions: tagSuggestions } = useTagSuggestions(
+    libraryId,
+    tagInput,
+    tags
+  );
   const [editorResetKey, setEditorResetKey] = useState(0);
 
   // Track the most recently saved updated_at so the OCC check
@@ -168,14 +174,19 @@ export function DocumentManager({
   const createdAt = initialData?.created_at || now;
   const updatedAt = initialData?.updated_at || now;
 
+  const addTag = (tagValue: string) => {
+    const newTag = tagValue.trim().toUpperCase();
+    if (!newTag || tags.includes(newTag)) {
+      return;
+    }
+    setTags([...tags, newTag]);
+    setTagInput('');
+  };
+
   const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && tagInput.trim() !== '') {
       e.preventDefault();
-      const newTag = tagInput.trim().toUpperCase();
-      if (!tags.includes(newTag)) {
-        setTags([...tags, newTag]);
-      }
-      setTagInput('');
+      addTag(tagInput);
     }
   };
 
@@ -480,16 +491,40 @@ export function DocumentManager({
             ))}
           </div>
           {isEditMode && (
-            <div className="max-w-[200px] min-w-[120px] flex-1">
+            <div className="relative max-w-[200px] min-w-[120px] flex-1">
               <input
                 type="text"
+                role="combobox"
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}
                 onKeyDown={handleAddTag}
                 placeholder="Add tag..."
                 aria-label="Tags"
+                aria-autocomplete="list"
+                aria-haspopup="listbox"
+                aria-controls="tag-suggestion-list"
+                aria-expanded={tagSuggestions.length > 0}
                 className="text-muted-foreground/60 placeholder:text-muted-foreground/30 w-full border-none bg-transparent text-xs focus:outline-none"
               />
+              {tagSuggestions.length > 0 && (
+                <div
+                  id="tag-suggestion-list"
+                  role="listbox"
+                  aria-label="Tag suggestions"
+                  className="absolute left-0 top-full z-10 mt-2 max-h-56 w-full overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-950"
+                >
+                  {tagSuggestions.map((suggestion) => (
+                    <button
+                      key={suggestion}
+                      type="button"
+                      onClick={() => addTag(suggestion)}
+                      className="w-full px-3 py-2 text-left text-xs text-muted-foreground transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>

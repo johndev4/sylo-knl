@@ -69,6 +69,56 @@ test.describe.serial('Document Management', () => {
     testDocId = match![1];
   });
 
+  test('Show tag suggestions in new document flow after typing 3 characters', async ({ page }) => {
+    await page.goto(`/hub/libraries/${libId}/documents/new`);
+    await page.waitForLoadState('networkidle');
+
+    const tagInput = page.getByPlaceholder('Add tag...');
+    await tagInput.fill('imp');
+
+    await expect(
+      page.getByRole('button', { name: 'IMPORTANT' })
+    ).toBeVisible();
+
+    await page.getByRole('button', { name: 'IMPORTANT' }).click();
+    await expect(page.getByText('IMPORTANT')).toBeVisible();
+  });
+
+  test('Show tag suggestions in edit document flow after typing 3 characters', async ({ page }) => {
+    // Seed a different tag from the same library so suggestion list can appear
+    await page.goto(`/hub/libraries/${libId}/documents/new`);
+    await page.waitForLoadState('networkidle');
+
+    await page.evaluate(async (libraryId) => {
+      await fetch('/api/documents', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: 'Suggestion Seed Document',
+          content: 'This document creates a tag suggestion source.',
+          libraryId,
+          tags: ['SuggestionSeed'],
+        }),
+      });
+    }, libId);
+
+    expect(testDocId).toBeDefined();
+    await page.goto(`/hub/libraries/${libId}/documents/${testDocId}`);
+    await page.waitForLoadState('networkidle');
+
+    await page.getByRole('button', { name: 'Edit Mode' }).click();
+
+    const tagInput = page.getByPlaceholder('Add tag...');
+    await tagInput.fill('sug');
+
+    await expect(
+      page.getByRole('button', { name: 'SuggestionSeed' })
+    ).toBeVisible();
+
+    await page.getByRole('button', { name: 'SuggestionSeed' }).click();
+    await expect(page.getByText('SuggestionSeed')).toBeVisible();
+  });
+
   test('List existing documents with filters in sidebar', async ({ page }) => {
     await page.goto(`/hub/libraries/${libId}/documents`);
     await page.waitForLoadState('networkidle');

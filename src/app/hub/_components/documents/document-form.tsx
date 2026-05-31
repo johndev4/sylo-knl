@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useTagSuggestions } from '@/lib/hooks/use-tag-suggestions';
 import { Calendar, Clock, Users, X, Save, Loader2 } from 'lucide-react';
 import { useSidebarRefresh } from './sidebar-refresh-context';
 import { BlockEditor } from './block_editor';
@@ -29,19 +30,31 @@ export function DocumentForm({ libraryId, initialData }: DocumentFormProps) {
   const [tagInput, setTagInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { suggestions: tagSuggestions } = useTagSuggestions(
+    libraryId,
+    tagInput,
+    tags
+  );
 
   const isEditing = !!initialData;
   const now = new Date().toISOString();
   const createdAt = initialData?.created_at || now;
   const updatedAt = initialData?.updated_at || now;
 
+  const addTag = (tagValue: string) => {
+    const trimmedTag = tagValue.trim();
+    if (!trimmedTag || tags.includes(trimmedTag)) {
+      return;
+    }
+
+    setTags([...tags, trimmedTag]);
+    setTagInput('');
+  };
+
   const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && tagInput.trim() !== '') {
       e.preventDefault();
-      if (!tags.includes(tagInput.trim())) {
-        setTags([...tags, tagInput.trim()]);
-      }
-      setTagInput('');
+      addTag(tagInput);
     }
   };
 
@@ -207,16 +220,40 @@ export function DocumentForm({ libraryId, initialData }: DocumentFormProps) {
                   </Badge>
                 ))}
               </div>
-              <div className="min-w-[120px] flex-1">
+              <div className="relative min-w-[120px] flex-1">
                 <input
                   type="text"
+                  role="combobox"
                   value={tagInput}
                   onChange={(e) => setTagInput(e.target.value)}
                   onKeyDown={handleAddTag}
                   placeholder="Add tag..."
                   aria-label="Tags"
+                  aria-autocomplete="list"
+                  aria-haspopup="listbox"
+                  aria-controls="tag-suggestion-list"
+                  aria-expanded={tagSuggestions.length > 0}
                   className="text-muted-foreground/60 placeholder:text-muted-foreground/20 w-full border-none bg-transparent text-xs focus:outline-none"
                 />
+                {tagSuggestions.length > 0 && (
+                  <div
+                    id="tag-suggestion-list"
+                    role="listbox"
+                    aria-label="Tag suggestions"
+                    className="absolute left-0 top-full z-10 mt-2 max-h-56 w-full overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-950"
+                  >
+                    {tagSuggestions.map((suggestion) => (
+                      <button
+                        key={suggestion}
+                        type="button"
+                        onClick={() => addTag(suggestion)}
+                        className="w-full px-3 py-2 text-left text-xs text-muted-foreground transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                      >
+                        {suggestion}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
