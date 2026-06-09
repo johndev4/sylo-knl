@@ -157,7 +157,7 @@ export function DocumentsSidebar() {
 
   if (!isOpen) {
     return (
-      <div className="sticky top-0 flex h-[calc(100vh-4.5rem)] w-16 shrink-0 flex-col items-center border-r border-zinc-200/10 bg-zinc-50 py-4 transition-all duration-300 dark:border-zinc-800/20 dark:bg-[#09090b]">
+      <div className="sticky top-0 flex h-[calc(100vh-4.1rem)] w-16 shrink-0 flex-col items-center border-r border-zinc-200/10 bg-zinc-50 py-4 transition-all duration-300 dark:border-zinc-800/20 dark:bg-[#09090b]">
         <Button variant="ghost" size="icon" onClick={() => setIsOpen(true)}>
           <PanelLeft className="h-5 w-5" />
         </Button>
@@ -169,7 +169,7 @@ export function DocumentsSidebar() {
   const newDocumentPath = `/hub/libraries/${libraryId}/documents/new`;
 
   return (
-    <aside className="sticky top-0 flex h-[calc(100vh-4.5rem)] w-72 shrink-0 flex-col border-r border-zinc-200/10 bg-zinc-50 transition-all duration-300 dark:border-zinc-800/20 dark:bg-[#09090b]">
+    <aside className="sticky top-0 flex h-[calc(100vh-4.1rem)] w-72 shrink-0 flex-col border-r border-zinc-200/10 bg-zinc-50 transition-all duration-300 dark:border-zinc-800/20 dark:bg-[#09090b]">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-zinc-200/10 p-4 dark:border-zinc-800/20">
         <div className="mr-2 flex flex-1 flex-col gap-0.5 overflow-hidden">
