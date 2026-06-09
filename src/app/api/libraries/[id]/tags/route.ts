@@ -66,15 +66,15 @@ export async function GET(
       });
     });
 
-    suggestions.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+    suggestions.sort((a, b) =>
+      a.localeCompare(b, undefined, { sensitivity: 'base' })
+    );
 
     return NextResponse.json({ tags: suggestions.slice(0, 20) });
   } catch (error: unknown) {
     console.error('[LIBRARY TAGS GET ERROR]', error);
-    const message = error instanceof Error ? error.message : 'Internal Server Error';
-    return NextResponse.json(
-      { error: message },
-      { status: 500 }
-    );
+    const message =
+      error instanceof Error ? error.message : 'Internal Server Error';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

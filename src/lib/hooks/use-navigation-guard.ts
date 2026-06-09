@@ -5,10 +5,16 @@ import { useEffect } from 'react';
  * the page with unsaved changes.
  *
  * Covers:
- * 1. Closing tab/browser (beforeunload)
+ * 1. Closing tab/browser (beforeunload) — always uses the native browser dialog
  * 2. Internal Next.js navigation (by intercepting link clicks)
+ *    - When `onNavigationAttempt` is provided, calls it with the target href
+ *      so the caller can show a custom dialog (e.g. AlertDialog).
+ *    - When omitted, falls back to `window.confirm`.
  */
-export function useNavigationGuard(isDirty: boolean) {
+export function useNavigationGuard(
+  isDirty: boolean,
+  onNavigationAttempt?: (href: string) => void
+) {
   // 1. Handle browser close/refresh
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -64,13 +70,21 @@ export function useNavigationGuard(isDirty: boolean) {
         return;
       }
 
-      const confirmed = window.confirm(
-        'You have unsaved changes. Are you sure you want to leave?'
-      );
+      // Always prevent default so navigation doesn't happen immediately.
+      e.preventDefault();
+      e.stopImmediatePropagation();
 
-      if (!confirmed) {
-        e.preventDefault();
-        e.stopImmediatePropagation();
+      if (onNavigationAttempt) {
+        // Let the caller show a custom dialog and navigate programmatically.
+        onNavigationAttempt(href);
+      } else {
+        // Fallback: use native browser confirm.
+        const confirmed = window.confirm(
+          'You have unsaved changes. Are you sure you want to leave?'
+        );
+        if (confirmed) {
+          window.location.href = href;
+        }
       }
     };
 
@@ -80,5 +94,5 @@ export function useNavigationGuard(isDirty: boolean) {
     return () => {
       document.removeEventListener('click', handleInternalNavigation, true);
     };
-  }, [isDirty]);
+  }, [isDirty, onNavigationAttempt]);
 }

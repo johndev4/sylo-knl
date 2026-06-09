@@ -43,7 +43,8 @@ export function useTagSuggestions(
           setAvailableTags(tags);
           setLastQuery(query);
         } catch (error: unknown) {
-          const message = error instanceof Error ? error.message : 'Unknown error';
+          const message =
+            error instanceof Error ? error.message : 'Unknown error';
           setLoadError(message);
         } finally {
           setIsLoadingTags(false);
@@ -70,7 +71,8 @@ export function useTagSuggestions(
     return availableTags
       .filter(
         (tag) =>
-          tag.toLowerCase().includes(query) && !lowerCaseExistingTags.has(tag.toLowerCase())
+          tag.toLowerCase().includes(query) &&
+          !lowerCaseExistingTags.has(tag.toLowerCase())
       )
       .slice(0, 10);
   }, [availableTags, lowerCaseExistingTags, tagInput]);

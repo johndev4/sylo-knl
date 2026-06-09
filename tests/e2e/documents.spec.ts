@@ -358,14 +358,17 @@ test.describe.serial('Document Management', () => {
     await tagInput.press('Enter');
     await expect(page.getByText('DRAFTTAG')).toBeVisible();
 
-    await page.evaluate(() => {
-      window.confirm = () => false;
-    });
-
     await page
       .locator(`a[href="/hub/libraries/${libId}/documents/new"]`)
       .first()
       .click();
+
+    await expect(
+      page.getByRole('heading', { name: 'Start a new document?' })
+    ).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Keep Editing' })).toBeVisible();
+
+    await page.getByRole('button', { name: 'Keep Editing' }).click();
 
     await expect(titleInput).toHaveValue('Draft Title');
     await expect(page.getByText('DRAFTTAG')).toBeVisible();
@@ -391,14 +394,17 @@ test.describe.serial('Document Management', () => {
     await tagInput.press('Enter');
     await expect(page.getByText('DRAFTTAG')).toBeVisible();
 
-    await page.evaluate(() => {
-      window.confirm = () => true;
-    });
-
     await page
       .locator(`a[href="/hub/libraries/${libId}/documents/new"]`)
       .first()
       .click();
+
+    await expect(
+      page.getByRole('heading', { name: 'Start a new document?' })
+    ).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Discard & Start New' })).toBeVisible();
+
+    await page.getByRole('button', { name: 'Discard & Start New' }).click();
 
     await expect(titleInput).toHaveValue('');
     await expect(page.getByText('DRAFTTAG')).not.toBeVisible();

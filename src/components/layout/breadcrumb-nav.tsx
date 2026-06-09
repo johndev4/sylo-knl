@@ -56,7 +56,8 @@ export function BreadcrumbNav() {
     segments.length >= 4 &&
     segments[3] === 'documents';
   const libraryId = isLibraryDocumentsRoute ? segments[2] : null;
-  const documentId = isLibraryDocumentsRoute && segments.length >= 5 ? segments[4] : null;
+  const documentId =
+    isLibraryDocumentsRoute && segments.length >= 5 ? segments[4] : null;
   const isEditPage = isLibraryDocumentsRoute && segments[5] === 'edit';
 
   // Only show on /hub routes when logged in
@@ -116,7 +117,7 @@ export function BreadcrumbNav() {
     const libraryLabel = loadingIds.has(libraryId) ? (
       <Skeleton className="h-4 w-24" />
     ) : (
-      dynamicNames[libraryId] ?? 'New Document'
+      (dynamicNames[libraryId] ?? 'New Document')
     );
 
     breadcrumbItems.push({
@@ -135,7 +136,7 @@ export function BreadcrumbNav() {
       const documentLabel = loadingIds.has(documentId) ? (
         <Skeleton className="h-4 w-24" />
       ) : (
-        dynamicNames[documentId] ?? 'New Document'
+        (dynamicNames[documentId] ?? 'New Document')
       );
 
       breadcrumbItems.push({

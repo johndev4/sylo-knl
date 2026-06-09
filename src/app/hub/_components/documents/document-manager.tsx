@@ -13,7 +13,6 @@ import {
   Save,
   Loader2,
   Edit,
-  Eye,
   Trash2,
   AlertTriangle,
 } from 'lucide-react';
@@ -48,6 +47,19 @@ interface DocumentManagerProps {
   userRole?: string;
 }
 
+/**
+ * Describes a deferred action that requires the user to confirm discarding
+ * unsaved changes before it is executed.
+ *
+ * - 'cancel'   → exit edit mode and reset to saved data
+ * - 'navigate' → navigate to a different page/document
+ * - 'reset'    → discard the new-document draft (triggered from sidebar "+")
+ */
+type PendingAction =
+  | { type: 'cancel' }
+  | { type: 'navigate'; href: string }
+  | { type: 'reset' };
+
 export function DocumentManager({
   libraryId,
   isNew = false,
@@ -80,22 +92,49 @@ export function DocumentManager({
   const [error, setError] = useState<string | null>(null);
   const [ignoreNavigationGuard, setIgnoreNavigationGuard] = useState(false);
 
-  // Derive if document is dirty
+  /**
+   * When non-null, the "Unsaved Changes" AlertDialog is shown.
+   * On confirm, the pending action is executed.
+   */
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(
+    null
+  );
+
+  // ---------------------------------------------------------------------------
+  // Dirty tracking
+  // ---------------------------------------------------------------------------
+
   const isDirty = useMemo(() => {
-    // For new documents, it's dirty if any field has been touched/filled
+    // For new documents: any character (including whitespace / newlines) is a change
     if (isNew) {
-      return title.trim() !== '' || content.trim() !== '' || tags.length > 0;
+      return title !== '' || content !== '' || tags.length > 0;
     }
 
-    // For existing documents, check for any changes
+    // For existing documents: raw comparison so whitespace/newline changes count
     return (
-      title !== initialData?.title ||
-      content !== initialData?.content ||
-      JSON.stringify(tags) !== JSON.stringify(initialData?.tags)
+      title !== (initialData?.title ?? '') ||
+      content !== (initialData?.content ?? '') ||
+      JSON.stringify(tags) !==
+        JSON.stringify((initialData?.tags ?? []).map((t) => t.toUpperCase()))
     );
   }, [isNew, title, content, tags, initialData]);
 
-  useNavigationGuard(isDirty && !ignoreNavigationGuard);
+  // ---------------------------------------------------------------------------
+  // Navigation guard — shows AlertDialog instead of window.confirm
+  // ---------------------------------------------------------------------------
+
+  const handleNavigationAttempt = useCallback((href: string) => {
+    setPendingAction({ type: 'navigate', href });
+  }, []);
+
+  useNavigationGuard(
+    isDirty && !ignoreNavigationGuard,
+    handleNavigationAttempt
+  );
+
+  // ---------------------------------------------------------------------------
+  // Reset helpers
+  // ---------------------------------------------------------------------------
 
   const resetNewDocumentDraft = useCallback(() => {
     setTitle('');
@@ -105,6 +144,60 @@ export function DocumentManager({
     setError(null);
     setEditorResetKey((prev) => prev + 1);
   }, []);
+
+  const resetToInitialData = useCallback(() => {
+    setTitle(initialData?.title ?? '');
+    setContent(initialData?.content ?? '');
+    setTags((initialData?.tags ?? []).map((t) => t.toUpperCase()));
+    setTagInput('');
+    setError(null);
+    setEditorResetKey((prev) => prev + 1);
+    setIsEditMode(false);
+  }, [initialData]);
+
+  // ---------------------------------------------------------------------------
+  // Confirm / dismiss the unified unsaved-changes dialog
+  // ---------------------------------------------------------------------------
+
+  const handleConfirmDiscard = useCallback(() => {
+    if (!pendingAction) return;
+
+    switch (pendingAction.type) {
+      case 'cancel':
+        resetToInitialData();
+        break;
+      case 'navigate':
+        // Navigation guard won't re-fire for programmatic push, so no need
+        // to set ignoreNavigationGuard here.
+        router.push(pendingAction.href);
+        break;
+      case 'reset':
+        resetNewDocumentDraft();
+        break;
+    }
+
+    setPendingAction(null);
+  }, [pendingAction, resetToInitialData, resetNewDocumentDraft, router]);
+
+  const handleDismissDiscard = useCallback(() => {
+    setPendingAction(null);
+  }, []);
+
+  // ---------------------------------------------------------------------------
+  // Cancel button handler
+  // ---------------------------------------------------------------------------
+
+  const handleCancel = useCallback(() => {
+    if (isDirty) {
+      setPendingAction({ type: 'cancel' });
+    } else {
+      resetToInitialData();
+    }
+  }, [isDirty, resetToInitialData]);
+
+  // ---------------------------------------------------------------------------
+  // Effects
+  // ---------------------------------------------------------------------------
 
   // Reset form when entering new document mode
   useEffect(() => {
@@ -139,7 +232,8 @@ export function DocumentManager({
     (async () => setIgnoreNavigationGuard(false))();
   }, [isNew, initialData?.id]);
 
-  // Handle reset request from sidebar button when already on new document page
+  // Handle reset request from sidebar "+" button when already on new document page.
+  // Uses the unified AlertDialog instead of window.confirm.
   useEffect(() => {
     if (!isNew) return;
 
@@ -148,14 +242,8 @@ export function DocumentManager({
         resetNewDocumentDraft();
         return;
       }
-
-      const confirmed = window.confirm(
-        'You have unsaved changes. Do you want to discard them and start a new document?'
-      );
-
-      if (confirmed) {
-        resetNewDocumentDraft();
-      }
+      // Show the unified dialog
+      setPendingAction({ type: 'reset' });
     };
 
     window.addEventListener(
@@ -170,9 +258,48 @@ export function DocumentManager({
     };
   }, [isNew, isDirty, resetNewDocumentDraft]);
 
+  // ---------------------------------------------------------------------------
+  // Computed dialog copy (changes based on the pending action type)
+  // ---------------------------------------------------------------------------
+
+  const discardDialogCopy = useMemo(() => {
+    switch (pendingAction?.type) {
+      case 'navigate':
+        return {
+          title: 'Leave without saving?',
+          description:
+            'You have unsaved changes. Navigating away will discard all changes. This action cannot be undone.',
+          confirm: 'Leave & Discard',
+        };
+      case 'reset':
+        return {
+          title: 'Start a new document?',
+          description:
+            'You have unsaved changes. Starting a new document will discard all current changes. This action cannot be undone.',
+          confirm: 'Discard & Start New',
+        };
+      case 'cancel':
+      default:
+        return {
+          title: 'Discard Changes?',
+          description:
+            'You have unsaved changes. Cancelling will discard all changes and return to view mode. This action cannot be undone.',
+          confirm: 'Discard Changes',
+        };
+    }
+  }, [pendingAction]);
+
+  // ---------------------------------------------------------------------------
+  // Data
+  // ---------------------------------------------------------------------------
+
   const now = new Date().toISOString();
   const createdAt = initialData?.created_at || now;
   const updatedAt = initialData?.updated_at || now;
+
+  // ---------------------------------------------------------------------------
+  // Tag handlers
+  // ---------------------------------------------------------------------------
 
   const addTag = (tagValue: string) => {
     const newTag = tagValue.trim().toUpperCase();
@@ -193,6 +320,10 @@ export function DocumentManager({
   const removeTag = (tagToRemove: string) => {
     setTags(tags.filter((tag) => tag !== tagToRemove));
   };
+
+  // ---------------------------------------------------------------------------
+  // Save
+  // ---------------------------------------------------------------------------
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -273,6 +404,10 @@ export function DocumentManager({
     }
   };
 
+  // ---------------------------------------------------------------------------
+  // Delete
+  // ---------------------------------------------------------------------------
+
   const handleDelete = async () => {
     if (!initialData?.id) return;
 
@@ -300,6 +435,10 @@ export function DocumentManager({
     }
   };
 
+  // ---------------------------------------------------------------------------
+  // Editor change
+  // ---------------------------------------------------------------------------
+
   const handleEditorChange = useCallback(
     (markdown: string, blockCount: number) => {
       setContent(markdown);
@@ -312,9 +451,47 @@ export function DocumentManager({
     []
   );
 
+  // ---------------------------------------------------------------------------
+  // Render
+  // ---------------------------------------------------------------------------
+
   return (
     <div className="animate-fadeIn bg-background flex h-full flex-col overflow-hidden">
-      {/* Top Fixed Header with Controls */}
+      {/* ── Unified "Unsaved Changes" AlertDialog ───────────────────────────── */}
+      <AlertDialog
+        open={pendingAction !== null}
+        onOpenChange={(open) => {
+          if (!open) handleDismissDiscard();
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              {discardDialogCopy.title}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {discardDialogCopy.description}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleDismissDiscard}>
+              Keep Editing
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleConfirmDiscard();
+              }}
+              variant="destructive"
+            >
+              {discardDialogCopy.confirm}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* ── Top Fixed Header with Controls ──────────────────────────────────── */}
       <div className="bg-background/95 border-border supports-[backdrop-filter]:bg-background/60 z-20 flex shrink-0 items-center justify-between border-b px-8 py-4 shadow-sm backdrop-blur">
         <div className="mr-4 flex-1">
           <input
@@ -331,28 +508,33 @@ export function DocumentManager({
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Draft indicator removed */}
-
-          {!isNew && (
+          {/* Edit Mode button — shown in view mode only */}
+          {!isNew && !isEditMode && (
             <Button
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => setIsEditMode(!isEditMode)}
+              onClick={() => setIsEditMode(true)}
               className="text-muted-foreground"
             >
-              {isEditMode ? (
-                <>
-                  <Eye className="mr-2 h-4 w-4" /> View Mode
-                </>
-              ) : (
-                <>
-                  <Edit className="mr-2 h-4 w-4" /> Edit Mode
-                </>
-              )}
+              <Edit className="mr-2 h-4 w-4" /> Edit Mode
             </Button>
           )}
 
+          {/* Cancel button — shown in edit mode only */}
+          {!isNew && isEditMode && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleCancel}
+              className="text-muted-foreground"
+            >
+              <X className="mr-2 h-4 w-4" /> Cancel
+            </Button>
+          )}
+
+          {/* Save button */}
           {isEditMode && (
             <Button
               type="button"
@@ -374,6 +556,7 @@ export function DocumentManager({
             </Button>
           )}
 
+          {/* Delete button */}
           {!isNew && userRole !== 'VIEWER' && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
@@ -429,7 +612,7 @@ export function DocumentManager({
         </div>
       </div>
 
-      {/* Metadata & Tags Header Bar */}
+      {/* ── Metadata & Tags Header Bar ──────────────────────────────────────── */}
       <div className="border-border flex shrink-0 flex-col gap-4 border-b bg-zinc-50/50 px-8 py-4 dark:bg-zinc-900/20">
         {/* Metadata Row */}
         <div className="text-muted-foreground/60 flex flex-wrap items-center gap-x-8 gap-y-2 text-[11px] font-bold tracking-wider uppercase">
@@ -511,14 +694,14 @@ export function DocumentManager({
                   id="tag-suggestion-list"
                   role="listbox"
                   aria-label="Tag suggestions"
-                  className="absolute left-0 top-full z-10 mt-2 max-h-56 w-full overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-950"
+                  className="absolute top-full left-0 z-10 mt-2 max-h-56 w-full overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-950"
                 >
                   {tagSuggestions.map((suggestion) => (
                     <button
                       key={suggestion}
                       type="button"
                       onClick={() => addTag(suggestion)}
-                      className="w-full px-3 py-2 text-left text-xs text-muted-foreground transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                      className="text-muted-foreground w-full px-3 py-2 text-left text-xs transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
                     >
                       {suggestion}
                     </button>
@@ -530,7 +713,7 @@ export function DocumentManager({
         </div>
       </div>
 
-      {/* Dedicated Scrollable Editor Area */}
+      {/* ── Dedicated Scrollable Editor Area ────────────────────────────────── */}
       <div className="relative flex-1 overflow-hidden">
         {error && (
           <div

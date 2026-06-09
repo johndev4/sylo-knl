@@ -240,14 +240,14 @@ export function DocumentForm({ libraryId, initialData }: DocumentFormProps) {
                     id="tag-suggestion-list"
                     role="listbox"
                     aria-label="Tag suggestions"
-                    className="absolute left-0 top-full z-10 mt-2 max-h-56 w-full overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-950"
+                    className="absolute top-full left-0 z-10 mt-2 max-h-56 w-full overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-950"
                   >
                     {tagSuggestions.map((suggestion) => (
                       <button
                         key={suggestion}
                         type="button"
                         onClick={() => addTag(suggestion)}
-                        className="w-full px-3 py-2 text-left text-xs text-muted-foreground transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                        className="text-muted-foreground w-full px-3 py-2 text-left text-xs transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
                       >
                         {suggestion}
                       </button>
