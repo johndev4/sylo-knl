@@ -31,10 +31,20 @@ logger = logging.getLogger(__name__)
 
 class Config:
     def __init__(self):
-        self.supabase_url = os.getenv("SUPABASE_URL")
-        self.supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+        self.supabase_url = (
+            os.getenv("SUPABASE_URL")
+            or os.getenv("NEXT_PUBLIC_SUPABASE_URL")
+        )
+        self.supabase_key = (
+            os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+            or os.getenv("SUPABASE_KEY")
+            or os.getenv("NEXT_PUBLIC_SUPABASE_ANON_KEY")
+        )
         self.llm_provider = os.getenv("LLM_PROVIDER", "google").lower()
-        self.google_api_key = os.getenv("GOOGLE_API_KEY")
+        self.google_api_key = (
+            os.getenv("GOOGLE_API_KEY")
+            or os.getenv("GOOGLE_GENERATIVE_AI_API_KEY")
+        )
         self.ollama_base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 
         if not self.supabase_url or not self.supabase_key:
@@ -66,6 +76,29 @@ def validate_uuid(value: str) -> UUID:
         raise argparse.ArgumentTypeError(f"Invalid UUID: {value}")
 
 
+def _normalize_ollama_base_url(base_url: Optional[str]) -> str:
+    if not base_url:
+        return "http://localhost:11434"
+
+    normalized = base_url.rstrip("/")
+    if normalized.endswith("/api"):
+        return normalized[:-4]
+    return normalized
+
+
+def _call_ollama_embeddings(endpoint: str, base_url: Optional[str], model: str, payload: object):
+    normalized_base_url = _normalize_ollama_base_url(base_url)
+    full_url = f"{normalized_base_url}/{endpoint.lstrip('/')}"
+    logger.info(f"Ollama request: url={full_url}, model={model}")
+    response = requests.post(
+        full_url,
+        json={"model": model, **payload},
+        timeout=30,
+    )
+    response.raise_for_status()
+    return response.json()
+
+
 def test_embedding_provider(
     provider: str, api_key: Optional[str] = None, base_url: Optional[str] = None
 ) -> int:
@@ -76,23 +109,39 @@ def test_embedding_provider(
 
             genai.configure(api_key=api_key)
             response = genai.embed_content(
-                model="models/embedding-001",
+                model="models/gemini-embedding-001",
                 content="test",
             )
             vector_dim = len(response["embedding"])
             logger.info(f"Google provider test successful: vector_dim={vector_dim}")
             return vector_dim
         elif provider == "ollama":
-            response = requests.post(
-                f"{base_url}/api/embed",
-                json={"model": "nomic-embed-text", "input": "test"},
-                timeout=10,
-            )
-            response.raise_for_status()
-            embedding = response.json()["embeddings"][0]
-            vector_dim = len(embedding)
-            logger.info(f"Ollama provider test successful: vector_dim={vector_dim}")
-            return vector_dim
+            model_name = os.getenv("OLLAMA_EMBEDDING_MODEL") or "nomic-embed-text:v1.5"
+            base_url = base_url or os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+            base_url = _normalize_ollama_base_url(base_url)
+            payload = {"input": "test"}
+
+            try:
+                payload_response = _call_ollama_embeddings("/api/embed", base_url, model_name, payload)
+                embeddings = payload_response.get("embeddings", [])
+                if not embeddings:
+                    raise ValueError("Ollama did not return any embeddings")
+                embedding = embeddings[0]
+                vector_dim = len(embedding)
+                logger.info(f"Ollama provider test successful via /api/embed: vector_dim={vector_dim}")
+                return vector_dim
+            except requests.HTTPError as exc:
+                if getattr(exc.response, "status_code", None) != 404:
+                    raise
+                logger.info("Ollama /api/embed returned 404; trying /api/embeddings")
+                payload_response = _call_ollama_embeddings("/api/embeddings", base_url, model_name, payload)
+                embeddings = payload_response.get("embeddings", [])
+                if not embeddings:
+                    raise ValueError("Ollama did not return any embeddings")
+                embedding = embeddings[0]
+                vector_dim = len(embedding)
+                logger.info(f"Ollama provider test successful via /api/embeddings: vector_dim={vector_dim}")
+                return vector_dim
         else:
             raise ValueError(f"Unknown provider: {provider}")
     except Exception as e:
@@ -104,62 +153,53 @@ def verify_database_schema(client, library_id: str) -> dict:
     """Verify database schema and get library info."""
     try:
         result = (
-            client.table("libraries")
-            .select("id, name")
-            .eq("id", library_id)
-            .single()
-            .execute()
+            client.table("libraries").select("id, name").eq("id", library_id).execute()
         )
-        library = result.data
+        library = (result.data or [{}])[0]
+        if not library:
+            raise ValueError(f"Library not found: {library_id}")
         logger.info(f"Library found: {library['name']} (id={library_id})")
 
-        doc_count = (
+        docs_result = (
             client.table("documents")
-            .select("id", count="exact")
+            .select("id, deleted_at")
             .eq("library_id", library_id)
-            .is_("deleted_at", "NULL")
             .execute()
         )
-        doc_count_value = (
-            doc_count.count if hasattr(doc_count, "count") else len(doc_count.data)
-        )
+        documents = docs_result.data or []
+        active_documents = [doc for doc in documents if not doc.get("deleted_at")]
+        doc_ids = [doc["id"] for doc in active_documents]
+        doc_count_value = len(doc_ids)
         logger.info(f"Documents in library: {doc_count_value}")
 
-        chunk_count = (
-            client.table("document_chunks")
-            .select("id", count="exact")
-            .in_(
-                "document_id",
-                [
-                    d["id"]
-                    for d in client.table("documents")
-                    .select("id")
-                    .eq("library_id", library_id)
-                    .execute()
-                    .data
-                ],
+        chunk_count_value = 0
+        if doc_ids:
+            chunk_result = (
+                client.table("document_chunks")
+                .select("id")
+                .in_("document_id", doc_ids)
+                .execute()
             )
-            .execute()
-        )
-        chunk_count_value = (
-            chunk_count.count
-            if hasattr(chunk_count, "count")
-            else len(chunk_count.data)
-        )
+            chunk_count_value = len(chunk_result.data or [])
         logger.info(f"Chunks in library: {chunk_count_value}")
 
-        sample_chunk = (
-            client.table("document_chunks")
-            .select("embedding")
-            .not_("embedding", "is", None)
-            .limit(1)
-            .execute()
-        )
-        if sample_chunk.data:
-            current_dim = len(sample_chunk.data[0]["embedding"])
+        current_dim = None
+        if doc_ids:
+            sample_chunk_result = (
+                client.table("document_chunks")
+                .select("embedding")
+                .in_("document_id", doc_ids)
+                .execute()
+            )
+            for chunk in sample_chunk_result.data or []:
+                embedding = chunk.get("embedding")
+                if embedding:
+                    current_dim = len(embedding)
+                    break
+
+        if current_dim is not None:
             logger.info(f"Current vector dimension: {current_dim}")
         else:
-            current_dim = None
             logger.warning("No existing embeddings found in library")
 
         return {
@@ -179,14 +219,13 @@ def fetch_documents_batch(client, library_id: str, offset: int, limit: int) -> l
     try:
         result = (
             client.table("documents")
-            .select("id, title")
+            .select("id, title, deleted_at")
             .eq("library_id", library_id)
-            .is_("deleted_at", "NULL")
             .order("created_at")
             .range(offset, offset + limit - 1)
             .execute()
         )
-        return result.data
+        return [doc for doc in (result.data or []) if not doc.get("deleted_at")]
     except Exception as e:
         logger.error(f"Failed to fetch documents batch at offset {offset}: {e}")
         return []
@@ -226,21 +265,41 @@ def generate_embeddings_batch(
 
             genai.configure(api_key=api_key)
             response = genai.embed_content(
-                model="models/embedding-001",
+                model="models/gemini-embedding-001",
                 content=texts,
             )
-            if "embedding" in response:
-                return [response["embedding"]]
-            else:
-                return response.get("embeddings", [])
+            if "embeddings" in response:
+                return response["embeddings"]
+            elif "embedding" in response:
+                embedding = response["embedding"]
+                # Unwrap nested list if Google returned [[...]] instead of [...]
+                if embedding and isinstance(embedding[0], list):
+                    return embedding
+                return [embedding]
         elif provider == "ollama":
-            response = requests.post(
-                f"{base_url}/api/embed",
-                json={"model": "nomic-embed-text", "input": texts},
-                timeout=30,
-            )
-            response.raise_for_status()
-            return response.json()["embeddings"]
+            model_name = os.getenv("OLLAMA_EMBEDDING_MODEL") or "nomic-embed-text:v1.5"
+            base_url = base_url or os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+            base_url = _normalize_ollama_base_url(base_url)
+
+            try:
+                payload = _call_ollama_embeddings(
+                    "/api/embed",
+                    base_url,
+                    model_name,
+                    {"input": texts},
+                )
+                return payload.get("embeddings")
+            except requests.HTTPError as exc:
+                if getattr(exc.response, "status_code", None) != 404:
+                    raise
+                logger.info("Ollama /api/embed returned 404; trying /api/embeddings")
+                payload = _call_ollama_embeddings(
+                    "/api/embeddings",
+                    base_url,
+                    model_name,
+                    {"input": texts},
+                )
+                return payload.get("embeddings")
         else:
             raise ValueError(f"Unknown provider: {provider}")
     except Exception as e:
