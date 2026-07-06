@@ -4,7 +4,7 @@ Sylo is an AI-powered knowledge library for building searchable knowledge bases 
 
 ## Requirements
 
-- Node.js 20+
+- Node.js 22+
 - npm
 - A Supabase project with auth and Postgres enabled
 - Environment variables configured from `.env.example`
@@ -54,4 +54,6 @@ See `MIGRATION_GUIDE.md` for workflow rules, cleanup guidance, and migration bes
 
 ## Deployment
 
-Deploy the app to any platform that supports Next.js 16 and Node.js 20+. Ensure your environment variables are set in the deployment environment.
+Deploy the app to any platform that supports Next.js 16 and Node.js 22+. Ensure your environment variables are set in the deployment environment.
+
+For GitHub-based deployments to Vercel, add these repository secrets: `VERCEL_TOKEN`. The workflow in [.github/workflows/deploy-vercel.yml](.github/workflows/deploy-vercel.yml) deploys pull requests as preview deployments and pushes to `main` as production deployments.
