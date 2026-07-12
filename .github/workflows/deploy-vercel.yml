@@ -27,6 +27,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
     steps:
       # Check out the repository code
       - name: Checkout repository
@@ -43,16 +45,26 @@ jobs:
       # Fail fast on lint errors before building
       - name: Lint
         run: npm run lint
+      # Pull Vercel project settings and environment variables dynamically
+      - name: Pull Vercel project settings
+        run: |
+          if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
+            npx vercel@latest pull --yes --environment=production --token="$VERCEL_TOKEN"
+          else
+            npx vercel@latest pull --yes --environment=preview --token="$VERCEL_TOKEN"
+          fi
       # Build project into .vercel/output using Vercel's build pipeline
-      # Use --prod flag only for main branch, omit for PR preview builds
       - name: Build project
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
         run: |
           if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
             npx vercel@latest build --prod --token="$VERCEL_TOKEN"
           else
             npx vercel@latest build --token="$VERCEL_TOKEN"
           fi
-      # Deploy the prebuilt artifact; --prod only for main branch pushes
+      # Deploy the prebuilt artifact
       - name: Deploy to Vercel
         run: |
           if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
