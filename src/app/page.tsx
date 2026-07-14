@@ -13,5 +13,3 @@ export default async function Home() {
     redirect('/hub');
   }
 }
-
-// test the workflow deployment
