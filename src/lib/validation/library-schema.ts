@@ -52,3 +52,39 @@ export type LibraryMember = z.infer<typeof LibraryMemberSchema>;
 // List library members response
 export const ListLibraryMembersSchema = z.array(LibraryMemberSchema);
 export type ListLibraryMembers = z.infer<typeof ListLibraryMembersSchema>;
+
+// Invite Schemas
+export const CreateInviteSchema = z.object({
+  role: z.enum(['VIEWER', 'EDITOR']),
+  expiresAt: z.string().datetime().optional().nullable(),
+  maxUses: z.number().int().positive().optional().nullable(),
+});
+export type CreateInviteInput = z.infer<typeof CreateInviteSchema>;
+
+export const JoinInviteSchema = z.object({
+  inviteCode: z.string().min(1, 'Invite code is required'),
+});
+export type JoinInviteInput = z.infer<typeof JoinInviteSchema>;
+
+export const InviteResponseSchema = z.object({
+  id: z.string().uuid(),
+  library_id: z.string().uuid(),
+  invite_code: z.string(),
+  role: UserRoleEnum,
+  created_by: z.string().uuid().nullable(),
+  expires_at: z.string().datetime().nullable(),
+  max_uses: z.number().int().nullable(),
+  use_count: z.number().int(),
+  is_active: z.boolean(),
+  created_at: z.string().datetime(),
+  updated_at: z.string().datetime(),
+  created_by_user: z
+    .object({
+      id: z.string().uuid(),
+      name: z.string().nullable(),
+      email: z.string().email(),
+      avatar_url: z.string().nullable(),
+    })
+    .optional(),
+});
+export type InviteResponse = z.infer<typeof InviteResponseSchema>;

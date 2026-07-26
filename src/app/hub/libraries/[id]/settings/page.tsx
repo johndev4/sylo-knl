@@ -17,6 +17,7 @@ import { MemberTable } from '@/app/hub/_components/libraries/settings';
 import { AddMemberForm } from '@/app/hub/_components/libraries/settings/add-member-form';
 import { DeleteLibraryForm } from '@/app/hub/_components/libraries/settings/delete-library-form';
 import { RenameLibraryForm } from '@/app/hub/_components/libraries/settings/rename-library-form';
+import { InviteSection } from '@/app/hub/_components/libraries/settings/invite-section';
 import { useAuth } from '@/lib/hooks/use-auth';
 
 interface LibraryMember {
@@ -227,7 +228,7 @@ export default function LibrarySettingsPage({
       )}
 
       {/* Add Member Section */}
-      {canManageMembers && (
+      {/* {canManageMembers && (
         <Card className="space-y-4 p-6">
           <div className="space-y-2">
             <h2 className="text-xl font-semibold">Add Member</h2>
@@ -241,6 +242,11 @@ export default function LibrarySettingsPage({
             memberCount={members.length}
           />
         </Card>
+      )} */}
+
+      {/* Invite Links Section */}
+      {canManageMembers && (
+        <InviteSection libraryId={libraryId} />
       )}
 
       {/* Members List Section */}

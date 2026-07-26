@@ -477,3 +477,70 @@ export async function getUserLibraries() {
     role: m.role as string,
   }));
 }
+
+// Invite Management Functions
+
+export async function createLibraryInvite(
+  libraryId: string,
+  role: 'VIEWER' | 'EDITOR',
+  expiresAt?: string | null,
+  maxUses?: number | null
+) {
+  const url = `${process.env.NEXT_PUBLIC_APP_URL || 'http://127.0.0.1:3000'}/api/libraries/${libraryId}/invites`;
+  const cookiesList = await cookies();
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Cookie: cookiesList.toString(),
+    },
+    body: JSON.stringify({ role, expiresAt, maxUses }),
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to create invite');
+  }
+
+  const result = await res.json();
+  revalidatePath(`/hub/libraries/${libraryId}/settings`);
+  return result.data;
+}
+
+export async function fetchLibraryInvites(libraryId: string) {
+  const url = `${process.env.NEXT_PUBLIC_APP_URL || 'http://127.0.0.1:3000'}/api/libraries/${libraryId}/invites`;
+  const cookiesList = await cookies();
+  const res = await fetch(url, {
+    headers: {
+      Cookie: cookiesList.toString(),
+    },
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to fetch invites');
+  }
+
+  const result = await res.json();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (result.data || []) as any[];
+}
+
+export async function revokeLibraryInvite(libraryId: string, inviteId: string) {
+  const url = `${process.env.NEXT_PUBLIC_APP_URL || 'http://127.0.0.1:3000'}/api/libraries/${libraryId}/invites/${inviteId}`;
+  const cookiesList = await cookies();
+  const res = await fetch(url, {
+    method: 'DELETE',
+    headers: {
+      Cookie: cookiesList.toString(),
+    },
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to revoke invite');
+  }
+
+  revalidatePath(`/hub/libraries/${libraryId}/settings`);
+  return { success: true };
+}
