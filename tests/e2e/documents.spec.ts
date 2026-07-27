@@ -69,22 +69,24 @@ test.describe.serial('Document Management', () => {
     testDocId = match![1];
   });
 
-  test('Show tag suggestions in new document flow after typing 3 characters', async ({ page }) => {
+  test('Show tag suggestions in new document flow after typing 3 characters', async ({
+    page,
+  }) => {
     await page.goto(`/hub/libraries/${libId}/documents/new`);
     await page.waitForLoadState('networkidle');
 
     const tagInput = page.getByPlaceholder('Add tag...');
     await tagInput.fill('imp');
 
-    await expect(
-      page.getByRole('button', { name: 'IMPORTANT' })
-    ).toBeVisible();
+    await expect(page.getByRole('button', { name: 'IMPORTANT' })).toBeVisible();
 
     await page.getByRole('button', { name: 'IMPORTANT' }).click();
     await expect(page.getByText('IMPORTANT')).toBeVisible();
   });
 
-  test('Show tag suggestions in edit document flow after typing 3 characters', async ({ page }) => {
+  test('Show tag suggestions in edit document flow after typing 3 characters', async ({
+    page,
+  }) => {
     // Seed a different tag from the same library so suggestion list can appear
     await page.goto(`/hub/libraries/${libId}/documents/new`);
     await page.waitForLoadState('networkidle');
@@ -366,7 +368,9 @@ test.describe.serial('Document Management', () => {
     await expect(
       page.getByRole('heading', { name: 'Start a new document?' })
     ).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Keep Editing' })).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: 'Keep Editing' })
+    ).toBeVisible();
 
     await page.getByRole('button', { name: 'Keep Editing' }).click();
 
@@ -402,7 +406,9 @@ test.describe.serial('Document Management', () => {
     await expect(
       page.getByRole('heading', { name: 'Start a new document?' })
     ).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Discard & Start New' })).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: 'Discard & Start New' })
+    ).toBeVisible();
 
     await page.getByRole('button', { name: 'Discard & Start New' }).click();
 

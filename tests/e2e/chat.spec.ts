@@ -11,7 +11,7 @@ test.describe('Chat Page UI & Sidebar', () => {
   test('Sidebar and Pinned Input layout', async ({ page }) => {
     await page.goto('/hub/chat');
     await page.waitForLoadState('networkidle');
-    
+
     // Sidebar should be present (using role or tag)
     const sidebar = page.locator('aside').first();
     await expect(sidebar).toBeVisible({ timeout: 10000 });
@@ -22,7 +22,7 @@ test.describe('Chat Page UI & Sidebar', () => {
     // Input section should be pinned at the bottom
     const footer = page.locator('footer');
     await expect(footer).toBeVisible();
-    
+
     // Chat history area should have independent scroll
     const messagesArea = page.getByLabel('Chat messages');
     await expect(messagesArea).toHaveClass(/overflow-y-auto/);
@@ -31,14 +31,14 @@ test.describe('Chat Page UI & Sidebar', () => {
   test('Sidebar toggling works', async ({ page }) => {
     await page.goto('/hub/chat');
     await page.waitForLoadState('networkidle');
-    
+
     const sidebar = page.locator('aside').first();
     await expect(sidebar).toBeVisible({ timeout: 10000 });
 
     // Collapse
     const collapseBtn = page.getByLabel('Collapse sidebar');
     await collapseBtn.click();
-    
+
     // Sidebar should be in collapsed state (slim div)
     // In our implementation, the <aside> is replaced by a <div> if !isOpen
     await expect(sidebar).not.toBeVisible();
@@ -48,6 +48,8 @@ test.describe('Chat Page UI & Sidebar', () => {
     // Expand
     await openBtn.click();
     await expect(page.locator('aside').first()).toBeVisible();
-    await expect(page.locator('aside').first()).toContainText('AI Knowledge Chat');
+    await expect(page.locator('aside').first()).toContainText(
+      'AI Knowledge Chat'
+    );
   });
 });

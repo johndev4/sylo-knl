@@ -2,16 +2,23 @@ import fs from 'fs';
 import path from 'path';
 
 export interface TestData {
-  userId: string;
+  testUserId: string;
+  testUserEmail: string;
+  testUserPassword: string;
+  testUser2Id: string;
+  testUser2Email: string;
+  testUser2Password: string;
   testLibraryId: string;
   testLibraryId2: string;
   testLibraryName: string;
   testLibraryName2: string;
-  testEmail: string;
 }
 
 export function getTestData(): TestData {
-  const dataPath = path.resolve(process.cwd(), 'tests/e2e/.auth/test-data.json');
+  const dataPath = path.resolve(
+    process.cwd(),
+    'tests/e2e/.auth/test-data.json'
+  );
   if (!fs.existsSync(dataPath)) {
     throw new Error('Test data file not found. Ensure global setup has run.');
   }

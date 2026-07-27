@@ -1,14 +1,13 @@
 import dotenv from 'dotenv';
 import path from 'path';
 
-// Load default .env file
-dotenv.config();
 // Load .env.test to override/supplement configuration for tests
 dotenv.config({ path: path.resolve(__dirname, '.env.test') });
 
 import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
+  tsconfig: './tsconfig.e2e.json',
   testDir: './tests/e2e',
   timeout: 30_000,
   expect: {
@@ -20,9 +19,6 @@ export default defineConfig({
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {
     baseURL: 'http://127.0.0.1:3000',
-    headless: true,
-    viewport: { width: 1280, height: 720 },
-    ignoreHTTPSErrors: true,
     actionTimeout: 10_000,
     trace: 'on-first-retry',
   },
@@ -40,13 +36,32 @@ export default defineConfig({
       testMatch: /.*\.setup\.ts/,
     },
     {
-      name: 'chromium',
+      name: 'chromium-documents',
+      testMatch: /.*documents\.spec\.ts/,
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'tests/e2e/.auth/user.json',
-        launchOptions: {
-          slowMo: 1000,
-        },
+        launchOptions: { slowMo: 1000 },
+      },
+      dependencies: ['setup'],
+    },
+    {
+      name: 'chromium-chat',
+      testMatch: /.*chat\.spec\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'tests/e2e/.auth/user.json',
+        launchOptions: { slowMo: 1000 },
+      },
+      dependencies: ['setup'],
+    },
+    {
+      name: 'chromium-library-invites',
+      testMatch: /.*library-invites\.spec\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'tests/e2e/.auth/user.json',
+        launchOptions: { slowMo: 1000 },
       },
       dependencies: ['setup'],
     },
