@@ -65,8 +65,8 @@ setup('authenticate and seed', async ({ page }) => {
   expect(libData2?.id).toBeTruthy();
 
   // 6. Retrieve or create the 2nd test user
-  const testUser2Email = 'testmember@example.com';
-  const testUser2Password = 'P@ssw0rd1';
+  const testUser2Email = process.env.PLAYWRIGHT_2ND_TEST_EMAIL;
+  const testUser2Password = process.env.PLAYWRIGHT_2ND_TEST_PASSWORD;
   const { testUserId: testUser2Id } = await getOrCreateTestUser(
     supabase,
     isServiceRole,
