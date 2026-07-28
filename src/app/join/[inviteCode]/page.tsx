@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -107,7 +108,7 @@ export default function JoinPage({
           <Badge variant={invite.isValid ? "default" : "destructive"} className="mb-4">
             {invite.isValid ? 'Valid Invite' : 'Expired / Maxed'}
           </Badge>
-          <h1 className="text-2xl font-bold">You've been invited!</h1>
+          <h1 className="text-2xl font-bold">{"You've been invited!"}</h1>
           <p className="text-muted-foreground mt-2">
             Join the library <span className="font-semibold text-foreground">{invite.libraryName}</span>
           </p>
