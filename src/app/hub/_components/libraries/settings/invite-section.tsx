@@ -18,6 +18,16 @@ import {
 } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   createLibraryInvite,
   fetchLibraryInvites,
   revokeLibraryInvite,
@@ -39,6 +49,9 @@ export function InviteSection({ libraryId }: InviteSectionProps) {
   const [role, setRole] = useState('VIEWER');
   const [expiresAt, setExpiresAt] = useState('');
   const [maxUses, setMaxUses] = useState('');
+
+  const [inviteToRevoke, setInviteToRevoke] = useState<any | null>(null);
+  const [isRevoking, setIsRevoking] = useState(false);
 
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -103,15 +116,26 @@ export function InviteSection({ libraryId }: InviteSectionProps) {
     }
   };
 
-  const handleRevoke = async (inviteId: string) => {
-    if (!confirm('Are you sure you want to revoke this invite?')) return;
+  const handleRevokeClick = (invite: any) => {
+    setInviteToRevoke(invite);
+  };
+
+  const confirmRevoke = async () => {
+    if (!inviteToRevoke) return;
 
     try {
-      await revokeLibraryInvite(libraryId, inviteId);
+      setIsRevoking(true);
+      setError('');
+      setSuccess('');
+
+      await revokeLibraryInvite(libraryId, inviteToRevoke.id);
       setSuccess('Invite revoked successfully');
+      setInviteToRevoke(null);
       loadInvites();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to revoke invite');
+    } finally {
+      setIsRevoking(false);
     }
   };
 
@@ -268,7 +292,7 @@ export function InviteSection({ libraryId }: InviteSectionProps) {
                         <Button
                           variant="destructive"
                           size="sm"
-                          onClick={() => handleRevoke(invite.id)}
+                          onClick={() => handleRevokeClick(invite)}
                         >
                           Revoke
                         </Button>
@@ -281,6 +305,41 @@ export function InviteSection({ libraryId }: InviteSectionProps) {
           </div>
         )}
       </div>
+
+      <AlertDialog
+        open={!!inviteToRevoke}
+        onOpenChange={(open) => {
+          if (!open && !isRevoking) {
+            setInviteToRevoke(null);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Revoke Invite Link?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to revoke the invite code{' '}
+              <span className="font-mono font-semibold text-foreground">
+                {inviteToRevoke?.invite_code}
+              </span>
+              ? Users will no longer be able to use this link to join the library. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isRevoking}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              disabled={isRevoking}
+              onClick={(e) => {
+                e.preventDefault();
+                confirmRevoke();
+              }}
+            >
+              {isRevoking ? 'Revoking...' : 'Revoke Invite'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }

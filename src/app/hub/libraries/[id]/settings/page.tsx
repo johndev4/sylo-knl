@@ -7,6 +7,16 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   fetchLibraryMembers,
   addLibraryMember,
   updateLibraryMemberRole,
@@ -48,6 +58,14 @@ export default function LibrarySettingsPage({
     new Set()
   );
   const [isAddingMember, setIsAddingMember] = useState(false);
+  // removePending describes the pending remove action:
+  //   { type: 'single'; userId: string; name: string } | { type: 'bulk'; count: number } | null
+  const [removePending, setRemovePending] = useState<
+    | { type: 'single'; userId: string; name: string }
+    | { type: 'bulk'; count: number }
+    | null
+  >(null);
+  const [isRemoving, setIsRemoving] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -129,42 +147,48 @@ export default function LibrarySettingsPage({
     }
   };
 
-  const handleRemoveMember = async (userId: string) => {
-    if (!confirm('Are you sure you want to remove this member?')) return;
-
-    try {
-      await removeLibraryMember(libraryId, userId);
-      const updatedMembers = await fetchLibraryMembers(libraryId);
-      setMembers(updatedMembers);
-      setSelectedMembers((prev) => {
-        const next = new Set(prev);
-        next.delete(userId);
-        return next;
-      });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to remove member');
-    }
+  const handleRemoveMember = (userId: string) => {
+    const member = members.find((m) => m.user_id === userId);
+    const displayName =
+      member?.user?.name || member?.user?.email || 'this member';
+    setRemovePending({ type: 'single', userId, name: displayName });
   };
 
-  const handleRemoveMultiple = async () => {
+  const handleRemoveMultiple = () => {
     if (selectedMembers.size === 0) return;
-    if (
-      !confirm(
-        `Are you sure you want to remove ${selectedMembers.size} member(s)?`
-      )
-    )
-      return;
+    setRemovePending({ type: 'bulk', count: selectedMembers.size });
+  };
 
+  const confirmRemove = async () => {
+    if (!removePending) return;
     try {
-      await removeMultipleLibraryMembers(
-        libraryId,
-        Array.from(selectedMembers)
-      );
-      const updatedMembers = await fetchLibraryMembers(libraryId);
-      setMembers(updatedMembers);
-      setSelectedMembers(new Set());
+      setIsRemoving(true);
+      setError('');
+      if (removePending.type === 'single') {
+        await removeLibraryMember(libraryId, removePending.userId);
+        const updatedMembers = await fetchLibraryMembers(libraryId);
+        setMembers(updatedMembers);
+        setSelectedMembers((prev) => {
+          const next = new Set(prev);
+          next.delete(removePending.userId);
+          return next;
+        });
+      } else {
+        await removeMultipleLibraryMembers(
+          libraryId,
+          Array.from(selectedMembers)
+        );
+        const updatedMembers = await fetchLibraryMembers(libraryId);
+        setMembers(updatedMembers);
+        setSelectedMembers(new Set());
+      }
+      setRemovePending(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to remove members');
+      setError(
+        err instanceof Error ? err.message : 'Failed to remove member(s)'
+      );
+    } finally {
+      setIsRemoving(false);
     }
   };
 
@@ -333,6 +357,60 @@ export default function LibrarySettingsPage({
           libraryName={libraryName || 'this library'}
         />
       )}
+
+      {/* Remove Member Confirmation Dialog */}
+      <AlertDialog
+        open={!!removePending}
+        onOpenChange={(open) => {
+          if (!open && !isRemoving) {
+            setRemovePending(null);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {removePending?.type === 'bulk'
+                ? `Remove ${removePending.count} member(s)?`
+                : 'Remove Member?'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {removePending?.type === 'bulk' ? (
+                <>
+                  You are about to remove{' '}
+                  <span className="font-semibold text-foreground">
+                    {removePending.count} member(s)
+                  </span>{' '}
+                  from this library. They will immediately lose access. This
+                  action cannot be undone.
+                </>
+              ) : (
+                <>
+                  You are about to remove{' '}
+                  <span className="font-semibold text-foreground">
+                    {removePending?.name}
+                  </span>{' '}
+                  from this library. They will immediately lose access. This
+                  action cannot be undone.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isRemoving}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              disabled={isRemoving}
+              onClick={(e) => {
+                e.preventDefault();
+                confirmRemove();
+              }}
+            >
+              {isRemoving ? 'Removing...' : 'Remove'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
