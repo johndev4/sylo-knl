@@ -7,7 +7,6 @@ dotenv.config({ path: path.resolve(__dirname, '.env.test') });
 import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
-  tsconfig: './tsconfig.e2e.json',
   testDir: './tests/e2e',
   timeout: 30_000,
   expect: {
