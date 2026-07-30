@@ -6,11 +6,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useReducedMotion } from '@/lib/hooks/use-reduced-motion';
 import {
   LogOut,
-  Settings,
   AlertTriangle,
   Loader2,
   FileText,
   MessageSquare,
+  MoreHorizontal,
+  LucideSettings2,
 } from 'lucide-react';
 import { useState } from 'react';
 import { leaveLibrary } from '@/lib/actions/libraries';
@@ -24,6 +25,12 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 type Membership = {
   role: string;
@@ -110,9 +117,9 @@ export function LibrariesTable({ memberships }: LibrariesTableProps) {
     }
   };
 
-  const handleRowClick = (id: string) => {
-    router.push(`/hub/libraries/${id}/documents`); // navigate to another page
-  };
+  // const handleRowClick = (id: string) => {
+  //   router.push(`/hub/libraries/${id}/documents`); // navigate to another page
+  // };
 
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
@@ -150,6 +157,7 @@ export function LibrariesTable({ memberships }: LibrariesTableProps) {
                 const library = membership.library;
                 const space = library;
                 const isOwner = membership.role === 'OWNER';
+                const isAdmin = membership.role === 'ADMIN';
                 return (
                   <motion.tr
                     key={library.id}
@@ -192,46 +200,59 @@ export function LibrariesTable({ memberships }: LibrariesTableProps) {
                           </Link>
                         </Button>
 
-                        {membership.role !== 'VIEWER' ? (
-                          <Button
-                            asChild
-                            variant="outline"
-                            size="sm"
-                            aria-label={`View documents for ${space.name}`}
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <Link href={`/hub/libraries/${space.id}/documents`}>
-                              <FileText className="mr-2 h-4 w-4" />
-                              Docs
-                            </Link>
-                          </Button>
-                        ) : (
-                          <div />
-                        )}
-                        {isOwner && (
-                          <button
-                            className="rounded-md p-2 text-zinc-400 transition-colors hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950/40"
-                            aria-label={`Open settings for ${space.name}`}
-                          >
-                            <Link
-                              href={`/hub/libraries/${space.id}/settings`}
+                        <Button
+                          asChild
+                          variant="outline"
+                          size="sm"
+                          aria-label={`View documents for ${space.name}`}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Link href={`/hub/libraries/${space.id}/documents`}>
+                            <FileText className="mr-2 h-4 w-4" />
+                            Docs
+                          </Link>
+                        </Button>
+
+                        {/* Library Dropdown Menu */}
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button
+                              className="rounded-md p-2 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800"
                               onClick={(e) => e.stopPropagation()}
+                              aria-label="More options"
                             >
-                              <Settings className="h-4 w-4" />
-                            </Link>
-                          </button>
-                        )}
-                        {!isOwner && (
-                          <button
-                            onClick={() =>
-                              handleOpenLeaveDialog(library.id, library.name)
-                            }
-                            className="rounded-md p-2 text-zinc-400 transition-colors hover:bg-orange-50 hover:text-orange-600 dark:hover:bg-orange-950/40"
-                            aria-label={`Leave ${library.name}`}
-                          >
-                            <LogOut className="h-4 w-4" />
-                          </button>
-                        )}
+                              <MoreHorizontal className="h-4 w-4" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            {(isOwner || isAdmin) && (
+                              <DropdownMenuItem asChild>
+                                <Link
+                                  href={`/hub/libraries/${space.id}/settings`}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="flex items-center gap-2"
+                                >
+                                  <LucideSettings2 className="h-4 w-4" />
+                                  Settings
+                                </Link>
+                              </DropdownMenuItem>
+                            )}
+                            {!isOwner && (
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  handleOpenLeaveDialog(
+                                    library.id,
+                                    library.name
+                                  )
+                                }
+                                className="flex items-center gap-2 text-orange-600 focus:text-orange-600 dark:text-orange-400"
+                              >
+                                <LogOut className="h-4 w-4" />
+                                Leave
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </td>
                   </motion.tr>
