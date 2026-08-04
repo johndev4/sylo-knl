@@ -179,31 +179,27 @@ export function BreadcrumbNav() {
   }
 
   return (
-    <div className="sticky top-0 z-10">
-      <div className="w-full border-b border-zinc-200 bg-zinc-50 px-4 py-2 sm:px-6 lg:px-8 dark:border-zinc-800/50 dark:bg-zinc-900">
-        <Breadcrumb>
-          <BreadcrumbList className="sm:gap-2">
-            {breadcrumbItems.map((item, index) => {
-              const isLast = index === breadcrumbItems.length - 1;
+    <Breadcrumb>
+      <BreadcrumbList className="sm:gap-2">
+        {breadcrumbItems.map((item, index) => {
+          const isLast = index === breadcrumbItems.length - 1;
 
-              return (
-                <React.Fragment key={item.key}>
-                  {index > 0 && <BreadcrumbSeparator />}
-                  <BreadcrumbItem>
-                    {isLast ? (
-                      <BreadcrumbPage>{item.label}</BreadcrumbPage>
-                    ) : (
-                      <BreadcrumbLink asChild>
-                        <Link href={item.href}>{item.label}</Link>
-                      </BreadcrumbLink>
-                    )}
-                  </BreadcrumbItem>
-                </React.Fragment>
-              );
-            })}
-          </BreadcrumbList>
-        </Breadcrumb>
-      </div>
-    </div>
+          return (
+            <React.Fragment key={item.key}>
+              {index > 0 && <BreadcrumbSeparator />}
+              <BreadcrumbItem>
+                {isLast ? (
+                  <BreadcrumbPage>{item.label}</BreadcrumbPage>
+                ) : (
+                  <BreadcrumbLink asChild>
+                    <Link href={item.href}>{item.label}</Link>
+                  </BreadcrumbLink>
+                )}
+              </BreadcrumbItem>
+            </React.Fragment>
+          );
+        })}
+      </BreadcrumbList>
+    </Breadcrumb>
   );
 }

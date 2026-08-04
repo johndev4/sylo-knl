@@ -4,9 +4,6 @@ import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams, usePathname, useRouter } from 'next/navigation';
 import {
-  PanelLeftClose,
-  PanelLeft,
-  Grid,
   ChevronLeft,
   LogOut,
   AlertTriangle,
@@ -14,8 +11,8 @@ import {
   Target,
   Settings,
   Users,
+  Library,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useSidebarRefresh } from '../[id]/documents/_components';
 import {
@@ -31,10 +28,14 @@ import {
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarRail,
 } from '@/components/ui/sidebar';
 import { leaveLibrary } from '@/lib/actions/libraries';
 
@@ -44,7 +45,6 @@ export function LibrarySidebar() {
   const router = useRouter();
   const libraryId = params?.id as string;
 
-  const [isOpen, setIsOpen] = useState(true);
   const [library, setLibrary] = useState<{ name: string } | null>(null);
   const [role, setRole] = useState<string | null>(null);
   const [isLeaveDialogOpen, setIsLeaveDialogOpen] = useState(false);
@@ -108,145 +108,134 @@ export function LibrarySidebar() {
     }
   };
 
-  if (!isOpen) {
-    return (
-      <div className="sticky top-0 flex h-[calc(100vh-4.1rem)] w-16 shrink-0 flex-col items-center border-r border-zinc-200/10 bg-zinc-50 py-4 transition-all duration-300 dark:border-zinc-800/20 dark:bg-[#09090b]">
-        <Button variant="ghost" size="icon" onClick={() => setIsOpen(true)}>
-          <PanelLeft className="h-5 w-5" />
-        </Button>
-      </div>
-    );
-  }
-
   const canManageLibrarySettings = ['OWNER', 'ADMIN'].includes(role ?? '');
   const isOwner = role === 'OWNER';
 
   return (
-    <Sidebar className="sticky top-0 flex h-[calc(100vh-4.1rem)] w-72 shrink-0 flex-col border-r border-zinc-200/10 bg-zinc-50 transition-all duration-300 dark:border-zinc-800/20 dark:bg-[#09090b]">
+    <Sidebar collapsible="icon" className="top-[4.1rem] h-[calc(100vh-4.1rem)]">
       {/* Header */}
-      <SidebarHeader className="flex items-center justify-between border-b border-zinc-200/10 p-4 dark:border-zinc-800/20">
-        <div className="mr-2 flex flex-1 flex-col gap-0.5 overflow-hidden">
-          <span className="text-muted-foreground/50 text-[10px] font-bold tracking-widest uppercase">
-            Library
-          </span>
-          <div className="text-foreground flex items-center gap-1.5 truncate text-xs font-bold">
-            <Grid className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
-            {library ? (
-              <span className="truncate">{library.name}</span>
-            ) : (
-              <Skeleton className="h-4 w-24" />
-            )}
-          </div>
-        </div>
-
-        <div className="flex items-center gap-1">
-          {/* Sidebar Toggle Button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6"
-            onClick={() => setIsOpen(false)}
-          >
-            <PanelLeftClose className="h-4 w-4" />
-          </Button>
-        </div>
+      <SidebarHeader>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <div className="flex min-w-0 items-center justify-between gap-2 p-0 group-data-[collapsible=icon]:justify-center">
+              <div className="flex min-w-0 items-center gap-2">
+                <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 shrink-0 items-center justify-center rounded-lg">
+                  <Library className="size-4" />
+                </div>
+                <div className="grid flex-1 overflow-hidden text-left text-xs leading-tight group-data-[collapsible=icon]:hidden">
+                  <span className="text-muted-foreground/70 text-[10px] font-bold tracking-wider uppercase">
+                    Library
+                  </span>
+                  <span className="truncate text-sm font-semibold">
+                    {library ? library.name : <Skeleton className="h-4 w-24" />}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarHeader>
 
-      <SidebarContent className="flex shrink-0 flex-col gap-1 bg-inherit p-4">
-        {libraryId &&
-          (library ? (
-            <SidebarMenu>
-              {/* Back to Documents Button */}
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  className="text-sm font-semibold"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <Link
-                    href={`/hub/libraries/${libraryId}/documents`}
-                    className="relative flex w-full items-center justify-center"
-                  >
-                    <ChevronLeft className="absolute left-1 h-5 w-5" />
-                    Manage Documents
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupContent>
+            {libraryId &&
+              (library ? (
+                <SidebarMenu className="gap-1">
+                  {/* Back to Documents Button */}
+                  <SidebarMenuItem className="group-data-[collapsible=icon]:hidden">
+                    <SidebarMenuButton
+                      asChild
+                      tooltip="Manage Documents"
+                      className="font-semibold"
+                    >
+                      <Link href={`/hub/libraries/${libraryId}/documents`} className="relative">
+                        <ChevronLeft className="absolute left-0" />
+                        <span className="flex-1 text-center">Manage Documents</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
 
-              {/* Overview Menu Item */}
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={pathname === `/hub/libraries/${libraryId}/overview`}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <Link href={`/hub/libraries/${libraryId}/overview`}>
-                    <Target className="mr-2 h-4 w-4" />
-                    Overview
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              {/* Settings Menu Item */}
-              {canManageLibrarySettings && (
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={pathname?.includes(
-                      `/hub/libraries/${libraryId}/settings`
-                    )}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Link href={`/hub/libraries/${libraryId}/settings`}>
-                      <Settings className="mr-2 h-4 w-4" />
-                      Settings
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              )}
-              {/* Members Menu Item */}
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={pathname?.includes(
-                    `/hub/libraries/${libraryId}/members`
+                  {/* Overview Menu Item */}
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={
+                        pathname === `/hub/libraries/${libraryId}/overview`
+                      }
+                      tooltip="Overview"
+                    >
+                      <Link href={`/hub/libraries/${libraryId}/overview`}>
+                        <Target />
+                        <span>Overview</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+
+                  {/* Settings Menu Item */}
+                  {canManageLibrarySettings && (
+                    <SidebarMenuItem>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={pathname?.includes(
+                          `/hub/libraries/${libraryId}/settings`
+                        )}
+                        tooltip="Settings"
+                      >
+                        <Link href={`/hub/libraries/${libraryId}/settings`}>
+                          <Settings />
+                          <span>Settings</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
                   )}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <Link href={`/hub/libraries/${libraryId}/members`}>
-                    <Users className="mr-2 h-4 w-4" />
-                    Members
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
 
-              {/* Leave Library Button */}
-              {!isOwner && (
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    asChild
-                    className="text-destructive hover:text-destructive"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleOpenLeaveDialog();
-                    }}
-                  >
-                    <button type="button" className="flex w-full items-center">
-                      <LogOut className="mr-2 h-4 w-4" />
-                      Leave Library
-                    </button>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              )}
-            </SidebarMenu>
-          ) : (
-            <div className="space-y-3">
-              <Skeleton className="h-10 w-full rounded-xl" />
-              <Skeleton className="h-10 w-full rounded-xl" />
-              <Skeleton className="h-10 w-full rounded-xl" />
-              <Skeleton className="h-10 w-full rounded-xl" />
-            </div>
-          ))}
+                  {/* Members Menu Item */}
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={pathname?.includes(
+                        `/hub/libraries/${libraryId}/members`
+                      )}
+                      tooltip="Members"
+                    >
+                      <Link href={`/hub/libraries/${libraryId}/members`}>
+                        <Users />
+                        <span>Members</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              ) : (
+                <div className="space-y-3 p-2">
+                  <Skeleton className="h-8 w-full rounded-md" />
+                  <Skeleton className="h-8 w-full rounded-md" />
+                  <Skeleton className="h-8 w-full rounded-md" />
+                  <Skeleton className="h-8 w-full rounded-md" />
+                </div>
+              ))}
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
+
+      <SidebarFooter>
+        {!isOwner && library && (
+          <SidebarMenu>
+            <SidebarMenuItem className="group-data-[collapsible=icon]:hidden">
+              <SidebarMenuButton
+                onClick={handleOpenLeaveDialog}
+                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                tooltip="Leave Library"
+              >
+                <LogOut />
+                <span>Leave Library</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        )}
+      </SidebarFooter>
+
+      <SidebarRail />
 
       {/* Leave Library Alert Dialog */}
       <AlertDialog
