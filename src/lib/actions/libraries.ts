@@ -374,29 +374,30 @@ export async function leaveLibrary(libraryId: string) {
 
   if (!user) throw new Error('Unauthorized');
 
-  // Verify user is not the owner
-  const { data: membership } = await supabase
+  const { data: membership, error: membershipError } = await supabase
     .from('library_members')
     .select('role')
     .eq('library_id', libraryId)
     .eq('user_id', user.id)
     .single();
 
-  if (!membership) throw new Error('Not a member of this library');
+  if (membershipError || !membership) {
+    throw new Error('Not a member of this library');
+  }
+
   if (membership.role === 'OWNER') {
     throw new Error(
       'Library owner cannot leave. Delete or transfer ownership first.'
     );
   }
 
-  // Remove user from library
-  const { error } = await supabase
-    .from('library_members')
-    .delete()
-    .eq('library_id', libraryId)
-    .eq('user_id', user.id);
+  const { error } = await supabase.rpc('leave_library', {
+    p_library_id: libraryId,
+  });
 
-  if (error) throw new Error(error.message || 'Failed to leave library');
+  if (error) {
+    throw new Error(error.message || 'Failed to leave library');
+  }
 
   revalidatePath('/hub');
   return { success: true };

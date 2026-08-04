@@ -1,6 +1,5 @@
 import { ReactNode } from 'react';
-import { requireLibraryRole } from '@/lib/actions/require-library-role';
-import { Unauthorized } from '@/app/unauthorized/page';
+import { guardLibraryAccess } from '@/lib/actions/guard-library-access';
 
 export default async function LibraryLayout({
   children,
@@ -10,12 +9,8 @@ export default async function LibraryLayout({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-
-  // Require at least VIEWER role to access any library route
-  const membership = await requireLibraryRole(id);
-  if (!membership) {
-    return <Unauthorized />;
-  }
+  const denied = await guardLibraryAccess(id);
+  if (denied) return denied;
 
   return <>{children}</>;
 }

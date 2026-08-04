@@ -1,7 +1,7 @@
 'use client';
 
-import { DocumentsSidebar } from '@/app/hub/_components/documents/documents-sidebar';
-import { SidebarRefreshProvider } from '@/app/hub/_components/documents/sidebar-refresh-context';
+import { DocumentsSidebar } from '@/app/hub/libraries/[id]/documents/_components';
+import { SidebarRefreshProvider } from '@/app/hub/libraries/[id]/documents/_components/sidebar-refresh-context';
 import { BreadcrumbNav } from '@/components/layout/breadcrumb-nav';
 
 export default function DocumentsLayout({

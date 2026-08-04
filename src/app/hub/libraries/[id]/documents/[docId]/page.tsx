@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { DocumentManager } from '@/app/hub/_components/documents/document-manager';
+import { DocumentManager } from '@/app/hub/libraries/[id]/documents/_components/document-manager';
 
 export default function DocumentDetailsPage() {
   const params = useParams();

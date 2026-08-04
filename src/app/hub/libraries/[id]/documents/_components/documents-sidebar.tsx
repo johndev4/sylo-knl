@@ -1,6 +1,5 @@
 'use client';
 
-import * as React from 'react';
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { useParams, usePathname } from 'next/navigation';
@@ -12,11 +11,12 @@ import {
   ChevronRight,
   PanelLeftClose,
   PanelLeft,
-  Settings,
   Grid,
   FileText,
   Loader2,
   Calendar,
+  MessageSquare,
+  Info,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,6 +35,12 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+} from '@/components/ui/sidebar';
 
 interface Document {
   id: string;
@@ -157,11 +163,11 @@ export function DocumentsSidebar() {
 
   if (!isOpen) {
     return (
-      <div className="sticky top-0 flex h-[calc(100vh-4.1rem)] w-16 shrink-0 flex-col items-center border-r border-zinc-200/10 bg-zinc-50 py-4 transition-all duration-300 dark:border-zinc-800/20 dark:bg-[#09090b]">
+      <Sidebar className="sticky top-0 h-[calc(100vh-4.1rem)] w-16 shrink-0 items-center bg-zinc-50 py-4 transition-all duration-300 dark:bg-[#09090b]">
         <Button variant="ghost" size="icon" onClick={() => setIsOpen(true)}>
           <PanelLeft className="h-5 w-5" />
         </Button>
-      </div>
+      </Sidebar>
     );
   }
 
@@ -169,9 +175,9 @@ export function DocumentsSidebar() {
   const newDocumentPath = `/hub/libraries/${libraryId}/documents/new`;
 
   return (
-    <aside className="sticky top-0 flex h-[calc(100vh-4.1rem)] w-72 shrink-0 flex-col border-r border-zinc-200/10 bg-zinc-50 transition-all duration-300 dark:border-zinc-800/20 dark:bg-[#09090b]">
+    <Sidebar className="sticky top-0 h-[calc(100vh-4.1rem)] w-72 shrink-0 bg-zinc-50 transition-all duration-300 dark:bg-[#09090b]">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-zinc-200/10 p-4 dark:border-zinc-800/20">
+      <SidebarHeader className="flex items-center justify-between border-b border-zinc-200/10 p-4 dark:border-zinc-800/20">
         <div className="mr-2 flex flex-1 flex-col gap-0.5 overflow-hidden">
           <span className="text-muted-foreground/50 text-[10px] font-bold tracking-widest uppercase">
             Library
@@ -181,7 +187,9 @@ export function DocumentsSidebar() {
             <span className="truncate">{library?.name || 'Loading...'}</span>
           </div>
         </div>
+
         <div className="flex items-center gap-1">
+          {/* Create New Document Button */}
           {isAtLimit ? (
             <Button
               variant="ghost"
@@ -215,6 +223,8 @@ export function DocumentsSidebar() {
               </Link>
             </Button>
           )}
+
+          {/* Sidebar Toggle Button */}
           <Button
             variant="ghost"
             size="icon"
@@ -224,9 +234,9 @@ export function DocumentsSidebar() {
             <PanelLeftClose className="h-4 w-4" />
           </Button>
         </div>
-      </div>
+      </SidebarHeader>
 
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+      <SidebarContent className="flex min-h-0 flex-1 flex-col overflow-hidden">
         {/* Fixed Filters Area */}
         <div className="flex shrink-0 flex-col gap-3 border-b border-zinc-200/10 p-4 dark:border-zinc-800/20">
           <div className="relative">
@@ -350,20 +360,40 @@ export function DocumentsSidebar() {
             </AnimatePresence>
           </div>
         </ScrollArea>
-      </div>
+      </SidebarContent>
 
       {/* Footer Navigation */}
-      <div className="mt-auto flex shrink-0 flex-col gap-1.5 border-t border-zinc-200 bg-inherit p-4 dark:border-zinc-800/50">
-        <Button
-          asChild
-          variant="ghost"
-          className="text-muted-foreground hover:text-foreground w-full justify-start"
-        >
-          <Link href={`/hub/libraries/${libraryId}/settings`}>
-            <Settings className="mr-2 h-4 w-4" /> Settings
-          </Link>
-        </Button>
-      </div>
-    </aside>
+      <SidebarFooter className="flex shrink-0 flex-row justify-between border-t border-zinc-200 bg-inherit p-3 dark:border-zinc-800/50">
+        {library && (
+          <>
+            {/* Chat Button */}
+            <Button
+              asChild
+              variant="ghost"
+              className="text-muted-foreground hover:text-foreground w-55 justify-start"
+              aria-label={`Open chat for ${library.name}`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Link href={`/hub/chat?libraryId=${libraryId}`}>
+                <MessageSquare className="mr-2 h-4 w-4" />
+                Chat
+              </Link>
+            </Button>
+
+            {/* Library Info Icon Button */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-full">
+                  <Link href={`/hub/libraries/${libraryId}/overview`}>
+                    <Info className="h-4 w-4" />
+                  </Link>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Library Info</TooltipContent>
+            </Tooltip>
+          </>
+        )}
+      </SidebarFooter>
+    </Sidebar>
   );
 }

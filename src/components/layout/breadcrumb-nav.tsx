@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 
 import * as React from 'react';
@@ -50,17 +51,16 @@ export function BreadcrumbNav() {
   const [loadingIds, setLoadingIds] = React.useState<Set<string>>(new Set());
 
   const segments = pathname.split('/').filter(Boolean);
-  const isLibraryDocumentsRoute =
+  const isLibraryRoute =
     segments[0] === 'hub' &&
     segments[1] === 'libraries' &&
-    segments.length >= 4 &&
-    segments[3] === 'documents';
-  const libraryId = isLibraryDocumentsRoute ? segments[2] : null;
+    segments.length >= 4;
+  const libraryId = isLibraryRoute ? segments[2] : null;
   const documentId =
-    isLibraryDocumentsRoute && segments.length >= 5 ? segments[4] : null;
-  const isEditPage = isLibraryDocumentsRoute && segments[5] === 'edit';
+    isLibraryRoute && segments.length >= 5 ? segments[4] : null;
+  // const isEditPage = isLibraryRoute && segments[5] === 'edit';
 
-  // Only show on /hub routes when logged in
+  // We can toggle this to false if we want to hide breadcrumbs in certain contexts
   const showBreadcrumbs = true;
 
   React.useEffect(() => {
@@ -102,7 +102,6 @@ export function BreadcrumbNav() {
     };
 
     resolveNames();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname, showBreadcrumbs]);
 
   if (!showBreadcrumbs) return null;
@@ -113,7 +112,7 @@ export function BreadcrumbNav() {
     href: string;
   }> = [];
 
-  if (isLibraryDocumentsRoute && libraryId) {
+  if (isLibraryRoute && libraryId) {
     const libraryLabel = loadingIds.has(libraryId) ? (
       <Skeleton className="h-4 w-24" />
     ) : (
@@ -146,13 +145,13 @@ export function BreadcrumbNav() {
       });
     }
 
-    if (isEditPage && documentId) {
-      breadcrumbItems.push({
-        key: 'edit',
-        label: 'Edit',
-        href: `/hub/libraries/${libraryId}/documents/${documentId}/edit`,
-      });
-    }
+    // if (isEditPage && documentId) {
+    //   breadcrumbItems.push({
+    //     key: 'edit',
+    //     label: 'Edit',
+    //     href: `/hub/libraries/${libraryId}/documents/${documentId}/edit`,
+    //   });
+    // }
   } else {
     breadcrumbItems.push(
       ...segments.map((segment, index) => {
@@ -180,29 +179,31 @@ export function BreadcrumbNav() {
   }
 
   return (
-    <div className="w-full border-b border-zinc-200 bg-zinc-50/50 px-4 py-2 sm:px-6 lg:px-8 dark:border-zinc-800/50 dark:bg-zinc-900/50">
-      <Breadcrumb>
-        <BreadcrumbList className="sm:gap-2">
-          {breadcrumbItems.map((item, index) => {
-            const isLast = index === breadcrumbItems.length - 1;
+    <div className="sticky top-0 z-10">
+      <div className="w-full border-b border-zinc-200 bg-zinc-50 px-4 py-2 sm:px-6 lg:px-8 dark:border-zinc-800/50 dark:bg-zinc-900">
+        <Breadcrumb>
+          <BreadcrumbList className="sm:gap-2">
+            {breadcrumbItems.map((item, index) => {
+              const isLast = index === breadcrumbItems.length - 1;
 
-            return (
-              <React.Fragment key={item.key}>
-                {index > 0 && <BreadcrumbSeparator />}
-                <BreadcrumbItem>
-                  {isLast ? (
-                    <BreadcrumbPage>{item.label}</BreadcrumbPage>
-                  ) : (
-                    <BreadcrumbLink asChild>
-                      <Link href={item.href}>{item.label}</Link>
-                    </BreadcrumbLink>
-                  )}
-                </BreadcrumbItem>
-              </React.Fragment>
-            );
-          })}
-        </BreadcrumbList>
-      </Breadcrumb>
+              return (
+                <React.Fragment key={item.key}>
+                  {index > 0 && <BreadcrumbSeparator />}
+                  <BreadcrumbItem>
+                    {isLast ? (
+                      <BreadcrumbPage>{item.label}</BreadcrumbPage>
+                    ) : (
+                      <BreadcrumbLink asChild>
+                        <Link href={item.href}>{item.label}</Link>
+                      </BreadcrumbLink>
+                    )}
+                  </BreadcrumbItem>
+                </React.Fragment>
+              );
+            })}
+          </BreadcrumbList>
+        </Breadcrumb>
+      </div>
     </div>
   );
 }

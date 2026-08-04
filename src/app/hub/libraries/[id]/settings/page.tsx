@@ -1,11 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,17 +13,14 @@ import {
 } from '@/components/ui/alert-dialog';
 import {
   fetchLibraryMembers,
-  addLibraryMember,
-  updateLibraryMemberRole,
   removeLibraryMember,
   removeMultipleLibraryMembers,
 } from '@/lib/actions/libraries';
-import { MemberTable } from '@/app/hub/_components/libraries/settings';
-import { AddMemberForm } from '@/app/hub/_components/libraries/settings/add-member-form';
-import { DeleteLibraryForm } from '@/app/hub/_components/libraries/settings/delete-library-form';
-import { RenameLibraryForm } from '@/app/hub/_components/libraries/settings/rename-library-form';
-import { InviteSection } from '@/app/hub/_components/libraries/settings/invite-section';
 import { useAuth } from '@/lib/hooks/use-auth';
+import {
+  DeleteLibraryForm,
+  RenameLibraryForm,
+} from '@/app/hub/libraries/[id]/settings/_components';
 
 interface LibraryMember {
   library_id: string;
@@ -57,7 +49,6 @@ export default function LibrarySettingsPage({
   const [selectedMembers, setSelectedMembers] = useState<Set<string>>(
     new Set()
   );
-  const [isAddingMember, setIsAddingMember] = useState(false);
   // removePending describes the pending remove action:
   //   { type: 'single'; userId: string; name: string } | { type: 'bulk'; count: number } | null
   const [removePending, setRemovePending] = useState<
@@ -116,49 +107,6 @@ export default function LibrarySettingsPage({
     loadMembers();
   }, [libraryId, user]);
 
-  const handleAddMember = async (email: string, role: string) => {
-    try {
-      setIsAddingMember(true);
-      await addLibraryMember(
-        libraryId,
-        email,
-        role as 'ADMIN' | 'EDITOR' | 'VIEWER'
-      );
-      const updatedMembers = await fetchLibraryMembers(libraryId);
-      setMembers(updatedMembers);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add member');
-    } finally {
-      setIsAddingMember(false);
-    }
-  };
-
-  const handleUpdateRole = async (userId: string, newRole: string) => {
-    try {
-      await updateLibraryMemberRole(
-        libraryId,
-        userId,
-        newRole as 'ADMIN' | 'EDITOR' | 'VIEWER'
-      );
-      const updatedMembers = await fetchLibraryMembers(libraryId);
-      setMembers(updatedMembers);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update role');
-    }
-  };
-
-  const handleRemoveMember = (userId: string) => {
-    const member = members.find((m) => m.user_id === userId);
-    const displayName =
-      member?.user?.name || member?.user?.email || 'this member';
-    setRemovePending({ type: 'single', userId, name: displayName });
-  };
-
-  const handleRemoveMultiple = () => {
-    if (selectedMembers.size === 0) return;
-    setRemovePending({ type: 'bulk', count: selectedMembers.size });
-  };
-
   const confirmRemove = async () => {
     if (!removePending) return;
     try {
@@ -194,223 +142,110 @@ export default function LibrarySettingsPage({
 
   const canManageMembers = ['OWNER', 'ADMIN'].includes(currentUserRole);
 
-  if (isLoading) {
-    return (
-      <div className="container mx-auto max-w-4xl space-y-8 p-6">
-        <div className="mb-8 flex flex-col gap-3">
-          <div className="space-y-2">
-            <h1 className="text-3xl font-bold tracking-tight">
-              Library Settings
-            </h1>
-            <p className="text-muted-foreground">
-              Manage members and library settings
-            </p>
-          </div>
-        </div>
-        <div className="py-8 text-center">Loading...</div>
-      </div>
-    );
-  }
-
   return (
-    <div className="container mx-auto max-w-4xl space-y-8 p-6">
-      {/* Header */}
-      <div className="mb-8 flex flex-col gap-3">
-        <div className="flex items-center justify-between gap-3">
-          <div className="space-y-2">
-            <h1 className="text-3xl font-bold tracking-tight">
-              Library Settings
-            </h1>
-            <p className="text-muted-foreground">
-              Manage members and library settings
-            </p>
-          </div>
-          <Link href={`/hub/libraries/${libraryId}/documents`}>
-            <button className="text-muted-foreground hover:text-foreground mb-4 flex items-center gap-1 text-sm">
-              ← Back
-            </button>
-          </Link>
-        </div>
-      </div>
-
-      {/* Error Message */}
-      {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
-          <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
-          <button
-            onClick={() => setError('')}
-            className="mt-2 text-xs text-red-600 underline dark:text-red-500"
-          >
-            Dismiss
-          </button>
-        </div>
-      )}
-
-      {/* Library Renaming Section */}
-      {canManageMembers && (
-        <RenameLibraryForm libraryId={libraryId} initialName={libraryName} />
-      )}
-
-      {/* Add Member Section */}
-      {/* {canManageMembers && (
-        <Card className="space-y-4 p-6">
-          <div className="space-y-2">
-            <h2 className="text-xl font-semibold">Add Member</h2>
-            <p className="text-muted-foreground text-sm">
-              Invite new members to your library
-            </p>
-          </div>
-          <AddMemberForm
-            onAddMember={handleAddMember}
-            isLoading={isAddingMember}
-            memberCount={members.length}
-          />
-        </Card>
-      )} */}
-
-      {/* Invite Links Section */}
-      {canManageMembers && (
-        <InviteSection libraryId={libraryId} />
-      )}
-
-      {/* Members List Section */}
-      <Card className="space-y-4 p-6">
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-semibold">Members</h2>
-              <p className="text-muted-foreground text-sm">
-                {members.length} of 11 members
-              </p>
+    <>
+      {isLoading ? (
+        <div className="py-8 text-center">Loading...</div>
+      ) : (
+        <div className="container mx-auto max-w-4xl space-y-8 p-6">
+          {/* Header */}
+          <div className="mb-8 flex flex-col gap-3">
+            <div className="flex items-center justify-between gap-3">
+              <div className="space-y-2">
+                <h1 className="text-3xl font-bold tracking-tight">
+                  Library Settings
+                </h1>
+                <p className="text-muted-foreground">Manage library settings</p>
+              </div>
             </div>
-            {canManageMembers && selectedMembers.size > 0 && (
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleRemoveMultiple}
+          </div>
+
+          {/* Error Message */}
+          {error && (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
+              <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
+              <button
+                onClick={() => setError('')}
+                className="mt-2 text-xs text-red-600 underline dark:text-red-500"
               >
-                Remove {selectedMembers.size} member(s)
-              </Button>
-            )}
-          </div>
-        </div>
+                Dismiss
+              </button>
+            </div>
+          )}
 
-        {members.length === 0 ? (
-          <div className="py-8 text-center">
-            <p className="text-muted-foreground">No members yet</p>
-          </div>
-        ) : (
-          <MemberTable
-            members={members}
-            currentUserRole={currentUserRole}
-            canManageMembers={canManageMembers}
-            selectedMembers={selectedMembers}
-            onSelectMember={(userId) => {
-              setSelectedMembers((prev) => {
-                const next = new Set(prev);
-                if (next.has(userId)) {
-                  next.delete(userId);
-                } else {
-                  next.add(userId);
-                }
-                return next;
-              });
-            }}
-            onRemoveMember={handleRemoveMember}
-            onUpdateRole={handleUpdateRole}
-          />
-        )}
-      </Card>
-
-      {/* Library Information */}
-      <Card className="space-y-4 p-6">
-        <div className="space-y-2">
-          <h2 className="text-xl font-semibold">Library Information</h2>
-          <p className="text-muted-foreground text-sm">
-            View important library details
-          </p>
-        </div>
-        <div className="space-y-4">
-          <div>
-            <Label className="text-sm font-medium">Library ID</Label>
-            <Input value={libraryId} disabled className="mt-1 text-sm" />
-          </div>
-          <div>
-            <Label className="text-sm font-medium">Your Role</Label>
-            <Input value={currentUserRole} disabled className="mt-1 text-sm" />
-          </div>
-          <div>
-            <Label className="text-sm font-medium">Member Limit</Label>
-            <Input
-              value={`${members.length} / 11`}
-              disabled
-              className="mt-1 text-sm"
+          {/* Library Renaming Section */}
+          {canManageMembers && (
+            <RenameLibraryForm
+              libraryId={libraryId}
+              initialName={libraryName}
             />
-          </div>
+          )}
+
+          {/* Delete Library Section - Owner Only */}
+          {currentUserRole === 'OWNER' && (
+            <DeleteLibraryForm
+              libraryId={libraryId}
+              libraryName={libraryName || 'this library'}
+            />
+          )}
+
+          {/* Remove Member Confirmation Dialog */}
+          <AlertDialog
+            open={!!removePending}
+            onOpenChange={(open) => {
+              if (!open && !isRemoving) {
+                setRemovePending(null);
+              }
+            }}
+          >
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>
+                  {removePending?.type === 'bulk'
+                    ? `Remove ${removePending.count} member(s)?`
+                    : 'Remove Member?'}
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  {removePending?.type === 'bulk' ? (
+                    <>
+                      You are about to remove{' '}
+                      <span className="text-foreground font-semibold">
+                        {removePending.count} member(s)
+                      </span>{' '}
+                      from this library. They will immediately lose access. This
+                      action cannot be undone.
+                    </>
+                  ) : (
+                    <>
+                      You are about to remove{' '}
+                      <span className="text-foreground font-semibold">
+                        {removePending?.name}
+                      </span>{' '}
+                      from this library. They will immediately lose access. This
+                      action cannot be undone.
+                    </>
+                  )}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={isRemoving}>
+                  Cancel
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  variant="destructive"
+                  disabled={isRemoving}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    confirmRemove();
+                  }}
+                >
+                  {isRemoving ? 'Removing...' : 'Remove'}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
-      </Card>
-
-      {/* Delete Library Section - Owner Only */}
-      {currentUserRole === 'OWNER' && (
-        <DeleteLibraryForm
-          libraryId={libraryId}
-          libraryName={libraryName || 'this library'}
-        />
       )}
-
-      {/* Remove Member Confirmation Dialog */}
-      <AlertDialog
-        open={!!removePending}
-        onOpenChange={(open) => {
-          if (!open && !isRemoving) {
-            setRemovePending(null);
-          }
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {removePending?.type === 'bulk'
-                ? `Remove ${removePending.count} member(s)?`
-                : 'Remove Member?'}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {removePending?.type === 'bulk' ? (
-                <>
-                  You are about to remove{' '}
-                  <span className="font-semibold text-foreground">
-                    {removePending.count} member(s)
-                  </span>{' '}
-                  from this library. They will immediately lose access. This
-                  action cannot be undone.
-                </>
-              ) : (
-                <>
-                  You are about to remove{' '}
-                  <span className="font-semibold text-foreground">
-                    {removePending?.name}
-                  </span>{' '}
-                  from this library. They will immediately lose access. This
-                  action cannot be undone.
-                </>
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isRemoving}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              variant="destructive"
-              disabled={isRemoving}
-              onClick={(e) => {
-                e.preventDefault();
-                confirmRemove();
-              }}
-            >
-              {isRemoving ? 'Removing...' : 'Remove'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
+    </>
   );
 }
