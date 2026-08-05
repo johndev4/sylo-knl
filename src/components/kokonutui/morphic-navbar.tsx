@@ -16,7 +16,7 @@ interface MorphicNavbarProps {
 
 const DEFAULT_NAV_ITEMS: Record<string, NavItem> = {
   '/hub': { name: 'Library Hub' },
-  '/hub/chat': { name: 'Chat' },
+  '/chat': { name: 'Chat' },
 };
 
 export function MorphicNavbar({
@@ -27,14 +27,14 @@ export function MorphicNavbar({
 
   const getIsActive = (path: string) => {
     if (path === '/hub') {
-      // Matches /hub or subpaths, but not /hub/chat
+      // Matches /hub or subpaths, but not /chat
       return (
         pathname === '/hub' ||
-        (pathname.startsWith('/hub/') && !pathname.startsWith('/hub/chat'))
+        (pathname.startsWith('/hub/') && !pathname.startsWith('/chat'))
       );
     }
-    if (path === '/hub/chat') {
-      return pathname.startsWith('/hub/chat');
+    if (path === '/chat') {
+      return pathname.startsWith('/chat');
     }
     return pathname === path;
   };

@@ -9,7 +9,7 @@ test.describe('Chat Page UI & Sidebar', () => {
   });
 
   test('Sidebar and Pinned Input layout', async ({ page }) => {
-    await page.goto('/hub/chat');
+    await page.goto('/chat');
     await page.waitForLoadState('networkidle');
 
     // Sidebar should be present (using role or tag)
@@ -29,7 +29,7 @@ test.describe('Chat Page UI & Sidebar', () => {
   });
 
   test('Sidebar toggling works', async ({ page }) => {
-    await page.goto('/hub/chat');
+    await page.goto('/chat');
     await page.waitForLoadState('networkidle');
 
     const sidebar = page.locator('aside').first();

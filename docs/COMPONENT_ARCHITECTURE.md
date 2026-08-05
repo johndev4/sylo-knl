@@ -110,7 +110,7 @@ src/
 │   │   │   └── page.tsx               ← fetches libraries, pre-selects from ?libraryId=
 │   │   ├── libraries/
 │   │   │   └── [id]/
-│   │   │       ├── chat/              ← redirects to /hub/chat?libraryId=[id]
+│   │   │       ├── chat/              ← redirects to /chat?libraryId=[id]
 │   │   │       ├── documents/
 │   │   │       └── settings/
 │   │   └── page.tsx

@@ -314,7 +314,7 @@ All code follows the patterns documented in your project's `AGENTS.md` file:
 As of May 2026, Sylo features a **Unified Chat Interface** that allows searching across multiple libraries at once.
 
 ### Key Features
-- **Centralized Hub**: Accessible at `/hub/chat`.
+- **Centralized Hub**: Accessible at `/chat`.
 - **Multi-Select**: Choose one, multiple, or all libraries via the interactive dropdown.
 - **Library Attribution**: AI responses identify which library the knowledge came from.
 - **Contextual Pre-selection**: Navigation from specific libraries pre-selects that library using URL parameters (`?libraryId=...`).

@@ -410,7 +410,7 @@ export function DocumentsSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip="Chat">
-              <Link href={`/hub/chat?libraryId=${libraryId}`}>
+              <Link href={`/chat?libraryId=${libraryId}`}>
                 <MessageSquare />
                 <span>Chat</span>
               </Link>

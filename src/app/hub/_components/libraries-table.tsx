@@ -127,7 +127,7 @@ export function LibrariesTable({ memberships }: LibrariesTableProps) {
                           aria-label={`Open chat for ${space.name}`}
                           onClick={(e) => e.stopPropagation()}
                         >
-                          <Link href={`/hub/chat?libraryId=${space.id}`}>
+                          <Link href={`/chat?libraryId=${space.id}`}>
                             <MessageSquare className="mr-2 h-4 w-4" />
                             Chat
                           </Link>

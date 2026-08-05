@@ -24,7 +24,7 @@ function GlobalNav() {
         className={cn(
           'focus-visible:ring-ring rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none',
           pathname === '/hub' ||
-            (pathname.startsWith('/hub/') && !pathname.startsWith('/hub/chat'))
+            (pathname.startsWith('/hub/') && !pathname.startsWith('/chat'))
             ? 'text-foreground bg-zinc-100 dark:bg-zinc-800/50'
             : 'text-muted-foreground hover:text-foreground hover:bg-zinc-100/50 dark:hover:bg-zinc-800/30'
         )}
@@ -33,10 +33,10 @@ function GlobalNav() {
       </Link>
       {/* Chat Nav Item */}
       <Link
-        href="/hub/chat"
+        href="/chat"
         className={cn(
           'focus-visible:ring-ring rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none',
-          pathname.startsWith('/hub/chat')
+          pathname.startsWith('/chat')
             ? 'text-foreground bg-zinc-100 dark:bg-zinc-800/50'
             : 'text-muted-foreground hover:text-foreground hover:bg-zinc-100/50 dark:hover:bg-zinc-800/30'
         )}

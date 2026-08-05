@@ -111,10 +111,10 @@ supabase db pull                # Sync schema changes
 | `src/app/hub/`                                          | Main application hub (libraries, documents, chat) |
 | `src/app/hub/_components/`                              | Feature-local components (documents, libraries)   |
 | `src/app/hub/_components/documents/document-manager.tsx` | Unified Create/Edit/View document component       |
-| `src/app/hub/chat/page.tsx`                             | **Unified multi-library chat page**               |
-| `src/app/hub/chat/_components/chat-client.tsx`           | Interactive chat UI with library multi-select     |
+| `src/app/chat/page.tsx`                             | **Unified multi-library chat page**               |
+| `src/app/chat/_components/chat-client.tsx`           | Interactive chat UI with library multi-select     |
 | `src/app/hub/libraries/[id]/`                           | Library-specific routes (documents, settings)     |
-| `src/app/hub/libraries/[id]/chat/page.tsx`              | Redirects to `/hub/chat?libraryId=[id]`           |
+| `src/app/hub/libraries/[id]/chat/page.tsx`              | Redirects to `/chat?libraryId=[id]`           |
 | `src/app/api/`                                          | API route handlers                                |
 | `src/app/api/chat/`                                     | RAG chat endpoint — accepts `libraryIds[]` array  |
 | `src/app/api/documents/`                                | Document CRUD endpoints                           |
