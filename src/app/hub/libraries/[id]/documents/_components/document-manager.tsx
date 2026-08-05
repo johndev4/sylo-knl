@@ -56,9 +56,7 @@ interface DocumentManagerProps {
  * - 'reset'    → discard the new-document draft (triggered from sidebar "+")
  */
 type PendingAction =
-  | { type: 'cancel' }
-  | { type: 'navigate'; href: string }
-  | { type: 'reset' };
+  { type: 'cancel' } | { type: 'navigate'; href: string } | { type: 'reset' };
 
 export function DocumentManager({
   libraryId,
@@ -231,6 +229,17 @@ export function DocumentManager({
   useEffect(() => {
     (async () => setIgnoreNavigationGuard(false))();
   }, [isNew, initialData?.id]);
+
+  // Broadcast title changes so sibling components (e.g. breadcrumb nav) can
+  // update reactively without shared context or prop drilling.
+  useEffect(() => {
+    const documentId = isNew ? 'new' : (initialData?.id ?? 'new');
+    window.dispatchEvent(
+      new CustomEvent('sylo:document:title-change', {
+        detail: { documentId, title },
+      })
+    );
+  }, [title, isNew, initialData?.id]);
 
   // Handle reset request from sidebar "+" button when already on new document page.
   // Uses the unified AlertDialog instead of window.confirm.

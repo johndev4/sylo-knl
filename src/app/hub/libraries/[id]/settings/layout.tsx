@@ -1,8 +1,10 @@
 import { ReactNode } from 'react';
 import { LIBRARY_ROLES } from '@/lib/actions/require-library-role';
 import { guardLibraryAccess } from '@/lib/actions/guard-library-access';
-import { LibrarySidebar } from '@/app/hub/libraries/_components';
-import { BreadcrumbNav } from '@/components/layout/breadcrumb-nav';
+import {
+  LibraryBreadcrumbNav,
+  LibrarySidebar,
+} from '@/app/hub/libraries/_components';
 import {
   SidebarInset,
   SidebarProvider,
@@ -22,15 +24,15 @@ export default async function LibrarySettingsLayout({
   if (denied) return denied;
 
   return (
-    <SidebarProvider className="min-h-0 flex-1 h-[calc(100vh-4.1rem)]">
+    <SidebarProvider className="h-[calc(100vh-4.1rem)] min-h-0 flex-1">
       <LibrarySidebar />
-      <SidebarInset className="flex flex-col min-w-0 flex-1 overflow-hidden">
-        <header className="flex h-12 shrink-0 items-center gap-2 border-b border-zinc-200/50 bg-background px-4 dark:border-zinc-800/50">
+      <SidebarInset className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        <header className="bg-background flex h-12 shrink-0 items-center gap-2 border-b border-zinc-200/50 px-4 dark:border-zinc-800/50">
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mr-2 h-4" />
-          <BreadcrumbNav />
+          <LibraryBreadcrumbNav />
         </header>
-        <div className="bg-background relative flex flex-1 flex-col min-w-0 overflow-y-auto">
+        <div className="bg-background relative flex min-w-0 flex-1 flex-col overflow-y-auto">
           {children}
         </div>
       </SidebarInset>

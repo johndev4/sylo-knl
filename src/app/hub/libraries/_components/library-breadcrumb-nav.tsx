@@ -13,6 +13,10 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
 import { Skeleton } from '@/components/ui/skeleton';
+import { UrlObject } from 'url';
+
+// Helper to capitalize first letter
+const capFirst = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
 
 // Helper to determine if a string is a UUID
 const isUUID = (str: string) => {
@@ -43,29 +47,47 @@ async function fetchDocumentTitle(id: string): Promise<string | null> {
   }
 }
 
-export function BreadcrumbNav() {
+export function LibraryBreadcrumbNav() {
   const pathname = usePathname();
+  // State to hold dynamic names for library and document IDs
   const [dynamicNames, setDynamicNames] = React.useState<
     Record<string, string>
   >({});
+  // State to track which IDs are currently loading
   const [loadingIds, setLoadingIds] = React.useState<Set<string>>(new Set());
+  // Live title overrides broadcast by DocumentManager while the user types
+  const [liveTitles, setLiveTitles] = React.useState<Record<string, string>>(
+    {}
+  );
 
+  // Split the pathname into segments and filter out empty strings
   const segments = pathname.split('/').filter(Boolean);
+  // Determine if we are on a library route and extract the library ID
   const isLibraryRoute =
     segments[0] === 'hub' &&
     segments[1] === 'libraries' &&
     segments.length >= 4;
   const libraryId = isLibraryRoute ? segments[2] : null;
+  // Determine if we are on a library documents route and extract the document ID
+  const isLibraryDocumentsRoute = libraryId && segments[3] === 'documents';
   const documentId =
-    isLibraryRoute && segments.length >= 5 ? segments[4] : null;
-  // const isEditPage = isLibraryRoute && segments[5] === 'edit';
+    isLibraryDocumentsRoute && segments.length >= 5 ? segments[4] : null;
 
-  // We can toggle this to false if we want to hide breadcrumbs in certain contexts
-  const showBreadcrumbs = true;
-
+  // Listen for real-time title changes dispatched by DocumentManager
   React.useEffect(() => {
-    if (!showBreadcrumbs) return;
+    const handler = (e: Event) => {
+      const { documentId, title } = (
+        e as CustomEvent<{ documentId: string; title: string }>
+      ).detail;
+      setLiveTitles((prev) => ({ ...prev, [documentId]: title }));
+    };
+    window.addEventListener('sylo:document:title-change', handler);
+    return () =>
+      window.removeEventListener('sylo:document:title-change', handler);
+  }, []);
 
+  // Fetch dynamic names for library and document IDs when the pathname changes
+  React.useEffect(() => {
     const resolveNames = async () => {
       const newNames: Record<string, string> = {};
       const newLoading = new Set<string>();
@@ -102,41 +124,53 @@ export function BreadcrumbNav() {
     };
 
     resolveNames();
-  }, [pathname, showBreadcrumbs]);
-
-  if (!showBreadcrumbs) return null;
+  }, [pathname]);
 
   const breadcrumbItems: Array<{
     key: string;
     label: React.ReactNode;
-    href: string;
+    href: string | UrlObject;
   }> = [];
 
   if (isLibraryRoute && libraryId) {
     const libraryLabel = loadingIds.has(libraryId) ? (
       <Skeleton className="h-4 w-24" />
     ) : (
-      (dynamicNames[libraryId] ?? 'New Document')
+      (dynamicNames[libraryId] ?? '')
     );
 
     breadcrumbItems.push({
       key: 'library',
       label: libraryLabel,
-      href: `/hub/libraries/${libraryId}/documents`,
+      href: `/hub/libraries/${libraryId}`,
     });
 
     breadcrumbItems.push({
-      key: 'documents',
-      label: 'Documents',
-      href: `/hub/libraries/${libraryId}/documents`,
+      key: segments[3],
+      label: capFirst(segments[3]),
+      href: `/hub/libraries/${libraryId}/${segments[3]}`,
     });
 
-    if (documentId) {
-      const documentLabel = loadingIds.has(documentId) ? (
-        <Skeleton className="h-4 w-24" />
-      ) : (
-        (dynamicNames[documentId] ?? 'New Document')
-      );
+    if (isLibraryDocumentsRoute && documentId) {
+      let documentLabel;
+
+      if (documentId === 'new') {
+        const liveTitle = liveTitles['new'];
+        documentLabel =
+          liveTitle !== undefined && liveTitle !== ''
+            ? liveTitle
+            : 'Untitled Document';
+      } else {
+        const liveTitle = liveTitles[documentId];
+        documentLabel =
+          liveTitle !== undefined ? (
+            liveTitle || 'Untitled Document'
+          ) : loadingIds.has(documentId) ? (
+            <Skeleton className="h-4 w-24" />
+          ) : (
+            (dynamicNames[documentId] ?? '')
+          );
+      }
 
       breadcrumbItems.push({
         key: 'document',
@@ -144,39 +178,11 @@ export function BreadcrumbNav() {
         href: `/hub/libraries/${libraryId}/documents/${documentId}`,
       });
     }
-
-    // if (isEditPage && documentId) {
-    //   breadcrumbItems.push({
-    //     key: 'edit',
-    //     label: 'Edit',
-    //     href: `/hub/libraries/${libraryId}/documents/${documentId}/edit`,
-    //   });
-    // }
-  } else {
-    breadcrumbItems.push(
-      ...segments.map((segment, index) => {
-        const href = `/${segments.slice(0, index + 1).join('/')}`;
-        let label: React.ReactNode =
-          segment.charAt(0).toUpperCase() + segment.slice(1);
-
-        if (isUUID(segment)) {
-          if (loadingIds.has(segment)) {
-            label = <Skeleton className="h-4 w-24" />;
-          } else if (dynamicNames[segment]) {
-            label = dynamicNames[segment];
-          } else {
-            label = 'New Document';
-          }
-        }
-
-        return {
-          key: href,
-          label,
-          href,
-        };
-      })
-    );
   }
+
+  // ---------------------------------------------------------------------------
+  // Render
+  // ---------------------------------------------------------------------------
 
   return (
     <Breadcrumb>
