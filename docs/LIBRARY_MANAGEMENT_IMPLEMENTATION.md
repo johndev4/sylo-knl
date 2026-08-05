@@ -9,7 +9,7 @@ I have successfully implemented a complete library member management system for 
 ## 🎯 Features Implemented
 
 ### 1. **Member Management**
-- ✅ Add members by email with role selection (ADMIN, EDITOR, VIEWER)
+- ✅ Invite members by email with role selection (ADMIN, EDITOR, VIEWER)
 - ✅ Delete individual members with confirmation
 - ✅ Delete multiple members at once
 - ✅ Modify member roles dynamically
@@ -41,7 +41,7 @@ src/app/api/libraries/[id]/members/[userId]/route.ts (PATCH, DELETE)
 
 ### Components (New)
 ```
-src/app/hub/_components/libraries/settings/add-member-form.tsx   - Form to add new members
+src/app/hub/_components/libraries/settings/invite-member-form.tsx   - Form to invite new members
 src/app/hub/_components/libraries/settings/member-table.tsx     - Table displaying all members
 src/app/hub/_components/libraries/settings/delete-library-form.tsx  - Delete library confirmation
 src/app/hub/_components/libraries/settings/rename-library-form.tsx  - Rename library form
@@ -86,7 +86,7 @@ supabase/migrations/20260418223650_init_pure_schema.sql
 - **Response**: Array of member objects with user details
 
 ### POST /api/libraries/[id]/members
-**Add a new member to library**
+**Invite a new member to library**
 - **Auth**: Required
 - **Permission**: OWNER or ADMIN
 - **Body**: `{ email: string, role: "ADMIN" | "EDITOR" | "VIEWER" }`
@@ -120,7 +120,7 @@ supabase/migrations/20260418223650_init_pure_schema.sql
 
 ### Library Settings Page (`/hub/libraries/[id]/settings`)
 
-1. **Add Member Form**
+1. **Invite Member Form**
    - Email input with validation
    - Role dropdown (ADMIN, EDITOR, VIEWER)
    - Submit button with loading state
@@ -170,12 +170,12 @@ supabase/migrations/20260418223650_init_pure_schema.sql
 
 ### Manual Testing Steps
 
-1. **Add Member**
+1. **Invite Member**
    - [ ] Login as OWNER
    - [ ] Navigate to library settings
    - [ ] Enter valid email of existing user
    - [ ] Select role (ADMIN, EDITOR, VIEWER)
-   - [ ] Click "Add Member"
+   - [ ] Click "Invite Member"
    - [ ] Verify member appears in table
 
 2. **Update Member Role**
@@ -197,7 +197,7 @@ supabase/migrations/20260418223650_init_pure_schema.sql
 5. **Permission Checks**
    - [ ] Login as EDITOR
    - [ ] Navigate to library settings
-   - [ ] Verify "Add Member" form is hidden
+   - [ ] Verify "Invite Member" form is hidden
    - [ ] Verify you cannot see member management options
 
 6. **Edge Cases**
@@ -240,11 +240,11 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_key
 
 ## 📊 Data Flow
 
-### Adding a Member
+### Inviting a Member
 ```
 User (OWNER/ADMIN)
   ↓
-AddMemberForm (validation)
+InviteMemberForm (validation)
   ↓
 POST /api/libraries/[id]/members
   ↓
