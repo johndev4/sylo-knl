@@ -41,11 +41,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { useSidebarRefresh } from './sidebar-refresh-context';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 interface Document {
@@ -54,31 +49,6 @@ interface Document {
   tags: string[];
   created_at: string;
   updated_at: string;
-}
-
-function TruncatedTitle({ title }: { title: string }) {
-  const maxLength = 32; // Character limit for sidebar titles
-  const isTruncated = title.length > maxLength;
-  const displayTitle = isTruncated ? title.slice(0, maxLength) + '...' : title;
-
-  const content = (
-    <div className="text-foreground w-full overflow-hidden whitespace-nowrap">
-      {displayTitle}
-    </div>
-  );
-
-  if (!isTruncated) {
-    return content;
-  }
-
-  return (
-    <Tooltip delayDuration={300}>
-      <TooltipTrigger asChild>{content}</TooltipTrigger>
-      <TooltipContent side="top" className="max-w-[300px] break-words">
-        {title}
-      </TooltipContent>
-    </Tooltip>
-  );
 }
 
 export function DocumentsSidebar() {
@@ -354,7 +324,10 @@ export function DocumentsSidebar() {
                                 >
                                   <div className="flex w-full items-center gap-2">
                                     <FileText className="text-muted-foreground h-4 w-4 shrink-0" />
-                                    <span className="truncate text-xs font-medium group-data-[collapsible=icon]:hidden">
+                                    <span
+                                      className="truncate text-xs font-medium group-data-[collapsible=icon]:hidden"
+                                      title={doc.title}
+                                    >
                                       {doc.title}
                                     </span>
                                   </div>
