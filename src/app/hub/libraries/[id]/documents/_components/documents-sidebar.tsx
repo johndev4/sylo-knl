@@ -41,6 +41,12 @@ import {
 import { Input } from '@/components/ui/input';
 import { useSidebarRefresh } from './sidebar-refresh-context';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 interface Document {
   id: string;
@@ -48,6 +54,31 @@ interface Document {
   tags: string[];
   created_at: string;
   updated_at: string;
+}
+
+function TruncatedTitle({ title }: { title: string }) {
+  const maxLength = 32; // Character limit for sidebar titles
+  const isTruncated = title.length > maxLength;
+  const displayTitle = isTruncated ? title.slice(0, maxLength) + '...' : title;
+
+  const content = (
+    <div className="text-foreground w-full overflow-hidden whitespace-nowrap">
+      {displayTitle}
+    </div>
+  );
+
+  if (!isTruncated) {
+    return content;
+  }
+
+  return (
+    <Tooltip delayDuration={300}>
+      <TooltipTrigger asChild>{content}</TooltipTrigger>
+      <TooltipContent side="top" className="max-w-[300px] break-words">
+        {title}
+      </TooltipContent>
+    </Tooltip>
+  );
 }
 
 export function DocumentsSidebar() {
@@ -139,7 +170,11 @@ export function DocumentsSidebar() {
   const newDocumentPath = `/hub/libraries/${libraryId}/documents/new`;
 
   return (
-    <Sidebar collapsible="icon" className="top-[4.1rem] h-[calc(100vh-4.1rem)]">
+    <Sidebar
+      collapsible="icon"
+      className="top-[4.1rem] h-[calc(100vh-4.1rem)]"
+      aria-label="Documents Sidebar"
+    >
       {/* Header */}
       <SidebarHeader>
         <SidebarMenu>
@@ -260,7 +295,7 @@ export function DocumentsSidebar() {
         </div>
 
         {/* Documents Group */}
-        <SidebarGroup className="group-data-[collapsible=icon]:hidden">
+        <SidebarGroup className="flex min-h-0 flex-1 flex-col group-data-[collapsible=icon]:hidden">
           <SidebarGroupLabel className="justify-between">
             <button
               className="hover:text-foreground flex items-center gap-1 text-xs font-semibold transition-colors"
@@ -275,87 +310,91 @@ export function DocumentsSidebar() {
             </button>
           </SidebarGroupLabel>
 
-          <SidebarGroupContent>
-            <AnimatePresence initial={false}>
-              {isDocsOpen && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                >
-                  <SidebarMenu>
-                    {isLoading && page === 1 ? (
-                      <div className="flex justify-center p-4">
-                        <Loader2 className="text-muted-foreground h-5 w-5 animate-spin" />
-                      </div>
-                    ) : filteredDocuments.length === 0 ? (
-                      <div className="text-muted-foreground px-4 py-3 text-center text-xs group-data-[collapsible=icon]:hidden">
-                        No documents found.
-                      </div>
-                    ) : (
-                      filteredDocuments.map((doc) => {
-                        const isActive =
-                          pathname ===
-                          `/hub/libraries/${libraryId}/documents/${doc.id}`;
-                        return (
-                          <SidebarMenuItem key={doc.id}>
-                            <SidebarMenuButton
-                              asChild
-                              isActive={isActive}
-                              tooltip={doc.title}
-                              size="lg"
-                              className="h-auto py-2"
-                            >
-                              <Link
-                                href={`/hub/libraries/${libraryId}/documents/${doc.id}`}
-                                className="flex flex-col items-start gap-0.5"
+          <SidebarGroupContent className="flex min-h-0 flex-1 flex-col">
+            <ScrollArea className="min-h-0 flex-1">
+              <AnimatePresence initial={false}>
+                {isDocsOpen && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                  >
+                    <SidebarMenu className="max-w-60 gap-1">
+                      {isLoading && page === 1 ? (
+                        <div className="flex justify-center p-4">
+                          <Loader2 className="text-muted-foreground h-5 w-5 animate-spin" />
+                        </div>
+                      ) : filteredDocuments.length === 0 ? (
+                        <div className="text-muted-foreground px-4 py-3 text-center text-xs group-data-[collapsible=icon]:hidden">
+                          No documents found.
+                        </div>
+                      ) : (
+                        filteredDocuments.map((doc) => {
+                          const isActive =
+                            pathname ===
+                            `/hub/libraries/${libraryId}/documents/${doc.id}`;
+                          return (
+                            <SidebarMenuItem key={doc.id}>
+                              <SidebarMenuButton
+                                asChild
+                                isActive={isActive}
+                                tooltip={doc.title}
+                                size="lg"
+                                className="h-auto py-2"
                               >
-                                <div className="flex w-full items-center gap-2">
-                                  <FileText className="text-muted-foreground h-4 w-4 shrink-0" />
-                                  <span className="truncate text-xs font-medium group-data-[collapsible=icon]:hidden">
-                                    {doc.title}
-                                  </span>
-                                </div>
-                                <div className="text-muted-foreground/60 flex items-center pl-6 text-[10px] group-data-[collapsible=icon]:hidden">
-                                  <Calendar className="mr-1 h-3 w-3" />
-                                  {new Date(doc.created_at)
-                                    .toLocaleDateString(undefined, {
-                                      month: 'short',
-                                      day: 'numeric',
-                                      year: 'numeric',
-                                    })
-                                    .toUpperCase()}
-                                </div>
-                              </Link>
-                            </SidebarMenuButton>
-                          </SidebarMenuItem>
-                        );
-                      })
-                    )}
+                                <Link
+                                  href={`/hub/libraries/${libraryId}/documents/${doc.id}`}
+                                  className="flex flex-col items-start gap-0.5"
+                                >
+                                  <div className="flex w-full items-center gap-2">
+                                    <FileText className="text-muted-foreground h-4 w-4 shrink-0" />
+                                    <span className="truncate text-xs font-medium group-data-[collapsible=icon]:hidden">
+                                      {doc.title}
+                                    </span>
+                                  </div>
+                                  <div className="text-muted-foreground/60 flex items-center pl-6 text-[10px] group-data-[collapsible=icon]:hidden">
+                                    <Calendar className="mr-1 h-3 w-3" />
+                                    {new Date(doc.created_at)
+                                      .toLocaleDateString(undefined, {
+                                        month: 'short',
+                                        day: 'numeric',
+                                        year: 'numeric',
+                                      })
+                                      .toUpperCase()}
+                                  </div>
+                                </Link>
+                              </SidebarMenuButton>
+                            </SidebarMenuItem>
+                          );
+                        })
+                      )}
 
-                    {totalDocs > documents.length && (
-                      <div className="p-2 group-data-[collapsible=icon]:hidden">
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            setPage((p) => p + 1);
-                            fetchDocuments(page + 1);
-                          }}
-                          disabled={isLoading}
-                          className="h-8 w-full text-[10px] font-bold tracking-widest uppercase"
-                        >
-                          {isLoading ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            `Load More (${totalDocs - documents.length} Left)`
-                          )}
-                        </Button>
-                      </div>
-                    )}
-                  </SidebarMenu>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                      {totalDocs > documents.length && (
+                        <div className="p-2 group-data-[collapsible=icon]:hidden">
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              const next = page + 1;
+                              setPage(next);
+                              fetchDocuments(next);
+                            }}
+                            disabled={isLoading}
+                            className="h-8 w-full text-[10px] font-bold tracking-widest uppercase"
+                          >
+                            {isLoading ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              `Load More (${totalDocs - documents.length} Left)`
+                            )}
+                          </Button>
+                        </div>
+                      )}
+                    </SidebarMenu>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              <ScrollBar orientation="vertical" />
+            </ScrollArea>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>

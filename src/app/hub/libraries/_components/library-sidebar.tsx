@@ -112,7 +112,11 @@ export function LibrarySidebar() {
   const isOwner = role === 'OWNER';
 
   return (
-    <Sidebar collapsible="icon" className="top-[4.1rem] h-[calc(100vh-4.1rem)]">
+    <Sidebar
+      collapsible="icon"
+      className="top-[4.1rem] h-[calc(100vh-4.1rem)]"
+      aria-label="Library Sidebar"
+    >
       {/* Header */}
       <SidebarHeader>
         <SidebarMenu>
@@ -149,9 +153,14 @@ export function LibrarySidebar() {
                       tooltip="Manage Documents"
                       className="font-semibold"
                     >
-                      <Link href={`/hub/libraries/${libraryId}/documents`} className="relative">
+                      <Link
+                        href={`/hub/libraries/${libraryId}/documents`}
+                        className="relative"
+                      >
                         <ChevronLeft className="absolute left-0" />
-                        <span className="flex-1 text-center">Manage Documents</span>
+                        <span className="flex-1 text-center">
+                          Manage Documents
+                        </span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
