@@ -136,12 +136,12 @@ export async function POST(req: NextRequest) {
 
     const { data: membership } = await supabase
       .from('library_members')
-      .select('library_id')
+      .select('library_id, role')
       .eq('library_id', libraryId)
       .eq('user_id', user.id)
       .single();
 
-    if (!membership) {
+    if (!membership || membership.role === 'VIEWER') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

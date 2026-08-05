@@ -69,22 +69,24 @@ test.describe.serial('Document Management', () => {
     testDocId = match![1];
   });
 
-  test('Show tag suggestions in new document flow after typing 3 characters', async ({ page }) => {
+  test('Show tag suggestions in new document flow after typing 3 characters', async ({
+    page,
+  }) => {
     await page.goto(`/hub/libraries/${libId}/documents/new`);
     await page.waitForLoadState('networkidle');
 
     const tagInput = page.getByPlaceholder('Add tag...');
     await tagInput.fill('imp');
 
-    await expect(
-      page.getByRole('button', { name: 'IMPORTANT' })
-    ).toBeVisible();
+    await expect(page.getByRole('button', { name: 'IMPORTANT' })).toBeVisible();
 
     await page.getByRole('button', { name: 'IMPORTANT' }).click();
     await expect(page.getByText('IMPORTANT')).toBeVisible();
   });
 
-  test('Show tag suggestions in edit document flow after typing 3 characters', async ({ page }) => {
+  test('Show tag suggestions in edit document flow after typing 3 characters', async ({
+    page,
+  }) => {
     // Seed a different tag from the same library so suggestion list can appear
     await page.goto(`/hub/libraries/${libId}/documents/new`);
     await page.waitForLoadState('networkidle');
@@ -130,7 +132,9 @@ test.describe.serial('Document Management', () => {
 
     // Verify document appears in sidebar list
     await expect(
-      page.locator('aside').getByText(testDocName.slice(0, 32))
+      page
+        .locator('div[aria-label="Documents Sidebar"]')
+        .getByText(testDocName.slice(0, 32))
     ).toBeVisible();
 
     // Search input in sidebar
@@ -206,20 +210,27 @@ test.describe.serial('Document Management', () => {
 
     // Sidebar should show the total count label "DOCUMENTS (1000)"
     await expect(
-      page.locator('aside').getByText('DOCUMENTS (1000)')
+      page
+        .locator('div[aria-label="Documents Sidebar"]')
+        .getByText('DOCUMENTS (1000)')
     ).toBeVisible({
       timeout: 10000,
     });
 
     // First mock document should appear immediately
     await expect(
-      page.locator('aside').getByText('Mock Document 1', { exact: true })
+      page
+        .locator('div[aria-label="Documents Sidebar"]')
+        .getByText('Mock Document 1', { exact: true })
     ).toBeVisible();
 
     // "Load More" button must be present showing 900 remaining
-    const loadMoreBtn = page.locator('aside button', {
-      hasText: /load more/i,
-    });
+    const loadMoreBtn = page.locator(
+      'div[aria-label="Documents Sidebar"] button',
+      {
+        hasText: /load more/i,
+      }
+    );
     await expect(loadMoreBtn).toBeVisible();
     await expect(loadMoreBtn).toContainText('900 Left');
 
@@ -227,14 +238,18 @@ test.describe.serial('Document Management', () => {
     await loadMoreBtn.click();
     await expect(loadMoreBtn).toContainText('800 Left');
     await expect(
-      page.locator('aside').getByText('Mock Document 101', { exact: true })
+      page
+        .locator('div[aria-label="Documents Sidebar"]')
+        .getByText('Mock Document 101', { exact: true })
     ).toBeVisible();
 
     // --- Load page 3: 100 more docs, 700 remaining ---
     await loadMoreBtn.click();
     await expect(loadMoreBtn).toContainText('700 Left');
     await expect(
-      page.locator('aside').getByText('Mock Document 201', { exact: true })
+      page
+        .locator('div[aria-label="Documents Sidebar"]')
+        .getByText('Mock Document 201', { exact: true })
     ).toBeVisible();
 
     // --- Exhaust all remaining pages (pages 4–10) ---
@@ -253,7 +268,9 @@ test.describe.serial('Document Management', () => {
 
     // All 1000 docs are now rendered in the sidebar list
     await expect(
-      page.locator('aside').getByText('Mock Document 1000', { exact: true })
+      page
+        .locator('div[aria-label="Documents Sidebar"]')
+        .getByText('Mock Document 1000', { exact: true })
     ).toBeVisible();
   });
 
@@ -320,7 +337,7 @@ test.describe.serial('Document Management', () => {
 
     // Click library name in sidebar
     await page
-      .locator('aside')
+      .locator('div[aria-label="Documents Sidebar"]')
       .getByText(/Test Library|Mock Library/)
       .first()
       .click();
@@ -334,7 +351,7 @@ test.describe.serial('Document Management', () => {
     });
 
     await page
-      .locator('aside')
+      .locator('div[aria-label="Documents Sidebar"]')
       .getByText(/Test Library|Mock Library/)
       .first()
       .click();
@@ -366,7 +383,9 @@ test.describe.serial('Document Management', () => {
     await expect(
       page.getByRole('heading', { name: 'Start a new document?' })
     ).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Keep Editing' })).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: 'Keep Editing' })
+    ).toBeVisible();
 
     await page.getByRole('button', { name: 'Keep Editing' }).click();
 
@@ -402,7 +421,9 @@ test.describe.serial('Document Management', () => {
     await expect(
       page.getByRole('heading', { name: 'Start a new document?' })
     ).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Discard & Start New' })).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: 'Discard & Start New' })
+    ).toBeVisible();
 
     await page.getByRole('button', { name: 'Discard & Start New' }).click();
 

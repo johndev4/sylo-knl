@@ -3,7 +3,7 @@
 ## 🎯 What Was Built
 
 A complete library member management system allowing OWNER and ADMIN users to:
-- ✅ Add team members by email
+- ✅ Invite team members by email
 - ✅ Assign roles (ADMIN, EDITOR, VIEWER)
 - ✅ Change member roles dynamically
 - ✅ Remove individual or multiple members
@@ -18,12 +18,12 @@ A complete library member management system allowing OWNER and ADMIN users to:
 
 ### API Endpoints
 - **GET** `/api/libraries/[id]/members` - List members
-- **POST** `/api/libraries/[id]/members` - Add member
+- **POST** `/api/libraries/[id]/members` - Invite member
 - **PATCH** `/api/libraries/[id]/members/[userId]` - Update role
 - **DELETE** `/api/libraries/[id]/members/[userId]` - Remove member
 
 ### Components
-- `add-member-form.tsx` - Form to add new members
+- `invite-member-form.tsx` - Form to invite new members
 - `member-table.tsx` - Table displaying members
 - `delete-library-form.tsx` - Delete library confirmation
 - `rename-library-form.tsx` - Rename library form
@@ -48,7 +48,7 @@ A complete library member management system allowing OWNER and ADMIN users to:
 
 ### 2. Test Member Operations
 ```bash
-# Add member
+# Invite member
 POST /api/libraries/[id]/members
 { "email": "user@example.com", "role": "EDITOR" }
 
@@ -62,10 +62,10 @@ DELETE /api/libraries/[id]/members/[userId]
 
 ### 3. Use in Code
 ```typescript
-import { addLibraryMember, fetchLibraryMembers } from '@/lib/actions/libraries';
+import { inviteLibraryMember, fetchLibraryMembers } from '@/lib/actions/libraries';
 
-// Add member
-await addLibraryMember(libraryId, 'email@example.com', 'EDITOR');
+// Invite member
+await inviteLibraryMember(libraryId, 'email@example.com', 'EDITOR');
 
 // Get all members
 const members = await fetchLibraryMembers(libraryId);
@@ -101,11 +101,11 @@ const members = await fetchLibraryMembers(libraryId);
 
 ## 🧪 Test Checklist
 
-- [ ] Add member with valid email
-- [ ] Add member gets correct role
+- [ ] Invite member with valid email
+- [ ] Invite member gets correct role
 - [ ] Update member role works
 - [ ] Remove member works
-- [ ] Cannot add duplicate members
+- [ ] Cannot invite duplicate members
 - [ ] Cannot exceed 11 members
 - [ ] Cannot remove only owner
 - [ ] EDITOR cannot see management UI

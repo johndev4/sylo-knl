@@ -18,7 +18,7 @@ Components that are **specific to a feature or route** live inside the `app` fol
 
 - `src/app/hub/_components/documents/document-manager.tsx` - Unified Create/Edit/View document component
 - `src/app/hub/_components/documents/documents-sidebar.tsx` - Only used in document management
-- `src/app/hub/_components/libraries/settings/add-member-form.tsx` - Only used in library settings
+- `src/app/hub/_components/libraries/settings/invite-member-form.tsx` - Only used in library settings
 - `src/app/(auth)/_components/login-hero.tsx` - Only used in auth flow
 
 **When to use:**
@@ -91,7 +91,7 @@ src/
 │   │   │   │   └── index.ts              # Barrel export
 │   │   │   └── libraries/
 │   │   │       ├── settings/
-│   │   │       │   ├── add-member-form.tsx
+│   │   │       │   ├── invite-member-form.tsx
 │   │   │       │   ├── member-table.tsx
 │   │   │       │   ├── delete-library-form.tsx
 │   │   │       │   ├── rename-library-form.tsx
@@ -110,7 +110,7 @@ src/
 │   │   │   └── page.tsx               ← fetches libraries, pre-selects from ?libraryId=
 │   │   ├── libraries/
 │   │   │   └── [id]/
-│   │   │       ├── chat/              ← redirects to /hub/chat?libraryId=[id]
+│   │   │       ├── chat/              ← redirects to /chat?libraryId=[id]
 │   │   │       ├── documents/
 │   │   │       └── settings/
 │   │   └── page.tsx
@@ -223,7 +223,7 @@ export * from "./ComponentA";
 
 - **PascalCase** for React components: `DocumentForm`, `MemberTable`
 - **camelCase** for React hooks: `useAuth`, `useSidebarRefresh`
-- **Descriptive Names**: `AddMemberForm` not `MemberForm`
+- **Descriptive Names**: `InviteMemberForm` not `MemberForm`
 
 ---
 
@@ -284,10 +284,10 @@ src / app / hub / _components / documents / PaginationControls.tsx;
 
 ```typescript
 // BAD
-import { AddMemberForm } from "../../../../_components/libraries/settings/AddMemberForm";
+import { InviteMemberForm } from "../../../../_components/libraries/settings/InviteMemberForm";
 
 // GOOD
-import { AddMemberForm } from "@/app/hub/_components/libraries/settings";
+import { InviteMemberForm } from "@/app/hub/_components/libraries/settings";
 ```
 
 ### ❌ Don't Put Business Logic in Shared Components

@@ -16,13 +16,16 @@ export default function LoginPage() {
   useEffect(() => {
     const authClient = createClient();
 
+    const searchParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
+    const redirectParam = searchParams.get('redirect') || '/hub';
+
     const checkSession = async () => {
       const {
         data: { session },
       } = await authClient.auth.getSession();
 
       if (session) {
-        router.push('/hub');
+        router.push(redirectParam);
       }
     };
 
@@ -30,7 +33,7 @@ export default function LoginPage() {
 
     const { data } = authClient.auth.onAuthStateChange((event, session) => {
       if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
-        router.push('/hub');
+        router.push(redirectParam);
       }
     });
 

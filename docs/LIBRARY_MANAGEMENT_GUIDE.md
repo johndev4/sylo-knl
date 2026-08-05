@@ -15,13 +15,13 @@ I have successfully implemented a **complete library member management system** 
 
 ### 2. **API Endpoints**
 - ✅ `GET /api/libraries/[id]/members` - List all members
-- ✅ `POST /api/libraries/[id]/members` - Add member by email
+- ✅ `POST /api/libraries/[id]/members` - Invite member by email
 - ✅ `PATCH /api/libraries/[id]/members/[userId]` - Update member role
 - ✅ `DELETE /api/libraries/[id]/members/[userId]` - Remove member
 
 ### 3. **Frontend Components**
 - ✅ Library settings page (`/hub/libraries/[id]/settings`)
-- ✅ Add member form with email and role selection
+- ✅ Invite member form with email and role selection
 - ✅ Member table with inline role editing
 - ✅ Bulk member selection and deletion
 - ✅ Permission-aware UI (hide management options for non-admins)
@@ -49,7 +49,7 @@ I have successfully implemented a **complete library member management system** 
    src/app/api/libraries/[id]/members/[userId]/route.ts
 
 ✅ Components
-   src/app/hub/_components/libraries/settings/add-member-form.tsx
+   src/app/hub/_components/libraries/settings/invite-member-form.tsx
    src/app/hub/_components/libraries/settings/member-table.tsx
    src/app/hub/_components/libraries/settings/delete-library-form.tsx
    src/app/hub/_components/libraries/settings/rename-library-form.tsx
@@ -74,20 +74,22 @@ I have successfully implemented a **complete library member management system** 
 ## 🔑 Key Features
 
 ### Role-Based Permissions
-| Role | View Members | Add Members | Change Roles | Remove Members |
+| Role | View Members | Invite Members | Change Roles | Remove Members |
 |------|:---:|:---:|:---:|:---:|
 | OWNER | ✅ | ✅ | ✅ | ✅ |
 | ADMIN | ✅ | ✅ | ✅ | ✅ |
 | EDITOR | ✅ | ❌ | ❌ | ❌ |
 | VIEWER | ✅ | ❌ | ❌ | ❌ |
 
+> The "add member" feature has been replaced by the "invite member" feature.
+
 ### Business Rules Enforced
 - ✅ Maximum 11 members per library
 - ✅ Only 1 owner per library
 - ✅ Cannot remove the only owner
 - ✅ Cannot promote someone to OWNER
-- ✅ Cannot add duplicate members
-- ✅ Cannot add non-existent email addresses
+- ✅ Cannot invite duplicate members
+- ✅ Cannot invite non-existent email addresses
 - ✅ Only OWNER and ADMIN can manage members
 
 ---
@@ -97,7 +99,7 @@ I have successfully implemented a **complete library member management system** 
 ### For Users
 1. Navigate to any library
 2. Click "Settings" in the library navigation
-3. Use the "Add Member" form to invite teammates
+3. Use the "Invite Member" form to invite teammates
 4. Adjust roles using the dropdown in the member table
 5. Remove members individually or in bulk
 
@@ -115,13 +117,13 @@ I have successfully implemented a **complete library member management system** 
 ```typescript
 import { 
   fetchLibraryMembers,
-  addLibraryMember,
+  inviteLibraryMember,
   updateLibraryMemberRole,
   removeLibraryMember,
 } from '@/lib/actions/libraries';
 
-// Example: Add a member
-const member = await addLibraryMember(
+// Example: Invite a member
+const member = await inviteLibraryMember(
   libraryId, 
   'user@example.com', 
   'EDITOR'
@@ -148,12 +150,12 @@ await removeLibraryMember(libraryId, userId);
 
 ### Test Scenarios
 
-#### ✅ Test 1: Add a Member
+#### ✅ Test 1: Invite a Member
 1. Login as library OWNER
 2. Navigate to `/hub/libraries/[library-id]/settings`
 3. Enter a team member's email
 4. Select "EDITOR" role
-5. Click "Add Member"
+5. Click "Invite Member"
 6. Verify member appears in the table
 
 #### ✅ Test 2: Update Member Role
@@ -177,14 +179,14 @@ await removeLibraryMember(libraryId, userId);
 1. Login as EDITOR or VIEWER
 2. Navigate to settings page
 3. Verify:
-   - "Add Member" form is hidden
+   - "Invite Member" form is hidden
    - Cannot edit roles
    - Cannot see remove buttons
 
 #### ✅ Test 6: Business Rules
-- Try adding at 11/11 members → Should fail
-- Try adding same email twice → Should fail  
-- Try adding non-existent email → Should fail
+- Try inviting at 11/11 members → Should fail
+- Try inviting same email twice → Should fail  
+- Try inviting non-existent email → Should fail
 - Try removing the only OWNER → Should fail
 - Try promoting to OWNER → Should fail
 
@@ -253,7 +255,7 @@ await removeLibraryMember(libraryId, userId);
 ### Issue: Getting 403 Forbidden
 **Solution**: Ensure you're logged in as OWNER or ADMIN of the library
 
-### Issue: Getting 404 when adding member
+### Issue: Getting 404 when inviting member
 **Solution**: Verify the email exists in the system (user must have signed up)
 
 ### Issue: Cannot edit roles
@@ -282,7 +284,7 @@ await removeLibraryMember(libraryId, userId);
 5. **Audit Logging**: Consider adding audit logs for member changes
 
 6. **Notifications**: Consider sending email notifications when:
-   - User is added to library
+   - User is invited to library
    - User's role changes
    - User is removed from library
 
@@ -314,7 +316,7 @@ All code follows the patterns documented in your project's `AGENTS.md` file:
 As of May 2026, Sylo features a **Unified Chat Interface** that allows searching across multiple libraries at once.
 
 ### Key Features
-- **Centralized Hub**: Accessible at `/hub/chat`.
+- **Centralized Hub**: Accessible at `/chat`.
 - **Multi-Select**: Choose one, multiple, or all libraries via the interactive dropdown.
 - **Library Attribution**: AI responses identify which library the knowledge came from.
 - **Contextual Pre-selection**: Navigation from specific libraries pre-selects that library using URL parameters (`?libraryId=...`).

@@ -1,3 +1,4 @@
+import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 
 // RBAC roles
@@ -29,7 +30,7 @@ export async function requireLibraryRole(
   }
 
   if (!user) {
-    return null;
+    redirect('/login');
   }
 
   const { data: membership } = await supabase

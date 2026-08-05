@@ -11,7 +11,7 @@
 │  │         (/hub/libraries/[id]/settings/page.tsx)                   │  │
 │  │                                                              │  │
 │  │  ┌─────────────────┐  ┌──────────────────────────────────┐ │  │
-│  │  │ AddMemberForm   │  │    MemberTable                   │ │  │
+│  │  │ InviteMemberForm │  │    MemberTable                   │ │  │
 │  │  │                 │  │  - List all members              │ │  │
 │  │  │ • Email input   │  │  - Edit roles (inline)           │ │  │
 │  │  │ • Role select   │  │  - Bulk select & delete          │ │  │
@@ -25,7 +25,7 @@
 │              (src/lib/actions/libraries.ts)                         │
 │                                                                       │
 │  • fetchLibraryMembers(libraryId)                               │
-│  • addLibraryMember(libraryId, email, role)                     │
+│  • inviteLibraryMember(libraryId, email, role)                  │
 │  • updateLibraryMemberRole(libraryId, userId, role)             │
 │  • removeLibraryMember(libraryId, userId)                       │
 │  • removeMultipleLibraryMembers(libraryId, userIds[])           │
@@ -40,7 +40,7 @@
 │         ├─ Permission check (member of library)                   │
 │         └─ Return: Array of member objects                          │
 │                                                                       │
-│  POST   /api/libraries/[id]/members                                │
+│  POST   /api/libraries/[id]/members/invite                         │
 │         ├─ Auth check                                               │
 │         ├─ Permission check (OWNER or ADMIN)                        │
 │         ├─ Validate input (Zod schema)                              │
@@ -85,14 +85,14 @@
 
 ## Request Flow Examples
 
-### Adding a New Member
+### Inviting a New Member
 
 ```
 1. User fills form: email="user@example.com", role="EDITOR"
    ↓
-2. AddMemberForm validates email format (Zod)
+2. InviteMemberForm validates email format (Zod)
    ↓
-3. Form calls: addLibraryMember(libraryId, email, role)
+3. Form calls: inviteLibraryMember(libraryId, email, role)
    ↓
 4. POST /api/libraries/[id]/members
    {
@@ -184,9 +184,11 @@ interface LibraryMember {
 }
 ```
 
-### Add Member Input (Zod)
+### Invite Member Input (Zod)
 ```typescript
-interface AddLibraryMemberInput {
+// Note: The "add member" feature has been replaced by "invite member".
+// The schema previously named AddLibraryMemberInput is now InviteLibraryMemberInput in src/.
+interface InviteLibraryMemberInput {
   email: string;  // Must be valid email and user must exist
   role: 'ADMIN' | 'EDITOR' | 'VIEWER';  // Cannot be OWNER
 }
@@ -206,7 +208,7 @@ interface UpdateLibraryMemberRoleInput {
 ### Who Can Perform What Actions
 
 ```
-                ADD    UPDATE   REMOVE
+                INVITE UPDATE   REMOVE
 OWNER           ✅     ✅       ✅ (except self if only owner)
 ADMIN           ✅     ✅       ✅ (except owner)
 EDITOR          ❌     ❌       ❌
@@ -305,7 +307,7 @@ FROM VIEWER:
 LibrarySettingsPage (page.tsx)
 ├── Header with Back button
 ├── Error/Success messages
-├── AddMemberForm
+├── InviteMemberForm
 │   ├── Email input
 │   ├── Role dropdown
 │   └── Submit button
@@ -346,10 +348,10 @@ LibrarySettingsPage (page.tsx)
 ## Testing Coverage Checklist
 
 ```
-✅ Add member with valid email
-✅ Add member with invalid email
-✅ Add duplicate member (already exists)
-✅ Add to full library (11/11)
+✅ Invite member with valid email
+✅ Invite member with invalid email
+✅ Invite duplicate member (already exists)
+✅ Invite to full library (11/11)
 ✅ Update member role
 ✅ Prevent demoting only owner
 ✅ Prevent promoting to owner

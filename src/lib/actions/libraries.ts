@@ -374,29 +374,30 @@ export async function leaveLibrary(libraryId: string) {
 
   if (!user) throw new Error('Unauthorized');
 
-  // Verify user is not the owner
-  const { data: membership } = await supabase
+  const { data: membership, error: membershipError } = await supabase
     .from('library_members')
     .select('role')
     .eq('library_id', libraryId)
     .eq('user_id', user.id)
     .single();
 
-  if (!membership) throw new Error('Not a member of this library');
+  if (membershipError || !membership) {
+    throw new Error('Not a member of this library');
+  }
+
   if (membership.role === 'OWNER') {
     throw new Error(
       'Library owner cannot leave. Delete or transfer ownership first.'
     );
   }
 
-  // Remove user from library
-  const { error } = await supabase
-    .from('library_members')
-    .delete()
-    .eq('library_id', libraryId)
-    .eq('user_id', user.id);
+  const { error } = await supabase.rpc('leave_library', {
+    p_library_id: libraryId,
+  });
 
-  if (error) throw new Error(error.message || 'Failed to leave library');
+  if (error) {
+    throw new Error(error.message || 'Failed to leave library');
+  }
 
   revalidatePath('/hub');
   return { success: true };
@@ -476,4 +477,71 @@ export async function getUserLibraries() {
     name: m.library.name as string,
     role: m.role as string,
   }));
+}
+
+// Invite Management Functions
+
+export async function createLibraryInvite(
+  libraryId: string,
+  role: 'VIEWER' | 'EDITOR',
+  expiresAt?: string | null,
+  maxUses?: number | null
+) {
+  const url = `${process.env.NEXT_PUBLIC_APP_URL || 'http://127.0.0.1:3000'}/api/libraries/${libraryId}/invites`;
+  const cookiesList = await cookies();
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Cookie: cookiesList.toString(),
+    },
+    body: JSON.stringify({ role, expiresAt, maxUses }),
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to create invite');
+  }
+
+  const result = await res.json();
+  revalidatePath(`/hub/libraries/${libraryId}/settings`);
+  return result.data;
+}
+
+export async function fetchLibraryInvites(libraryId: string) {
+  const url = `${process.env.NEXT_PUBLIC_APP_URL || 'http://127.0.0.1:3000'}/api/libraries/${libraryId}/invites`;
+  const cookiesList = await cookies();
+  const res = await fetch(url, {
+    headers: {
+      Cookie: cookiesList.toString(),
+    },
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to fetch invites');
+  }
+
+  const result = await res.json();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (result.data || []) as any[];
+}
+
+export async function revokeLibraryInvite(libraryId: string, inviteId: string) {
+  const url = `${process.env.NEXT_PUBLIC_APP_URL || 'http://127.0.0.1:3000'}/api/libraries/${libraryId}/invites/${inviteId}`;
+  const cookiesList = await cookies();
+  const res = await fetch(url, {
+    method: 'DELETE',
+    headers: {
+      Cookie: cookiesList.toString(),
+    },
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to revoke invite');
+  }
+
+  revalidatePath(`/hub/libraries/${libraryId}/settings`);
+  return { success: true };
 }
