@@ -225,6 +225,13 @@ export function DocumentManager({
     }
   }, [libraryId, isNew, initialUserRole]);
 
+  // Ensure VIEWER members cannot enter edit mode
+  useEffect(() => {
+    if (userRole === 'VIEWER' && !isNew) {
+      (async () => setIsEditMode(false))();
+    }
+  }, [userRole, isNew]);
+
   // Re-enable the navigation guard when switching document contexts
   useEffect(() => {
     (async () => setIgnoreNavigationGuard(false))();
@@ -511,14 +518,14 @@ export function DocumentManager({
             placeholder="Untitled Document"
             aria-label="Document Title"
             title={title} // Hover to show full title
-            disabled={!isEditMode}
+            disabled={!isEditMode || userRole === 'VIEWER'}
             className="text-foreground placeholder:text-muted-foreground/30 w-full truncate border-none bg-transparent text-3xl font-bold focus:outline-none disabled:bg-transparent disabled:opacity-100"
           />
         </div>
 
         <div className="flex items-center gap-2">
           {/* Edit Mode button — shown in view mode only */}
-          {!isNew && !isEditMode && (
+          {!isNew && !isEditMode && userRole !== 'VIEWER' && (
             <Button
               type="button"
               variant="outline"
@@ -544,7 +551,7 @@ export function DocumentManager({
           )}
 
           {/* Save button */}
-          {isEditMode && (
+          {isEditMode && userRole !== 'VIEWER' && (
             <Button
               type="button"
               size="sm"
@@ -747,7 +754,7 @@ export function DocumentManager({
               key={editorResetKey}
               initialContent={content}
               onChange={handleEditorChange}
-              editable={isEditMode}
+              editable={isEditMode && userRole !== 'VIEWER'}
             />
           </div>
         </div>

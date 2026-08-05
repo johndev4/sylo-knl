@@ -95,6 +95,7 @@ export function DocumentsSidebar() {
 
   const [isDocsOpen, setIsDocsOpen] = useState(true);
   const [library, setLibrary] = useState<{ name: string } | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const { refreshKey } = useSidebarRefresh();
 
   const fetchLibrary = useCallback(async () => {
@@ -104,6 +105,7 @@ export function DocumentsSidebar() {
       if (res.ok) {
         const data = await res.json();
         setLibrary(data.library);
+        setUserRole(data.role || 'VIEWER');
       }
     } catch (error) {
       console.error('Failed to fetch library:', error);
@@ -195,41 +197,43 @@ export function DocumentsSidebar() {
               </div>
 
               {/* Create New Document Button */}
-              <div className="group-data-[collapsible=icon]:hidden">
-                {isAtLimit ? (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-muted-foreground/50 h-7 w-7 cursor-not-allowed"
-                    title="Maximum limit of 500 documents reached."
-                    disabled
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                ) : (
-                  <Button
-                    asChild
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7"
-                    title="New Document"
-                  >
-                    <Link
-                      href={newDocumentPath}
-                      onClick={(e) => {
-                        if (pathname === newDocumentPath) {
-                          e.preventDefault();
-                          window.dispatchEvent(
-                            new CustomEvent('sylo:new-document:reset-request')
-                          );
-                        }
-                      }}
+              {userRole !== 'VIEWER' && (
+                <div className="group-data-[collapsible=icon]:hidden">
+                  {isAtLimit ? (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-muted-foreground/50 h-7 w-7 cursor-not-allowed"
+                      title="Maximum limit of 500 documents reached."
+                      disabled
                     >
                       <Plus className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                )}
-              </div>
+                    </Button>
+                  ) : (
+                    <Button
+                      asChild
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      title="New Document"
+                    >
+                      <Link
+                        href={newDocumentPath}
+                        onClick={(e) => {
+                          if (pathname === newDocumentPath) {
+                            e.preventDefault();
+                            window.dispatchEvent(
+                              new CustomEvent('sylo:new-document:reset-request')
+                            );
+                          }
+                        }}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Link>
+                    </Button>
+                  )}
+                </div>
+              )}
             </div>
           </SidebarMenuItem>
         </SidebarMenu>
@@ -267,32 +271,34 @@ export function DocumentsSidebar() {
         </div>
 
         {/* New Document Button in collapsed mode */}
-        <div className="hidden p-2 group-data-[collapsible=icon]:block">
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                asChild
-                tooltip="New Document"
-                disabled={isAtLimit}
-              >
-                <Link
-                  href={newDocumentPath}
-                  onClick={(e) => {
-                    if (pathname === newDocumentPath) {
-                      e.preventDefault();
-                      window.dispatchEvent(
-                        new CustomEvent('sylo:new-document:reset-request')
-                      );
-                    }
-                  }}
+        {userRole !== 'VIEWER' && (
+          <div className="hidden p-2 group-data-[collapsible=icon]:block">
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  tooltip="New Document"
+                  disabled={isAtLimit}
                 >
-                  <Plus />
-                  <span>New Document</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </div>
+                  <Link
+                    href={newDocumentPath}
+                    onClick={(e) => {
+                      if (pathname === newDocumentPath) {
+                        e.preventDefault();
+                        window.dispatchEvent(
+                          new CustomEvent('sylo:new-document:reset-request')
+                        );
+                      }
+                    }}
+                  >
+                    <Plus />
+                    <span>New Document</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </div>
+        )}
 
         {/* Documents Group */}
         <SidebarGroup className="flex min-h-0 flex-1 flex-col group-data-[collapsible=icon]:hidden">
