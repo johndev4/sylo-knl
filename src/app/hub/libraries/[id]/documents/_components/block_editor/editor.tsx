@@ -80,6 +80,10 @@ const Editor: React.FC<EditorProps> = ({
     );
   }
 
+  // ---------------------------------------------------------------------------
+  // Render
+  // ---------------------------------------------------------------------------
+
   return (
     <div className="-mx-[54px] flex h-full flex-col">
       <BlockNoteView
@@ -89,6 +93,7 @@ const Editor: React.FC<EditorProps> = ({
         onChange={handleEditorChange}
         slashMenu={false}
         className="flex-1 overflow-y-auto"
+        portalElements={{ default: document.body }}
       >
         <SuggestionMenuController
           triggerCharacter={'/'}
