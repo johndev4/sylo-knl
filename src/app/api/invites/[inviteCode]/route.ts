@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-// We need a service role client to fetch invite details because RLS 
+const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!url || !serviceKey) {
+  throw new Error('Missing Supabase environment variables');
+}
+
+// We need a service role client to fetch invite details because RLS
 // blocks anonymous users from viewing invites.
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+const supabaseAdmin = createClient(url, serviceKey);
 
 export async function GET(
   request: NextRequest,
