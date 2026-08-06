@@ -6,6 +6,8 @@ import { Card } from '@/components/ui/card';
 import {
   fetchLibraryMembers,
   updateLibraryMemberRole,
+  removeLibraryMember,
+  removeMultipleLibraryMembers,
 } from '@/lib/actions/libraries';
 import { useAuth } from '@/lib/hooks/use-auth';
 import {
@@ -34,20 +36,12 @@ export default function LibrarySettingsPage({
   const [libraryId, setLibraryId] = useState<string>('');
   const [members, setMembers] = useState<LibraryMember[]>([]);
   const [currentUserRole, setCurrentUserRole] = useState<string>('');
-  const [libraryName, setLibraryName] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string>('');
   const [selectedMembers, setSelectedMembers] = useState<Set<string>>(
     new Set()
   );
 
-  // removePending describes the pending remove action:
-  //   { type: 'single'; userId: string; name: string } | { type: 'bulk'; count: number } | null
-  const [removePending, setRemovePending] = useState<
-    | { type: 'single'; userId: string; name: string }
-    | { type: 'bulk'; count: number }
-    | null
-  >(null);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -74,20 +68,6 @@ export default function LibrarySettingsPage({
         );
         setCurrentUserRole(currentMember?.role || '');
 
-        // Extract library name from the first member if available
-        // In a real scenario, you'd want to fetch the library directly
-        // For now, we'll fetch it from Supabase client
-        const { createClient } = await import('@/lib/supabase/client');
-        const supabase = createClient();
-        const { data: libraryData } = await supabase
-          .from('libraries')
-          .select('name')
-          .eq('id', libraryId)
-          .single();
-
-        if (libraryData?.name) {
-          setLibraryName(libraryData.name);
-        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load members');
       } finally {
@@ -112,16 +92,30 @@ export default function LibrarySettingsPage({
     }
   };
 
-  const handleRemoveMember = (userId: string) => {
-    const member = members.find((m) => m.user_id === userId);
-    const displayName =
-      member?.user?.name || member?.user?.email || 'this member';
-    setRemovePending({ type: 'single', userId, name: displayName });
+  const handleRemoveMember = async (userId: string) => {
+    try {
+      await removeLibraryMember(libraryId, userId);
+      setMembers((prev) => prev.filter((m) => m.user_id !== userId));
+      setSelectedMembers((prev) => {
+        const next = new Set(prev);
+        next.delete(userId);
+        return next;
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to remove member');
+    }
   };
 
-  const handleRemoveMultiple = () => {
+  const handleRemoveMultiple = async () => {
     if (selectedMembers.size === 0) return;
-    setRemovePending({ type: 'bulk', count: selectedMembers.size });
+    const ids = Array.from(selectedMembers);
+    try {
+      await removeMultipleLibraryMembers(libraryId, ids);
+      setMembers((prev) => prev.filter((m) => !ids.includes(m.user_id)));
+      setSelectedMembers(new Set());
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to remove members');
+    }
   };
 
   const canManageMembers = ['OWNER', 'ADMIN'].includes(currentUserRole);
