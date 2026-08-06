@@ -29,7 +29,9 @@ export default function JoinPage({
     const fetchInvite = async () => {
       try {
         setIsLoading(true);
-        const res = await fetch(`/api/invites/${inviteCode}`);
+        const res = await fetch(`/api/invites/${inviteCode}`, {
+          method: 'GET',
+        });
         const result = await res.json();
         
         if (!res.ok) {

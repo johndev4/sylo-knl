@@ -75,9 +75,9 @@ jobs:
           fi
       # Build project into .vercel/output using Vercel's build pipeline
       - name: Build project
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+        # env:
+        #   NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+        #   NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
         run: |
           if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
             npx vercel@latest build --prod --token="$VERCEL_TOKEN"
