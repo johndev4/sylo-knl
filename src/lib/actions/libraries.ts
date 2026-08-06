@@ -1,8 +1,13 @@
 'use server';
 
+import crypto from 'crypto';
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
+
+function generateInviteCode() {
+  return crypto.randomBytes(6).toString('base64url').substring(0, 8);
+}
 
 export async function createLibrary(name: string) {
   const supabase = await createClient();
@@ -487,59 +492,119 @@ export async function createLibraryInvite(
   expiresAt?: string | null,
   maxUses?: number | null
 ) {
-  const url = `${process.env.NEXT_PUBLIC_APP_URL || 'http://127.0.0.1:3000'}/api/libraries/${libraryId}/invites`;
-  const cookiesList = await cookies();
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Cookie: cookiesList.toString(),
-    },
-    body: JSON.stringify({ role, expiresAt, maxUses }),
-  });
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  if (!res.ok) {
-    const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.error || 'Failed to create invite');
+  if (!user) throw new Error('Unauthorized');
+
+  const { data: membership } = await supabase
+    .from('library_members')
+    .select('role')
+    .eq('library_id', libraryId)
+    .eq('user_id', user.id)
+    .single();
+
+  if (!membership || !['OWNER', 'ADMIN'].includes(membership.role)) {
+    throw new Error('Only owners and admins can create invites');
   }
 
-  const result = await res.json();
+  const inviteCode = generateInviteCode();
+
+  const { data: invite, error } = await supabase
+    .from('library_invites')
+    .insert({
+      library_id: libraryId,
+      invite_code: inviteCode,
+      role,
+      created_by: user.id,
+      expires_at: expiresAt || null,
+      max_uses: maxUses || null,
+    })
+    .select()
+    .single();
+
+  if (error || !invite) {
+    console.error('Failed to create invite:', error);
+    throw new Error('Failed to create invite');
+  }
+
   revalidatePath(`/hub/libraries/${libraryId}/settings`);
-  return result.data;
+  return invite;
 }
 
 export async function fetchLibraryInvites(libraryId: string) {
-  const url = `${process.env.NEXT_PUBLIC_APP_URL || 'http://127.0.0.1:3000'}/api/libraries/${libraryId}/invites`;
-  const cookiesList = await cookies();
-  const res = await fetch(url, {
-    headers: {
-      Cookie: cookiesList.toString(),
-    },
-  });
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  if (!res.ok) {
-    const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.error || 'Failed to fetch invites');
+  if (!user) throw new Error('Unauthorized');
+
+  const { data: membership } = await supabase
+    .from('library_members')
+    .select('role')
+    .eq('library_id', libraryId)
+    .eq('user_id', user.id)
+    .single();
+
+  if (!membership || !['OWNER', 'ADMIN'].includes(membership.role)) {
+    throw new Error('Only owners and admins can view invites');
   }
 
-  const result = await res.json();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (result.data || []) as any[];
+  const { data: invites, error } = await supabase
+    .from('library_invites')
+    .select(`
+      *,
+      created_by_user:users!library_invites_created_by_fkey(id, name, email, avatar_url)
+    `)
+    .eq('library_id', libraryId)
+    .eq('is_active', true)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Failed to fetch invites:', error);
+    throw new Error('Failed to fetch invites');
+  }
+
+  return (invites || []) as unknown[];
 }
 
 export async function revokeLibraryInvite(libraryId: string, inviteId: string) {
-  const url = `${process.env.NEXT_PUBLIC_APP_URL || 'http://127.0.0.1:3000'}/api/libraries/${libraryId}/invites/${inviteId}`;
-  const cookiesList = await cookies();
-  const res = await fetch(url, {
-    method: 'DELETE',
-    headers: {
-      Cookie: cookiesList.toString(),
-    },
-  });
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  if (!res.ok) {
-    const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.error || 'Failed to revoke invite');
+  if (!user) throw new Error('Unauthorized');
+
+  const { data: membership } = await supabase
+    .from('library_members')
+    .select('role')
+    .eq('library_id', libraryId)
+    .eq('user_id', user.id)
+    .single();
+
+  if (!membership || !['OWNER', 'ADMIN'].includes(membership.role)) {
+    throw new Error('Only owners and admins can revoke invites');
+  }
+
+  const { data: updatedInvite, error } = await supabase
+    .from('library_invites')
+    .update({ is_active: false, updated_at: new Date().toISOString() })
+    .eq('id', inviteId)
+    .eq('library_id', libraryId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Failed to revoke invite:', error);
+    throw new Error('Failed to revoke invite');
+  }
+
+  if (!updatedInvite) {
+    throw new Error('Invite not found');
   }
 
   revalidatePath(`/hub/libraries/${libraryId}/settings`);
