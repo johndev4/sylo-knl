@@ -127,36 +127,36 @@ export default function LibrarySettingsPage({
   const canManageMembers = ['OWNER', 'ADMIN'].includes(currentUserRole);
 
   return (
-    <>
+    <div className="container mx-auto max-w-4xl space-y-8 p-6">
+      {/* Header */}
+      <div className="mb-8 flex flex-col gap-3">
+        <div className="flex items-center justify-between gap-3">
+          <div className="space-y-2">
+            <h1 className="text-3xl font-bold tracking-tight">
+              Library Members
+            </h1>
+            <p className="text-muted-foreground">Manage library members</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Error Message */}
+      {error && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
+          <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
+          <button
+            onClick={() => setError('')}
+            className="mt-2 text-xs text-red-600 underline dark:text-red-500"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
       {isLoading ? (
         <div className="py-8 text-center">Loading...</div>
       ) : (
-        <div className="container mx-auto max-w-4xl space-y-8 p-6">
-          {/* Header */}
-          <div className="mb-8 flex flex-col gap-3">
-            <div className="flex items-center justify-between gap-3">
-              <div className="space-y-2">
-                <h1 className="text-3xl font-bold tracking-tight">
-                  Library Members
-                </h1>
-                <p className="text-muted-foreground">Manage library members</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Error Message */}
-          {error && (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
-              <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
-              <button
-                onClick={() => setError('')}
-                className="mt-2 text-xs text-red-600 underline dark:text-red-500"
-              >
-                Dismiss
-              </button>
-            </div>
-          )}
-
+        <>
           {/* Invite Links Section */}
           {canManageMembers && <InviteSection libraryId={libraryId} />}
 
@@ -208,8 +208,8 @@ export default function LibrarySettingsPage({
               />
             )}
           </Card>
-        </div>
+        </>
       )}
-    </>
+    </div>
   );
 }

@@ -96,17 +96,6 @@ export default function LibraryInfoPage({
               View details about this library
             </p>
           </div>
-
-          {/* <Link href={`/hub/libraries/${libraryId}/documents`}>
-            <Button
-              variant="outline"
-              size="lg"
-              className="shadow-soft-md gap-2 rounded-full"
-            >
-              <FolderKanban className="h-5 w-5" />
-              Manage Documents
-            </Button>
-          </Link> */}
         </div>
       </div>
 

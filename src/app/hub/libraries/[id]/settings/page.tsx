@@ -143,37 +143,36 @@ export default function LibrarySettingsPage({
   const canManageMembers = ['OWNER', 'ADMIN'].includes(currentUserRole);
 
   return (
-    <>
+    <div className="container mx-auto max-w-4xl space-y-8 p-6">
+      {/* Header */}
+      <div className="mb-8 flex flex-col gap-3">
+        <div className="flex items-center justify-between gap-3">
+          <div className="space-y-2">
+            <h1 className="text-3xl font-bold tracking-tight">
+              Library Settings
+            </h1>
+            <p className="text-muted-foreground">Manage library settings</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Error Message */}
+      {error && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
+          <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
+          <button
+            onClick={() => setError('')}
+            className="mt-2 text-xs text-red-600 underline dark:text-red-500"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
       {isLoading ? (
         <div className="py-8 text-center">Loading...</div>
       ) : (
-        <div className="container mx-auto max-w-4xl space-y-8 p-6">
-          {/* Header */}
-          <div className="mb-8 flex flex-col gap-3">
-            <div className="flex items-center justify-between gap-3">
-              <div className="space-y-2">
-                <h1 className="text-3xl font-bold tracking-tight">
-                  Library Settings
-                </h1>
-                <p className="text-muted-foreground">Manage library settings</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Error Message */}
-          {error && (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
-              <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
-              <button
-                onClick={() => setError('')}
-                className="mt-2 text-xs text-red-600 underline dark:text-red-500"
-              >
-                Dismiss
-              </button>
-            </div>
-          )}
-
-          {/* Library Renaming Section */}
+        <>
           {canManageMembers && (
             <RenameLibraryForm
               libraryId={libraryId}
@@ -181,71 +180,68 @@ export default function LibrarySettingsPage({
             />
           )}
 
-          {/* Delete Library Section - Owner Only */}
           {currentUserRole === 'OWNER' && (
             <DeleteLibraryForm
               libraryId={libraryId}
               libraryName={libraryName || 'this library'}
             />
           )}
-
-          {/* Remove Member Confirmation Dialog */}
-          <AlertDialog
-            open={!!removePending}
-            onOpenChange={(open) => {
-              if (!open && !isRemoving) {
-                setRemovePending(null);
-              }
-            }}
-          >
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>
-                  {removePending?.type === 'bulk'
-                    ? `Remove ${removePending.count} member(s)?`
-                    : 'Remove Member?'}
-                </AlertDialogTitle>
-                <AlertDialogDescription>
-                  {removePending?.type === 'bulk' ? (
-                    <>
-                      You are about to remove{' '}
-                      <span className="text-foreground font-semibold">
-                        {removePending.count} member(s)
-                      </span>{' '}
-                      from this library. They will immediately lose access. This
-                      action cannot be undone.
-                    </>
-                  ) : (
-                    <>
-                      You are about to remove{' '}
-                      <span className="text-foreground font-semibold">
-                        {removePending?.name}
-                      </span>{' '}
-                      from this library. They will immediately lose access. This
-                      action cannot be undone.
-                    </>
-                  )}
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel disabled={isRemoving}>
-                  Cancel
-                </AlertDialogCancel>
-                <AlertDialogAction
-                  variant="destructive"
-                  disabled={isRemoving}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    confirmRemove();
-                  }}
-                >
-                  {isRemoving ? 'Removing...' : 'Remove'}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
+        </>
       )}
-    </>
+
+      {/* Remove Member Confirmation Dialog */}
+      <AlertDialog
+        open={!!removePending}
+        onOpenChange={(open) => {
+          if (!open && !isRemoving) {
+            setRemovePending(null);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {removePending?.type === 'bulk'
+                ? `Remove ${removePending.count} member(s)?`
+                : 'Remove Member?'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {removePending?.type === 'bulk' ? (
+                <>
+                  You are about to remove{' '}
+                  <span className="text-foreground font-semibold">
+                    {removePending.count} member(s)
+                  </span>{' '}
+                  from this library. They will immediately lose access. This
+                  action cannot be undone.
+                </>
+              ) : (
+                <>
+                  You are about to remove{' '}
+                  <span className="text-foreground font-semibold">
+                    {removePending?.name}
+                  </span>{' '}
+                  from this library. They will immediately lose access. This
+                  action cannot be undone.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isRemoving}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              disabled={isRemoving}
+              onClick={(e) => {
+                e.preventDefault();
+                confirmRemove();
+              }}
+            >
+              {isRemoving ? 'Removing...' : 'Remove'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
   );
 }
