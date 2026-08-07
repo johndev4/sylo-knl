@@ -62,7 +62,7 @@ Create a `.env` file in the **workspace root** (not in the scripts folder):
 # Project root: .env
 # Required
 SUPABASE_URL=https://your-project-id.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+SUPABASE_SECRET_KEY=your-service-role-key
 
 # Optional (defaults to 'google')
 LLM_PROVIDER=google
@@ -93,7 +93,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 print('SUPABASE_URL:', 'OK' if os.getenv('SUPABASE_URL') else 'MISSING')
-print('SUPABASE_SERVICE_ROLE_KEY:', 'OK' if os.getenv('SUPABASE_SERVICE_ROLE_KEY') else 'MISSING')
+print('SUPABASE_SECRET_KEY:', 'OK' if os.getenv('SUPABASE_SECRET_KEY') else 'MISSING')
 print('LLM_PROVIDER:', os.getenv('LLM_PROVIDER', 'google (default)'))
 print('GOOGLE_API_KEY:', 'OK' if os.getenv('GOOGLE_API_KEY') else 'MISSING (required if LLM_PROVIDER=google)')
 print('OLLAMA_BASE_URL:', os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434 (default)'))
@@ -266,7 +266,7 @@ Expected: `vector_dim` matches the new model's dimension (e.g., 1536 for Google,
 
 ## Troubleshooting
 
-### Issue: "SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables are required"
+### Issue: "SUPABASE_URL and SUPABASE_SECRET_KEY environment variables are required"
 
 **Solution:** Create a `.env` file in the **project root** (not in the scripts folder):
 
@@ -274,7 +274,7 @@ Expected: `vector_dim` matches the new model's dimension (e.g., 1536 for Google,
 # Create in workspace root:
 cat > .env <<EOF
 SUPABASE_URL=https://your-project-id.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+SUPABASE_SECRET_KEY=your-service-role-key
 LLM_PROVIDER=google
 GOOGLE_API_KEY=your-google-api-key
 EOF

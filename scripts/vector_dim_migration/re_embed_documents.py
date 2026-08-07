@@ -36,9 +36,9 @@ class Config:
             or os.getenv("NEXT_PUBLIC_SUPABASE_URL")
         )
         self.supabase_key = (
-            os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+            os.getenv("SUPABASE_SECRET_KEY")
             or os.getenv("SUPABASE_KEY")
-            or os.getenv("NEXT_PUBLIC_SUPABASE_ANON_KEY")
+            or os.getenv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY")
         )
         self.llm_provider = os.getenv("LLM_PROVIDER", "google").lower()
         self.google_api_key = (
@@ -49,7 +49,7 @@ class Config:
 
         if not self.supabase_url or not self.supabase_key:
             raise ValueError(
-                "SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables are required"
+                "SUPABASE_URL and SUPABASE_SECRET_KEY environment variables are required"
             )
 
         if self.llm_provider == "google" and not self.google_api_key:

@@ -214,18 +214,18 @@ export function getSupabaseClient(): {
   const supabaseUrl =
     process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://127.0.0.1:54321';
   const supabaseKey =
-    process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    process.env.SUPABASE_SECRET_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
   if (!supabaseKey) {
     throw new Error(
-      'Supabase key is required for E2E tests. Set SUPABASE_SERVICE_ROLE_KEY or NEXT_PUBLIC_SUPABASE_ANON_KEY.'
+      'Supabase key is required for E2E tests. Set SUPABASE_SECRET_KEY or NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.'
     );
   }
 
   return {
     supabase: createClient(supabaseUrl, supabaseKey),
-    isServiceRole: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY),
+    isServiceRole: Boolean(process.env.SUPABASE_SECRET_KEY),
   };
 }
 

@@ -77,7 +77,7 @@ jobs:
       - name: Build project
         # env:
         #   NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-        #   NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+        #   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
         run: |
           if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
             npx vercel@latest build --prod --token="$VERCEL_TOKEN"

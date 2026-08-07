@@ -16,7 +16,7 @@ Sylo is a Next.js App Router application powered by Supabase and a RAG pipeline.
 1. Copy `.env.example` to `.env`.
 2. Populate Supabase variables:
    - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
 3. Install dependencies:
 
 ```bash

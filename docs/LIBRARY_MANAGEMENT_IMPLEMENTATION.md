@@ -233,7 +233,7 @@ You may need to run the migration on your Supabase instance or redeploy the data
 Ensure your `.env.local` has:
 ```
 NEXT_PUBLIC_SUPABASE_URL=your_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_key
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_key
 ```
 
 ---
