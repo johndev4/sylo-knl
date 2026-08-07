@@ -305,7 +305,7 @@ src / app / hub / _components / libraries / settings / member-table.tsx;
 ## Route Guards & RBAC (2026)
 
 ### Authentication Guard
-- Implemented in `middleware.ts`.
+- Implemented in `src/proxy.ts` as the Next.js proxy middleware entry point.
 - Redirects unauthenticated users from `/hub*` to `/login`.
 - Redirects authenticated users from `/login` to `/hub`.
 

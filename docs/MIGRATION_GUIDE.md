@@ -85,7 +85,7 @@ If new tools are added, describe them clearly and add any relevant scripts to `p
 
 ## Route Guard & RBAC Migration (2026)
 
-- Added `middleware.ts` for global authentication redirects.
+- Added `src/proxy.ts` as the Next.js proxy middleware entry point for global authentication redirects.
 - Added `src/lib/actions/requireLibraryRole.ts` for RBAC checks.
 - All `/hub/libraries/[id]` and document routes now require membership and minimum role.
 - Unauthorized access redirects to `/unauthorized`.

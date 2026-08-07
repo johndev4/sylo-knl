@@ -319,7 +319,7 @@ MemberTable (refresh list)
 
 ## Route Guard & RBAC
 
-- Middleware (`middleware.ts`) enforces authentication for all `/hub` routes and redirects authenticated users away from `/login`.
+- Authentication guard logic lives in `src/proxy.ts` and handles `/hub` routes and `/login` redirects through the Next.js proxy middleware entry point.
 - Library/document routes use `requireLibraryRole()` for RBAC enforcement.
 - Unauthorized access redirects to `/unauthorized`.
 - See also: `src/app/hub/libraries/[id]/layout.tsx` and `src/lib/actions/requireLibraryRole.ts`.
