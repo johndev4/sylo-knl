@@ -29,6 +29,7 @@ test.describe.serial('Library Invites', () => {
     page,
   }) => {
     await page.goto(`/hub/libraries/${testData.testLibraryId}/members`);
+    await page.waitForLoadState('networkidle');
 
     // Navigate to settings and look for Invite Links section
     await expect(
