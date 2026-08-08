@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { getURL } from '../auth/utils';
 
 /**
  * Hook to prevent data loss by prompting the user when they try to leave
@@ -57,12 +58,12 @@ export function useNavigationGuard(
       const href = anchor.getAttribute('href');
       if (!href) return;
 
-      if (!(href.startsWith('/') || href.startsWith(window.location.origin))) {
+      if (!(href.startsWith('/') || href.startsWith(getURL()))) {
         return;
       }
 
       // Ignore pure hash navigation on same path/query.
-      const url = new URL(href, window.location.origin);
+      const url = new URL(href, getURL());
       if (
         url.pathname === window.location.pathname &&
         url.search === window.location.search

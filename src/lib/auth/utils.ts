@@ -1,0 +1,11 @@
+export function getURL(): string {
+  // Use explicitly set site URL, fallback to Vercel preview URL, or fallback to localhost
+  const base =
+    process.env.NEXT_PUBLIC_APP_URL ||
+    (process.env.NEXT_PUBLIC_VERCEL_URL
+      ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
+      : 'http://localhost:3000');
+
+  // Ensure trailing slash is removed, then return
+  return base.replace(/\/$/, '');
+}
