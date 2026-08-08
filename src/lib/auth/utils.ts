@@ -1,5 +1,5 @@
 export function getURL(): string {
-  // Use explicitly set site URL, fallback to Vercel preview URL, or fallback to localhost
+  // Use explicitly set site URL, fallback to Vercel URL, or fallback to localhost
   const base =
     process.env.NEXT_PUBLIC_APP_URL ||
     (process.env.NEXT_PUBLIC_VERCEL_URL
