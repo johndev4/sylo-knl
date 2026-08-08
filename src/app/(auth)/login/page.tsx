@@ -7,6 +7,7 @@ import { Auth } from '@supabase/auth-ui-react';
 import { getAuthTheme } from '@/lib/themes/auth-theme';
 import { LoginHero } from '@/app/(auth)/login/_components/login-hero';
 import { useTheme } from 'next-themes';
+import { getURL } from '@/lib/auth/utils';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -16,7 +17,9 @@ export default function LoginPage() {
   useEffect(() => {
     const authClient = createClient();
 
-    const searchParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
+    const searchParams = new URLSearchParams(
+      typeof window !== 'undefined' ? window.location.search : ''
+    );
     const redirectParam = searchParams.get('redirect') || '/hub';
 
     const checkSession = async () => {
@@ -61,7 +64,7 @@ export default function LoginPage() {
               process.env.NEXT_PUBLIC_SUPABASE_URL!
             )
           }
-          redirectTo={`${typeof window !== 'undefined' ? window.location.origin : ''}/auth/callback`}
+          redirectTo={`${getURL()}/auth/callback`}
         />
       </div>
     </LoginHero>

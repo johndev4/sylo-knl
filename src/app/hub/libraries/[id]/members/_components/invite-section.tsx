@@ -32,6 +32,7 @@ import {
   fetchLibraryInvites,
   revokeLibraryInvite,
 } from '@/lib/actions/libraries';
+import { getURL } from '@/lib/auth/utils';
 
 interface InviteSectionProps {
   libraryId: string;
@@ -140,7 +141,7 @@ export function InviteSection({ libraryId }: InviteSectionProps) {
   };
 
   const handleCopyLink = (code: string) => {
-    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const origin = getURL();
     const url = `${origin}/join/${code}`;
     navigator.clipboard.writeText(url);
     setSuccess('Invite link copied to clipboard');
