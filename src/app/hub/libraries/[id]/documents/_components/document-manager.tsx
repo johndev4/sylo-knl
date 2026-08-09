@@ -4,7 +4,15 @@ import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import { useTagSuggestions } from '@/lib/hooks/use-tag-suggestions';
-import { Calendar, Clock, Users, X, AlertTriangle } from 'lucide-react';
+import {
+  Calendar,
+  Clock,
+  Users,
+  X,
+  AlertTriangle,
+  ChevronUp,
+  ChevronDown,
+} from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,6 +29,7 @@ import { TagChipsInput } from './tag-chips-input';
 import dynamic from 'next/dynamic';
 const Editor = dynamic(() => import('./block_editor/editor'), { ssr: false });
 import { useNavigationGuard } from '@/lib/hooks/use-navigation-guard';
+import { Button } from '@/components/ui/button';
 
 interface DocumentManagerProps {
   libraryId: string;
@@ -79,6 +88,7 @@ export function DocumentManager({
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ignoreNavigationGuard, setIgnoreNavigationGuard] = useState(false);
+  const [isMetaOpen, setIsMetaOpen] = useState(true);
 
   /**
    * When non-null, the "Unsaved Changes" AlertDialog is shown.
@@ -524,69 +534,87 @@ export function DocumentManager({
       </div>
 
       {/* ── Metadata & Tags Header Bar ──────────────────────────────────────── */}
-      <div className="border-border flex shrink-0 flex-col gap-4 border-b bg-zinc-50/50 px-8 py-4 dark:bg-zinc-900/20">
-        {/* Metadata Row */}
-        <div className="text-muted-foreground/60 flex flex-wrap items-center gap-x-8 gap-y-2 text-[11px] font-bold tracking-wider uppercase">
-          <div className="flex items-center">
-            <Calendar className="mr-2 h-3.5 w-3.5" />
-            CREATED:{' '}
-            <span className="text-muted-foreground/90 ml-1">
-              {new Date(createdAt).toLocaleDateString(undefined, {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric',
-              })}
-            </span>
-          </div>
-          {createdAt !== updatedAt && (
-            <div className="flex items-center">
-              <Clock className="mr-2 h-3.5 w-3.5" />
-              MODIFIED:{' '}
-              <span className="text-muted-foreground/90 ml-1">
-                {new Date(updatedAt).toLocaleDateString(undefined, {
-                  month: 'short',
-                  day: 'numeric',
-                  year: 'numeric',
-                })}
-              </span>
-            </div>
-          )}
-          {!isNew && initialData?.authors && initialData.authors.length > 0 && (
-            <div className="flex items-center">
-              <Users className="mr-2 h-3.5 w-3.5" />
-              AUTHORS:{' '}
-              <span className="text-muted-foreground/90 ml-1">
-                {initialData.authors.map((a) => a.name).join(', ')}
-              </span>
-            </div>
-          )}
-        </div>
+      <div className="border-border relative shrink-0 border-b bg-zinc-50/50 dark:bg-zinc-900/20">
+        {!isMetaOpen && <div className="h-7" />}
+        <button
+          onClick={() => setIsMetaOpen((v) => !v)}
+          className="hover:text-muted-foreground absolute right-2 bottom-1 rounded-full p-1 transition-colors"
+          aria-expanded={isMetaOpen}
+          aria-label="Toggle details"
+        >
+          <ChevronDown
+            className={`h-3.5 w-3.5 transition-transform duration-200 ${isMetaOpen ? '' : 'rotate-90'}`}
+          />
+        </button>
 
-        {/* Tags Row */}
-        <div className="flex flex-wrap items-center gap-2">
-          {isEditMode ? (
-            <TagChipsInput
-              tags={tags}
-              tagInput={tagInput}
-              suggestions={tagSuggestions}
-              onInputChange={setTagInput}
-              onAddTag={addTag}
-              onRemoveTag={removeTag}
-            />
-          ) : (
-            <div className="flex flex-wrap gap-1.5">
-              {tags.map((tag) => (
-                <Badge
-                  key={tag}
-                  variant="secondary"
-                  className="text-muted-foreground rounded-full border-none bg-zinc-100 px-3 py-0.5 text-[10px] dark:bg-zinc-800"
-                >
-                  {tag}
-                </Badge>
-              ))}
+        {isMetaOpen && (
+          <div className="flex flex-col gap-4 px-8 py-4 pr-8">
+            {/* Metadata Row */}
+            <div className="text-muted-foreground/60 flex flex-wrap items-center gap-x-8 gap-y-2 text-[11px] font-bold tracking-wider uppercase">
+              <div className="flex items-center">
+                <Calendar className="mr-2 h-3.5 w-3.5" />
+                CREATED:{' '}
+                <span className="text-muted-foreground/90 ml-1">
+                  {new Date(createdAt).toLocaleDateString(undefined, {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })}
+                </span>
+              </div>
+              {createdAt !== updatedAt && (
+                <div className="flex items-center">
+                  <Clock className="mr-2 h-3.5 w-3.5" />
+                  MODIFIED:{' '}
+                  <span className="text-muted-foreground/90 ml-1">
+                    {new Date(updatedAt).toLocaleDateString(undefined, {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })}
+                  </span>
+                </div>
+              )}
+              {!isNew &&
+                initialData?.authors &&
+                initialData.authors.length > 0 && (
+                  <div className="flex items-center">
+                    <Users className="mr-2 h-3.5 w-3.5" />
+                    AUTHORS:{' '}
+                    <span className="text-muted-foreground/90 ml-1">
+                      {initialData.authors.map((a) => a.name).join(', ')}
+                    </span>
+                  </div>
+                )}
             </div>
-          )}
-        </div>
+
+            {/* Tags Row */}
+            <div className="flex flex-wrap items-center gap-2">
+              {isEditMode ? (
+                <TagChipsInput
+                  tags={tags}
+                  tagInput={tagInput}
+                  suggestions={tagSuggestions}
+                  onInputChange={setTagInput}
+                  onAddTag={addTag}
+                  onRemoveTag={removeTag}
+                />
+              ) : (
+                <div className="flex flex-wrap gap-1.5">
+                  {tags.map((tag) => (
+                    <Badge
+                      key={tag}
+                      variant="secondary"
+                      className="text-muted-foreground rounded-full border-none bg-zinc-100 px-3 py-0.5 text-[10px] dark:bg-zinc-800"
+                    >
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── Dedicated Scrollable Editor Area ────────────────────────────────── */}
