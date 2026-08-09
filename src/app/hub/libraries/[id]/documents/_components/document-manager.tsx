@@ -2,20 +2,9 @@
 
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useTagSuggestions } from '@/lib/hooks/use-tag-suggestions';
-import {
-  Calendar,
-  Clock,
-  Users,
-  X,
-  Save,
-  Loader2,
-  Edit,
-  Trash2,
-  AlertTriangle,
-} from 'lucide-react';
+import { Calendar, Clock, Users, X, AlertTriangle } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,8 +14,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { DocumentActions } from './document-actions';
 import { useSidebarRefresh } from './sidebar-refresh-context';
 import { TagChipsInput } from './tag-chips-input';
 import dynamic from 'next/dynamic';
@@ -519,109 +508,19 @@ export function DocumentManager({
           />
         </div>
 
-        <div className="flex items-center gap-2">
-          {/* Edit Mode button — shown in view mode only */}
-          {!isNew && !isEditMode && userRole !== 'VIEWER' && (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setIsEditMode(true)}
-              className="text-muted-foreground"
-            >
-              <Edit className="mr-2 h-4 w-4" /> Edit Mode
-            </Button>
-          )}
-
-          {/* Cancel button — shown in edit mode only */}
-          {!isNew && isEditMode && (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleCancel}
-              className="text-muted-foreground"
-            >
-              <X className="mr-2 h-4 w-4" /> Cancel
-            </Button>
-          )}
-
-          {/* Save button */}
-          {isEditMode && userRole !== 'VIEWER' && (
-            <Button
-              type="button"
-              size="sm"
-              onClick={() => handleSubmit()}
-              disabled={
-                isLoading ||
-                !title.trim() ||
-                !!error?.includes('exceeds 1000 blocks')
-              }
-              className="rounded-lg bg-[#10b981] px-4 font-semibold text-white shadow-sm hover:bg-[#059669]"
-            >
-              {isLoading ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Save className="mr-2 h-4 w-4" />
-              )}
-              Save
-            </Button>
-          )}
-
-          {/* Delete button */}
-          {!isNew && userRole !== 'VIEWER' && (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={isDeleting}
-                  className="text-destructive hover:bg-destructive/10 border-zinc-200 dark:border-zinc-800"
-                >
-                  {isDeleting ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Trash2 className="h-4 w-4" />
-                  )}
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle className="flex items-center gap-2">
-                    <AlertTriangle className="text-destructive h-5 w-5" />
-                    Delete Document
-                  </AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Are you sure you want to delete <strong>{title}</strong>?
-                    This action will soft-delete the document and it will no
-                    longer be accessible in the library. This action cannot be
-                    undone.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel disabled={isDeleting}>
-                    Cancel
-                  </AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handleDelete();
-                    }}
-                    disabled={isDeleting}
-                    variant="destructive"
-                  >
-                    {isDeleting ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      'Delete Document'
-                    )}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          )}
-        </div>
+        <DocumentActions
+          isNew={isNew}
+          isEditMode={isEditMode}
+          userRole={userRole}
+          title={title}
+          isLoading={isLoading}
+          isDeleting={isDeleting}
+          hasBlockLimitError={!!error?.includes('exceeds 1000 blocks')}
+          onEnterEditMode={() => setIsEditMode(true)}
+          onCancel={handleCancel}
+          onSave={handleSubmit}
+          onDelete={handleDelete}
+        />
       </div>
 
       {/* ── Metadata & Tags Header Bar ──────────────────────────────────────── */}
