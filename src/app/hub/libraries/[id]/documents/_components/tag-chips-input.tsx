@@ -33,7 +33,7 @@ export function TagChipsInput({
 
   return (
     <div
-      className="border-border flex min-h-[36px] flex-wrap items-center gap-1.5 rounded-lg border bg-transparent px-2 py-1 focus-within:ring-1 focus-within:ring-zinc-400 dark:focus-within:ring-zinc-600"
+      className="border-border flex max-h-24 flex-wrap items-center gap-1.5 overflow-x-auto overflow-y-auto rounded-lg border bg-transparent px-2 py-1 focus-within:ring-1 focus-within:ring-zinc-400 dark:focus-within:ring-zinc-600"
       onClick={() => inputRef.current?.focus()}
     >
       {tags.map((tag) => (
@@ -71,6 +71,7 @@ export function TagChipsInput({
           aria-controls="tag-suggestion-list"
           aria-expanded={suggestions.length > 0}
           className="text-muted-foreground/60 placeholder:text-muted-foreground/30 w-full border-none bg-transparent text-xs focus:outline-none"
+          maxLength={20}
         />
         {suggestions.length > 0 && (
           <div
