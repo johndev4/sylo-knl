@@ -88,9 +88,7 @@ const Editor: React.FC<EditorProps> = ({
   // ---------------------------------------------------------------------------
 
   return (
-    <ScrollArea
-      className={`flex h-full w-full flex-col ${editable ? 'rounded-lg border bg-transparent focus-within:ring-1 focus-within:ring-zinc-400 dark:focus-within:ring-zinc-600' : ''}`}
-    >
+    <ScrollArea className="flex h-full w-full flex-col">
       <BlockNoteView
         editor={editor}
         editable={editable}
