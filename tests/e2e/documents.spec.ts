@@ -466,9 +466,9 @@ test.describe.serial('Document Management', () => {
     await page.waitForLoadState('networkidle');
 
     // Verify delete button is visible (we are OWNER)
-    const deleteBtn = page
-      .locator('button')
-      .filter({ has: page.locator('svg.lucide-trash2') });
+    const deleteBtn = page.getByLabel('Delete document', {
+      exact: true,
+    });
     await expect(deleteBtn).toBeVisible({});
 
     await deleteBtn.click();

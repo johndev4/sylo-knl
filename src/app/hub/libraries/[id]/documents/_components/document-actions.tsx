@@ -1,19 +1,5 @@
 import { Button } from '@/components/ui/button';
-import {
-  Edit,
-  X,
-  Save,
-  Loader2,
-  Trash2,
-  AlertTriangle,
-  MoreVertical,
-} from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { Edit, X, Save, Loader2, Trash2, AlertTriangle } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -131,7 +117,7 @@ export function DocumentActions({
             Save
           </Button>
         )}
-        {!isNew && !isViewer && (
+        {!isNew && !isEditMode && !isViewer && (
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button
@@ -140,6 +126,7 @@ export function DocumentActions({
                 size="sm"
                 disabled={isDeleting}
                 className="text-destructive hover:bg-destructive/10 border-zinc-200 dark:border-zinc-800"
+                aria-label="Delete document"
               >
                 {isDeleting ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -154,62 +141,66 @@ export function DocumentActions({
       </div>
 
       {/* Mobile (below sm) */}
-      {!isViewer && (
-        <div className="flex items-center gap-2 sm:hidden">
-          {isEditMode && (
-            <Button
-              type="button"
-              size="sm"
-              onClick={onSave}
-              disabled={saveDisabled}
-              className="rounded-lg bg-[#10b981] px-3 font-semibold text-white shadow-sm hover:bg-[#059669]"
-            >
-              {isLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Save className="h-4 w-4" />
-              )}
-            </Button>
-          )}
+      <div className="flex items-center gap-2 sm:hidden">
+        {!isNew && !isEditMode && !isViewer && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={onEnterEditMode}
+            className="text-muted-foreground"
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+        )}
+        {!isNew && isEditMode && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={onCancel}
+            className="text-muted-foreground"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        )}
+        {isEditMode && !isViewer && (
+          <Button
+            type="button"
+            size="sm"
+            onClick={onSave}
+            disabled={saveDisabled}
+            className="rounded-lg bg-[#10b981] px-4 font-semibold text-white shadow-sm hover:bg-[#059669]"
+          >
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Save className="h-4 w-4" />
+            )}
+          </Button>
+        )}
+        {!isNew && !isEditMode && !isViewer && (
           <AlertDialog>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button type="button" variant="outline" size="sm">
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {!isNew && !isEditMode && (
-                  <DropdownMenuItem onClick={onEnterEditMode}>
-                    <Edit className="mr-2 h-4 w-4" /> Edit Mode
-                  </DropdownMenuItem>
+            <AlertDialogTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={isDeleting}
+                className="text-destructive hover:bg-destructive/10 border-zinc-200 dark:border-zinc-800"
+                aria-label="Delete document(mobile)"
+              >
+                {isDeleting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Trash2 className="h-4 w-4" />
                 )}
-                {!isNew && isEditMode && (
-                  <DropdownMenuItem onClick={onCancel}>
-                    <X className="mr-2 h-4 w-4" /> Cancel
-                  </DropdownMenuItem>
-                )}
-                {!isNew && (
-                  <AlertDialogTrigger asChild>
-                    <DropdownMenuItem
-                      disabled={isDeleting}
-                      className="text-destructive focus:text-destructive"
-                    >
-                      {isDeleting ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      ) : (
-                        <Trash2 className="mr-2 h-4 w-4" />
-                      )}
-                      Delete
-                    </DropdownMenuItem>
-                  </AlertDialogTrigger>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+              </Button>
+            </AlertDialogTrigger>
             {deleteDialog}
           </AlertDialog>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

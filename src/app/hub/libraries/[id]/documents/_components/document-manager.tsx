@@ -11,7 +11,6 @@ import {
   X,
   AlertTriangle,
   ChevronUp,
-  ChevronDown,
 } from 'lucide-react';
 import {
   AlertDialog,
@@ -29,7 +28,6 @@ import { TagChipsInput } from './tag-chips-input';
 import dynamic from 'next/dynamic';
 const Editor = dynamic(() => import('./block_editor/editor'), { ssr: false });
 import { useNavigationGuard } from '@/lib/hooks/use-navigation-guard';
-import { Button } from '@/components/ui/button';
 
 interface DocumentManagerProps {
   libraryId: string;
@@ -538,12 +536,12 @@ export function DocumentManager({
         {!isMetaOpen && <div className="h-7" />}
         <button
           onClick={() => setIsMetaOpen((v) => !v)}
-          className="hover:text-muted-foreground absolute right-2 bottom-1 rounded-full p-1 transition-colors"
+          className="hover:text-muted-foreground absolute right-1 bottom-0 rounded-full p-1 transition-colors"
           aria-expanded={isMetaOpen}
           aria-label="Toggle details"
         >
-          <ChevronDown
-            className={`h-3.5 w-3.5 transition-transform duration-200 ${isMetaOpen ? '' : 'rotate-90'}`}
+          <ChevronUp
+            className={`h-4.5 w-4.5 transition-transform duration-200 ${isMetaOpen ? '' : 'rotate-180'}`}
           />
         </button>
 
@@ -636,7 +634,7 @@ export function DocumentManager({
             </button>
           </div>
         )}
-        <div className="h-full px-8 py-6">
+        <div className="h-full">
           <div className="mx-auto h-full max-w-5xl">
             <Editor
               key={editorResetKey}
