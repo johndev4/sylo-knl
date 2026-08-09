@@ -28,6 +28,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useSidebarRefresh } from './sidebar-refresh-context';
+import { TagChipsInput } from './tag-chips-input';
 import dynamic from 'next/dynamic';
 const Editor = dynamic(() => import('./block_editor/editor'), { ssr: false });
 import { useNavigationGuard } from '@/lib/hooks/use-navigation-guard';
@@ -324,13 +325,6 @@ export function DocumentManager({
     }
     setTags([...tags, newTag]);
     setTagInput('');
-  };
-
-  const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && tagInput.trim() !== '') {
-      e.preventDefault();
-      addTag(tagInput);
-    }
   };
 
   const removeTag = (tagToRemove: string) => {
@@ -669,61 +663,26 @@ export function DocumentManager({
 
         {/* Tags Row */}
         <div className="flex flex-wrap items-center gap-2">
-          <div className="flex flex-wrap gap-1.5">
-            {tags.map((tag) => (
-              <Badge
-                key={tag}
-                variant="secondary"
-                className="text-muted-foreground hover:text-foreground group flex items-center gap-1 rounded-full border-none bg-zinc-100 px-3 py-0.5 text-[10px] transition-colors dark:bg-zinc-800"
-              >
-                {tag}
-                {isEditMode && (
-                  <button
-                    type="button"
-                    onClick={() => removeTag(tag)}
-                    className="ml-1 opacity-0 transition-opacity group-hover:opacity-100"
-                  >
-                    <X className="h-2.5 w-2.5" />
-                  </button>
-                )}
-              </Badge>
-            ))}
-          </div>
-          {isEditMode && (
-            <div className="relative max-w-[200px] min-w-[120px] flex-1">
-              <input
-                type="text"
-                role="combobox"
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
-                onKeyDown={handleAddTag}
-                placeholder="Add tag..."
-                aria-label="Tags"
-                aria-autocomplete="list"
-                aria-haspopup="listbox"
-                aria-controls="tag-suggestion-list"
-                aria-expanded={tagSuggestions.length > 0}
-                className="text-muted-foreground/60 placeholder:text-muted-foreground/30 w-full border-none bg-transparent text-xs focus:outline-none"
-              />
-              {tagSuggestions.length > 0 && (
-                <div
-                  id="tag-suggestion-list"
-                  role="listbox"
-                  aria-label="Tag suggestions"
-                  className="absolute top-full left-0 z-10 mt-2 max-h-56 w-full overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-950"
+          {isEditMode ? (
+            <TagChipsInput
+              tags={tags}
+              tagInput={tagInput}
+              suggestions={tagSuggestions}
+              onInputChange={setTagInput}
+              onAddTag={addTag}
+              onRemoveTag={removeTag}
+            />
+          ) : (
+            <div className="flex flex-wrap gap-1.5">
+              {tags.map((tag) => (
+                <Badge
+                  key={tag}
+                  variant="secondary"
+                  className="text-muted-foreground rounded-full border-none bg-zinc-100 px-3 py-0.5 text-[10px] dark:bg-zinc-800"
                 >
-                  {tagSuggestions.map((suggestion) => (
-                    <button
-                      key={suggestion}
-                      type="button"
-                      onClick={() => addTag(suggestion)}
-                      className="text-muted-foreground w-full px-3 py-2 text-left text-xs transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                    >
-                      {suggestion}
-                    </button>
-                  ))}
-                </div>
-              )}
+                  {tag}
+                </Badge>
+              ))}
             </div>
           )}
         </div>
