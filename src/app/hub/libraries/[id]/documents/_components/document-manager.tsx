@@ -708,7 +708,7 @@ export function DocumentManager({
           </div>
         )}
         <div className="h-full px-8 py-6">
-          <div className="mx-auto h-full max-w-4xl">
+          <div className="mx-auto h-full max-w-5xl">
             <Editor
               key={editorResetKey}
               initialContent={content}

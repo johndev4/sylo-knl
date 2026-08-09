@@ -8,6 +8,7 @@ import '@blocknote/shadcn/style.css';
 import React, { useEffect, useState, useRef } from 'react';
 import { getCustomSlashMenuItems } from './custom-slash-menu-items';
 import { useTheme } from 'next-themes';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 interface EditorProps {
   onChange: (markdown: string, blockCount: number) => void;
@@ -87,7 +88,9 @@ const Editor: React.FC<EditorProps> = ({
   // ---------------------------------------------------------------------------
 
   return (
-    <div className="-mx-[54px] flex h-full flex-col">
+    <ScrollArea
+      className={`flex h-full w-full flex-col ${editable ? 'rounded-lg border bg-transparent focus-within:ring-1 focus-within:ring-zinc-400 dark:focus-within:ring-zinc-600' : ''}`}
+    >
       <BlockNoteView
         editor={editor}
         editable={editable}
@@ -103,7 +106,9 @@ const Editor: React.FC<EditorProps> = ({
           getItems={async (query) => getCustomSlashMenuItems(editor, query)}
         />
       </BlockNoteView>
-    </div>
+
+      <ScrollBar />
+    </ScrollArea>
   );
 };
 
