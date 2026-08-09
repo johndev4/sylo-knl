@@ -49,6 +49,8 @@ const Editor: React.FC<EditorProps> = ({
     },
   });
 
+  // Initialize editor with initial content if provided.
+  // Uses a ref to prevent re-initializing on every render.
   useEffect(() => {
     async function loadContent() {
       if (loadedRef.current) return;
