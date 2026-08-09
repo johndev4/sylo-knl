@@ -502,8 +502,10 @@ export function DocumentManager({
       </AlertDialog>
 
       {/* ── Top Fixed Header with Controls ──────────────────────────────────── */}
-      <div className="bg-background/95 border-border supports-[backdrop-filter]:bg-background/60 z-20 flex shrink-0 items-center justify-between border-b px-8 py-4 shadow-sm backdrop-blur">
-        <div className="mr-4 flex-1">
+      <div className="bg-background/95 border-border supports-[backdrop-filter]:bg-background/60 z-20 flex shrink-0 items-center justify-between border-b py-1 pr-3 pl-1 shadow-sm backdrop-blur">
+        <div
+          className={`mr-4 flex-1 px-3 py-1 ${isEditMode ? 'rounded-lg border bg-transparent focus-within:ring-1 focus-within:ring-zinc-400 dark:focus-within:ring-zinc-600' : ''}`}
+        >
           <input
             type="text"
             value={title}
