@@ -78,9 +78,9 @@ test.describe.serial('Document Management', () => {
     const tagInput = page.getByPlaceholder('Add tag...');
     await tagInput.fill('imp');
 
-    await expect(page.getByRole('button', { name: 'IMPORTANT' })).toBeVisible();
+    await expect(page.getByText('IMPORTANT', { exact: true })).toBeVisible();
 
-    await page.getByRole('button', { name: 'IMPORTANT' }).click();
+    await page.getByText('IMPORTANT', { exact: true }).click();
     await expect(page.getByText('IMPORTANT')).toBeVisible();
   });
 
@@ -114,10 +114,10 @@ test.describe.serial('Document Management', () => {
     await tagInput.fill('sug');
 
     await expect(
-      page.getByRole('button', { name: 'SuggestionSeed' })
+      page.getByRole('menuitem', { name: 'SuggestionSeed' })
     ).toBeVisible();
 
-    await page.getByRole('button', { name: 'SuggestionSeed' }).click();
+    await page.getByRole('menuitem', { name: 'SuggestionSeed' }).click();
     await expect(page.getByText('SuggestionSeed')).toBeVisible();
   });
 
