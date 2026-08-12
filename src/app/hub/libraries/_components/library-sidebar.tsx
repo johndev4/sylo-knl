@@ -170,11 +170,11 @@ export function LibrarySidebar() {
                     <SidebarMenuButton
                       asChild
                       isActive={
-                        pathname === `/hub/libraries/${libraryId}/overview`
+                        pathname === `/hub/libraries/${libraryId}/~/overview`
                       }
                       tooltip="Overview"
                     >
-                      <Link href={`/hub/libraries/${libraryId}/overview`}>
+                      <Link href={`/hub/libraries/${libraryId}/~/overview`}>
                         <Target />
                         <span>Overview</span>
                       </Link>
@@ -187,11 +187,11 @@ export function LibrarySidebar() {
                       <SidebarMenuButton
                         asChild
                         isActive={pathname?.includes(
-                          `/hub/libraries/${libraryId}/settings`
+                          `/hub/libraries/${libraryId}/~/settings`
                         )}
                         tooltip="Settings"
                       >
-                        <Link href={`/hub/libraries/${libraryId}/settings`}>
+                        <Link href={`/hub/libraries/${libraryId}/~/settings`}>
                           <Settings />
                           <span>Settings</span>
                         </Link>
@@ -204,11 +204,11 @@ export function LibrarySidebar() {
                     <SidebarMenuButton
                       asChild
                       isActive={pathname?.includes(
-                        `/hub/libraries/${libraryId}/members`
+                        `/hub/libraries/${libraryId}/~/members`
                       )}
                       tooltip="Members"
                     >
-                      <Link href={`/hub/libraries/${libraryId}/members`}>
+                      <Link href={`/hub/libraries/${libraryId}/~/members`}>
                         <Users />
                         <span>Members</span>
                       </Link>

@@ -1,4 +1,4 @@
-export function Unauthorized() {
+export default function Unauthorized() {
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
       <h1 className="mb-4 text-3xl font-bold">Unauthorized</h1>
@@ -10,8 +10,4 @@ export function Unauthorized() {
       </a>
     </div>
   );
-}
-
-export default function UnauthorizedPage() {
-  return <Unauthorized />;
 }

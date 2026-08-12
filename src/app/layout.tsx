@@ -6,6 +6,7 @@ import { ThemeProvider } from 'next-themes';
 import { Navbar } from '@/components/layout/navbar';
 import { cn } from '@/lib/utils';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { Spinner } from '@/components/ui/spinner';
 
 const geist = Geist({ subsets: ['latin'], variable: '--font-sans' });
 
@@ -54,7 +55,18 @@ export default function RootLayout({
           <TooltipProvider>
             <Navbar />
             <main className="flex-1">
-              <Suspense fallback={null}>{children}</Suspense>
+              <Suspense
+                fallback={
+                  <div className="text-muted-foreground flex flex-1 items-center justify-center p-8 text-sm h-[calc(100dvh-4.5rem)]">
+                    <div className="flex flex-col items-center gap-4">
+                      <Spinner className="text-muted-foreground h-8 w-8" />
+                      Loading…
+                    </div>
+                  </div>
+                }
+              >
+                {children}
+              </Suspense>
             </main>
           </TooltipProvider>
         </ThemeProvider>

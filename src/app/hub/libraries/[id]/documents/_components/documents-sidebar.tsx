@@ -42,6 +42,7 @@ import { Input } from '@/components/ui/input';
 import { useSidebarRefresh } from './sidebar-refresh-context';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { Spinner } from '@/components/ui/spinner';
 
 interface Document {
   id: string;
@@ -167,7 +168,7 @@ export function DocumentsSidebar() {
               </div>
 
               {/* Create New Document Button */}
-              {userRole !== 'VIEWER' && (
+              {!!userRole && userRole !== 'VIEWER' && (
                 <div className="group-data-[collapsible=icon]:hidden">
                   {isAtLimit ? (
                     <Button
@@ -212,32 +213,41 @@ export function DocumentsSidebar() {
       <SidebarContent>
         {/* Fixed Filters Area (Hidden when collapsed into icon mode) */}
         <div className="border-sidebar-border flex shrink-0 flex-col gap-2.5 border-b p-3 group-data-[collapsible=icon]:hidden">
-          <div className="relative">
-            <Search className="text-muted-foreground absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2" />
-            <Input
-              placeholder="Search docs..."
-              className="focus-visible:ring-primary/30 border-sidebar-border bg-sidebar-accent/50 h-8 pl-8 text-xs focus-visible:ring-1"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
+          {isLoading ? (
+            <div className="space-y-3 p-2">
+              <Skeleton className="h-5 w-full rounded-md" />
+              <Skeleton className="h-5 w-20 rounded-md" />
+            </div>
+          ) : (
+            <>
+              <div className="relative">
+                <Search className="text-muted-foreground absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2" />
+                <Input
+                  placeholder="Search docs..."
+                  className="focus-visible:ring-primary/30 border-sidebar-border bg-sidebar-accent/50 h-8 pl-8 text-xs focus-visible:ring-1"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
 
-          <Select value={selectedTag} onValueChange={setSelectedTag}>
-            <SelectTrigger className="border-sidebar-border bg-sidebar-accent/50 h-8 text-xs font-bold tracking-wider">
-              <SelectValue placeholder="FILTER BY TAG" />
-            </SelectTrigger>
-            <SelectContent>
-              {allTags.map((tag) => (
-                <SelectItem
-                  key={tag}
-                  value={tag}
-                  className="text-[10px] font-bold tracking-wider uppercase"
-                >
-                  {tag}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+              <Select value={selectedTag} onValueChange={setSelectedTag}>
+                <SelectTrigger className="border-sidebar-border bg-sidebar-accent/50 h-8 text-xs font-bold tracking-wider">
+                  <SelectValue placeholder="FILTER BY TAG" />
+                </SelectTrigger>
+                <SelectContent>
+                  {allTags.map((tag) => (
+                    <SelectItem
+                      key={tag}
+                      value={tag}
+                      className="text-[10px] font-bold tracking-wider uppercase"
+                    >
+                      {tag}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </>
+          )}
         </div>
 
         {/* New Document Button in collapsed mode */}
@@ -297,8 +307,11 @@ export function DocumentsSidebar() {
                   >
                     <SidebarMenu className="max-w-60 gap-1">
                       {isLoading && page === 1 ? (
-                        <div className="flex justify-center p-4">
-                          <Loader2 className="text-muted-foreground h-5 w-5 animate-spin" />
+                        <div className="space-y-3 p-2">
+                          <Skeleton className="h-8 w-full rounded-md" />
+                          <Skeleton className="h-8 w-full rounded-md" />
+                          <Skeleton className="h-8 w-full rounded-md" />
+                          <Skeleton className="h-8 w-full rounded-md" />
                         </div>
                       ) : filteredDocuments.length === 0 ? (
                         <div className="text-muted-foreground px-4 py-3 text-center text-xs group-data-[collapsible=icon]:hidden">
@@ -361,7 +374,7 @@ export function DocumentsSidebar() {
                             className="h-8 w-full text-[10px] font-bold tracking-widest uppercase"
                           >
                             {isLoading ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
+                              <Spinner className="h-4 w-4" />
                             ) : (
                               `Load More (${totalDocs - documents.length} Left)`
                             )}
@@ -392,7 +405,7 @@ export function DocumentsSidebar() {
 
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip="Library Info">
-              <Link href={`/hub/libraries/${libraryId}/overview`}>
+              <Link href={`/hub/libraries/${libraryId}/~/overview`}>
                 <Info />
                 <span>Library Info</span>
               </Link>

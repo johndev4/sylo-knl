@@ -1,18 +1,18 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DocumentManager } from '@/app/hub/libraries/[id]/documents/_components/document-manager';
+import { Spinner } from '@/components/ui/spinner';
 
-export default function DocumentDetailsPage() {
+export default function DocumentViewPage() {
   const params = useParams();
   const libraryId = params?.id as string;
   const docId = params?.docId as string;
   const router = useRouter();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [document, setDocument] = useState<any>(null);
   const [role, setRole] = useState<string>('VIEWER');
   const [isLoading, setIsLoading] = useState(true);
@@ -34,7 +34,6 @@ export default function DocumentDetailsPage() {
       const data = await res.json();
       setDocument(data.document);
       setRole(data.role || 'VIEWER');
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -43,14 +42,13 @@ export default function DocumentDetailsPage() {
   }, [docId]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchDocument();
+    (async () => fetchDocument())();
   }, [fetchDocument]);
 
   if (isLoading) {
     return (
       <div className="flex h-full flex-1 items-center justify-center">
-        <Loader2 className="text-muted-foreground h-8 w-8 animate-spin" />
+        <Spinner className="text-muted-foreground h-8 w-8" />
       </div>
     );
   }
@@ -61,7 +59,11 @@ export default function DocumentDetailsPage() {
         <h2 className="mb-2 text-2xl font-bold">
           {error || 'Document not found'}
         </h2>
-        <Button onClick={() => router.back()}>Go Back</Button>
+        <Button
+          onClick={() => router.push(`/hub/libraries/${libraryId}/documents`)}
+        >
+          Go Back
+        </Button>
       </div>
     );
   }

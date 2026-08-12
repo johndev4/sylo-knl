@@ -145,11 +145,13 @@ export function LibraryBreadcrumbNav() {
       href: `/hub/libraries/${libraryId}`,
     });
 
-    breadcrumbItems.push({
-      key: segments[3],
-      label: capFirst(segments[3]),
-      href: `/hub/libraries/${libraryId}/${segments[3]}`,
-    });
+    if (segments[3] !== '~') {
+      breadcrumbItems.push({
+        key: segments[3],
+        label: capFirst(segments[3]),
+        href: `/hub/libraries/${libraryId}/${segments[3]}`,
+      });
+    }
 
     if (isLibraryDocumentsRoute && documentId) {
       let documentLabel;
@@ -176,6 +178,12 @@ export function LibraryBreadcrumbNav() {
         key: 'document',
         label: documentLabel,
         href: `/hub/libraries/${libraryId}/documents/${documentId}`,
+      });
+    } else if (segments[3] === '~' && segments[4]) {
+      breadcrumbItems.push({
+        key: `${segments[3]}`,
+        label: capFirst(segments[4]),
+        href: `/hub/libraries/${libraryId}/${segments[3]}/${segments[4]}`,
       });
     }
   }

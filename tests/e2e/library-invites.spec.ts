@@ -28,7 +28,7 @@ test.describe.serial('Library Invites', () => {
   test('owner can generate an invite link and see it in the active invites table', async ({
     page,
   }) => {
-    await page.goto(`/hub/libraries/${testData.testLibraryId}/members`);
+    await page.goto(`/hub/libraries/${testData.testLibraryId}/~/members`);
     await page.waitForLoadState('networkidle');
 
     // Navigate to settings and look for Invite Links section
@@ -58,7 +58,7 @@ test.describe.serial('Library Invites', () => {
     context,
     browser,
   }) => {
-    await page.goto(`/hub/libraries/${testData.testLibraryId}/members`);
+    await page.goto(`/hub/libraries/${testData.testLibraryId}/~/members`);
 
     // Grant clipboard read permissions
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
@@ -103,7 +103,7 @@ test.describe.serial('Library Invites', () => {
     );
 
     // Verify that the second user is now a member of the library with the correct role
-    await page.goto(`/hub/libraries/${testData.testLibraryId}/members`);
+    await page.goto(`/hub/libraries/${testData.testLibraryId}/~/members`);
     const user2Row = page.locator('tr', { hasText: testData.testUser2Email });
     await expect(user2Row).toBeVisible();
     await expect(user2Row.locator('td', { hasText: 'EDITOR' })).toBeVisible();

@@ -1,6 +1,4 @@
 import { ReactNode } from 'react';
-import { LIBRARY_ROLES } from '@/lib/actions/require-library-role';
-import { guardLibraryAccess } from '@/lib/actions/guard-library-access';
 import {
   LibraryBreadcrumbNav,
   LibrarySidebar,
@@ -12,17 +10,11 @@ import {
 } from '@/components/ui/sidebar';
 import { Separator } from '@/components/ui/separator';
 
-export default async function LibrarySettingsLayout({
+export default function LibraryInfoLayout({
   children,
-  params,
 }: {
   children: ReactNode;
-  params: Promise<{ id: string }>;
 }) {
-  const { id } = await params;
-  const denied = await guardLibraryAccess(id, LIBRARY_ROLES.ADMIN);
-  if (denied) return denied;
-
   return (
     <SidebarProvider className="h-[calc(100vh-4.1rem)] min-h-0 flex-1">
       <LibrarySidebar />

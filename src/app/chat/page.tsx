@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { getUserLibraries } from '@/lib/actions/libraries';
 import ChatClient from './_components/chat-client';
 import { redirect } from 'next/navigation';
@@ -8,7 +9,19 @@ interface ChatPageProps {
   searchParams: Promise<{ libraryId?: string }>;
 }
 
-export default async function ChatPage({ searchParams }: ChatPageProps) {
+export default function ChatPage({ searchParams }: ChatPageProps) {
+  return (
+    <Suspense
+      fallback={
+        <div className="p-6 text-sm text-muted-foreground">Loading chat…</div>
+      }
+    >
+      <ChatPageContent searchParams={searchParams} />
+    </Suspense>
+  );
+}
+
+async function ChatPageContent({ searchParams }: ChatPageProps) {
   // Auth guard
   const supabase = await createClient();
   const {

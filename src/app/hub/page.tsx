@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import {
@@ -7,13 +8,65 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   CreateLibraryDialog,
   LibrariesContainer,
   LibrarySummaryHero,
 } from './_components';
 
-export default async function LibrariesPage() {
+export default function LibrariesPage() {
+  return (
+    <div className="container mx-auto max-w-6xl p-6">
+      <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <h1 className="mb-1 text-3xl font-bold tracking-tight">
+            Your Libraries
+          </h1>
+          <p className="text-muted-foreground text-sm">
+            Manage your knowledge bases, documents, and AI chat hubs.
+          </p>
+        </div>
+      </div>
+
+      <Suspense fallback={<HubLoading />}>
+        <HubContent />
+      </Suspense>
+    </div>
+  );
+}
+
+function HubLoading() {
+  return (
+    <div className="space-y-6">
+      <div className="rounded-3xl border border-zinc-200/50 bg-white/60 p-10 shadow-lg shadow-slate-900/5 backdrop-blur-md dark:border-zinc-800/50 dark:bg-zinc-950/60">
+        <Skeleton className="mb-4 h-6 w-48" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="mt-3 h-4 w-5/6" />
+      </div>
+      <div className="grid gap-6 lg:grid-cols-[1.8fr_1fr]">
+        <div className="rounded-3xl border border-zinc-200/50 bg-white/60 p-6 shadow-sm backdrop-blur-md dark:border-zinc-800/50 dark:bg-zinc-950/60">
+          <Skeleton className="mb-3 h-6 w-36" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="mt-2 h-4 w-5/6" />
+          <Skeleton className="mt-2 h-4 w-4/5" />
+        </div>
+        <div className="space-y-4">
+          <div className="rounded-3xl border border-zinc-200/50 bg-white/60 p-6 shadow-sm backdrop-blur-md dark:border-zinc-800/50 dark:bg-zinc-950/60">
+            <Skeleton className="h-6 w-32" />
+            <Skeleton className="mt-3 h-4 w-full" />
+          </div>
+          <div className="rounded-3xl border border-zinc-200/50 bg-white/60 p-6 shadow-sm backdrop-blur-md dark:border-zinc-800/50 dark:bg-zinc-950/60">
+            <Skeleton className="h-6 w-28" />
+            <Skeleton className="mt-3 h-4 w-full" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+async function HubContent() {
   const supabase = await createClient();
   const {
     data: { user },
@@ -87,18 +140,7 @@ export default async function LibrariesPage() {
   }>;
 
   return (
-    <div className="container mx-auto max-w-6xl p-6">
-      <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div>
-          <h1 className="mb-1 text-3xl font-bold tracking-tight">
-            Your Libraries
-          </h1>
-          <p className="text-muted-foreground text-sm">
-            Manage your knowledge bases, documents, and AI chat hubs.
-          </p>
-        </div>
-      </div>
-
+    <>
       {memberships.length === 0 ? (
         <div className="grid items-start gap-6 lg:grid-cols-[1.8fr_1fr]">
           <div className="rounded-3xl border border-zinc-200/50 bg-white/60 p-10 text-center shadow-lg shadow-slate-900/5 backdrop-blur-md dark:border-zinc-800/50 dark:bg-zinc-950/60">
@@ -174,6 +216,6 @@ export default async function LibrariesPage() {
           <LibrariesContainer memberships={memberships} />
         </>
       )}
-    </div>
+    </>
   );
 }

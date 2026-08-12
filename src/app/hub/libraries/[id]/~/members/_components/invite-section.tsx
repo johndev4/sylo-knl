@@ -320,10 +320,11 @@ export function InviteSection({ libraryId }: InviteSectionProps) {
             <AlertDialogTitle>Revoke Invite Link?</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to revoke the invite code{' '}
-              <span className="font-mono font-semibold text-foreground">
+              <span className="text-foreground font-mono font-semibold">
                 {inviteToRevoke?.invite_code}
               </span>
-              ? Users will no longer be able to use this link to join the library. This action cannot be undone.
+              ? Users will no longer be able to use this link to join the
+              library. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

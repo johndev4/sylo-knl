@@ -1,5 +1,5 @@
 import { LIBRARY_ROLES, requireLibraryRole } from './require-library-role';
-import { Unauthorized } from '@/app/unauthorized/page';
+import Unauthorized from '@/app/unauthorized';
 
 /**
  * Checks library auth/authz. Redirects to /login if unauthenticated,

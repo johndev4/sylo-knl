@@ -9,6 +9,95 @@ function generateInviteCode() {
   return crypto.randomBytes(6).toString('base64url').substring(0, 8);
 }
 
+// --------------------------------------------------------------------------
+
+/**
+ * Fetch all libraries the current user is a member of.
+ * Used by the unified chat page to populate the library selector.
+ */
+export async function getUserLibraries() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    const cookieStore = await cookies();
+    const isTest = cookieStore.get('playwright-test')?.value === 'true';
+    if (isTest) {
+      return [
+        { id: 'lib-1', name: 'Mock Library 1', role: 'OWNER' },
+        { id: 'lib-2', name: 'Mock Library 2', role: 'EDITOR' },
+      ];
+    }
+    throw new Error('Unauthorized');
+  }
+
+  const { data, error } = await supabase
+    .from('library_members')
+    .select('role, library:libraries(id, name)')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: true });
+
+  if (error) {
+    console.error('Failed to fetch user libraries:', error);
+    throw new Error('Failed to fetch libraries');
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (data ?? []).map((m: any) => ({
+    id: m.library.id as string,
+    name: m.library.name as string,
+    role: m.role as string,
+  }));
+}
+
+// --------------------------------------------------------------------------
+
+/**
+ * Leave library (for current user)
+ */
+export async function leaveLibrary(libraryId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) throw new Error('Unauthorized');
+
+  const { data: membership, error: membershipError } = await supabase
+    .from('library_members')
+    .select('role')
+    .eq('library_id', libraryId)
+    .eq('user_id', user.id)
+    .single();
+
+  if (membershipError || !membership) {
+    throw new Error('Not a member of this library');
+  }
+
+  if (membership.role === 'OWNER') {
+    throw new Error(
+      'Library owner cannot leave. Delete or transfer ownership first.'
+    );
+  }
+
+  const { error } = await supabase.rpc('leave_library', {
+    p_library_id: libraryId,
+  });
+
+  if (error) {
+    throw new Error(error.message || 'Failed to leave library');
+  }
+
+  revalidatePath('/hub');
+  return { success: true };
+}
+
+// --------------------------------------------------------------------------
+
+// Library Management Functions
+
 export async function createLibrary(name: string) {
   const supabase = await createClient();
   const {
@@ -82,6 +171,51 @@ export async function deleteLibraries(ids: string[]) {
 
   if (error) throw new Error(error.message || 'Failed to delete libraries');
 
+  revalidatePath('/hub');
+  return { success: true };
+}
+
+export async function getLibraryName(libraryId: string) {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from('libraries')
+    .select('name')
+    .eq('id', libraryId)
+    .single();
+  return data?.name ?? '';
+}
+
+export async function updateLibraryName(libraryId: string, newName: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) throw new Error('Unauthorized');
+
+  // Check if requester is OWNER or ADMIN of library
+  const { data: membership } = await supabase
+    .from('library_members')
+    .select('role')
+    .eq('library_id', libraryId)
+    .eq('user_id', user.id)
+    .single();
+
+  if (!membership || !['OWNER', 'ADMIN'].includes(membership.role)) {
+    throw new Error('Only owners and admins can rename the library');
+  }
+
+  const { error } = await supabase
+    .from('libraries')
+    .update({ name: newName.trim() })
+    .eq('id', libraryId);
+
+  if (error) {
+    console.error('Failed to update library name:', error);
+    throw new Error(error.message || 'Failed to update library name');
+  }
+
+  revalidatePath(`/hub/libraries/${libraryId}/settings`);
   revalidatePath('/hub');
   return { success: true };
 }
@@ -370,120 +504,6 @@ export async function removeMultipleLibraryMembers(
   return { success: true, removedCount: userIds.length };
 }
 
-// Leave library (for current user)
-export async function leaveLibrary(libraryId: string) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) throw new Error('Unauthorized');
-
-  const { data: membership, error: membershipError } = await supabase
-    .from('library_members')
-    .select('role')
-    .eq('library_id', libraryId)
-    .eq('user_id', user.id)
-    .single();
-
-  if (membershipError || !membership) {
-    throw new Error('Not a member of this library');
-  }
-
-  if (membership.role === 'OWNER') {
-    throw new Error(
-      'Library owner cannot leave. Delete or transfer ownership first.'
-    );
-  }
-
-  const { error } = await supabase.rpc('leave_library', {
-    p_library_id: libraryId,
-  });
-
-  if (error) {
-    throw new Error(error.message || 'Failed to leave library');
-  }
-
-  revalidatePath('/hub');
-  return { success: true };
-}
-
-export async function updateLibraryName(libraryId: string, newName: string) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) throw new Error('Unauthorized');
-
-  // Check if requester is OWNER or ADMIN of library
-  const { data: membership } = await supabase
-    .from('library_members')
-    .select('role')
-    .eq('library_id', libraryId)
-    .eq('user_id', user.id)
-    .single();
-
-  if (!membership || !['OWNER', 'ADMIN'].includes(membership.role)) {
-    throw new Error('Only owners and admins can rename the library');
-  }
-
-  const { error } = await supabase
-    .from('libraries')
-    .update({ name: newName.trim() })
-    .eq('id', libraryId);
-
-  if (error) {
-    console.error('Failed to update library name:', error);
-    throw new Error(error.message || 'Failed to update library name');
-  }
-
-  revalidatePath(`/hub/libraries/${libraryId}/settings`);
-  revalidatePath('/hub');
-  return { success: true };
-}
-
-/**
- * Fetch all libraries the current user is a member of.
- * Used by the unified chat page to populate the library selector.
- */
-export async function getUserLibraries() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    const cookieStore = await cookies();
-    const isTest = cookieStore.get('playwright-test')?.value === 'true';
-    if (isTest) {
-      return [
-        { id: 'lib-1', name: 'Mock Library 1', role: 'OWNER' },
-        { id: 'lib-2', name: 'Mock Library 2', role: 'EDITOR' },
-      ];
-    }
-    throw new Error('Unauthorized');
-  }
-
-  const { data, error } = await supabase
-    .from('library_members')
-    .select('role, library:libraries(id, name)')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: true });
-
-  if (error) {
-    console.error('Failed to fetch user libraries:', error);
-    throw new Error('Failed to fetch libraries');
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (data ?? []).map((m: any) => ({
-    id: m.library.id as string,
-    name: m.library.name as string,
-    role: m.role as string,
-  }));
-}
-
 // Invite Management Functions
 
 export async function createLibraryInvite(
@@ -555,10 +575,12 @@ export async function fetchLibraryInvites(libraryId: string) {
 
   const { data: invites, error } = await supabase
     .from('library_invites')
-    .select(`
+    .select(
+      `
       *,
       created_by_user:users!library_invites_created_by_fkey(id, name, email, avatar_url)
-    `)
+    `
+    )
     .eq('library_id', libraryId)
     .eq('is_active', true)
     .order('created_at', { ascending: false });
@@ -569,6 +591,44 @@ export async function fetchLibraryInvites(libraryId: string) {
   }
 
   return (invites || []) as unknown[];
+}
+
+export async function fetchLibraryOverview(libraryId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error('Unauthorized');
+
+  const [
+    { data: library },
+    { count: memberCount },
+    { count: documentCount },
+    { data: membership },
+  ] = await Promise.all([
+    supabase
+      .from('libraries')
+      .select('name, created_at')
+      .eq('id', libraryId)
+      .single(),
+    supabase
+      .from('library_members')
+      .select('*', { count: 'exact', head: true })
+      .eq('library_id', libraryId),
+    supabase
+      .from('documents')
+      .select('*', { count: 'exact', head: true })
+      .eq('library_id', libraryId)
+      .is('deleted_at', null),
+    supabase
+      .from('library_members')
+      .select('role')
+      .eq('library_id', libraryId)
+      .eq('user_id', user.id)
+      .single(),
+  ]);
+
+  return { library, memberCount, documentCount, membership };
 }
 
 export async function revokeLibraryInvite(libraryId: string, inviteId: string) {

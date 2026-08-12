@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useReducedMotion } from '@/lib/hooks/use-reduced-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

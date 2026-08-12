@@ -25,9 +25,8 @@ import {
 import { DocumentActions } from './document-actions';
 import { useSidebarRefresh } from './sidebar-refresh-context';
 import { TagChipsInput } from './tag-chips-input';
-import dynamic from 'next/dynamic';
-const Editor = dynamic(() => import('./block_editor/editor'), { ssr: false });
 import { useNavigationGuard } from '@/lib/hooks/use-navigation-guard';
+import { BlockEditor } from './block_editor';
 
 interface DocumentManagerProps {
   libraryId: string;
@@ -636,7 +635,7 @@ export function DocumentManager({
         )}
         <div className="h-full">
           <div className="mx-auto h-full max-w-5xl">
-            <Editor
+            <BlockEditor
               key={editorResetKey}
               initialContent={content}
               onChange={handleEditorChange}

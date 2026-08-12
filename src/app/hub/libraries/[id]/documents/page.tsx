@@ -1,18 +1,28 @@
+import { Suspense } from 'react';
 import { FileText, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import {
-  requireLibraryRole,
-  LIBRARY_ROLES,
-} from '@/lib/actions/require-library-role';
+import { requireLibraryRole } from '@/lib/actions/require-library-role';
 
-export default async function DocumentsPage({
+export default function DocumentsPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  return (
+    <Suspense fallback={null}>
+      <DocumentsPageContent params={params} />
+    </Suspense>
+  );
+}
+
+async function DocumentsPageContent({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id: libraryId } = await params;
-  const membership = await requireLibraryRole(libraryId, LIBRARY_ROLES.VIEWER);
+  const membership = await requireLibraryRole(libraryId);
   const isViewer = membership?.role === 'VIEWER';
 
   return (
