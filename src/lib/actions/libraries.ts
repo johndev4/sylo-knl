@@ -600,35 +600,25 @@ export async function fetchLibraryOverview(libraryId: string) {
   } = await supabase.auth.getUser();
   if (!user) throw new Error('Unauthorized');
 
-  const [
-    { data: library },
-    { count: memberCount },
-    { count: documentCount },
-    { data: membership },
-  ] = await Promise.all([
-    supabase
-      .from('libraries')
-      .select('name, created_at')
-      .eq('id', libraryId)
-      .single(),
-    supabase
-      .from('library_members')
-      .select('*', { count: 'exact', head: true })
-      .eq('library_id', libraryId),
-    supabase
-      .from('documents')
-      .select('*', { count: 'exact', head: true })
-      .eq('library_id', libraryId)
-      .is('deleted_at', null),
-    supabase
-      .from('library_members')
-      .select('role')
-      .eq('library_id', libraryId)
-      .eq('user_id', user.id)
-      .single(),
-  ]);
+  const [{ data: library }, { count: memberCount }, { count: documentCount }] =
+    await Promise.all([
+      supabase
+        .from('libraries')
+        .select('name, created_at')
+        .eq('id', libraryId)
+        .single(),
+      supabase
+        .from('library_members')
+        .select('*', { count: 'exact', head: true })
+        .eq('library_id', libraryId),
+      supabase
+        .from('documents')
+        .select('*', { count: 'exact', head: true })
+        .eq('library_id', libraryId)
+        .is('deleted_at', null),
+    ]);
 
-  return { library, memberCount, documentCount, membership };
+  return { library, memberCount, documentCount };
 }
 
 export async function revokeLibraryInvite(libraryId: string, inviteId: string) {

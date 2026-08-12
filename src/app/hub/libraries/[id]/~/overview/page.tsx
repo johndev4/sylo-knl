@@ -1,9 +1,10 @@
-import { guardLibraryAccess } from '@/lib/actions/guard-library-access';
 import { fetchLibraryOverview } from '@/lib/actions/libraries';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Suspense } from 'react';
+import { requireLibraryRole } from '@/lib/actions/require-library-role';
+import { unauthorized } from 'next/navigation';
 
 const ROLE_DESCRIPTIONS: Record<string, string> = {
   VIEWER: 'You can view documents in this library.',
@@ -37,10 +38,11 @@ async function LibraryInfoPageContent({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const denied = await guardLibraryAccess(id);
-  if (denied) return denied;
+  const membership = await requireLibraryRole(id);
+  if (!membership) return unauthorized();
 
-  const { library, memberCount, documentCount, membership } = await fetchLibraryOverview(id);
+  const { library, memberCount, documentCount } =
+    await fetchLibraryOverview(id);
 
   const libraryName = library?.name ?? '';
   const userRole = membership?.role ?? '';

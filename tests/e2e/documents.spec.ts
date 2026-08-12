@@ -24,12 +24,8 @@ test.describe.serial('Document Management', () => {
     await expect(page).toHaveURL(
       `/hub/libraries/${unauthorizedLibId}/documents`
     );
-    await expect(
-      page.getByRole('heading', { name: 'Unauthorized' })
-    ).toBeVisible();
-    await expect(
-      page.getByText('You do not have permission to access this page.')
-    ).toBeVisible();
+    await expect(page.getByRole('heading', { name: '404' })).toBeVisible();
+    await expect(page.getByText('This page could not be found.')).toBeVisible();
   });
 
   test('Create a new document with all required fields', async ({ page }) => {

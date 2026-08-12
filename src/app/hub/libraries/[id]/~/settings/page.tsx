@@ -1,4 +1,3 @@
-import { guardLibraryAccess } from '@/lib/actions/guard-library-access';
 import {
   LIBRARY_ROLES,
   requireLibraryRole,
@@ -6,6 +5,7 @@ import {
 import { getLibraryName } from '@/lib/actions/libraries';
 import { DeleteLibraryForm, RenameLibraryForm } from './_components';
 import { Suspense } from 'react';
+import { unauthorized } from 'next/navigation';
 
 export default async function LibrarySettingsPage({
   params,
@@ -31,13 +31,10 @@ async function LibrarySettingsPageContent({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const denied = await guardLibraryAccess(id, LIBRARY_ROLES.ADMIN);
-  if (denied) return denied;
+  const membership = await requireLibraryRole(id, LIBRARY_ROLES.ADMIN);
+  if (!membership) return unauthorized();
 
-  const [libraryName, membership] = await Promise.all([
-    getLibraryName(id),
-    requireLibraryRole(id, LIBRARY_ROLES.ADMIN),
-  ]);
+  const libraryName = await getLibraryName(id);
   const currentUserRole = membership?.role ?? '';
   const canManageMembers = ['OWNER', 'ADMIN'].includes(currentUserRole);
 

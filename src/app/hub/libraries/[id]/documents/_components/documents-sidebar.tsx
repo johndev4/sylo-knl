@@ -10,7 +10,6 @@ import {
   ChevronDown,
   ChevronRight,
   FileText,
-  Loader2,
   Calendar,
   MessageSquare,
   Info,

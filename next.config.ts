@@ -4,6 +4,7 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
   allowedDevOrigins: ['127.0.0.1'],
   experimental: {
+    authInterrupts: true,
     instantInsights: {
       validationLevel: 'warning',
     },

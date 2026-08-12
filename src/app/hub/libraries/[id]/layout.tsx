@@ -1,5 +1,7 @@
 import { Suspense, type ReactNode } from 'react';
-import { guardLibraryAccess } from '@/lib/actions/guard-library-access';
+import { requireLibraryRole } from '@/lib/actions/require-library-role';
+import { notFound } from 'next/navigation';
+import { Spinner } from '@/components/ui/spinner';
 
 export default function LibraryLayout({
   children,
@@ -11,7 +13,8 @@ export default function LibraryLayout({
   return (
     <Suspense
       fallback={
-        <div className="text-muted-foreground flex h-full items-center justify-center p-6 text-sm">
+        <div className="text-muted-foreground flex h-full flex-col items-center justify-center gap-1 p-6 text-sm">
+          <Spinner className="text-muted-foreground h-8 w-8" />
           Loading library…
         </div>
       }
@@ -28,9 +31,9 @@ async function LibraryLayoutContent({
   children: ReactNode;
   params: Promise<{ id: string }>;
 }) {
-  const { id } = await params;
-  const denied = await guardLibraryAccess(id);
-  if (denied) return denied;
+  const { id: libraryId } = await params;
+  const membership = await requireLibraryRole(libraryId);
+  if (!membership) return notFound();
 
   return <>{children}</>;
 }

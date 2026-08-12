@@ -1,5 +1,3 @@
-'use client';
-
 import { DocumentsSidebar } from '@/app/hub/libraries/[id]/documents/_components';
 import { SidebarRefreshProvider } from '@/app/hub/libraries/[id]/documents/_components/sidebar-refresh-context';
 import {

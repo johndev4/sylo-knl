@@ -3,6 +3,7 @@ import { FileText, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { requireLibraryRole } from '@/lib/actions/require-library-role';
+import { unauthorized } from 'next/navigation';
 
 export default function DocumentsPage({
   params,
@@ -23,6 +24,8 @@ async function DocumentsPageContent({
 }) {
   const { id: libraryId } = await params;
   const membership = await requireLibraryRole(libraryId);
+  if (!membership) return unauthorized();
+
   const isViewer = membership?.role === 'VIEWER';
 
   return (

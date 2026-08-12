@@ -1,9 +1,8 @@
-import { guardLibraryAccess } from '@/lib/actions/guard-library-access';
 import { fetchLibraryMembers } from '@/lib/actions/libraries';
-import { createClient } from '@/lib/supabase/server';
 import { InviteSection, MemberTable } from './_components';
 import { Suspense } from 'react';
-import { LibraryMember } from './_components/member-table';
+import { requireLibraryRole } from '@/lib/actions/require-library-role';
+import { unauthorized } from 'next/navigation';
 
 export default async function LibraryMembersPage({
   params,
@@ -29,20 +28,11 @@ async function LibraryMembersPageContent({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const denied = await guardLibraryAccess(id);
-  if (denied) return denied;
-
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const membership = await requireLibraryRole(id);
+  if (!membership) return unauthorized();
 
   const members = await fetchLibraryMembers(id);
-
-  const currentMember = members.find(
-    (m: LibraryMember) => m.user_id === user?.id
-  );
-  const currentUserRole = currentMember?.role || '';
+  const currentUserRole = membership?.role || '';
   const canManageMembers = ['OWNER', 'ADMIN'].includes(currentUserRole);
 
   return (
