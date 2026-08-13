@@ -14,13 +14,13 @@ export default function LoginPage() {
   const supabase = createClient();
   const { resolvedTheme } = useTheme();
 
+  const redirectParam =
+    typeof window !== 'undefined'
+      ? new URLSearchParams(window.location.search).get('redirect') || '/'
+      : '/';
+
   useEffect(() => {
     const authClient = createClient();
-
-    const searchParams = new URLSearchParams(
-      typeof window !== 'undefined' ? window.location.search : ''
-    );
-    const redirectParam = searchParams.get('redirect') || '/hub';
 
     const checkSession = async () => {
       const {
@@ -43,6 +43,7 @@ export default function LoginPage() {
     return () => {
       data?.subscription?.unsubscribe();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router]);
 
   return (
@@ -64,7 +65,7 @@ export default function LoginPage() {
               process.env.NEXT_PUBLIC_SUPABASE_URL!
             )
           }
-          redirectTo={`${getURL()}/auth/callback`}
+          redirectTo={`${getURL()}/auth/callback?next=${encodeURIComponent(redirectParam)}`}
         />
       </div>
     </LoginHero>

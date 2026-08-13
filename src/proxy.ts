@@ -3,7 +3,6 @@ import type { NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 
 const LOGIN_PATH = '/login';
-const HUB_PATH = '/hub';
 
 export async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
@@ -49,7 +48,7 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser();
   const isAuthenticated = Boolean(user) && !error;
 
-  if (pathname.startsWith('/hub') && !isAuthenticated) {
+  if (!pathname.startsWith('/login') && !isAuthenticated) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = LOGIN_PATH;
     loginUrl.searchParams.set('redirect', `${pathname}${search}`);
@@ -58,7 +57,6 @@ export async function proxy(request: NextRequest) {
 
   if (pathname === LOGIN_PATH && isAuthenticated) {
     const hubUrl = request.nextUrl.clone();
-    hubUrl.pathname = HUB_PATH;
     return NextResponse.redirect(hubUrl);
   }
 
@@ -66,5 +64,11 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/hub/:path*', '/login', '/join/:path*'],
+  matcher: [
+    '/hub/:path*',
+    '/login',
+    '/join/:path*',
+    '/chat/:path*',
+    '/account/:path*',
+  ],
 };
