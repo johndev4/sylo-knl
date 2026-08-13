@@ -1,46 +1,32 @@
 import { Suspense } from 'react';
-import { getUserLibraries } from '@/lib/actions/libraries';
+
 import ChatClient from './_components/chat-client';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { cookies } from 'next/headers';
+import { ChatSkeleton } from './_components';
+import { getUserLibraries } from '@/lib/actions/libraries';
 
 interface ChatPageProps {
   searchParams: Promise<{ libraryId?: string }>;
 }
 
+// 1. Keep the parent page component completely clean so Suspense can stream immediately
 export default function ChatPage({ searchParams }: ChatPageProps) {
   return (
-    <Suspense
-      fallback={
-        <div className="p-6 text-sm text-muted-foreground">Loading chat…</div>
-      }
-    >
+    <Suspense fallback={<ChatSkeleton />}>
       <ChatPageContent searchParams={searchParams} />
     </Suspense>
   );
 }
 
 async function ChatPageContent({ searchParams }: ChatPageProps) {
-  // Auth guard
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const cookieStore = await cookies();
-  const isTest = cookieStore.get('playwright-test')?.value === 'true';
-
-  if (!user && !isTest) {
-    redirect('/auth/login');
-  }
-
-  const [libraries, params] = await Promise.all([
-    getUserLibraries(),
+  // 3. Concurrent fetching or clean data resolution
+  const [params, libraries] = await Promise.all([
     searchParams,
+    getUserLibraries(),
   ]);
 
-  // Pre-select library from query param if valid
+  // 4. Determine pre-selected items safely
   const preSelectedId = params.libraryId;
   const initialLibraryIds =
     preSelectedId && libraries.some((l) => l.id === preSelectedId)

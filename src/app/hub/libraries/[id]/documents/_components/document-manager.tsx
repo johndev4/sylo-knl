@@ -3,7 +3,7 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
-import { useTagSuggestions } from '@/lib/hooks/use-tag-suggestions';
+import { useTagSuggestions } from '@/hooks/use-tag-suggestions';
 import {
   Calendar,
   Clock,
@@ -25,7 +25,7 @@ import {
 import { DocumentActions } from './document-actions';
 import { useSidebarRefresh } from './sidebar-refresh-context';
 import { TagChipsInput } from './tag-chips-input';
-import { useNavigationGuard } from '@/lib/hooks/use-navigation-guard';
+import { useNavigationGuard } from '@/hooks/use-navigation-guard';
 import { BlockEditor } from './block_editor';
 
 interface DocumentManagerProps {

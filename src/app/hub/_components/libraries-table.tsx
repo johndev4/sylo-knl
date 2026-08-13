@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useReducedMotion } from '@/lib/hooks/use-reduced-motion';
+import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { FileText, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 

@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { getURL } from '../auth/utils';
+import { getURL } from '../lib/auth/utils';
 
 /**
  * Hook to prevent data loss by prompting the user when they try to leave
