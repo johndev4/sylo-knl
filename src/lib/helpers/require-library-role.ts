@@ -9,6 +9,8 @@ export const LIBRARY_ROLES = {
   OWNER: 3,
 };
 
+const LOGIN_PATH = '/login';
+
 /**
  * Returns the library membership if the user is authorized, or null if not.
  * @param libraryId string
@@ -29,9 +31,7 @@ export async function requireLibraryRole(
     return { role: 'OWNER' };
   }
 
-  if (!user) {
-    redirect('/login');
-  }
+  if (!user) redirect(LOGIN_PATH);
 
   const { data: membership } = await supabase
     .from('library_members')

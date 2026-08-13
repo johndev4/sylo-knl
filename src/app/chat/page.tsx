@@ -1,10 +1,7 @@
 import { Suspense } from 'react';
 
 import ChatClient from './_components/chat-client';
-import { redirect } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
-import { ChatSkeleton } from './_components';
-import { getUserLibraries } from '@/lib/actions/libraries';
+import { getUserLibraries } from '@/actions/libraries';
 
 interface ChatPageProps {
   searchParams: Promise<{ libraryId?: string }>;
@@ -13,7 +10,11 @@ interface ChatPageProps {
 // 1. Keep the parent page component completely clean so Suspense can stream immediately
 export default function ChatPage({ searchParams }: ChatPageProps) {
   return (
-    <Suspense fallback={<ChatSkeleton />}>
+    <Suspense
+      fallback={
+        <div className="text-muted-foreground p-6 text-sm">Loading chat…</div>
+      }
+    >
       <ChatPageContent searchParams={searchParams} />
     </Suspense>
   );

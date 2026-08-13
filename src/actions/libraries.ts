@@ -3,7 +3,6 @@
 import crypto from 'crypto';
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
-import { cookies } from 'next/headers';
 
 function generateInviteCode() {
   return crypto.randomBytes(6).toString('base64url').substring(0, 8);
@@ -21,17 +20,7 @@ export async function getUserLibraries() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) {
-    const cookieStore = await cookies();
-    const isTest = cookieStore.get('playwright-test')?.value === 'true';
-    if (isTest) {
-      return [
-        { id: 'lib-1', name: 'Mock Library 1', role: 'OWNER' },
-        { id: 'lib-2', name: 'Mock Library 2', role: 'EDITOR' },
-      ];
-    }
-    throw new Error('Unauthorized');
-  }
+  if (!user) throw new Error('Unauthorized');
 
   const { data, error } = await supabase
     .from('library_members')

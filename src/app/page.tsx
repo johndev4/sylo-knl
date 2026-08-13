@@ -1,6 +1,9 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 
+const LOGIN_PATH = '/login';
+const HUB_PATH = '/hub';
+
 export default async function Home() {
   const supabase = await createClient();
   const {
@@ -8,8 +11,8 @@ export default async function Home() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect('/login');
+    redirect(LOGIN_PATH);
   } else {
-    redirect('/hub');
+    redirect(HUB_PATH);
   }
 }

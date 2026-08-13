@@ -37,7 +37,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from '@/components/ui/sidebar';
-import { leaveLibrary } from '@/lib/actions/libraries';
+import { leaveLibrary } from '@/actions/libraries';
 
 export function LibrarySidebar() {
   const params = useParams();

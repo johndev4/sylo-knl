@@ -16,7 +16,7 @@ import {
   updateLibraryMemberRole,
   removeLibraryMember,
   removeMultipleLibraryMembers,
-} from '@/lib/actions/libraries';
+} from '@/actions/libraries';
 
 export interface LibraryMember {
   library_id: string;

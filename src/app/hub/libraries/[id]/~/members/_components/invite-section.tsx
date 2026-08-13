@@ -31,7 +31,7 @@ import {
   createLibraryInvite,
   fetchLibraryInvites,
   revokeLibraryInvite,
-} from '@/lib/actions/libraries';
+} from '@/actions/libraries';
 import { getURL } from '@/lib/auth/utils';
 
 interface InviteSectionProps {

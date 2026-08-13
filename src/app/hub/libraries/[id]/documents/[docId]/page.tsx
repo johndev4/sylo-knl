@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import { unauthorized } from 'next/navigation';
-import { requireLibraryRole } from '@/lib/actions/require-library-role';
+import { requireLibraryRole } from '@/lib/helpers/require-library-role';
 import { DocumentViewClient } from '../_components/document-view-client';
 import { DocumentSkeleton } from '../_components';
 

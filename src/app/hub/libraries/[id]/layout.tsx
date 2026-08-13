@@ -1,5 +1,5 @@
 import { Suspense, type ReactNode } from 'react';
-import { requireLibraryRole } from '@/lib/actions/require-library-role';
+import { requireLibraryRole } from '@/lib/helpers/require-library-role';
 import { notFound } from 'next/navigation';
 import { Spinner } from '@/components/ui/spinner';
 

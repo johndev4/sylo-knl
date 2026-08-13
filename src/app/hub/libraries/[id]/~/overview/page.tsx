@@ -1,9 +1,9 @@
-import { fetchLibraryOverview } from '@/lib/actions/libraries';
+import { fetchLibraryOverview } from '@/actions/libraries';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Suspense } from 'react';
-import { requireLibraryRole } from '@/lib/actions/require-library-role';
+import { requireLibraryRole } from '@/lib/helpers/require-library-role';
 import { unauthorized } from 'next/navigation';
 
 const ROLE_DESCRIPTIONS: Record<string, string> = {
