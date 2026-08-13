@@ -67,7 +67,6 @@ export const config = {
   matcher: [
     '/hub/:path*',
     '/login',
-    '/join/:path*',
     '/chat/:path*',
     '/account/:path*',
   ],
