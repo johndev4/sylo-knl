@@ -50,7 +50,20 @@ export default function ChatClient({
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {}, []);
+  // This reset all the component states function
+  const resetState = useCallback(() => {
+    setSelectedIds(initialLibraryIds);
+    setInput('');
+    setMessages([]);
+    setIsLoading(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      resetState();
+    };
+  }, [resetState]);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
