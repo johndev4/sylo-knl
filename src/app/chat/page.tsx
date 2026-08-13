@@ -1,11 +1,10 @@
 import { Suspense } from 'react';
-
 import ChatClient from './_components/chat-client';
 import { getUserLibraries } from '@/queries/chat';
 import { ChatSkeleton } from './_components';
 
 interface ChatPageProps {
-  searchParams: Promise<{ libraryId?: string }>;
+  searchParams: Promise<{ libraryIds?: string }>;
 }
 
 export default function ChatPage({ searchParams }: ChatPageProps) {
@@ -26,11 +25,9 @@ async function ChatPageContent({ searchParams }: ChatPageProps) {
     getUserLibraries(),
   ]);
 
-  const preSelectedId = params.libraryId;
-  const initialLibraryIds =
-    preSelectedId && libraries.some((l) => l.id === preSelectedId)
-      ? [preSelectedId]
-      : [];
+  const preSelected = params.libraryIds ? params.libraryIds.split(',') : [];
+  const validIds = new Set(libraries.map((l) => l.id));
+  const initialLibraryIds = preSelected.filter((id) => validIds.has(id));
 
   return (
     <ChatClient libraries={libraries} initialLibraryIds={initialLibraryIds} />

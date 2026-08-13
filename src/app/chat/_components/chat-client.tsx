@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { Button } from '@/components/ui/button';
@@ -37,14 +38,19 @@ export default function ChatClient({
   libraries,
   initialLibraryIds,
 }: ChatClientProps) {
+  const router = useRouter();
+  const pathname = usePathname();
   const prefersReducedMotion = useReducedMotion();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Initialize the component states
   const [selectedIds, setSelectedIds] = useState<string[]>(initialLibraryIds);
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {}, []);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -58,14 +64,28 @@ export default function ChatClient({
   const allSelected = selectedIds.length === libraries.length;
   const noneSelected = selectedIds.length === 0;
 
+  const updateSearchParams = useCallback(
+    (ids: string[]) => {
+      const url = ids.length
+        ? `${pathname}?libraryIds=${ids.join(',')}`
+        : pathname;
+      router.replace(url, { scroll: false });
+    },
+    [router, pathname]
+  );
+
   const toggleLibrary = (id: string) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-    );
+    const next = selectedIds.includes(id)
+      ? selectedIds.filter((x) => x !== id)
+      : [...selectedIds, id];
+    setSelectedIds(next);
+    updateSearchParams(next);
   };
 
   const toggleAll = () => {
-    setSelectedIds(allSelected ? [] : libraries.map((l) => l.id));
+    const next = allSelected ? [] : libraries.map((l) => l.id);
+    setSelectedIds(next);
+    updateSearchParams(next);
   };
 
   const selectedLibraries = libraries.filter((l) => selectedIds.includes(l.id));
