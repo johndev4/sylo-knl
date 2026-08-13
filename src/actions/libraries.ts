@@ -4,43 +4,6 @@ import crypto from 'crypto';
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 
-function generateInviteCode() {
-  return crypto.randomBytes(6).toString('base64url').substring(0, 8);
-}
-
-// --------------------------------------------------------------------------
-
-/**
- * Fetch all libraries the current user is a member of.
- * Used by the unified chat page to populate the library selector.
- */
-export async function getUserLibraries() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) throw new Error('Unauthorized');
-
-  const { data, error } = await supabase
-    .from('library_members')
-    .select('role, library:libraries(id, name)')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: true });
-
-  if (error) {
-    console.error('Failed to fetch user libraries:', error);
-    throw new Error('Failed to fetch libraries');
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (data ?? []).map((m: any) => ({
-    id: m.library.id as string,
-    name: m.library.name as string,
-    role: m.role as string,
-  }));
-}
-
 // --------------------------------------------------------------------------
 
 /**
@@ -519,7 +482,11 @@ export async function createLibraryInvite(
     throw new Error('Only owners and admins can create invites');
   }
 
-  const inviteCode = generateInviteCode();
+  // Generate invite code
+  const inviteCode = crypto
+    .randomBytes(6)
+    .toString('base64url')
+    .substring(0, 8);
 
   const { data: invite, error } = await supabase
     .from('library_invites')
