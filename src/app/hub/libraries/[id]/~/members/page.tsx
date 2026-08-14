@@ -1,8 +1,9 @@
-import { fetchLibraryMembers } from '@/actions/libraries';
 import { InviteSection, MemberTable } from './_components';
 import { Suspense } from 'react';
 import { requireLibraryRole } from '@/lib/auth/library-role';
 import { forbidden } from 'next/navigation';
+import { getLibraryMembers } from '@/queries/libraries';
+import { createClient } from '@/lib/supabase/server';
 
 export default async function LibraryMembersPage({
   params,
@@ -31,7 +32,8 @@ async function LibraryMembersPageContent({
   const membership = await requireLibraryRole(id);
   if (!membership) return forbidden();
 
-  const members = await fetchLibraryMembers(id);
+  const supabase = await createClient();
+  const members = await getLibraryMembers(id, supabase);
   const currentUserRole = membership?.role || '';
   const canManageMembers = ['OWNER', 'ADMIN'].includes(currentUserRole);
 

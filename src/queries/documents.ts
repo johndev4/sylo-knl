@@ -1,60 +1,12 @@
-import { z } from 'zod';
+import {
+  DocumentsResult,
+  DocumentsResultSchema,
+  DocumentResult,
+  DocumentAuthor,
+  DocumentAuthorSchema,
+  DocumentResultSchema,
+} from '@/lib/validation/document-schema';
 import { SupabaseClient } from '@supabase/supabase-js';
-
-// -----------------------------------------------------------------------------
-// Schemas
-// -----------------------------------------------------------------------------
-
-const DocumentListItemSchema = z.object({
-  id: z.string(),
-  title: z.string(),
-  tags: z.array(z.string()),
-  created_at: z.string(),
-});
-
-const DocumentsResultSchema = z.object({
-  data: z.array(DocumentListItemSchema),
-  metadata: z.object({
-    total: z.number(),
-    page: z.number(),
-    limit: z.number(),
-    totalPages: z.number(),
-  }),
-});
-
-const DocumentAuthorSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  avatar_url: z.string().nullable(),
-});
-
-const DocumentDetailSchema = z.object({
-  id: z.string(),
-  title: z.string(),
-  content: z.string(),
-  tags: z.array(z.string()),
-  author_ids: z.array(z.string()),
-  library_id: z.string(),
-  created_at: z.string(),
-  updated_at: z.string(),
-  deleted_at: z.string().nullable(),
-  authors: z.array(DocumentAuthorSchema),
-});
-
-const DocumentResultSchema = z.object({
-  document: DocumentDetailSchema,
-  role: z.string(),
-});
-
-// -----------------------------------------------------------------------------
-// Types
-// -----------------------------------------------------------------------------
-
-export type DocumentListItem = z.infer<typeof DocumentListItemSchema>;
-export type DocumentsResult = z.infer<typeof DocumentsResultSchema>;
-export type DocumentAuthor = z.infer<typeof DocumentAuthorSchema>;
-export type DocumentDetail = z.infer<typeof DocumentDetailSchema>;
-export type DocumentResult = z.infer<typeof DocumentResultSchema>;
 
 /**
  * Retrieves a paginated list of documents from a library with optional filtering.

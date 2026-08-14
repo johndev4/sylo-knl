@@ -1,10 +1,11 @@
-import { fetchLibraryOverview } from '@/actions/libraries';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Suspense } from 'react';
 import { requireLibraryRole } from '@/lib/auth/library-role';
 import { forbidden } from 'next/navigation';
+import { getLibraryOverview } from '@/queries/libraries';
+import { createClient } from '@/lib/supabase/server';
 
 const ROLE_DESCRIPTIONS: Record<string, string> = {
   VIEWER: 'You can view documents in this library.',
@@ -41,8 +42,11 @@ async function LibraryInfoPageContent({
   const membership = await requireLibraryRole(id);
   if (!membership) return forbidden();
 
-  const { library, memberCount, documentCount } =
-    await fetchLibraryOverview(id);
+  const supabase = await createClient();
+  const { library, memberCount, documentCount } = await getLibraryOverview(
+    id,
+    supabase
+  );
 
   const libraryName = library?.name ?? '';
   const userRole = membership?.role ?? '';

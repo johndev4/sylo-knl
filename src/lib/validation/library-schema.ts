@@ -37,7 +37,7 @@ export const LibraryMemberSchema = z.object({
   library_id: z.string().uuid(),
   user_id: z.string().uuid(),
   role: UserRoleEnum,
-  created_at: z.string().datetime().or(z.date()),
+  created_at: z.string().datetime({ offset: true }).or(z.date()),
   user: z
     .object({
       id: z.string().uuid(),
@@ -72,12 +72,12 @@ export const InviteResponseSchema = z.object({
   invite_code: z.string(),
   role: UserRoleEnum,
   created_by: z.string().uuid().nullable(),
-  expires_at: z.string().datetime().nullable(),
+  expires_at: z.string().datetime({ offset: true }).nullable(),
   max_uses: z.number().int().nullable(),
   use_count: z.number().int(),
   is_active: z.boolean(),
-  created_at: z.string().datetime(),
-  updated_at: z.string().datetime(),
+  created_at: z.string().datetime({ offset: true }),
+  updated_at: z.string().datetime({ offset: true }),
   created_by_user: z
     .object({
       id: z.string().uuid(),

@@ -1,13 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { createClient } from '@/lib/supabase/server';
+import { SupabaseClient } from '@supabase/supabase-js';
 import { redirect } from 'next/navigation';
 
 /**
- * Fetch all libraries the current user is a member of.
- * Used by the unified chat page to populate the library selector.
+ * Retrieves all libraries that the current user is a member of.
+ *
+ * @param supabase - Optional SupabaseClient instance. If not provided, a new browser client will be created
  */
-export async function getUserLibraries() {
-  const supabase = await createClient();
+export async function getUserLibraries(supabase?: SupabaseClient) {
+  if (!supabase) {
+    const { createClient } = await import('@/lib/supabase/client');
+    supabase = createClient();
+  }
+
   const {
     data: { user },
   } = await supabase.auth.getUser();

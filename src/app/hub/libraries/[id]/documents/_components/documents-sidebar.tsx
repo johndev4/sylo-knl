@@ -42,7 +42,8 @@ import { useSidebarRefresh } from './sidebar-refresh-context';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Spinner } from '@/components/ui/spinner';
-import { DocumentListItem, getDocuments } from '@/queries/documents';
+import { getDocuments } from '@/queries/documents';
+import { DocumentListItem } from '@/lib/validation/document-schema';
 
 type Document = DocumentListItem;
 

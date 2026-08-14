@@ -4,10 +4,11 @@ import crypto from 'crypto';
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 
-// --------------------------------------------------------------------------
-
 /**
- * Leave library (for current user)
+ * Allows a user to leave a library they are a member of.
+ * Library owners cannot leave and must transfer ownership or delete the library first.
+ *
+ * @param libraryId - The unique identifier of the library to leave
  */
 export async function leaveLibrary(libraryId: string) {
   const supabase = await createClient();
@@ -46,10 +47,12 @@ export async function leaveLibrary(libraryId: string) {
   return { success: true };
 }
 
-// --------------------------------------------------------------------------
-
-// Library Management Functions
-
+/**
+ * Creates a new library with the current user as the owner.
+ * Checks for duplicate library names (case-insensitive) within the user's existing libraries.
+ *
+ * @param name - The name of the library to create
+ */
 export async function createLibrary(name: string) {
   const supabase = await createClient();
   const {
@@ -88,6 +91,12 @@ export async function createLibrary(name: string) {
   return library;
 }
 
+/**
+ * Deletes a library by ID.
+ * Only the library owner can delete the library (enforced by RLS).
+ *
+ * @param libraryId - The unique identifier of the library to delete
+ */
 export async function deleteLibrary(libraryId: string) {
   const supabase = await createClient();
   const {
@@ -108,6 +117,12 @@ export async function deleteLibrary(libraryId: string) {
   return { success: true };
 }
 
+/**
+ * Deletes multiple libraries by their IDs.
+ * Only libraries where the user is the owner will be deleted (enforced by RLS).
+ *
+ * @param ids - Array of library IDs to delete
+ */
 export async function deleteLibraries(ids: string[]) {
   if (!ids.length) return { success: true };
 
@@ -127,16 +142,13 @@ export async function deleteLibraries(ids: string[]) {
   return { success: true };
 }
 
-export async function getLibraryName(libraryId: string) {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from('libraries')
-    .select('name')
-    .eq('id', libraryId)
-    .single();
-  return data?.name ?? '';
-}
-
+/**
+ * Updates the name of a library.
+ * Only library owners and admins can rename the library.
+ *
+ * @param libraryId - The unique identifier of the library to rename
+ * @param newName - The new name for the library
+ */
 export async function updateLibraryName(libraryId: string, newName: string) {
   const supabase = await createClient();
   const {
@@ -172,52 +184,15 @@ export async function updateLibraryName(libraryId: string, newName: string) {
   return { success: true };
 }
 
-// Member Management Functions
-
-export async function fetchLibraryMembers(libraryId: string) {
-  console.log(`[DEBUG] fetchLibraryMembers called for: ${libraryId}`);
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) throw new Error('Unauthorized');
-
-  // Check if user is member of library
-  const { data: membership } = await supabase
-    .from('library_members')
-    .select('role')
-    .eq('library_id', libraryId)
-    .eq('user_id', user.id)
-    .single();
-
-  if (!membership) throw new Error('Access denied to library');
-
-  // Fetch all members with user details
-  const { data: members, error } = await supabase
-    .from('library_members')
-    .select(
-      `
-      library_id,
-      user_id,
-      role,
-      created_at,
-      user:user_id(id, name, email, avatar_url)
-    `
-    )
-    .eq('library_id', libraryId)
-    .order('created_at', { ascending: true });
-
-  if (error) {
-    console.error('Failed to fetch members:', error);
-    throw new Error('Failed to fetch members');
-  }
-
-  // Type assertion to match schema (Supabase can return slightly different shapes)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (members || []) as any[];
-}
-
+/**
+ * Adds a new member to a library by email address.
+ * Only library owners and admins can add members.
+ * Enforces a maximum of 11 members per library.
+ *
+ * @param libraryId - The unique identifier of the library
+ * @param email - The email address of the user to add
+ * @param role - The role to assign to the new member (ADMIN, EDITOR, or VIEWER)
+ */
 export async function addLibraryMember(
   libraryId: string,
   email: string,
@@ -300,6 +275,15 @@ export async function addLibraryMember(
   return newMember;
 }
 
+/**
+ * Updates the role of an existing library member.
+ * Only library owners and admins can modify member roles.
+ * Prevents demoting the only owner of a library.
+ *
+ * @param libraryId - The unique identifier of the library
+ * @param userId - The unique identifier of the user whose role to update
+ * @param role - The new role to assign (ADMIN, EDITOR, or VIEWER)
+ */
 export async function updateLibraryMemberRole(
   libraryId: string,
   userId: string,
@@ -377,6 +361,14 @@ export async function updateLibraryMemberRole(
   return updatedMember;
 }
 
+/**
+ * Removes a member from a library.
+ * Only library owners and admins can remove members.
+ * Prevents removing the only owner of a library.
+ *
+ * @param libraryId - The unique identifier of the library
+ * @param userId - The unique identifier of the user to remove
+ */
 export async function removeLibraryMember(libraryId: string, userId: string) {
   const supabase = await createClient();
   const {
@@ -439,6 +431,13 @@ export async function removeLibraryMember(libraryId: string, userId: string) {
   return { success: true };
 }
 
+/**
+ * Removes multiple members from a library in a batch operation.
+ * Uses Promise.allSettled to attempt removal of all members and reports failures.
+ *
+ * @param libraryId - The unique identifier of the library
+ * @param userIds - Array of user IDs to remove from the library
+ */
 export async function removeMultipleLibraryMembers(
   libraryId: string,
   userIds: string[]
@@ -456,8 +455,16 @@ export async function removeMultipleLibraryMembers(
   return { success: true, removedCount: userIds.length };
 }
 
-// Invite Management Functions
-
+/**
+ * Creates a new invite link for a library.
+ * Only library owners and admins can create invites.
+ * Generates a unique 8-character invite code.
+ *
+ * @param libraryId - The unique identifier of the library
+ * @param role - The role to assign to users who join via this invite (VIEWER or EDITOR)
+ * @param expiresAt - Optional expiration date/time for the invite
+ * @param maxUses - Optional maximum number of times the invite can be used
+ */
 export async function createLibraryInvite(
   libraryId: string,
   role: 'VIEWER' | 'EDITOR',
@@ -510,73 +517,14 @@ export async function createLibraryInvite(
   return invite;
 }
 
-export async function fetchLibraryInvites(libraryId: string) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) throw new Error('Unauthorized');
-
-  const { data: membership } = await supabase
-    .from('library_members')
-    .select('role')
-    .eq('library_id', libraryId)
-    .eq('user_id', user.id)
-    .single();
-
-  if (!membership || !['OWNER', 'ADMIN'].includes(membership.role)) {
-    throw new Error('Only owners and admins can view invites');
-  }
-
-  const { data: invites, error } = await supabase
-    .from('library_invites')
-    .select(
-      `
-      *,
-      created_by_user:users!library_invites_created_by_fkey(id, name, email, avatar_url)
-    `
-    )
-    .eq('library_id', libraryId)
-    .eq('is_active', true)
-    .order('created_at', { ascending: false });
-
-  if (error) {
-    console.error('Failed to fetch invites:', error);
-    throw new Error('Failed to fetch invites');
-  }
-
-  return (invites || []) as unknown[];
-}
-
-export async function fetchLibraryOverview(libraryId: string) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error('Unauthorized');
-
-  const [{ data: library }, { count: memberCount }, { count: documentCount }] =
-    await Promise.all([
-      supabase
-        .from('libraries')
-        .select('name, created_at')
-        .eq('id', libraryId)
-        .single(),
-      supabase
-        .from('library_members')
-        .select('*', { count: 'exact', head: true })
-        .eq('library_id', libraryId),
-      supabase
-        .from('documents')
-        .select('*', { count: 'exact', head: true })
-        .eq('library_id', libraryId)
-        .is('deleted_at', null),
-    ]);
-
-  return { library, memberCount, documentCount };
-}
-
+/**
+ * Revokes an existing invite link for a library.
+ * Only library owners and admins can revoke invites.
+ * Sets the invite's is_active flag to false.
+ *
+ * @param libraryId - The unique identifier of the library
+ * @param inviteId - The unique identifier of the invite to revoke
+ */
 export async function revokeLibraryInvite(libraryId: string, inviteId: string) {
   const supabase = await createClient();
   const {

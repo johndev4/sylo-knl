@@ -3,31 +3,21 @@
 import { createClient } from '@/lib/supabase/server';
 import { chunkText } from '@/lib/ai/chunking';
 import { generateEmbeddings } from '@/lib/ai/embeddings';
-import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-
-// ---------------------------------------------------------------------------
-// Schemas
-// ---------------------------------------------------------------------------
-
-const createSchema = z.object({
-  title: z.string().min(1, 'Title is required'),
-  content: z.string().min(10, 'Content is too short'),
-  libraryId: z.string().uuid('Invalid Library ID'),
-  tags: z.array(z.string()).optional(),
-});
-
-const updateSchema = z.object({
-  title: z.string().min(1, 'Title is required'),
-  content: z.string().min(10, 'Content is too short'),
-  tags: z.array(z.string()).optional(),
-  lastUpdatedAt: z.string().optional(),
-});
+import { createSchema, updateSchema } from '@/lib/validation/document-schema';
 
 // ---------------------------------------------------------------------------
 // createDocument — mirrors POST /api/documents
 // ---------------------------------------------------------------------------
-
+/**
+ * Creates a new document in a library with automatic chunking and embedding generation.
+ * Ensures the user has appropriate permissions and creates a personal space if needed.
+ * @param input - The document creation input
+ * @param input.title - The title of the document (minimum 1 character)
+ * @param input.content - The content of the document (minimum 10 characters)
+ * @param input.libraryId - The UUID of the library where the document will be created
+ * @param input.tags - Optional array of tags to associate with the document
+ */
 export async function createDocument(input: {
   title: string;
   content: string;
@@ -78,7 +68,11 @@ export async function createDocument(input: {
   // 2. Generate embeddings for each chunk
   let embeddings: number[][];
   try {
-    console.log('[INGESTION] Generating embeddings for', chunks.length, 'chunks');
+    console.log(
+      '[INGESTION] Generating embeddings for',
+      chunks.length,
+      'chunks'
+    );
     embeddings = await generateEmbeddings(chunks);
     console.log('[INGESTION] Successfully generated embeddings');
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -135,7 +129,16 @@ export async function createDocument(input: {
 // ---------------------------------------------------------------------------
 // updateDocument — mirrors PUT /api/documents/[docId]
 // ---------------------------------------------------------------------------
-
+/**
+ * Updates an existing document with new content, title, or tags.
+ * Performs optimistic concurrency control and regenerates embeddings if content changes.
+ * @param docId - The UUID of the document to update
+ * @param input - The document update input
+ * @param input.title - The new title of the document (minimum 1 character)
+ * @param input.content - The new content of the document (minimum 10 characters)
+ * @param input.tags - Optional array of tags to associate with the document
+ * @param input.lastUpdatedAt - Optional timestamp for optimistic concurrency control
+ */
 export async function updateDocument(
   docId: string,
   input: {
@@ -263,8 +266,14 @@ export async function updateDocument(
 // ---------------------------------------------------------------------------
 // deleteDocument — mirrors DELETE /api/documents/[docId]
 // ---------------------------------------------------------------------------
-
-export async function deleteDocument(docId: string): Promise<{ success: true }> {
+/**
+ * Soft deletes a document by setting its deleted_at timestamp.
+ * Ensures the user has appropriate permissions before deletion.
+ * @param docId - The UUID of the document to delete
+ */
+export async function deleteDocument(
+  docId: string
+): Promise<{ success: true }> {
   const supabase = await createClient();
   const {
     data: { user },

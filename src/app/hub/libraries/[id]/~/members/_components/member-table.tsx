@@ -17,19 +17,7 @@ import {
   removeLibraryMember,
   removeMultipleLibraryMembers,
 } from '@/actions/libraries';
-
-export interface LibraryMember {
-  library_id: string;
-  user_id: string;
-  role: 'OWNER' | 'ADMIN' | 'EDITOR' | 'VIEWER';
-  created_at: string;
-  user: {
-    id: string;
-    name: string | null;
-    email: string;
-    avatar_url: string | null;
-  } | null;
-}
+import { LibraryMember } from '@/lib/validation/library-schema';
 
 interface MemberTableProps {
   libraryId: string;

@@ -1,8 +1,10 @@
 import { LIBRARY_ROLES, requireLibraryRole } from '@/lib/auth/library-role';
-import { getLibraryName } from '@/actions/libraries';
+
 import { DeleteLibraryForm, RenameLibraryForm } from './_components';
 import { Suspense } from 'react';
 import { forbidden } from 'next/navigation';
+import { getLibraryName } from '@/queries/libraries';
+import { createClient } from '@/lib/supabase/server';
 
 export default async function LibrarySettingsPage({
   params,
@@ -31,7 +33,8 @@ async function LibrarySettingsPageContent({
   const membership = await requireLibraryRole(id, LIBRARY_ROLES.ADMIN);
   if (!membership) return forbidden();
 
-  const libraryName = await getLibraryName(id);
+  const supabase = await createClient();
+  const libraryName = await getLibraryName(id, supabase);
   const currentUserRole = membership?.role ?? '';
   const canManageMembers = ['OWNER', 'ADMIN'].includes(currentUserRole);
 

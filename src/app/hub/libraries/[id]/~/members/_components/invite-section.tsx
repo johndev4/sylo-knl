@@ -27,12 +27,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import {
-  createLibraryInvite,
-  fetchLibraryInvites,
-  revokeLibraryInvite,
-} from '@/actions/libraries';
+import { createLibraryInvite, revokeLibraryInvite } from '@/actions/libraries';
 import { getURL } from '@/lib/auth/utils';
+import { getLibraryInvites } from '@/queries/libraries';
 
 interface InviteSectionProps {
   libraryId: string;
@@ -65,7 +62,7 @@ export function InviteSection({ libraryId }: InviteSectionProps) {
   const loadInvites = async () => {
     try {
       setIsLoading(true);
-      const data = await fetchLibraryInvites(libraryId);
+      const data = await getLibraryInvites(libraryId);
       setInvites(data);
     } catch (err) {
       console.error('Failed to load invites:', err);
