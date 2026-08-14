@@ -3,6 +3,7 @@
 import Image from 'next/image';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { LogOut, Settings } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { ThemeSubmenu } from '@/components/layout/theme-submenu';
@@ -25,6 +26,7 @@ interface UserProfile {
 }
 
 export function AccountDropdown() {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -87,7 +89,7 @@ export function AccountDropdown() {
       const supabase = createClient();
       await supabase.auth.signOut();
       setIsOpen(false);
-      window.location.href = '/login';
+      router.push('/login');
     } catch (err) {
       console.error('Logout failed:', err);
     }
@@ -177,7 +179,7 @@ export function AccountDropdown() {
 
         {/* Account Settings */}
         <DropdownMenuItem
-          onClick={() => (window.location.href = '/account/settings')}
+          onClick={() => router.push('/account/settings')}
         >
           <Settings className="h-4 w-4" />
           <span>Account Settings</span>
