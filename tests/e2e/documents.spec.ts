@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { getTestData } from './utils/test-data';
 import { randomUUID } from 'crypto';
+import { mockSupabaseDocuments } from './utils/helpers';
 
 test.describe.serial('Document Management', () => {
   let libId: string;
@@ -148,128 +149,84 @@ test.describe.serial('Document Management', () => {
   });
 
   /* Temporarily remove the 1000 mocked documents for E2E test. Fix this soon. */
-  // test('Load More paginates through 1000 mocked documents (100 per load)', async ({
-  //   page,
-  // }) => {
-  //   const TOTAL_DOCS = 1000;
-  //   const LIMIT = 100;
+  test('Load More paginates through 1000 mocked documents (100 per load)', async ({
+    page,
+  }) => {
+    const TOTAL_DOCS = 1000;
+    const LIMIT = 100;
 
-  //   /**
-  //    * Build a page of mock document records.
-  //    * Each document has a unique id, title, tags, and timestamps that match
-  //    * the shape returned by GET /api/documents.
-  //    */
-  //   function buildPage(pageNum: number) {
-  //     const from = (pageNum - 1) * LIMIT;
-  //     const to = Math.min(from + LIMIT, TOTAL_DOCS);
-  //     const data = Array.from({ length: to - from }, (_, i) => ({
-  //       id: `mock-doc-${from + i + 1}`,
-  //       title: `Mock Document ${from + i + 1}`,
-  //       tags: ['MOCK'],
-  //       author_ids: [],
-  //       created_at: new Date().toISOString(),
-  //       updated_at: new Date().toISOString(),
-  //       deleted_at: null,
-  //     }));
-  //     return {
-  //       data,
-  //       metadata: {
-  //         total: TOTAL_DOCS,
-  //         page: pageNum,
-  //         limit: LIMIT,
-  //         totalPages: Math.ceil(TOTAL_DOCS / LIMIT),
-  //       },
-  //     };
-  //   }
+    await mockSupabaseDocuments(page, 1000, 100);
 
-  //   // Intercept every GET /api/documents request and serve mock data.
-  //   // Requests for the real library API are passed through so auth and
-  //   // library metadata still work correctly.
-  //   await page.route('**/api/documents*', async (route) => {
-  //     const url = new URL(route.request().url());
-  //     // Only mock GET requests (not POST/PUT/DELETE)
-  //     if (route.request().method() !== 'GET') {
-  //       await route.continue();
-  //       return;
-  //     }
-  //     const pageNum = parseInt(url.searchParams.get('page') || '1');
-  //     await route.fulfill({
-  //       status: 200,
-  //       contentType: 'application/json',
-  //       body: JSON.stringify(buildPage(pageNum)),
-  //     });
-  //   });
+    await page.goto(`/hub/libraries/${libId}/documents`);
+    await page.waitForLoadState('networkidle');
 
-  //   await page.goto(`/hub/libraries/${libId}/documents`);
-  //   await page.waitForLoadState('networkidle');
+    // --- Initial page load: page=1 → 100 docs loaded, 900 remaining ---
 
-  //   // --- Initial page load: page=1 → 100 docs loaded, 900 remaining ---
+    // Sidebar should show the total count label "DOCUMENTS (1000)"
+    await expect(
+      page
+        .locator('div[aria-label="Documents Sidebar"]')
+        .getByText('DOCUMENTS (1000)')
+    ).toBeVisible({
+      timeout: 10000,
+    });
 
-  //   // Sidebar should show the total count label "DOCUMENTS (1000)"
-  //   await expect(
-  //     page
-  //       .locator('div[aria-label="Documents Sidebar"]')
-  //       .getByText('DOCUMENTS (1000)')
-  //   ).toBeVisible({
-  //     timeout: 10000,
-  //   });
+    // First mock document should appear immediately
+    await expect(
+      page
+        .locator('div[aria-label="Documents Sidebar"]')
+        .getByText('Mock Document 1', { exact: true })
+    ).toBeVisible();
 
-  //   // First mock document should appear immediately
-  //   await expect(
-  //     page
-  //       .locator('div[aria-label="Documents Sidebar"]')
-  //       .getByText('Mock Document 1', { exact: true })
-  //   ).toBeVisible();
+    // "Load More" button must be present showing 900 remaining
+    const loadMoreBtn = page.locator(
+      'div[aria-label="Documents Sidebar"] button',
+      {
+        hasText: /load more/i,
+      }
+    );
+    await expect(loadMoreBtn).toBeVisible();
+    await expect(loadMoreBtn).toContainText('900 Left');
 
-  //   // "Load More" button must be present showing 900 remaining
-  //   const loadMoreBtn = page.locator(
-  //     'div[aria-label="Documents Sidebar"] button',
-  //     {
-  //       hasText: /load more/i,
-  //     }
-  //   );
-  //   await expect(loadMoreBtn).toBeVisible();
-  //   await expect(loadMoreBtn).toContainText('900 Left');
+    // --- Load page 2: 100 more docs, 800 remaining ---
+    await loadMoreBtn.click();
+    await expect(loadMoreBtn).toContainText('800 Left');
+    await expect(
+      page
+        .locator('div[aria-label="Documents Sidebar"]')
+        .getByText('Mock Document 101', { exact: true })
+    ).toBeVisible();
 
-  //   // --- Load page 2: 100 more docs, 800 remaining ---
-  //   await loadMoreBtn.click();
-  //   await expect(loadMoreBtn).toContainText('800 Left');
-  //   await expect(
-  //     page
-  //       .locator('div[aria-label="Documents Sidebar"]')
-  //       .getByText('Mock Document 101', { exact: true })
-  //   ).toBeVisible();
+    // --- Load page 3: 100 more docs, 700 remaining ---
+    await loadMoreBtn.click();
+    await expect(loadMoreBtn).toContainText('700 Left');
+    await expect(
+      page
+        .locator('div[aria-label="Documents Sidebar"]')
+        .getByText('Mock Document 201', { exact: true })
+    ).toBeVisible();
 
-  //   // --- Load page 3: 100 more docs, 700 remaining ---
-  //   await loadMoreBtn.click();
-  //   await expect(loadMoreBtn).toContainText('700 Left');
-  //   await expect(
-  //     page
-  //       .locator('div[aria-label="Documents Sidebar"]')
-  //       .getByText('Mock Document 201', { exact: true })
-  //   ).toBeVisible();
+    // --- Exhaust all remaining pages (pages 4–10) ---
+    for (let p = 4; p <= 10; p++) {
+      await loadMoreBtn.click();
+      const remaining = TOTAL_DOCS - p * LIMIT;
+      if (remaining > 0) {
+        await expect(loadMoreBtn).toContainText(`${remaining} Left`, {
+          timeout: 10000,
+        });
+      }
+    }
 
-  //   // --- Exhaust all remaining pages (pages 4–10) ---
-  //   for (let p = 4; p <= 10; p++) {
-  //     await loadMoreBtn.click();
-  //     const remaining = TOTAL_DOCS - p * LIMIT;
-  //     if (remaining > 0) {
-  //       await expect(loadMoreBtn).toContainText(`${remaining} Left`, {
-  //         timeout: 10000,
-  //       });
-  //     }
-  //   }
+    // After all 10 pages loaded the "Load More" button should vanish
+    await expect(loadMoreBtn).not.toBeVisible();
 
-  //   // After all 10 pages loaded the "Load More" button should vanish
-  //   await expect(loadMoreBtn).not.toBeVisible();
-
-  //   // All 1000 docs are now rendered in the sidebar list
-  //   await expect(
-  //     page
-  //       .locator('div[aria-label="Documents Sidebar"]')
-  //       .getByText('Mock Document 1000', { exact: true })
-  //   ).toBeVisible();
-  // });
+    // All 1000 docs are now rendered in the sidebar list
+    await expect(
+      page
+        .locator('div[aria-label="Documents Sidebar"]')
+        .getByText('Mock Document 1000', { exact: true })
+    ).toBeVisible();
+  });
 
   test('View document details', async ({ page }) => {
     expect(testDocId).toBeDefined();

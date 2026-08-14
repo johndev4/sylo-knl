@@ -256,3 +256,60 @@ export async function performUiLogin(
     await afterLoginCallback();
   }
 }
+
+export async function mockSupabaseDocuments(
+  page: Page,
+  totalDocs: number,
+  defaultLimit: number
+) {
+  await page.route('**/rest/v1/documents**', async (route) => {
+    const request = route.request();
+
+    if (request.method() !== 'GET') {
+      await route.continue();
+      return;
+    }
+
+    const url = new URL(request.url());
+
+    const offset = Number(url.searchParams.get('offset') ?? '0');
+    const limit = Number(url.searchParams.get('limit') ?? defaultLimit);
+
+    const from = offset;
+    const to = Math.min(offset + limit - 1, totalDocs - 1);
+
+    // console.log('MOCK SUPABASE', {
+    //   url: request.url(),
+    //   offset,
+    //   limit,
+    //   from,
+    //   to,
+    // });
+
+    const data =
+      to >= from
+        ? Array.from({ length: to - from + 1 }, (_, i) => {
+            const documentNumber = from + i + 1;
+
+            return {
+              id: `mock-doc-${documentNumber}`,
+              title: `Mock Document ${documentNumber}`,
+              tags: ['MOCK'],
+              created_at: new Date().toISOString(),
+            };
+          })
+        : [];
+
+    await route.fulfill({
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Content-Range': `${from}-${to}/${totalDocs}`,
+        'Preference-Applied': 'count=exact',
+        'Access-Control-Expose-Headers':
+          'Content-Encoding, Content-Location, Content-Range, Content-Type, Date, Location, Server, Transfer-Encoding, Range-Unit',
+      },
+      body: JSON.stringify(data),
+    });
+  });
+}
