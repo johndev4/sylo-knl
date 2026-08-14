@@ -107,20 +107,21 @@ supabase db pull                # Sync schema changes
 
 ### Application Core
 
-| Path                                                    | Purpose                                           |
-| ------------------------------------------------------- | ------------------------------------------------- |
-| `src/app/`                                              | Next.js routes & API handlers                     |
-| `src/app/hub/`                                          | Main application hub (libraries, documents, chat) |
-| `src/app/hub/_components/`                              | Feature-local components (documents, libraries)   |
+| Path                                                     | Purpose                                           |
+| -------------------------------------------------------- | ------------------------------------------------- |
+| `src/app/`                                               | Next.js routes & API handlers                     |
+| `src/app/hub/`                                           | Main application hub (libraries, documents, chat) |
+| `src/app/hub/_components/`                               | Feature-local components (documents, libraries)   |
 | `src/app/hub/_components/documents/document-manager.tsx` | Unified Create/Edit/View document component       |
-| `src/app/chat/page.tsx`                             | **Unified multi-library chat page**               |
-| `src/app/chat/_components/chat-client.tsx`           | Interactive chat UI with library multi-select     |
-| `src/app/hub/libraries/[id]/`                           | Library-specific routes (documents, settings)     |
-| `src/app/hub/libraries/[id]/chat/page.tsx`              | Redirects to `/chat?libraryId=[id]`           |
-| `src/app/api/`                                          | API route handlers                                |
-| `src/app/api/chat/`                                     | RAG chat endpoint — accepts `libraryIds[]` array  |
-| `src/app/api/documents/`                                | Document CRUD endpoints                           |
-| `src/app/api/libraries/`                                | Library & member management                       |
+| `src/app/chat/page.tsx`                                  | **Unified multi-library chat page**               |
+| `src/app/chat/_components/chat-client.tsx`               | Interactive chat UI with library multi-select     |
+| `src/app/hub/libraries/[id]/`                            | Library-specific routes (documents, settings)     |
+| `src/app/hub/libraries/[id]/chat/page.tsx`               | Redirects to `/chat?libraryId=[id]`               |
+| `src/app/api/`                                           | API route handlers                                |
+| `src/app/api/chat/`                                      | RAG chat endpoint — accepts `libraryIds[]` array  |
+| `src/actions/documents.ts`                               | Document CRUD endpoints (write operations)        |
+| `src/queries/documents.ts`                               | Client-side query functions for document fetching |
+| `src/app/api/libraries/`                                 | Library & member management                       |
 
 ### Shared Components
 
@@ -133,19 +134,19 @@ supabase db pull                # Sync schema changes
 
 ### Libraries & Utilities
 
-| Path                                  | Purpose                                                         |
-| ------------------------------------- | --------------------------------------------------------------- |
-| `src/lib/ai/`                         | LLM core, providers, RAG pipeline                               |
-| `src/lib/ai/rag/pipeline.ts`          | Full RAG orchestration (query → embed → retrieve → stream)      |
-| `src/lib/ai/rag/retrieve.ts`          | Multi-library retrieval using `match_document_chunks_multi` RPC |
-| `src/lib/ai/core/llm.ts`              | Provider-agnostic LLM interface                                 |
-| `src/lib/supabase/`                   | Supabase client (server/client modes)                           |
-| `src/lib/actions/libraries.ts`        | Server actions for libraries (incl. `getUserLibraries`)         |
-| `src/lib/hooks/`                      | Custom React hooks (e.g. `use-auth.ts`)         |
+| Path                                    | Purpose                                                         |
+| --------------------------------------- | --------------------------------------------------------------- |
+| `src/lib/ai/`                           | LLM core, providers, RAG pipeline                               |
+| `src/lib/ai/rag/pipeline.ts`            | Full RAG orchestration (query → embed → retrieve → stream)      |
+| `src/lib/ai/rag/retrieve.ts`            | Multi-library retrieval using `match_document_chunks_multi` RPC |
+| `src/lib/ai/core/llm.ts`                | Provider-agnostic LLM interface                                 |
+| `src/lib/supabase/`                     | Supabase client (server/client modes)                           |
+| `src/lib/actions/libraries.ts`          | Server actions for libraries (incl. `getUserLibraries`)         |
+| `src/lib/hooks/`                        | Custom React hooks (e.g. `use-auth.ts`)                         |
 | `src/lib/hooks/use-navigation-guard.ts` | Prevents data loss with unsaved changes prompt                  |
-| `src/lib/validation/`                 | Zod schemas for input validation                                |
-| `src/lib/themes/`                     | Auth UI theming                                                 |
-| `src/lib/utils.ts`                    | Utility functions (cn helper)                                   |
+| `src/lib/validation/`                   | Zod schemas for input validation                                |
+| `src/lib/themes/`                       | Auth UI theming                                                 |
+| `src/lib/utils.ts`                      | Utility functions (cn helper)                                   |
 
 ### Configuration & Testing
 
@@ -203,12 +204,13 @@ Every API endpoint should follow this:
 
 ### Frontend Fetch Pattern
 
-1. On mount, fetch data from API with filters
-2. Check user permissions and show PermissionDenied if needed
-3. Show loading/error states
-4. Render with proper accessibility (labels, roles, ARIA)
+1. Import query functions from `src/queries/` (e.g. `getDocuments`, `getDocument`)
+2. Call query functions directly from client components — they handle auth and RBAC internally
+3. Check user permissions and show PermissionDenied if needed
+4. Show loading/error states
+5. Render with proper accessibility (labels, roles, ARIA)
 
-**Example:** `src/app/hub/libraries/[id]/documents/[docId]/page.tsx`
+**Example:** `src/queries/documents.ts` — `getDocuments` and `getDocument` replace direct API calls for document reads
 
 ### RAG Chat Pattern
 

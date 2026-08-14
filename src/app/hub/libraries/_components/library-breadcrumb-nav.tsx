@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/breadcrumb';
 import { Skeleton } from '@/components/ui/skeleton';
 import { UrlObject } from 'url';
+import { getDocument } from '@/queries/documents';
 
 // Helper to capitalize first letter
 const capFirst = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
@@ -38,9 +39,7 @@ async function fetchLibraryName(id: string): Promise<string | null> {
 
 async function fetchDocumentTitle(id: string): Promise<string | null> {
   try {
-    const res = await fetch(`/api/documents/${id}`);
-    if (!res.ok) return null;
-    const data = await res.json();
+    const data = await getDocument(id);
     return data?.document?.title ?? null;
   } catch {
     return null;

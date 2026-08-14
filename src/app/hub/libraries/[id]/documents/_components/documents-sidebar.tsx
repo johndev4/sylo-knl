@@ -42,14 +42,9 @@ import { useSidebarRefresh } from './sidebar-refresh-context';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Spinner } from '@/components/ui/spinner';
+import { DocumentListItem, getDocuments } from '@/queries/documents';
 
-interface Document {
-  id: string;
-  title: string;
-  tags: string[];
-  created_at: string;
-  updated_at: string;
-}
+type Document = DocumentListItem;
 
 export function DocumentsSidebar() {
   const params = useParams();
@@ -87,18 +82,17 @@ export function DocumentsSidebar() {
       if (!libraryId) return;
       setIsLoading(true);
       try {
-        const res = await fetch(
-          `/api/documents?libraryId=${libraryId}&limit=100&page=${pageToLoad}`
-        );
-        if (res.ok) {
-          const data = await res.json();
-          if (pageToLoad === 1) {
-            setDocuments(data.data || []);
-          } else {
-            setDocuments((prev) => [...prev, ...(data.data || [])]);
-          }
-          setTotalDocs(data.metadata?.total || 0);
+        const data = await getDocuments({
+          libraryId,
+          limit: 100,
+          page: pageToLoad,
+        });
+        if (pageToLoad === 1) {
+          setDocuments(data.data || []);
+        } else {
+          setDocuments((prev) => [...prev, ...(data.data || [])]);
         }
+        setTotalDocs(data.metadata?.total || 0);
       } catch (error) {
         console.error('Failed to fetch documents:', error);
       } finally {

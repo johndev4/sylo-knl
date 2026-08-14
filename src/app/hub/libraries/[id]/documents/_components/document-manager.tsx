@@ -2,6 +2,11 @@
 
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import {
+  createDocument,
+  updateDocument,
+  deleteDocument,
+} from '@/actions/documents';
 import { Badge } from '@/components/ui/badge';
 import { useTagSuggestions } from '@/hooks/use-tag-suggestions';
 import {
@@ -342,62 +347,35 @@ export function DocumentManager({
     setError(null);
 
     try {
-      const url = isNew
-        ? `/api/documents`
-        : `/api/documents/${initialData!.id}`;
-      const method = isNew ? 'POST' : 'PUT';
-
-      const payload: {
-        title: string;
-        content: string;
-        tags: string[];
-        libraryId?: string;
-        lastUpdatedAt?: string;
-      } = {
-        title,
-        content: content || '',
-        tags,
-      };
-
       if (isNew) {
-        payload.libraryId = libraryId;
-      } else {
-        // Use the ref so repeated saves always send the latest timestamp,
-        // not the stale initialData prop from the initial server render.
-        payload.lastUpdatedAt = latestUpdatedAt.current;
-      }
+        const data = await createDocument({
+          title,
+          content: content || '',
+          tags,
+          libraryId,
+        });
 
-      const res = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        if (res.status === 409) {
-          throw new Error(
-            data.error || 'Conflict: Document was edited by another user.'
-          );
-        }
-        throw new Error(data.error || 'Failed to save document');
-      }
-
-      triggerRefresh();
-
-      if (isNew) {
+        triggerRefresh();
         setIgnoreNavigationGuard(true);
         router.push(`/hub/libraries/${libraryId}/documents/${data.documentId}`);
         router.refresh();
       } else {
+        const data = await updateDocument(initialData!.id, {
+          title,
+          content: content || '',
+          tags,
+          // Use the ref so repeated saves always send the latest timestamp,
+          // not the stale initialData prop from the initial server render.
+          lastUpdatedAt: latestUpdatedAt.current,
+        });
+
         // Capture the new updated_at returned by the server so that the
         // next save sends the correct timestamp for the OCC check.
         if (data?.document?.updated_at) {
           latestUpdatedAt.current = data.document.updated_at;
         }
+
+        triggerRefresh();
         setIsEditMode(false);
         router.refresh();
       }
@@ -421,14 +399,7 @@ export function DocumentManager({
     setError(null);
 
     try {
-      const res = await fetch(`/api/documents/${initialData.id}`, {
-        method: 'DELETE',
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Failed to delete document');
-      }
+      await deleteDocument(initialData.id);
 
       setIgnoreNavigationGuard(true);
       triggerRefresh();

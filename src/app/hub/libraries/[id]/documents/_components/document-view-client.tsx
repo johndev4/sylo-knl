@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { DocumentManager } from '@/app/hub/libraries/[id]/documents/_components/document-manager';
 import { DocumentSkeleton } from './document-skeleton';
+import { getDocument } from '@/queries/documents';
 
 export function DocumentViewClient() {
   const params = useParams();
@@ -22,20 +23,15 @@ export function DocumentViewClient() {
     if (!docId) return;
     setIsLoading(true);
     try {
-      const res = await fetch(`/api/documents/${docId}`);
-      if (!res.ok) {
-        if (res.status === 404) {
-          setError('Document not found');
-        } else {
-          throw new Error('Failed to fetch document');
-        }
-        return;
-      }
-      const data = await res.json();
+      const data = await getDocument(docId);
       setDocument(data.document);
       setRole(data.role || 'VIEWER');
     } catch (err: any) {
-      setError(err.message);
+      if (err.message === 'Document not found') {
+        setError('Document not found');
+      } else {
+        setError(err.message);
+      }
     } finally {
       setIsLoading(false);
     }
