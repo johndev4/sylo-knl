@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Suspense } from 'react';
 import { requireLibraryRole } from '@/lib/auth/library-role';
-import { unauthorized } from 'next/navigation';
+import { forbidden } from 'next/navigation';
 
 const ROLE_DESCRIPTIONS: Record<string, string> = {
   VIEWER: 'You can view documents in this library.',
@@ -39,7 +39,7 @@ async function LibraryInfoPageContent({
 }) {
   const { id } = await params;
   const membership = await requireLibraryRole(id);
-  if (!membership) return unauthorized();
+  if (!membership) return forbidden();
 
   const { library, memberCount, documentCount } =
     await fetchLibraryOverview(id);

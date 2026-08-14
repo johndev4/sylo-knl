@@ -2,7 +2,7 @@ import { fetchLibraryMembers } from '@/actions/libraries';
 import { InviteSection, MemberTable } from './_components';
 import { Suspense } from 'react';
 import { requireLibraryRole } from '@/lib/auth/library-role';
-import { unauthorized } from 'next/navigation';
+import { forbidden } from 'next/navigation';
 
 export default async function LibraryMembersPage({
   params,
@@ -29,7 +29,7 @@ async function LibraryMembersPageContent({
 }) {
   const { id } = await params;
   const membership = await requireLibraryRole(id);
-  if (!membership) return unauthorized();
+  if (!membership) return forbidden();
 
   const members = await fetchLibraryMembers(id);
   const currentUserRole = membership?.role || '';

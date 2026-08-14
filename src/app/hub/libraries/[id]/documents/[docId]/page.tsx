@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Suspense } from 'react';
-import { redirect, unauthorized } from 'next/navigation';
+import { forbidden, redirect } from 'next/navigation';
 import { requireLibraryRole } from '@/lib/auth/library-role';
 import { DocumentManager, DocumentSkeleton } from '../_components';
 import { Button } from '@/components/ui/button';
@@ -26,7 +26,7 @@ async function DocumentContent(props: {
   const params = await props.params;
   const membership = await requireLibraryRole(params.id);
   console.log('echo', membership);
-  if (!membership) return unauthorized();
+  if (!membership) return forbidden();
 
   const libraryId = params.id;
   const docId = params.docId;

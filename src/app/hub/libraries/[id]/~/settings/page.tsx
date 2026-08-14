@@ -1,11 +1,8 @@
-import {
-  LIBRARY_ROLES,
-  requireLibraryRole,
-} from '@/lib/auth/library-role';
+import { LIBRARY_ROLES, requireLibraryRole } from '@/lib/auth/library-role';
 import { getLibraryName } from '@/actions/libraries';
 import { DeleteLibraryForm, RenameLibraryForm } from './_components';
 import { Suspense } from 'react';
-import { unauthorized } from 'next/navigation';
+import { forbidden } from 'next/navigation';
 
 export default async function LibrarySettingsPage({
   params,
@@ -32,7 +29,7 @@ async function LibrarySettingsPageContent({
 }) {
   const { id } = await params;
   const membership = await requireLibraryRole(id, LIBRARY_ROLES.ADMIN);
-  if (!membership) return unauthorized();
+  if (!membership) return forbidden();
 
   const libraryName = await getLibraryName(id);
   const currentUserRole = membership?.role ?? '';
