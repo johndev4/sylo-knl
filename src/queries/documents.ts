@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { createClient } from '@/lib/supabase/client';
+import { SupabaseClient } from '@supabase/supabase-js';
 
 // -----------------------------------------------------------------------------
 // Schemas
@@ -56,20 +56,28 @@ export type DocumentAuthor = z.infer<typeof DocumentAuthorSchema>;
 export type DocumentDetail = z.infer<typeof DocumentDetailSchema>;
 export type DocumentResult = z.infer<typeof DocumentResultSchema>;
 
-// -----------------------------------------------------------------------------
-// getDocuments
-// -----------------------------------------------------------------------------
-
-export async function getDocuments(params: {
-  libraryId: string;
-  page?: number;
-  limit?: number;
-  search?: string;
-  tags?: string[];
-}): Promise<DocumentsResult> {
+/**
+ * Retrieves a paginated list of documents from a library with optional filtering.
+ *
+ * @param params - Object containing libraryId, pagination options, search term, and tag filters
+ * @param supabase - Optional SupabaseClient instance. If not provided, a new browser client will be created
+ */
+export async function getDocuments(
+  params: {
+    libraryId: string;
+    page?: number;
+    limit?: number;
+    search?: string;
+    tags?: string[];
+  },
+  supabase?: SupabaseClient
+): Promise<DocumentsResult> {
   const { libraryId, page = 1, limit = 10, search = '', tags } = params;
 
-  const supabase = createClient();
+  if (!supabase) {
+    const { createClient } = await import('@/lib/supabase/client');
+    supabase = createClient();
+  }
 
   const {
     data: { user },
@@ -129,12 +137,20 @@ export async function getDocuments(params: {
   });
 }
 
-// -----------------------------------------------------------------------------
-// getDocument
-// -----------------------------------------------------------------------------
-
-export async function getDocument(docId: string): Promise<DocumentResult> {
-  const supabase = createClient();
+/**
+ * Retrieves a single document by ID with author information and user role.
+ *
+ * @param docId - The unique identifier of the document to retrieve
+ * @param supabase - Optional SupabaseClient instance. If not provided, a new browser client will be created
+ */
+export async function getDocument(
+  docId: string,
+  supabase?: SupabaseClient
+): Promise<DocumentResult> {
+  if (!supabase) {
+    const { createClient } = await import('@/lib/supabase/client');
+    supabase = createClient();
+  }
 
   const {
     data: { user },

@@ -1,23 +1,83 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Suspense } from 'react';
-import { unauthorized } from 'next/navigation';
+import { redirect, unauthorized } from 'next/navigation';
 import { requireLibraryRole } from '@/lib/helpers/require-library-role';
-import { DocumentViewClient } from '../_components/document-view-client';
-import { DocumentSkeleton } from '../_components';
+import { DocumentManager, DocumentSkeleton } from '../_components';
+import { Button } from '@/components/ui/button';
+import { getDocument } from '@/queries/documents';
+import { createClient } from '@/lib/supabase/server';
+import { randomUUID } from 'crypto';
 
-export default function DocumentView(props: {
-  params: Promise<{ id: string }>;
+export default function Document({
+  params,
+}: {
+  params: { id: string; docId: string };
 }) {
   return (
     <Suspense fallback={<DocumentSkeleton />}>
-      <DocumentViewGuard params={props.params} />
+      <DocumentContent params={params} />
     </Suspense>
   );
 }
 
-async function DocumentViewGuard(props: { params: Promise<{ id: string }> }) {
-  const { id: libraryId } = await props.params;
-  const membership = await requireLibraryRole(libraryId);
+async function DocumentContent(props: {
+  params: { id: string; docId: string };
+}) {
+  const params = await props.params;
+  const membership = await requireLibraryRole(params.id);
+  console.log('echo', membership);
   if (!membership) return unauthorized();
 
-  return <DocumentViewClient />;
+  const libraryId = params.id;
+  const docId = params.docId;
+
+  let document: any = null;
+  let role: string = 'VIEWER';
+  let error: string | null = null;
+
+  try {
+    const supabase = await createClient();
+    const data = await getDocument(docId, supabase);
+    document = data.document;
+    role = data.role || 'VIEWER';
+  } catch (err: any) {
+    if (err.message === 'Document not found') {
+      error = 'Document not found';
+    } else {
+      error = err.message;
+    }
+  }
+
+  if (!document || error) {
+    return (
+      <div className="flex h-full flex-1 flex-col items-center justify-center p-8 text-center">
+        <h2 className="mb-2 text-2xl font-bold">
+          {error || 'Document not found'}
+        </h2>
+        <Button
+          onClick={() => redirect(`/hub/libraries/${libraryId}/documents`)}
+        >
+          Go Back
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <DocumentManager
+      key={`${docId}_${randomUUID()}`}
+      libraryId={libraryId}
+      isNew={false}
+      initialData={{
+        id: document.id,
+        title: document.title,
+        content: document.content,
+        tags: document.tags,
+        created_at: document.created_at,
+        updated_at: document.updated_at,
+        authors: document.authors,
+      }}
+      userRole={role}
+    />
+  );
 }
