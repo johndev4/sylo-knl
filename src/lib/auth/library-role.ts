@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { getUser } from './get-user';
 
 // RBAC roles
 export const LIBRARY_ROLES = {
@@ -20,19 +21,16 @@ export async function requireLibraryRole(
   libraryId: string,
   minRole = LIBRARY_ROLES.VIEWER
 ) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getUser();
+  if (!user) redirect(LOGIN_PATH);
 
   // Special bypass for E2E tests using the zero-UUID.
   // This allows tests to run without a seeded database by mocking the UI state.
-  if (libraryId === '00000000-0000-0000-0000-000000000000') {
-    return { role: 'OWNER' };
-  }
+  // if (libraryId === '00000000-0000-0000-0000-000000000000') {
+  //   return { role: 'OWNER' };
+  // }
 
-  if (!user) redirect(LOGIN_PATH);
-
+  const supabase = await createClient();
   const { data: membership } = await supabase
     .from('library_members')
     .select('role')
