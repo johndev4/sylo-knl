@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Suspense } from 'react';
 import { redirect, unauthorized } from 'next/navigation';
-import { requireLibraryRole } from '@/lib/helpers/require-library-role';
+import { requireLibraryRole } from '@/lib/auth/library-role';
 import { DocumentManager, DocumentSkeleton } from '../_components';
 import { Button } from '@/components/ui/button';
 import { getDocument } from '@/queries/documents';

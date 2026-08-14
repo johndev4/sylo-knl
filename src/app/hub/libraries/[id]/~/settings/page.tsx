@@ -1,7 +1,7 @@
 import {
   LIBRARY_ROLES,
   requireLibraryRole,
-} from '@/lib/helpers/require-library-role';
+} from '@/lib/auth/library-role';
 import { getLibraryName } from '@/actions/libraries';
 import { DeleteLibraryForm, RenameLibraryForm } from './_components';
 import { Suspense } from 'react';

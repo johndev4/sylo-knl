@@ -1,7 +1,7 @@
 import { fetchLibraryMembers } from '@/actions/libraries';
 import { InviteSection, MemberTable } from './_components';
 import { Suspense } from 'react';
-import { requireLibraryRole } from '@/lib/helpers/require-library-role';
+import { requireLibraryRole } from '@/lib/auth/library-role';
 import { unauthorized } from 'next/navigation';
 
 export default async function LibraryMembersPage({

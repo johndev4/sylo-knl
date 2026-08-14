@@ -3,7 +3,7 @@ import { DocumentManager } from '@/app/hub/libraries/[id]/documents/_components/
 import {
   requireLibraryRole,
   LIBRARY_ROLES,
-} from '@/lib/helpers/require-library-role';
+} from '@/lib/auth/library-role';
 import { Suspense } from 'react';
 import { DocumentSkeleton } from '@/app/hub/libraries/[id]/documents/_components/document-skeleton';
 

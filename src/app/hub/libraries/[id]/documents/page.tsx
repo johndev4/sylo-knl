@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import { FileText, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { requireLibraryRole } from '@/lib/helpers/require-library-role';
+import { requireLibraryRole } from '@/lib/auth/library-role';
 import { unauthorized } from 'next/navigation';
 
 export default function DocumentsPage({
