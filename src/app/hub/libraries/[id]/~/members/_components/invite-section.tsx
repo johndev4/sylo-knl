@@ -93,7 +93,7 @@ export function InviteSection({ libraryId }: InviteSectionProps) {
         }
       }
 
-      const newInvite = await createLibraryInvite(
+      await createLibraryInvite(
         libraryId,
         role as 'VIEWER' | 'EDITOR',
         parsedExpiresAt,
