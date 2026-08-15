@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import ChatClient from './_components/chat-client';
 import { getUserLibraries } from '@/queries/chat';
 import { ChatSkeleton } from './_components';
+import { getUser } from '@/lib/auth/get-user';
 import { createClient } from '@/lib/supabase/server';
 
 interface ChatPageProps {
@@ -21,11 +22,10 @@ function ChatLoading() {
 }
 
 async function ChatPageContent({ searchParams }: ChatPageProps) {
+  const [params, user] = await Promise.all([searchParams, getUser()]);
+
   const supabase = await createClient();
-  const [params, libraries] = await Promise.all([
-    searchParams,
-    getUserLibraries(supabase),
-  ]);
+  const libraries = await getUserLibraries(supabase, user);
 
   const preSelected = params.libraryIds ? params.libraryIds.split(',') : [];
   const validIds = new Set(libraries.map((l) => l.id));

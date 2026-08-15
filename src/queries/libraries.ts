@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { SupabaseClient } from '@supabase/supabase-js';
 import {
   InviteResponseSchema,
@@ -8,17 +9,12 @@ import {
  * Retrieves the name of a library by its ID.
  *
  * @param libraryId - The unique identifier of the library to retrieve
- * @param supabase - Optional SupabaseClient instance. If not provided, a new browser client will be created
+ * @param supabase - SupabaseClient instance for database operations
  */
 export async function getLibraryName(
   libraryId: string,
-  supabase?: SupabaseClient
+  supabase: SupabaseClient
 ) {
-  if (!supabase) {
-    const { createClient } = await import('@/lib/supabase/client');
-    supabase = createClient();
-  }
-
   const { data } = await supabase
     .from('libraries')
     .select('name')
@@ -31,32 +27,15 @@ export async function getLibraryName(
  * Retrieves all members of a library with their user details and roles.
  *
  * @param libraryId - The unique identifier of the library
- * @param supabase - Optional SupabaseClient instance. If not provided, a new browser client will be created
+ * @param supabase - SupabaseClient instance for database operations
+ * @param membership - The membership object containing the user's role in the library
  */
 export async function getLibraryMembers(
   libraryId: string,
-  supabase?: SupabaseClient
+  supabase: SupabaseClient,
+  membership: { role: any } | null
 ) {
   console.log(`[DEBUG] fetchLibraryMembers called for: ${libraryId}`);
-
-  if (!supabase) {
-    const { createClient } = await import('@/lib/supabase/client');
-    supabase = createClient();
-  }
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) throw new Error('Unauthorized');
-
-  // Check if user is member of library
-  const { data: membership } = await supabase
-    .from('library_members')
-    .select('role')
-    .eq('library_id', libraryId)
-    .eq('user_id', user.id)
-    .single();
 
   if (!membership) throw new Error('Access denied to library');
 
@@ -87,30 +66,14 @@ export async function getLibraryMembers(
  * Retrieves all active invites for a library. Only accessible by library owners and admins.
  *
  * @param libraryId - The unique identifier of the library
- * @param supabase - Optional SupabaseClient instance. If not provided, a new browser client will be created
+ * @param supabase - SupabaseClient instance for database operations
+ * @param membership - The membership object containing the user's role in the library
  */
 export async function getLibraryInvites(
   libraryId: string,
-  supabase?: SupabaseClient
+  supabase: SupabaseClient,
+  membership: { role: any } | null
 ) {
-  if (!supabase) {
-    const { createClient } = await import('@/lib/supabase/client');
-    supabase = createClient();
-  }
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) throw new Error('Unauthorized');
-
-  const { data: membership } = await supabase
-    .from('library_members')
-    .select('role')
-    .eq('library_id', libraryId)
-    .eq('user_id', user.id)
-    .single();
-
   if (!membership || !['OWNER', 'ADMIN'].includes(membership.role)) {
     throw new Error('Only owners and admins can view invites');
   }
@@ -139,22 +102,12 @@ export async function getLibraryInvites(
  * Retrieves an overview of a library including its details, member count, and document count.
  *
  * @param libraryId - The unique identifier of the library
- * @param supabase - Optional SupabaseClient instance. If not provided, a new browser client will be created
+ * @param supabase - SupabaseClient instance for database operations
  */
 export async function getLibraryOverview(
   libraryId: string,
-  supabase?: SupabaseClient
+  supabase: SupabaseClient
 ) {
-  if (!supabase) {
-    const { createClient } = await import('@/lib/supabase/client');
-    supabase = createClient();
-  }
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error('Unauthorized');
-
   const [{ data: library }, { count: memberCount }, { count: documentCount }] =
     await Promise.all([
       supabase

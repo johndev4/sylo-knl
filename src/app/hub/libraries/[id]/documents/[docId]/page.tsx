@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { getDocument } from '@/queries/documents';
 import { createClient } from '@/lib/supabase/server';
 import { randomUUID } from 'crypto';
+import { getUser } from '@/lib/auth/get-user';
 
 export default function Document({
   params,
@@ -35,8 +36,10 @@ async function DocumentContent(props: {
   let error: string | null = null;
 
   try {
+    const user = await getUser();
+
     const supabase = await createClient();
-    const data = await getDocument(docId, supabase);
+    const data = await getDocument(docId, supabase, user);
     document = data.document;
     role = data.role || 'VIEWER';
   } catch (err: any) {

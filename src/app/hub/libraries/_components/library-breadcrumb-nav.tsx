@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { redirect, usePathname } from 'next/navigation';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -15,6 +15,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { UrlObject } from 'url';
 import { getDocument } from '@/queries/documents';
+import { createClient } from '@/lib/supabase/client';
 
 // Helper to capitalize first letter
 const capFirst = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
@@ -39,7 +40,18 @@ async function fetchLibraryName(id: string): Promise<string | null> {
 
 async function fetchDocumentTitle(id: string): Promise<string | null> {
   try {
-    const data = await getDocument(id);
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+
+    if (error || !user) {
+      console.error('Error fetching user:', error);
+      redirect('/login');
+    }
+
+    const data = await getDocument(id, supabase, user);
     return data?.document?.title ?? null;
   } catch {
     return null;

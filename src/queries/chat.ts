@@ -1,24 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { SupabaseClient } from '@supabase/supabase-js';
-import { redirect } from 'next/navigation';
+import { SupabaseClient, User } from '@supabase/supabase-js';
 
 /**
  * Retrieves all libraries that the current user is a member of.
  *
- * @param supabase - Optional SupabaseClient instance. If not provided, a new browser client will be created
+ * @param supabase - SupabaseClient instance for database operations
+ * @param user - User object containing the current user's information
  */
-export async function getUserLibraries(supabase?: SupabaseClient) {
-  if (!supabase) {
-    const { createClient } = await import('@/lib/supabase/client');
-    supabase = createClient();
-  }
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) redirect('/login');
-
+export async function getUserLibraries(supabase: SupabaseClient, user: User) {
   const { data, error } = await supabase
     .from('library_members')
     .select('role, library:libraries(id, name)')

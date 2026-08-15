@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import Link from 'next/link';
-import { useParams, usePathname } from 'next/navigation';
+import { redirect, useParams, usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plus,
@@ -44,6 +44,7 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Spinner } from '@/components/ui/spinner';
 import { getDocuments } from '@/queries/documents';
 import { DocumentListItem } from '@/lib/validation/document-schema';
+import { createClient } from '@/lib/supabase/client';
 
 type Document = DocumentListItem;
 
@@ -83,11 +84,26 @@ export function DocumentsSidebar() {
       if (!libraryId) return;
       setIsLoading(true);
       try {
-        const data = await getDocuments({
-          libraryId,
-          limit: 100,
-          page: pageToLoad,
-        });
+        const supabase = await createClient();
+        const {
+          data: { user },
+          error,
+        } = await supabase.auth.getUser();
+
+        if (error || !user) {
+          console.error('Error fetching user:', error);
+          redirect('/login');
+        }
+
+        const data = await getDocuments(
+          {
+            libraryId,
+            limit: 100,
+            page: pageToLoad,
+          },
+          supabase,
+          user
+        );
         if (pageToLoad === 1) {
           setDocuments(data.data || []);
         } else {

@@ -32,10 +32,11 @@ async function LibraryMembersPageContent({
   const membership = await requireLibraryRole(id);
   if (!membership) return forbidden();
 
-  const supabase = await createClient();
-  const members = await getLibraryMembers(id, supabase);
   const currentUserRole = membership?.role || '';
-  const canManageMembers = ['OWNER', 'ADMIN'].includes(currentUserRole);
+  const isOwnerOrHasAdminRole = ['OWNER', 'ADMIN'].includes(currentUserRole);
+
+  const supabase = await createClient();
+  const members = await getLibraryMembers(id, supabase, membership);
 
   return (
     <div className="container mx-auto max-w-4xl space-y-8 p-6">
@@ -55,12 +56,13 @@ async function LibraryMembersPageContent({
       <MemberTable
         libraryId={id}
         members={members}
-        currentUserRole={currentUserRole}
-        canManageMembers={canManageMembers}
+        canManageMembers={isOwnerOrHasAdminRole}
       />
 
       {/* Invite Links Section */}
-      {canManageMembers && <InviteSection libraryId={id} />}
+      {isOwnerOrHasAdminRole && (
+        <InviteSection libraryId={id} membership={membership} />
+      )}
     </div>
   );
 }

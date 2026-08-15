@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
@@ -31,11 +31,11 @@ import {
   removeMultipleLibraryMembers,
 } from '@/actions/libraries';
 import { LibraryMember } from '@/lib/validation/library-schema';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 interface MemberTableProps {
   libraryId: string;
   members: LibraryMember[];
-  currentUserRole: string;
   canManageMembers: boolean;
 }
 
@@ -53,6 +53,19 @@ export function MemberTable({
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const prefersReducedMotion = useReducedMotion();
+
+  // This reset all the component states function
+  const resetState = useCallback(() => {
+    setIsUpdating(false);
+    setError('');
+    setSuccess('');
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      resetState();
+    };
+  }, [resetState]);
 
   const handleRoleChange = async (userId: string, newRole: string) => {
     try {
@@ -157,7 +170,9 @@ export function MemberTable({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: prefersReducedMotion ? 0 : 0.2 }}
         >
-          <p className="text-sm text-green-700 dark:text-green-400">{success}</p>
+          <p className="text-sm text-green-700 dark:text-green-400">
+            {success}
+          </p>
         </motion.div>
       )}
 
@@ -166,161 +181,168 @@ export function MemberTable({
           <p className="text-muted-foreground">No members yet</p>
         </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="border-border border-b">
-              <tr>
-                {canManageMembers && (
-                  <th className="px-4 py-3 text-left font-medium">
-                    <Checkbox
-                      checked={
-                        members.length > 0 &&
-                        selectedMembers.size ===
-                          members.filter((m) => m.role !== 'OWNER').length
-                      }
-                      onChange={() => {
-                        if (
-                          selectedMembers.size ===
-                          members.filter((m) => m.role !== 'OWNER').length
-                        ) {
-                          setSelectedMembers(new Set());
-                        } else {
-                          const nonOwners = members
-                            .filter((m) => m.role !== 'OWNER')
-                            .map((m) => m.user_id);
-                          setSelectedMembers(new Set(nonOwners));
-                        }
-                      }}
-                      aria-label="Select all members"
-                    />
-                  </th>
-                )}
-                <th className="px-4 py-3 text-left font-medium">Name</th>
-                <th className="px-4 py-3 text-left font-medium">Email</th>
-                <th className="px-4 py-3 text-left font-medium">Role</th>
-                <th className="px-4 py-3 text-left font-medium">Joined</th>
-                {canManageMembers && (
-                  <th className="px-4 py-3 text-left font-medium">Actions</th>
-                )}
-              </tr>
-            </thead>
-            <tbody>
-              {members.map((member) => (
-                <tr
-                  key={member.user_id}
-                  className="border-border hover:bg-muted/50 border-b transition-colors"
-                >
+        <ScrollArea>
+          <div className="max-h-80">
+            <table className="w-full text-sm">
+              <thead className="border-border border-b">
+                <tr>
                   {canManageMembers && (
-                    <td className="px-4 py-3">
+                    <th className="px-4 py-3 text-left font-medium">
                       <Checkbox
-                        checked={selectedMembers.has(member.user_id)}
-                        onChange={() => handleSelectMember(member.user_id)}
-                        disabled={member.role === 'OWNER'}
-                        aria-label={`Select ${member.user?.email}`}
-                      />
-                    </td>
-                  )}
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      {member.user?.avatar_url && (
-                        <Image
-                          src={member.user.avatar_url}
-                          alt={member.user?.name || 'Avatar'}
-                          width={32}
-                          height={32}
-                          unoptimized
-                          className="h-8 w-8 rounded-full"
-                        />
-                      )}
-                      <span className="font-medium">
-                        {member.user?.name || 'Unknown User'}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="text-muted-foreground px-4 py-3">
-                    {member.user?.email}
-                  </td>
-                  <td className="px-4 py-3">
-                    {canManageMembers && member.role !== 'OWNER' ? (
-                      <Select
-                        value={member.role}
-                        disabled={isUpdating}
-                        onValueChange={(value) =>
-                          handleRoleChange(member.user_id, value)
+                        checked={
+                          members.length > 0 &&
+                          selectedMembers.size ===
+                            members.filter((m) => m.role !== 'OWNER').length
                         }
-                      >
-                        <SelectTrigger
-                          className="h-8 w-[110px]"
-                          aria-label={`Role for ${member.user?.email}`}
-                        >
-                          <SelectValue placeholder="Select role" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {roleOptions.map((role) => (
-                            <SelectItem key={role} value={role}>
-                              {role}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <div>
-                        <span className="font-medium">{member.role}</span>
-                        {member.role === 'OWNER' && (
-                          <p className="text-muted-foreground mt-1 text-xs">
-                            Library creator
-                          </p>
-                        )}
-                      </div>
-                    )}
-                  </td>
-                  <td className="text-muted-foreground px-4 py-3 text-xs">
-                    {new Date(member.created_at).toLocaleDateString()}
-                  </td>
+                        onChange={() => {
+                          if (
+                            selectedMembers.size ===
+                            members.filter((m) => m.role !== 'OWNER').length
+                          ) {
+                            setSelectedMembers(new Set());
+                          } else {
+                            const nonOwners = members
+                              .filter((m) => m.role !== 'OWNER')
+                              .map((m) => m.user_id);
+                            setSelectedMembers(new Set(nonOwners));
+                          }
+                        }}
+                        aria-label="Select all members"
+                      />
+                    </th>
+                  )}
+                  <th className="px-4 py-3 text-left font-medium">Name</th>
+                  <th className="px-4 py-3 text-left font-medium">Email</th>
+                  <th className="px-4 py-3 text-left font-medium">Role</th>
+                  <th className="px-4 py-3 text-left font-medium">Joined</th>
                   {canManageMembers && (
-                    <td className="px-4 py-3">
-                      {member.role !== 'OWNER' && (
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              disabled={isUpdating}
-                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                              aria-label={`Remove ${member.user?.email}`}
-                            >
-                              Remove
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Remove member</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Remove <strong>{member.user?.email}</strong>{' '}
-                                from this library? They will lose all access.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() =>
-                                  handleRemoveMember(member.user_id)
-                                }
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                              >
-                                Remove
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      )}
-                    </td>
+                    <th className="px-4 py-3 text-left font-medium">Actions</th>
                   )}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {members.map((member) => (
+                  <tr
+                    key={member.user_id}
+                    className="border-border hover:bg-muted/50 border-b transition-colors"
+                  >
+                    {canManageMembers && (
+                      <td className="px-4 py-3">
+                        <Checkbox
+                          checked={selectedMembers.has(member.user_id)}
+                          onChange={() => handleSelectMember(member.user_id)}
+                          disabled={member.role === 'OWNER'}
+                          aria-label={`Select ${member.user?.email}`}
+                        />
+                      </td>
+                    )}
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        {member.user?.avatar_url && (
+                          <Image
+                            src={member.user.avatar_url}
+                            alt={member.user?.name || 'Avatar'}
+                            width={32}
+                            height={32}
+                            unoptimized
+                            className="h-8 w-8 rounded-full"
+                          />
+                        )}
+                        <span className="font-medium">
+                          {member.user?.name || 'Unknown User'}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="text-muted-foreground px-4 py-3">
+                      {member.user?.email}
+                    </td>
+                    <td className="px-4 py-3">
+                      {canManageMembers && member.role !== 'OWNER' ? (
+                        <Select
+                          value={member.role}
+                          disabled={isUpdating}
+                          onValueChange={(value) =>
+                            handleRoleChange(member.user_id, value)
+                          }
+                        >
+                          <SelectTrigger
+                            className="h-8 w-[110px]"
+                            aria-label={`Role for ${member.user?.email}`}
+                          >
+                            <SelectValue placeholder="Select role" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {roleOptions.map((role) => (
+                              <SelectItem key={role} value={role}>
+                                {role}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <div>
+                          <span className="font-medium">{member.role}</span>
+                          {member.role === 'OWNER' && (
+                            <p className="text-muted-foreground mt-1 text-xs">
+                              Library creator
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </td>
+                    <td className="text-muted-foreground px-4 py-3 text-xs">
+                      {new Date(member.created_at).toLocaleDateString()}
+                    </td>
+                    {canManageMembers && (
+                      <td className="px-4 py-3">
+                        {member.role !== 'OWNER' && (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                disabled={isUpdating}
+                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                aria-label={`Remove ${member.user?.email}`}
+                              >
+                                Remove
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>
+                                  Remove member
+                                </AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Remove <strong>{member.user?.email}</strong>{' '}
+                                  from this library? They will lose all access.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() =>
+                                    handleRemoveMember(member.user_id)
+                                  }
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  Remove
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <ScrollBar orientation="vertical" />
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
       )}
     </Card>
   );

@@ -6,13 +6,14 @@ import {
   DocumentAuthorSchema,
   DocumentResultSchema,
 } from '@/lib/validation/document-schema';
-import { SupabaseClient } from '@supabase/supabase-js';
+import { SupabaseClient, User } from '@supabase/supabase-js';
 
 /**
  * Retrieves a paginated list of documents from a library with optional filtering.
  *
  * @param params - Object containing libraryId, pagination options, search term, and tag filters
- * @param supabase - Optional SupabaseClient instance. If not provided, a new browser client will be created
+ * @param supabase - SupabaseClient instance for database operations
+ * @param user - User object containing the current user's information
  */
 export async function getDocuments(
   params: {
@@ -22,23 +23,10 @@ export async function getDocuments(
     search?: string;
     tags?: string[];
   },
-  supabase?: SupabaseClient
+  supabase: SupabaseClient,
+  user: User
 ): Promise<DocumentsResult> {
   const { libraryId, page = 1, limit = 10, search = '', tags } = params;
-
-  if (!supabase) {
-    const { createClient } = await import('@/lib/supabase/client');
-    supabase = createClient();
-  }
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
-    throw new Error('Unauthorized');
-  }
 
   // Check RBAC
   const { data: membership } = await supabase
@@ -93,26 +81,14 @@ export async function getDocuments(
  * Retrieves a single document by ID with author information and user role.
  *
  * @param docId - The unique identifier of the document to retrieve
- * @param supabase - Optional SupabaseClient instance. If not provided, a new browser client will be created
+ * @param supabase - SupabaseClient instance for database operations
+ * @param user - User object containing the current user's information
  */
 export async function getDocument(
   docId: string,
-  supabase?: SupabaseClient
+  supabase: SupabaseClient,
+  user: User
 ): Promise<DocumentResult> {
-  if (!supabase) {
-    const { createClient } = await import('@/lib/supabase/client');
-    supabase = createClient();
-  }
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
-    throw new Error('Unauthorized');
-  }
-
   const { data: document, error: docError } = await supabase
     .from('documents')
     .select('*, author_ids, library_id, created_at, updated_at, deleted_at')
