@@ -10,8 +10,6 @@ export const LIBRARY_ROLES = {
   OWNER: 3,
 };
 
-const LOGIN_PATH = '/login';
-
 /**
  * Returns the library membership if the user is authorized, or null if not.
  * @param libraryId string
@@ -22,7 +20,9 @@ export async function requireLibraryRole(
   minRole = LIBRARY_ROLES.VIEWER
 ) {
   const user = await getUser();
-  if (!user) redirect(LOGIN_PATH);
+  if (!user) {
+    redirect('/login');
+  }
 
   // Special bypass for E2E tests using the zero-UUID.
   // This allows tests to run without a seeded database by mocking the UI state.
