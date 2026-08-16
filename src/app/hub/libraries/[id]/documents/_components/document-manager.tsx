@@ -469,7 +469,7 @@ export function DocumentManager({
       </AlertDialog>
 
       {/* ── Top Fixed Header with Controls ──────────────────────────────────── */}
-      <div className="bg-background/95 border-border supports-[backdrop-filter]:bg-background/60 z-20 flex shrink-0 items-center justify-between border-b py-1 pr-3 pl-1 shadow-sm backdrop-blur">
+      <div className="bg-background/95 border-border supports-[backdrop-filter]:bg-background/60 z-0 flex shrink-0 items-center justify-between border-b py-1 pr-3 pl-1 shadow-sm backdrop-blur">
         <div
           className={`mr-4 flex-1 px-3 py-1 ${isEditMode ? 'rounded-lg border bg-transparent focus-within:ring-1 focus-within:ring-zinc-400 dark:focus-within:ring-zinc-600' : ''}`}
         >
@@ -590,7 +590,7 @@ export function DocumentManager({
         {error && (
           <div
             role="alert"
-            className="bg-destructive text-destructive-foreground absolute top-3 left-1/2 z-30 flex w-[92%] max-w-xl -translate-x-1/2 items-start gap-3 rounded-lg px-4 py-3 text-sm font-medium shadow-lg"
+            className="bg-destructive text-destructive-foreground absolute top-3 left-1/2 z-0 flex w-[92%] max-w-xl -translate-x-1/2 items-start gap-3 rounded-lg px-4 py-3 text-sm font-medium shadow-lg"
           >
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
             <span className="flex-1">{error}</span>

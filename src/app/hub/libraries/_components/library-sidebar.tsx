@@ -35,7 +35,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarRail,
 } from '@/components/ui/sidebar';
 import { leaveLibrary } from '@/actions/libraries';
 
@@ -244,7 +243,7 @@ export function LibrarySidebar() {
         )}
       </SidebarFooter>
 
-      <SidebarRail />
+      {/* <SidebarRail /> */}
 
       {/* Leave Library Alert Dialog */}
       <AlertDialog

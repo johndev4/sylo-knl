@@ -34,7 +34,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarRail,
 } from '@/components/ui/sidebar';
 import { Input } from '@/components/ui/input';
 import { useSidebarRefresh } from './sidebar-refresh-context';
@@ -430,7 +429,7 @@ export function DocumentsSidebar() {
         </SidebarMenu>
       </SidebarFooter>
 
-      <SidebarRail />
+      {/* <SidebarRail /> */}
     </Sidebar>
   );
 }
