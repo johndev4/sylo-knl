@@ -7,13 +7,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plus,
   Search,
-  ChevronDown,
-  ChevronRight,
   FileText,
   Calendar,
   MessageSquare,
   Info,
   Library,
+  ChevronRightIcon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -45,6 +44,11 @@ import { Spinner } from '@/components/ui/spinner';
 import { getDocuments } from '@/queries/documents';
 import { DocumentListItem } from '@/lib/validation/document-schema';
 import { createClient } from '@/lib/supabase/client';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 
 type Document = DocumentListItem;
 
@@ -60,7 +64,6 @@ export function DocumentsSidebar() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTag, setSelectedTag] = useState<string>('ALL');
 
-  const [isDocsOpen, setIsDocsOpen] = useState(true);
   const [library, setLibrary] = useState<{ name: string } | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const { refreshKey } = useSidebarRefresh();
@@ -290,115 +293,118 @@ export function DocumentsSidebar() {
           </div>
         )}
 
-        {/* Documents Group */}
-        <SidebarGroup className="flex min-h-0 flex-1 flex-col group-data-[collapsible=icon]:hidden">
-          <SidebarGroupLabel className="justify-between">
-            <button
-              className="hover:text-foreground flex items-center gap-1 text-xs font-semibold transition-colors"
-              onClick={() => setIsDocsOpen(!isDocsOpen)}
+        <Collapsible
+          key={'DOCUMENTS'}
+          title={'DOCUMENTS'}
+          defaultOpen
+          className="group/collapsible group-data-[collapsible=icon]:hidden"
+        >
+          {/* Documents Group */}
+          <SidebarGroup>
+            <SidebarGroupLabel
+              asChild
+              className="group/label text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-sm"
             >
-              {isDocsOpen ? (
-                <ChevronDown className="h-3 w-3" />
-              ) : (
-                <ChevronRight className="h-3 w-3" />
-              )}
-              <span>DOCUMENTS ({totalDocs})</span>
-            </button>
-          </SidebarGroupLabel>
+              <CollapsibleTrigger className="text-xs font-semibold transition-colors">
+                <span>DOCUMENTS ({totalDocs})</span>
+                <ChevronRightIcon className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
+              </CollapsibleTrigger>
+            </SidebarGroupLabel>
 
-          <SidebarGroupContent className="flex min-h-0 flex-1 flex-col">
-            <ScrollArea className="min-h-0 flex-1">
-              <AnimatePresence initial={false}>
-                {isDocsOpen && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                  >
-                    <SidebarMenu className="max-w-60 gap-1">
-                      {isLoading && page === 1 ? (
-                        <div className="space-y-3 p-2">
-                          <Skeleton className="h-8 w-full rounded-md" />
-                          <Skeleton className="h-8 w-full rounded-md" />
-                          <Skeleton className="h-8 w-full rounded-md" />
-                          <Skeleton className="h-8 w-full rounded-md" />
-                        </div>
-                      ) : filteredDocuments.length === 0 ? (
-                        <div className="text-muted-foreground px-4 py-3 text-center text-xs group-data-[collapsible=icon]:hidden">
-                          No documents found.
-                        </div>
-                      ) : (
-                        filteredDocuments.map((doc) => {
-                          const isActive =
-                            pathname ===
-                            `/hub/libraries/${libraryId}/documents/${doc.id}`;
-                          return (
-                            <SidebarMenuItem key={doc.id}>
-                              <SidebarMenuButton
-                                asChild
-                                isActive={isActive}
-                                tooltip={doc.title}
-                                size="lg"
-                                className="h-auto py-2"
-                              >
-                                <Link
-                                  href={`/hub/libraries/${libraryId}/documents/${doc.id}`}
-                                  className="flex flex-col items-start gap-0.5"
+            <CollapsibleContent>
+              <SidebarGroupContent className="flex min-h-0 flex-1 flex-col">
+                <ScrollArea className="min-h-0 flex-1">
+                  <AnimatePresence initial={false}>
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                    >
+                      <SidebarMenu className="max-w-60 gap-1">
+                        {isLoading && page === 1 ? (
+                          <div className="space-y-3 p-2">
+                            <Skeleton className="h-8 w-full rounded-md" />
+                            <Skeleton className="h-8 w-full rounded-md" />
+                            <Skeleton className="h-8 w-full rounded-md" />
+                            <Skeleton className="h-8 w-full rounded-md" />
+                          </div>
+                        ) : filteredDocuments.length === 0 ? (
+                          <div className="text-muted-foreground px-4 py-3 text-center text-xs group-data-[collapsible=icon]:hidden">
+                            No documents found.
+                          </div>
+                        ) : (
+                          filteredDocuments.map((doc) => {
+                            const isActive =
+                              pathname ===
+                              `/hub/libraries/${libraryId}/documents/${doc.id}`;
+                            return (
+                              <SidebarMenuItem key={doc.id}>
+                                <SidebarMenuButton
+                                  asChild
+                                  isActive={isActive}
+                                  tooltip={doc.title}
+                                  size="lg"
+                                  className="h-auto py-2"
                                 >
-                                  <div className="flex w-full items-center gap-2">
-                                    <FileText className="text-muted-foreground h-4 w-4 shrink-0" />
-                                    <span
-                                      className="truncate text-xs font-medium group-data-[collapsible=icon]:hidden"
-                                      title={doc.title}
-                                    >
-                                      {doc.title}
-                                    </span>
-                                  </div>
-                                  <div className="text-muted-foreground/60 flex items-center pl-6 text-[10px] group-data-[collapsible=icon]:hidden">
-                                    <Calendar className="mr-1 h-3 w-3" />
-                                    {new Date(doc.created_at)
-                                      .toLocaleDateString(undefined, {
-                                        month: 'short',
-                                        day: 'numeric',
-                                        year: 'numeric',
-                                      })
-                                      .toUpperCase()}
-                                  </div>
-                                </Link>
-                              </SidebarMenuButton>
-                            </SidebarMenuItem>
-                          );
-                        })
-                      )}
+                                  <Link
+                                    href={`/hub/libraries/${libraryId}/documents/${doc.id}`}
+                                    className="flex flex-col items-start gap-0.5"
+                                  >
+                                    <div className="flex w-full items-center gap-2">
+                                      <FileText className="text-muted-foreground h-4 w-4 shrink-0" />
+                                      <span
+                                        className="truncate text-xs font-medium group-data-[collapsible=icon]:hidden"
+                                        title={doc.title}
+                                      >
+                                        {doc.title}
+                                      </span>
+                                    </div>
+                                    <div className="text-muted-foreground/60 flex items-center pl-6 text-[10px] group-data-[collapsible=icon]:hidden">
+                                      <Calendar className="mr-1 h-3 w-3" />
+                                      {new Date(doc.created_at)
+                                        .toLocaleDateString(undefined, {
+                                          month: 'short',
+                                          day: 'numeric',
+                                          year: 'numeric',
+                                        })
+                                        .toUpperCase()}
+                                    </div>
+                                  </Link>
+                                </SidebarMenuButton>
+                              </SidebarMenuItem>
+                            );
+                          })
+                        )}
 
-                      {totalDocs > documents.length && (
-                        <div className="p-2 group-data-[collapsible=icon]:hidden">
-                          <Button
-                            variant="outline"
-                            onClick={() => {
-                              const next = page + 1;
-                              setPage(next);
-                              fetchDocuments(next);
-                            }}
-                            disabled={isLoading}
-                            className="h-8 w-full text-[10px] font-bold tracking-widest uppercase"
-                          >
-                            {isLoading ? (
-                              <Spinner className="h-4 w-4" />
-                            ) : (
-                              `Load More (${totalDocs - documents.length} Left)`
-                            )}
-                          </Button>
-                        </div>
-                      )}
-                    </SidebarMenu>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-              <ScrollBar orientation="vertical" />
-            </ScrollArea>
-          </SidebarGroupContent>
-        </SidebarGroup>
+                        {totalDocs > documents.length && (
+                          <div className="p-2 group-data-[collapsible=icon]:hidden">
+                            <Button
+                              variant="outline"
+                              onClick={() => {
+                                const next = page + 1;
+                                setPage(next);
+                                fetchDocuments(next);
+                              }}
+                              disabled={isLoading}
+                              className="h-8 w-full text-[10px] font-bold tracking-widest uppercase"
+                            >
+                              {isLoading ? (
+                                <Spinner className="h-4 w-4" />
+                              ) : (
+                                `Load More (${totalDocs - documents.length} Left)`
+                              )}
+                            </Button>
+                          </div>
+                        )}
+                      </SidebarMenu>
+                    </motion.div>
+                  </AnimatePresence>
+                  <ScrollBar orientation="vertical" />
+                </ScrollArea>
+              </SidebarGroupContent>
+            </CollapsibleContent>
+          </SidebarGroup>
+        </Collapsible>
       </SidebarContent>
 
       {/* Footer Navigation */}
