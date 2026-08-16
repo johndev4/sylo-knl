@@ -208,7 +208,7 @@ export function LibrariesContainer({ memberships }: LibrariesContainerProps) {
                 key={mode}
                 onClick={() => setViewMode(mode)}
                 className={cn(
-                  'focus-visible:ring-ring relative flex h-8 w-8 items-center justify-center rounded-md transition-colors outline-none focus-visible:ring-2 focus-visible:ring-offset-1',
+                  'focus-visible:ring-ring relative flex h-8 w-8 items-center justify-center rounded-md transition-colors outline-none focus-visible:ring-1 focus-visible:ring-offset-1',
                   viewMode === mode
                     ? 'text-foreground'
                     : 'text-muted-foreground hover:text-foreground hover:bg-zinc-200/50 dark:hover:bg-zinc-800/50'

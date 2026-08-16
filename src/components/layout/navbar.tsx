@@ -22,7 +22,7 @@ function GlobalNav() {
       <Link
         href="/hub"
         className={cn(
-          'focus-visible:ring-ring rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none',
+          'focus-visible:ring-ring rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:ring-1 focus-visible:outline-none',
           pathname === '/hub' ||
             (pathname.startsWith('/hub/') && !pathname.startsWith('/chat'))
             ? 'text-foreground bg-zinc-100 dark:bg-zinc-800/50'
@@ -35,7 +35,7 @@ function GlobalNav() {
       <Link
         href="/chat"
         className={cn(
-          'focus-visible:ring-ring rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none',
+          'focus-visible:ring-ring rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:ring-1 focus-visible:outline-none',
           pathname.startsWith('/chat')
             ? 'text-foreground bg-zinc-100 dark:bg-zinc-800/50'
             : 'text-muted-foreground hover:text-foreground hover:bg-zinc-100/50 dark:hover:bg-zinc-800/30'
@@ -65,7 +65,7 @@ export function Navbar() {
             className={cn(
               'flex items-center gap-2 text-lg font-bold',
               'text-foreground',
-              'focus-visible:ring-ring rounded-lg transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:outline-none'
+              'focus-visible:ring-ring rounded-lg transition-opacity hover:opacity-80 focus-visible:ring-1 focus-visible:outline-none'
             )}
           >
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-zinc-900 text-zinc-50 shadow-sm dark:bg-zinc-100 dark:text-zinc-900">

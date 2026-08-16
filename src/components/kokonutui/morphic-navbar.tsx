@@ -54,7 +54,7 @@ export function MorphicNavbar({
             key={path}
             href={path}
             className={cn(
-              'relative rounded-lg px-4 py-1.5 text-sm font-medium transition-colors duration-200 outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 dark:focus-visible:ring-zinc-600',
+              'relative rounded-lg px-4 py-1.5 text-sm font-medium transition-colors duration-200 outline-none focus-visible:ring-1 focus-visible:ring-zinc-400 dark:focus-visible:ring-zinc-600',
               isActive
                 ? 'text-zinc-900 dark:text-zinc-50'
                 : 'text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100'

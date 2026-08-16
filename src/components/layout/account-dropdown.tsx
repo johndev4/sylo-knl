@@ -125,7 +125,7 @@ export function AccountDropdown() {
             'flex items-center gap-2 rounded-full py-1.5 pr-3 pl-1.5',
             'bg-zinc-100/80 hover:bg-zinc-200/80 dark:bg-zinc-800/50 dark:hover:bg-zinc-800',
             'border border-zinc-200/50 transition-colors outline-none dark:border-zinc-700/50',
-            'focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-1'
+            'focus-visible:ring-ring focus-visible:ring-1 focus-visible:ring-offset-1'
           )}
           aria-label="Account menu"
         >
