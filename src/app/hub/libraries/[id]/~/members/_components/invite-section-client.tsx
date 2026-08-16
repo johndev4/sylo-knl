@@ -275,7 +275,7 @@ export function InviteSectionClient({
         </Button>
       </form>
 
-      <div className="mt-6">
+      <div className="mt-6" aria-label="Active Invites section">
         <h3 className="mb-4 font-medium" id="active-invites-heading">
           Active Invites
         </h3>

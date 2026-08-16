@@ -38,7 +38,9 @@ test.describe.serial('Library Invites', () => {
 
     // Create a new invite
     await page.getByLabel('Invite member role', { exact: true }).click();
-    await page.getByRole('option', { name: 'Editor - Can create and edit content' }).click();
+    await page
+      .getByRole('option', { name: 'Editor - Can create and edit content' })
+      .click();
     await page.getByRole('button', { name: 'Generate Invite Link' }).click();
 
     // Verify success message
@@ -46,7 +48,7 @@ test.describe.serial('Library Invites', () => {
 
     // Verify invite appears in the table
     const table = page
-      .getByLabel('Active Invites Section', { exact: true })
+      .getByLabel('Active Invites section', { exact: true })
       .locator('table');
     await expect(table).toBeVisible();
     await expect(table.locator('tbody tr')).toHaveCount(1);
@@ -59,12 +61,13 @@ test.describe.serial('Library Invites', () => {
     browser,
   }) => {
     await page.goto(`/hub/libraries/${testData.testLibraryId}/~/members`);
+    await page.waitForLoadState('networkidle');
 
     // Grant clipboard read permissions
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
 
     // Copy the invite link
-    const table = page.getByLabel('Active Invites Section', { exact: true });
+    const table = page.getByLabel('Active Invites section', { exact: true });
     const copyButton = table.locator('button', { hasText: 'Copy' });
     await copyButton.click();
 
