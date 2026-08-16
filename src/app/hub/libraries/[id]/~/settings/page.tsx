@@ -5,6 +5,7 @@ import { Suspense } from 'react';
 import { forbidden } from 'next/navigation';
 import { getLibraryName } from '@/queries/libraries';
 import { createClient } from '@/lib/supabase/server';
+import { Spinner } from '@/components/ui/spinner';
 
 export default async function LibrarySettingsPage({
   params,
@@ -14,8 +15,9 @@ export default async function LibrarySettingsPage({
   return (
     <Suspense
       fallback={
-        <div className="text-muted-foreground flex flex-1 items-center justify-center p-8 py-8 text-center text-sm">
-          Loading settings…
+        <div className="text-muted-foreground flex flex-1 flex-col items-center justify-center p-8 py-8 text-center text-sm">
+          <Spinner className="text-muted-foreground h-8 w-8" />
+          Loading…
         </div>
       }
     >
