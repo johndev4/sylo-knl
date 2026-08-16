@@ -182,7 +182,7 @@ export function MemberTable({
         </div>
       ) : (
         <ScrollArea>
-          <div className="max-h-80">
+          <div className="max-h-90">
             <table className="w-full text-sm">
               <thead className="border-border border-b">
                 <tr>
@@ -194,7 +194,7 @@ export function MemberTable({
                           selectedMembers.size ===
                             members.filter((m) => m.role !== 'OWNER').length
                         }
-                        onChange={() => {
+                        onCheckedChange={() => {
                           if (
                             selectedMembers.size ===
                             members.filter((m) => m.role !== 'OWNER').length
@@ -230,7 +230,9 @@ export function MemberTable({
                       <td className="px-4 py-3">
                         <Checkbox
                           checked={selectedMembers.has(member.user_id)}
-                          onChange={() => handleSelectMember(member.user_id)}
+                          onCheckedChange={() =>
+                            handleSelectMember(member.user_id)
+                          }
                           disabled={member.role === 'OWNER'}
                           aria-label={`Select ${member.user?.email}`}
                         />
