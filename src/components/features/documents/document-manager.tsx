@@ -28,7 +28,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { DocumentActions } from './document-actions';
-import { useSidebarRefresh } from './sidebar-refresh-context';
+import { useSidebarRefresh } from '@/components/providers/sidebar-refresh-provider';
 import { TagChipsInput } from './tag-chips-input';
 import { useNavigationGuard } from '@/hooks/use-navigation-guard';
 import { BlockEditor } from './block_editor';

@@ -36,7 +36,7 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { Input } from '@/components/ui/input';
-import { useSidebarRefresh } from './sidebar-refresh-context';
+import { useSidebarRefresh } from '@/components/providers/sidebar-refresh-provider';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Spinner } from '@/components/ui/spinner';

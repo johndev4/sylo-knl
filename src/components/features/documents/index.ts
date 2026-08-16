@@ -2,7 +2,5 @@
 export { DocumentsSidebar } from './documents-sidebar';
 export { DocumentSkeleton } from './document-skeleton';
 export { DocumentManager } from './document-manager';
-export {
-  SidebarRefreshProvider,
-  useSidebarRefresh,
-} from './sidebar-refresh-context';
+export { DocumentActions } from './document-actions';
+export { TagChipsInput } from './tag-chips-input';

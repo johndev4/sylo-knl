@@ -1,12 +1,12 @@
-import { DocumentsSidebar } from '@/app/hub/libraries/[id]/documents/_components';
-import { SidebarRefreshProvider } from '@/app/hub/libraries/[id]/documents/_components/sidebar-refresh-context';
+import { DocumentsSidebar } from '@/components/features/documents';
+import { SidebarRefreshProvider } from '@/components/providers/sidebar-refresh-provider';
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 import { Separator } from '@/components/ui/separator';
-import { LibraryBreadcrumbNav } from '../../_components';
+import { LibraryBreadcrumbNav } from '@/components/features/libraries';
 
 export default function DocumentsLayout({
   children,

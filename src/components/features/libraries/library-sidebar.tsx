@@ -14,7 +14,6 @@ import {
   Library,
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useSidebarRefresh } from '../[id]/documents/_components';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -49,7 +48,6 @@ export function LibrarySidebar() {
   const [isLeaveDialogOpen, setIsLeaveDialogOpen] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
   const [leaveError, setLeaveError] = useState<string | null>(null);
-  const { refreshKey } = useSidebarRefresh();
 
   const fetchLibrary = useCallback(async () => {
     if (!libraryId) return;
@@ -71,7 +69,7 @@ export function LibrarySidebar() {
     }, 0);
 
     return () => window.clearTimeout(timeoutId);
-  }, [fetchLibrary, refreshKey]);
+  }, [fetchLibrary]);
 
   const handleOpenLeaveDialog = () => {
     setLeaveError(null);

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Suspense } from 'react';
 import { redirect } from 'next/navigation';
-import { DocumentManager, DocumentSkeleton } from '../_components';
+import { DocumentManager, DocumentSkeleton } from '@/components/features/documents';
 import { Button } from '@/components/ui/button';
 import { getDocument } from '@/queries/documents';
 import { createClient } from '@/lib/supabase/server';

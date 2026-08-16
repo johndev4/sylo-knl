@@ -2,7 +2,7 @@ import { ReactNode } from 'react';
 import {
   LibraryBreadcrumbNav,
   LibrarySidebar,
-} from '@/app/hub/libraries/_components';
+} from '@/components/features/libraries';
 import {
   SidebarInset,
   SidebarProvider,
