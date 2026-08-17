@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
-import { Suspense } from 'react';
 import { ThemeProvider } from 'next-themes';
 import { Navbar } from '@/components/layout/navbar';
 import { cn } from '@/lib/utils';
@@ -53,9 +52,7 @@ export default function RootLayout({
         >
           <TooltipProvider>
             <Navbar />
-            <main className="flex-1">
-              <Suspense fallback={null}>{children}</Suspense>
-            </main>
+            <main className="flex-1">{children}</main>
           </TooltipProvider>
         </ThemeProvider>
       </body>

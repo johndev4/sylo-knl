@@ -1,9 +1,9 @@
-import { Suspense } from 'react';
 import { FileText, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { requireLibraryRole } from '@/lib/auth/library-role';
-import { forbidden } from 'next/navigation';
+import { notFound } from 'next/navigation';
+import { Suspense } from 'react';
 
 export default function DocumentsPage({
   params,
@@ -24,7 +24,7 @@ async function DocumentsPageContent({
 }) {
   const { id: libraryId } = await params;
   const membership = await requireLibraryRole(libraryId);
-  if (!membership) return forbidden();
+  if (!membership) return notFound();
 
   const isViewer = membership?.role === 'VIEWER';
 

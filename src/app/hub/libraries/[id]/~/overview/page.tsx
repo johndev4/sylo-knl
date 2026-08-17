@@ -3,7 +3,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Suspense } from 'react';
 import { requireLibraryRole } from '@/lib/auth/library-role';
-import { forbidden } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import { getLibraryOverview } from '@/queries/libraries';
 import { createClient } from '@/lib/supabase/server';
 import { Spinner } from '@/components/ui/spinner';
@@ -42,7 +42,7 @@ async function LibraryInfoPageContent({
 }) {
   const { id } = await params;
   const membership = await requireLibraryRole(id);
-  if (!membership) return forbidden();
+  if (!membership) return notFound();
 
   const supabase = await createClient();
   const { library, memberCount, documentCount } = await getLibraryOverview(

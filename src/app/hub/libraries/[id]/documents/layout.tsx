@@ -7,12 +7,42 @@ import {
 } from '@/components/ui/sidebar';
 import { Separator } from '@/components/ui/separator';
 import { LibraryBreadcrumbNav } from '@/components/features/libraries';
+import { Suspense } from 'react';
+import { requireLibraryRole } from '@/lib/auth/library-role';
+import { Spinner } from '@/components/ui/spinner';
 
 export default function DocumentsLayout({
   children,
+  params,
 }: {
   children: React.ReactNode;
+  params: Promise<{ id: string }>;
 }) {
+  return (
+    <Suspense
+      fallback={
+        <div className="text-muted-foreground flex flex-1 flex-col items-center justify-center p-8 py-8 text-center text-sm">
+          <Spinner className="text-muted-foreground h-8 w-8" />
+          Loading…
+        </div>
+      }
+    >
+      <DocumentsLayoutShell params={params}>{children}</DocumentsLayoutShell>
+    </Suspense>
+  );
+}
+
+async function DocumentsLayoutShell({
+  children,
+  params,
+}: {
+  children: React.ReactNode;
+  params: Promise<{ id: string }>;
+}) {
+  const { id: libraryId } = await params;
+  const membership = await requireLibraryRole(libraryId);
+  if (!membership) return <>{children}</>;
+
   return (
     <SidebarRefreshProvider>
       <SidebarProvider className="h-[calc(100vh-4.1rem)] min-h-0 flex-1">

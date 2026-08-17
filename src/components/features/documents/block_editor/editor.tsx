@@ -94,8 +94,7 @@ const Editor: React.FC<EditorProps> = ({
         editable={editable}
         theme={resolvedTheme === 'dark' ? 'dark' : 'light'}
         onChange={handleEditorChange}
-        slashMenu={false}
-        className="flex-1 overflow-y-auto"
+        slashMenu={true}
         portalElements={{ default: document.body }}
       >
         <SuggestionMenuController

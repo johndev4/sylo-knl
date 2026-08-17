@@ -13,7 +13,6 @@ export const getUser = cache(async () => {
   } = await supabase.auth.getUser();
 
   if (error || !user) {
-    console.error('Error fetching user:', error);
     redirect('/login');
   }
 

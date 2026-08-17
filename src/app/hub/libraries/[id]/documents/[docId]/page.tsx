@@ -1,17 +1,21 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Suspense } from 'react';
-import { redirect } from 'next/navigation';
-import { DocumentManager, DocumentSkeleton } from '@/components/features/documents';
+import { notFound, redirect } from 'next/navigation';
+import {
+  DocumentManager,
+  DocumentSkeleton,
+} from '@/components/features/documents';
 import { Button } from '@/components/ui/button';
 import { getDocument } from '@/queries/documents';
 import { createClient } from '@/lib/supabase/server';
 import { randomUUID } from 'crypto';
 import { getUser } from '@/lib/auth/get-user';
+import { requireLibraryRole } from '@/lib/auth/library-role';
 
 export default function Document({
   params,
 }: {
-  params: { id: string; docId: string };
+  params: Promise<{ id: string; docId: string }>;
 }) {
   return (
     <Suspense fallback={<DocumentSkeleton />}>
@@ -20,28 +24,23 @@ export default function Document({
   );
 }
 
-async function DocumentContent(props: {
-  params: { id: string; docId: string };
+async function DocumentContent({
+  params,
+}: {
+  params: Promise<{ id: string; docId: string }>;
 }) {
-  const params = await props.params;
-  // const membership = await requireLibraryRole(params.id);
-  // console.log('echo', membership);
-  // if (!membership) return forbidden();
-
-  const libraryId = params.id;
-  const docId = params.docId;
+  const { id: libraryId, docId } = await params;
+  const membership = await requireLibraryRole(libraryId);
+  if (!membership) return notFound();
 
   let document: any = null;
-  let role: string = 'VIEWER';
   let error: string | null = null;
 
   try {
     const user = await getUser();
-
     const supabase = await createClient();
     const data = await getDocument(docId, supabase, user);
     document = data.document;
-    role = data.role || 'VIEWER';
   } catch (err: any) {
     if (err.message === 'Document not found') {
       error = 'Document not found';
@@ -79,7 +78,7 @@ async function DocumentContent(props: {
         updated_at: document.updated_at,
         authors: document.authors,
       }}
-      userRole={role}
+      userRole={membership.role}
     />
   );
 }

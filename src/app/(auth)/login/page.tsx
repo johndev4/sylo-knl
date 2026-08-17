@@ -16,8 +16,8 @@ export default function LoginPage() {
 
   const redirectParam =
     typeof window !== 'undefined'
-      ? new URLSearchParams(window.location.search).get('redirect') || '/'
-      : '/';
+      ? new URLSearchParams(window.location.search).get('redirect') || '/hub'
+      : '/hub';
 
   useEffect(() => {
     const authClient = createClient();

@@ -4,7 +4,7 @@ import {
   RenameLibraryForm,
 } from '@/components/features/libraries';
 import { Suspense } from 'react';
-import { forbidden } from 'next/navigation';
+import { forbidden, notFound } from 'next/navigation';
 import { getLibraryName } from '@/queries/libraries';
 import { createClient } from '@/lib/supabase/server';
 import { Spinner } from '@/components/ui/spinner';
@@ -34,8 +34,11 @@ async function LibrarySettingsPageContent({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const membership = await requireLibraryRole(id, LIBRARY_ROLES.ADMIN);
-  if (!membership) return forbidden();
+  const membership = await requireLibraryRole(id);
+  if (!membership) return notFound();
+
+  const adminMembership = await requireLibraryRole(id, LIBRARY_ROLES.ADMIN);
+  if (!adminMembership) return forbidden();
 
   const supabase = await createClient();
   const libraryName = await getLibraryName(id, supabase);

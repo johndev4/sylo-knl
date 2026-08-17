@@ -1,6 +1,8 @@
 import { getUser } from '@/lib/auth/get-user';
 import { redirect } from 'next/navigation';
 
+export const instant = false;
+
 export default async function Home() {
   // getUser() already handles redirect to /login if unauthenticated
   await getUser();

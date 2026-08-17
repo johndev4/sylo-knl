@@ -1,7 +1,7 @@
 import { InviteSection, MemberTable } from '@/components/features/libraries';
 import { Suspense } from 'react';
 import { requireLibraryRole } from '@/lib/auth/library-role';
-import { forbidden } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import { getLibraryMembers } from '@/queries/libraries';
 import { createClient } from '@/lib/supabase/server';
 import { Spinner } from '@/components/ui/spinner';
@@ -32,7 +32,7 @@ async function LibraryMembersPageContent({
 }) {
   const { id } = await params;
   const membership = await requireLibraryRole(id);
-  if (!membership) return forbidden();
+  if (!membership) return notFound();
 
   const currentUserRole = membership?.role || '';
   const isOwnerOrHasAdminRole = ['OWNER', 'ADMIN'].includes(currentUserRole);

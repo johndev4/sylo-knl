@@ -1,6 +1,8 @@
 import { redirect } from 'next/navigation';
 
-export default async function LibraryIndexPage({
+export const instant = false;
+
+export default async function LibraryIndexPageContent({
   params,
 }: {
   params: Promise<{ id: string }>;

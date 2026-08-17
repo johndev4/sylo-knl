@@ -1,9 +1,6 @@
 import { redirect } from 'next/navigation';
 import { DocumentManager } from '@/components/features/documents/document-manager';
-import {
-  requireLibraryRole,
-  LIBRARY_ROLES,
-} from '@/lib/auth/library-role';
+import { requireLibraryRole, LIBRARY_ROLES } from '@/lib/auth/library-role';
 import { Suspense } from 'react';
 import { DocumentSkeleton } from '@/components/features/documents/document-skeleton';
 
@@ -20,14 +17,14 @@ export default function NewDocumentViewPage(props: {
 async function NewDocumentViewPageContent(props: {
   params: Promise<{ id: string }>;
 }) {
-  const params = await props.params;
-  const membership = await requireLibraryRole(params.id, LIBRARY_ROLES.EDITOR);
-  if (!membership) redirect(`/hub/libraries/${params.id}/documents`);
+  const { id: libraryId } = await props.params;
+  const membership = await requireLibraryRole(libraryId, LIBRARY_ROLES.EDITOR);
+  if (!membership) redirect(`/hub/libraries/${libraryId}/documents`);
 
   return (
     <DocumentManager
       key="new"
-      libraryId={params.id}
+      libraryId={libraryId}
       isNew={true}
       userRole={membership.role}
     />
