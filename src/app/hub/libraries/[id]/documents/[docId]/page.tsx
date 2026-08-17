@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Suspense } from 'react';
-import { notFound, redirect } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import {
   DocumentManager,
   DocumentSkeleton,
@@ -11,6 +11,7 @@ import { createClient } from '@/lib/supabase/server';
 import { randomUUID } from 'crypto';
 import { getUser } from '@/lib/auth/get-user';
 import { requireLibraryRole } from '@/lib/auth/library-role';
+import Link from 'next/link';
 
 export default function Document({
   params,
@@ -40,26 +41,20 @@ async function DocumentContent({
     const user = await getUser();
     const supabase = await createClient();
     const data = await getDocument(docId, supabase, user);
-    document = data.document;
+    document = data?.document ?? null;
   } catch (err: any) {
-    if (err.message === 'Document not found') {
-      error = 'Document not found';
-    } else {
-      error = err.message;
-    }
+    error = err.message;
   }
 
   if (!document || error) {
     return (
       <div className="flex h-full flex-1 flex-col items-center justify-center p-8 text-center">
         <h2 className="mb-2 text-2xl font-bold">
-          {error || 'Document not found'}
+          {error || 'Something went wrong'}
         </h2>
-        <Button
-          onClick={() => redirect(`/hub/libraries/${libraryId}/documents`)}
-        >
-          Go Back
-        </Button>
+        <Link href={`/hub/libraries/${libraryId}`} role="button">
+          <Button>Go Back</Button>
+        </Link>
       </div>
     );
   }

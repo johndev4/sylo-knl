@@ -34,7 +34,7 @@ export async function getDocuments(
     .select('library_id')
     .eq('library_id', libraryId)
     .eq('user_id', user.id)
-    .single();
+    .maybeSingle();
 
   if (!membership) {
     throw new Error('Forbidden');
@@ -93,9 +93,11 @@ export async function getDocument(
     .from('documents')
     .select('*, author_ids, library_id, created_at, updated_at, deleted_at')
     .eq('id', docId)
-    .single();
+    .maybeSingle();
 
-  if (docError || !document || document.deleted_at) {
+  if (docError) {
+    throw new Error(`Server Error: ${docError.message}`);
+  } else if (!document || document.deleted_at) {
     throw new Error('Document not found');
   }
 
@@ -105,7 +107,7 @@ export async function getDocument(
     .select('role')
     .eq('library_id', document.library_id)
     .eq('user_id', user.id)
-    .single();
+    .maybeSingle();
 
   if (!membership) {
     throw new Error('Forbidden');
@@ -131,6 +133,5 @@ export async function getDocument(
       ...document,
       authors,
     },
-    role: membership.role,
   });
 }

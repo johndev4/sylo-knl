@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 
@@ -53,7 +54,12 @@ async function fetchDocumentTitle(id: string): Promise<string | null> {
 
     const data = await getDocument(id, supabase, user);
     return data?.document?.title ?? null;
-  } catch {
+  } catch (err: any) {
+    if (err.message === 'Document not found.') {
+      console.warn(`[DEBUG] ${err.message}`);
+    } else {
+      console.error(`${err.message}`);
+    }
     return null;
   }
 }

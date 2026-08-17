@@ -56,10 +56,7 @@ export const DocumentDetailSchema = z.object({
 
 export const DocumentResultSchema = z.object({
   document: DocumentDetailSchema,
-  role: z.string(),
 });
-
-
 
 // -----------------------------------------------------------------------------
 // Types
@@ -69,4 +66,4 @@ export type DocumentListItem = z.infer<typeof DocumentListItemSchema>;
 export type DocumentsResult = z.infer<typeof DocumentsResultSchema>;
 export type DocumentAuthor = z.infer<typeof DocumentAuthorSchema>;
 export type DocumentDetail = z.infer<typeof DocumentDetailSchema>;
-export type DocumentResult = z.infer<typeof DocumentResultSchema>;
+export type DocumentResult = z.infer<typeof DocumentResultSchema> | null;
