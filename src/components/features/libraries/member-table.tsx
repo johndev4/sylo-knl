@@ -326,7 +326,7 @@ export function MemberTable({
                                   onClick={() =>
                                     handleRemoveMember(member.user_id)
                                   }
-                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  variant={'destructive'}
                                 >
                                   Remove
                                 </AlertDialogAction>

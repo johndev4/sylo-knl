@@ -1,3 +1,3 @@
-export * as ChatClient from './chat-client';
-export { ChatSidebar } from './chat-sidebar';
-export { ChatSkeleton } from './chat-skeleton';
+export * from './chat-client';
+export * from './chat-sidebar';
+export * from './chat-skeleton';

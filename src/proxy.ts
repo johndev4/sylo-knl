@@ -48,7 +48,12 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser();
   const isAuthenticated = Boolean(user) && !error;
 
-  if (!pathname.startsWith(LOGIN_PATH) && !isAuthenticated) {
+  if (
+    (pathname.startsWith('/hub') ||
+      pathname.startsWith('/chat') ||
+      pathname.startsWith('/account')) &&
+    !isAuthenticated
+  ) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = LOGIN_PATH;
     loginUrl.searchParams.set('redirect', `${pathname}${search}`);
@@ -65,5 +70,11 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/hub/:path*', '/login', '/chat/:path*', '/account/:path*'],
+  matcher: [
+    '/hub/:path*',
+    '/chat/:path*',
+    '/account/:path*',
+    '/login',
+    '/join/:path*',
+  ],
 };

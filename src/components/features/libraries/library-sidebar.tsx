@@ -272,7 +272,7 @@ export function LibrarySidebar() {
             <AlertDialogAction
               onClick={handleLeaveConfirm}
               disabled={isLeaving}
-              className="bg-orange-600 text-white hover:bg-orange-700"
+              variant={'destructive'}
             >
               {isLeaving ? (
                 <>
