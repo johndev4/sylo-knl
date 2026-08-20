@@ -1,5 +1,7 @@
 'use client';
 
+import { createClient } from '@/lib/supabase/client';
+import { getLibraryTagSuggestions } from '@/queries/libraries';
 import { useEffect, useMemo, useState } from 'react';
 
 export function useTagSuggestions(
@@ -28,19 +30,13 @@ export function useTagSuggestions(
         setLoadError(null);
 
         try {
-          const encodedQuery = encodeURIComponent(query);
-          const response = await fetch(
-            `/api/libraries/${encodeURIComponent(libraryId)}/tags?q=${encodedQuery}`
+          const supabase = await createClient();
+          const tags = await getLibraryTagSuggestions(
+            libraryId,
+            query,
+            supabase
           );
-
-          if (!response.ok) {
-            const body = await response.json().catch(() => ({}));
-            throw new Error(body.error || 'Failed to load tag suggestions');
-          }
-
-          const data = await response.json();
-          const tags = Array.isArray(data.tags) ? data.tags : [];
-          setAvailableTags(tags);
+          setAvailableTags(Array.isArray(tags) ? tags : []);
           setLastQuery(query);
         } catch (error: unknown) {
           const message =

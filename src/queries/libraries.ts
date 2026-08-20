@@ -2,7 +2,9 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import {
   InviteResponseSchema,
+  LibraryIdSchema,
   ListLibraryMembersSchema,
+  TagSuggestionsQuerySchema,
 } from '@/lib/validation/library-schema';
 
 /**
@@ -127,4 +129,80 @@ export async function getLibraryOverview(
     ]);
 
   return { library, memberCount, documentCount };
+}
+
+// ---------------------------------------------------------------------------
+// Tag suggestions migrated from src/app/api/libraries/[id]/tags/route.ts
+// (use these in place of GET /api/libraries/[id]/tags?q=...)
+// ---------------------------------------------------------------------------
+
+const MAX_TAG_SUGGESTIONS = 20;
+const MIN_TAG_QUERY_LENGTH = 3;
+
+/**
+ * Returns up to {@link MAX_TAG_SUGGESTIONS} tag suggestions for a library,
+ * matched (case-insensitively, substring) against the trimmed query.
+ *
+ * Replaces the deprecated `GET /api/libraries/[id]/tags?q=<query>` route.
+ * Empty array returned when query length < {@link MIN_TAG_QUERY_LENGTH}.
+ *
+ * @param libraryId - UUID of the library to search tags within
+ * @param query - Raw query string from the client (will be trimmed)
+ * @param supabase - SupabaseClient instance for database operations
+ */
+export async function getLibraryTagSuggestions(
+  libraryId: string,
+  query: string,
+  supabase: SupabaseClient
+) {
+  const parsedId = LibraryIdSchema.safeParse(libraryId);
+  if (!parsedId.success) {
+    throw new Error('Invalid library id');
+  }
+
+  const parsedQuery = TagSuggestionsQuerySchema.safeParse(query);
+  if (!parsedQuery.success) {
+    throw new Error('Invalid tag query');
+  }
+
+  const trimmedQuery = parsedQuery.data.trim();
+
+  if (trimmedQuery.length < MIN_TAG_QUERY_LENGTH) {
+    return [];
+  }
+
+  const { data: documents, error } = await supabase
+    .from('documents')
+    .select('tags')
+    .eq('library_id', libraryId)
+    .is('deleted_at', null);
+
+  if (error) {
+    console.error('[LIBRARY TAGS QUERY ERROR]', error);
+    throw new Error('Failed to fetch tag suggestions');
+  }
+
+  const seen = new Set<string>();
+  const suggestions: string[] = [];
+  const normalizedQuery = trimmedQuery.toLowerCase();
+
+  for (const doc of documents ?? []) {
+    const tags = Array.isArray(doc.tags) ? doc.tags : [];
+    for (const raw of tags) {
+      const trimmed = typeof raw === 'string' ? raw.trim() : '';
+      if (!trimmed) continue;
+
+      const normalized = trimmed.toLowerCase();
+      if (normalized.includes(normalizedQuery) && !seen.has(normalized)) {
+        seen.add(normalized);
+        suggestions.push(trimmed);
+      }
+    }
+  }
+
+  suggestions.sort((a, b) =>
+    a.localeCompare(b, undefined, { sensitivity: 'base' })
+  );
+
+  return suggestions.slice(0, MAX_TAG_SUGGESTIONS);
 }

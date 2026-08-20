@@ -48,34 +48,33 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import { getLibraryName } from '@/queries/libraries';
 
-type Document = DocumentListItem;
+interface DocumentsSidebarProps {
+  userRole: string;
+}
 
-export function DocumentsSidebar() {
+export function DocumentsSidebar({ userRole }: DocumentsSidebarProps) {
   const params = useParams();
   const libraryId = params?.id as string;
   const pathname = usePathname();
 
-  const [documents, setDocuments] = useState<Document[]>([]);
+  const [documents, setDocuments] = useState<DocumentListItem[]>([]);
   const [totalDocs, setTotalDocs] = useState(0);
   const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTag, setSelectedTag] = useState<string>('ALL');
 
-  const [library, setLibrary] = useState<{ name: string } | null>(null);
-  const [userRole, setUserRole] = useState<string | null>(null);
+  const [libraryName, setLibraryName] = useState<string | null>(null);
   const { refreshKey } = useSidebarRefresh();
 
   const fetchLibrary = useCallback(async () => {
     if (!libraryId) return;
     try {
-      const res = await fetch(`/api/libraries/${libraryId}`);
-      if (res.ok) {
-        const data = await res.json();
-        setLibrary(data.library);
-        setUserRole(data.role || 'VIEWER');
-      }
+      const supabase = await createClient();
+      const libraryName = await getLibraryName(libraryId, supabase);
+      setLibraryName(libraryName);
     } catch (error) {
       console.error('Failed to fetch library:', error);
     }
@@ -122,11 +121,11 @@ export function DocumentsSidebar() {
   );
 
   useEffect(() => {
-    // Reset to page 1 on refresh
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setPage(1);
-    fetchDocuments(1);
-    fetchLibrary();
+    (async () => {
+      setPage(1); // Reset to page 1 on refresh
+      fetchDocuments(1);
+      fetchLibrary();
+    })();
   }, [fetchDocuments, fetchLibrary, refreshKey]);
 
   // Extract all unique tags
@@ -174,7 +173,11 @@ export function DocumentsSidebar() {
                     Library
                   </span>
                   <span className="truncate text-sm font-semibold">
-                    {library ? library.name : <Skeleton className="h-4 w-24" />}
+                    {libraryName ? (
+                      libraryName
+                    ) : (
+                      <Skeleton className="h-4 w-24" />
+                    )}
                   </span>
                 </div>
               </div>

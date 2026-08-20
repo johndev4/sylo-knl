@@ -4,15 +4,21 @@ import { z } from 'zod';
 export const UserRoleEnum = z.enum(['OWNER', 'ADMIN', 'EDITOR', 'VIEWER']);
 export type UserRole = z.infer<typeof UserRoleEnum>;
 
-// Add member to library
-export const AddLibraryMemberSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  role: UserRoleEnum.refine((role) => role !== 'OWNER', {
-    message:
-      'Cannot assign OWNER role when adding members. Only library creator can be OWNER.',
-  }),
-});
-export type AddLibraryMemberInput = z.infer<typeof AddLibraryMemberSchema>;
+// Library schemas
+export const LibraryIdSchema = z.uuid('Invalid library id');
+
+// Tag Schema
+export const TagSuggestionsQuerySchema = z.string();
+
+// // Add member to library
+// export const AddLibraryMemberSchema = z.object({
+//   email: z.string().email('Invalid email address'),
+//   role: UserRoleEnum.refine((role) => role !== 'OWNER', {
+//     message:
+//       'Cannot assign OWNER role when adding members. Only library creator can be OWNER.',
+//   }),
+// });
+// export type AddLibraryMemberInput = z.infer<typeof AddLibraryMemberSchema>;
 
 // Update member role
 export const UpdateLibraryMemberRoleSchema = z.object({

@@ -16,6 +16,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { UrlObject } from 'url';
 import { getDocument } from '@/queries/documents';
+import { getLibraryName } from '@/queries/libraries';
 import { createClient } from '@/lib/supabase/client';
 
 // Helper to capitalize first letter
@@ -30,10 +31,9 @@ const isUUID = (str: string) => {
 
 async function fetchLibraryName(id: string): Promise<string | null> {
   try {
-    const res = await fetch(`/api/libraries/${id}`);
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data?.library?.name ?? null;
+    const supabase = createClient();
+    const libraryName = await getLibraryName(id, supabase);
+    return libraryName ?? null;
   } catch {
     return null;
   }

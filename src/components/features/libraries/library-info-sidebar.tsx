@@ -36,15 +36,19 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { leaveLibrary } from '@/actions/libraries';
+import { getLibraryName } from '@/queries/libraries';
+import { createClient } from '@/lib/supabase/client';
+interface LibraryInfoSidebarProps {
+  userRole: string;
+}
 
-export function LibrarySidebar() {
+export function LibraryInfoSidebar({ userRole }: LibraryInfoSidebarProps) {
   const params = useParams();
   const pathname = usePathname();
   const router = useRouter();
   const libraryId = params?.id as string;
 
-  const [library, setLibrary] = useState<{ name: string } | null>(null);
-  const [role, setRole] = useState<string | null>(null);
+  const [libraryName, setLibraryName] = useState<string | null>(null);
   const [isLeaveDialogOpen, setIsLeaveDialogOpen] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
   const [leaveError, setLeaveError] = useState<string | null>(null);
@@ -52,12 +56,9 @@ export function LibrarySidebar() {
   const fetchLibrary = useCallback(async () => {
     if (!libraryId) return;
     try {
-      const res = await fetch(`/api/libraries/${libraryId}`);
-      if (res.ok) {
-        const data = await res.json();
-        setLibrary(data.library);
-        setRole(data.role);
-      }
+      const supabase = await createClient();
+      const libraryName = await getLibraryName(libraryId, supabase);
+      setLibraryName(libraryName);
     } catch (error) {
       console.error('Failed to fetch library:', error);
     }
@@ -105,8 +106,8 @@ export function LibrarySidebar() {
     }
   };
 
-  const canManageLibrarySettings = ['OWNER', 'ADMIN'].includes(role ?? '');
-  const isOwner = role === 'OWNER';
+  const canManageLibrarySettings = ['OWNER', 'ADMIN'].includes(userRole ?? '');
+  const isOwner = userRole === 'OWNER';
 
   return (
     <Sidebar
@@ -128,7 +129,11 @@ export function LibrarySidebar() {
                     Library
                   </span>
                   <span className="truncate text-sm font-semibold">
-                    {library ? library.name : <Skeleton className="h-4 w-24" />}
+                    {libraryName ? (
+                      libraryName
+                    ) : (
+                      <Skeleton className="h-4 w-24" />
+                    )}
                   </span>
                 </div>
               </div>
@@ -141,7 +146,7 @@ export function LibrarySidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             {libraryId &&
-              (library ? (
+              (libraryName ? (
                 <SidebarMenu className="gap-1">
                   {/* Back to Documents Button */}
                   <SidebarMenuItem className="group-data-[collapsible=icon]:hidden">
@@ -225,7 +230,7 @@ export function LibrarySidebar() {
       </SidebarContent>
 
       <SidebarFooter>
-        {!isOwner && library && (
+        {!isOwner && libraryName && (
           <SidebarMenu>
             <SidebarMenuItem className="group-data-[collapsible=icon]:hidden">
               <SidebarMenuButton
@@ -257,7 +262,7 @@ export function LibrarySidebar() {
             <AlertDialogDescription>
               You will no longer have access to{' '}
               <span className="text-foreground font-semibold">
-                &quot;{library?.name ?? 'this library'}&quot;
+                &quot;{libraryName ?? 'this library'}&quot;
               </span>
               . This action cannot be undone.
             </AlertDialogDescription>

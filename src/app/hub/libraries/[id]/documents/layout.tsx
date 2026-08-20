@@ -46,7 +46,7 @@ async function DocumentsLayoutShell({
   return (
     <SidebarRefreshProvider>
       <SidebarProvider className="h-[calc(100vh-4.1rem)] min-h-0 flex-1">
-        <DocumentsSidebar />
+        <DocumentsSidebar userRole={membership.role} />
         <SidebarInset className="flex min-w-0 flex-1 flex-col overflow-hidden">
           <header className="bg-background flex h-12 shrink-0 items-center gap-2 border-b border-zinc-200/50 px-4 dark:border-zinc-800/50">
             <SidebarTrigger className="-ml-1" />

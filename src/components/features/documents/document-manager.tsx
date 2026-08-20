@@ -63,7 +63,7 @@ export function DocumentManager({
   libraryId,
   isNew = false,
   initialData,
-  userRole: initialUserRole = 'VIEWER',
+  userRole = 'VIEWER',
 }: DocumentManagerProps) {
   const router = useRouter();
   const { triggerRefresh } = useSidebarRefresh();
@@ -205,27 +205,6 @@ export function DocumentManager({
       (async () => resetNewDocumentDraft())();
     }
   }, [isNew, resetNewDocumentDraft]);
-
-  const [fetchedRole, setFetchedRole] = useState<string | null>(null);
-  const userRole = fetchedRole || initialUserRole;
-
-  // Fetch role if it's a new document or if the initial role is VIEWER (to verify)
-  useEffect(() => {
-    if (isNew || initialUserRole === 'VIEWER') {
-      const fetchRole = async () => {
-        try {
-          const res = await fetch(`/api/libraries/${libraryId}`);
-          if (res.ok) {
-            const data = await res.json();
-            setFetchedRole(data.role || 'VIEWER');
-          }
-        } catch (error) {
-          console.error('Failed to fetch role:', error);
-        }
-      };
-      fetchRole();
-    }
-  }, [libraryId, isNew, initialUserRole]);
 
   // Ensure VIEWER members cannot enter edit mode
   useEffect(() => {
