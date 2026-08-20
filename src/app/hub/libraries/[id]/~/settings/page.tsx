@@ -2,7 +2,7 @@ import { LIBRARY_ROLES, requireLibraryRole } from '@/lib/auth/library-role';
 import {
   DeleteLibraryForm,
   RenameLibraryForm,
-} from '@/components/features/libraries';
+} from '@/features/libraries';
 import { Suspense } from 'react';
 import { forbidden, notFound } from 'next/navigation';
 import { getLibraryName } from '@/queries/libraries';

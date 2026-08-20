@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import {
   DocumentManager,
   DocumentSkeleton,
-} from '@/components/features/documents';
+} from '@/features/documents';
 import { Button } from '@/components/ui/button';
 import { getDocument } from '@/queries/documents';
 import { createClient } from '@/lib/supabase/server';

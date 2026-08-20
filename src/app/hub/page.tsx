@@ -13,7 +13,7 @@ import {
   CreateLibraryDialog,
   LibrariesContainer,
   LibrarySummaryHero,
-} from '@/components/features/hub';
+} from '@/features/hub';
 
 export default function LibrariesPage() {
   return (

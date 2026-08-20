@@ -1,8 +1,8 @@
 import { redirect } from 'next/navigation';
-import { DocumentManager } from '@/components/features/documents/document-manager';
+import { DocumentManager } from '@/features/documents/document-manager';
 import { requireLibraryRole, LIBRARY_ROLES } from '@/lib/auth/library-role';
 import { Suspense } from 'react';
-import { DocumentSkeleton } from '@/components/features/documents/document-skeleton';
+import { DocumentSkeleton } from '@/features/documents/document-skeleton';
 
 export default function NewDocumentViewPage(props: {
   params: Promise<{ id: string }>;

@@ -80,7 +80,7 @@ export function TagChipsInput({
             aria-autocomplete="list"
             aria-haspopup="listbox"
             aria-controls="tag-suggestion-list"
-            aria-expanded={suggestions.length > 0}
+            // aria-expanded removed — not valid on textbox role
             className="text-muted-foreground/60 placeholder:text-muted-foreground/30 min-w-[100px] flex-1 border-none bg-transparent text-xs focus:outline-none"
             maxLength={20}
           />

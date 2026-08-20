@@ -7,7 +7,7 @@ import { Auth } from '@supabase/auth-ui-react';
 import { getAuthTheme } from '@/lib/themes/auth-theme';
 import { useTheme } from 'next-themes';
 import { getURL } from '@/lib/auth/utils';
-import { LoginHero } from '@/components/features/login';
+import { LoginHero } from '@/features/login';
 
 export default function LoginPage() {
   const router = useRouter();

@@ -1,4 +1,4 @@
-import { InviteSection, MemberTable } from '@/components/features/libraries';
+import { InviteSection, MemberTable } from '@/features/libraries';
 import { Suspense } from 'react';
 import { requireLibraryRole } from '@/lib/auth/library-role';
 import { notFound } from 'next/navigation';

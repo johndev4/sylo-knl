@@ -1,7 +1,7 @@
 import {
   LibraryBreadcrumbNav,
   LibraryInfoSidebar,
-} from '@/components/features/libraries';
+} from '@/features/libraries';
 import {
   SidebarInset,
   SidebarProvider,

@@ -1,4 +1,4 @@
-import { DocumentsSidebar } from '@/components/features/documents';
+import { DocumentsSidebar } from '@/features/documents';
 import { SidebarRefreshProvider } from '@/components/providers/sidebar-refresh-provider';
 import {
   SidebarInset,
@@ -6,7 +6,7 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 import { Separator } from '@/components/ui/separator';
-import { LibraryBreadcrumbNav } from '@/components/features/libraries';
+import { LibraryBreadcrumbNav } from '@/features/libraries';
 import { Suspense } from 'react';
 import { requireLibraryRole } from '@/lib/auth/library-role';
 import { Spinner } from '@/components/ui/spinner';

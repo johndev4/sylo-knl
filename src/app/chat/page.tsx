@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
-import ChatClient from '@/components/features/chat/chat-client';
+import ChatClient from '@/features/chat/chat-client';
 import { getUserLibraries } from '@/queries/chat';
-import { ChatSkeleton } from '@/components/features/chat';
+import { ChatSkeleton } from '@/features/chat';
 import { getUser } from '@/lib/auth/get-user';
 import { createClient } from '@/lib/supabase/server';
 
