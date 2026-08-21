@@ -4,6 +4,8 @@ import { createClient } from '@/lib/supabase/client';
 import { getLibraryTagSuggestions } from '@/queries/libraries';
 import { useEffect, useMemo, useState } from 'react';
 
+const MIN_TAG_QUERY_LENGTH = 3;
+
 export function useTagSuggestions(
   libraryId: string,
   tagInput: string,
@@ -16,7 +18,7 @@ export function useTagSuggestions(
 
   useEffect(() => {
     const query = tagInput.trim();
-    if (query.length < 3) {
+    if (query.length < MIN_TAG_QUERY_LENGTH) {
       return;
     }
 

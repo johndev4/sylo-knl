@@ -78,7 +78,7 @@ test.describe.serial('Document Management', () => {
     await expect(page.getByText('IMPORTANT', { exact: true })).toBeVisible();
 
     await page.getByText('IMPORTANT', { exact: true }).click();
-    await expect(page.getByText('IMPORTANT')).toBeVisible();
+    await expect(page.getByText('IMPORTANT', { exact: true })).toBeVisible();
   });
 
   test('Show tag suggestions in edit document flow after typing 3 characters', async ({
@@ -111,10 +111,10 @@ test.describe.serial('Document Management', () => {
     await tagInput.fill('sug');
 
     await expect(
-      page.getByRole('menuitem', { name: 'SuggestionSeed' })
+      page.getByText('SuggestionSeed', { exact: true })
     ).toBeVisible();
 
-    await page.getByRole('menuitem', { name: 'SuggestionSeed' }).click();
+    await page.getByText('SuggestionSeed', { exact: true }).click();
     await expect(page.getByText('SuggestionSeed')).toBeVisible();
   });
 

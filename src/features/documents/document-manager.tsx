@@ -75,11 +75,7 @@ export function DocumentManager({
     (initialData?.tags || []).map((t) => t.toUpperCase())
   );
   const [tagInput, setTagInput] = useState('');
-  const { suggestions: tagSuggestions } = useTagSuggestions(
-    libraryId,
-    tagInput,
-    tags
-  );
+  const tagSuggestionsData = useTagSuggestions(libraryId, tagInput, tags);
   const [editorResetKey, setEditorResetKey] = useState(0);
 
   // Track the most recently saved updated_at so the OCC check
@@ -541,7 +537,9 @@ export function DocumentManager({
                 <TagChipsInput
                   tags={tags}
                   tagInput={tagInput}
-                  suggestions={tagSuggestions}
+                  suggestions={tagSuggestionsData.suggestions}
+                  isLoadingTags={tagSuggestionsData.isLoadingTags}
+                  loadError={tagSuggestionsData.loadError}
                   onInputChange={setTagInput}
                   onAddTag={addTag}
                   onRemoveTag={removeTag}
