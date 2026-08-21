@@ -84,22 +84,24 @@ test.describe.serial('Document Management', () => {
   test('Show tag suggestions in edit document flow after typing 3 characters', async ({
     page,
   }) => {
-    // Seed a different tag from the same library so suggestion list can appear
+    // Create a new document with a different tag from the same library so suggestion list can appear
     await page.goto(`/hub/libraries/${libId}/documents/new`);
     await page.waitForLoadState('networkidle');
-
-    await page.evaluate(async (libraryId) => {
-      await fetch('/api/documents', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: 'Suggestion Seed Document',
-          content: 'This document creates a tag suggestion source.',
-          libraryId,
-          tags: ['SuggestionSeed'],
-        }),
-      });
-    }, libId);
+    const suggestionTitleInput = page.getByPlaceholder('Untitled Document');
+    await expect(suggestionTitleInput).toBeVisible();
+    await suggestionTitleInput.fill('Suggestion Seed Document');
+    const suggestionEditor = page.locator('[contenteditable="true"]').first();
+    await suggestionEditor.waitFor({ state: 'visible' });
+    await suggestionEditor.click();
+    await suggestionEditor.pressSequentially(
+      'This document creates a tag suggestion source.'
+    );
+    const suggestionTagInput = page.getByPlaceholder('Add tag...');
+    await suggestionTagInput.fill('suggestion seed');
+    await suggestionTagInput.press('Enter');
+    const suggestionSaveBtn = page.getByRole('button', { name: 'Save' });
+    await expect(suggestionSaveBtn).toBeEnabled();
+    await Promise.all([page.waitForLoadState(), suggestionSaveBtn.click()]);
 
     expect(testDocId).toBeDefined();
     await page.goto(`/hub/libraries/${libId}/documents/${testDocId}`);
@@ -111,11 +113,13 @@ test.describe.serial('Document Management', () => {
     await tagInput.fill('sug');
 
     await expect(
-      page.getByText('SuggestionSeed', { exact: true })
+      page.getByText('SUGGESTION SEED', { exact: true })
     ).toBeVisible();
 
-    await page.getByText('SuggestionSeed', { exact: true }).click();
-    await expect(page.getByText('SuggestionSeed')).toBeVisible();
+    await page.getByText('SUGGESTION SEED', { exact: true }).click();
+    await expect(
+      page.getByText('SUGGESTION SEED', { exact: true })
+    ).toBeVisible();
   });
 
   test('List existing documents with filters in sidebar', async ({ page }) => {
