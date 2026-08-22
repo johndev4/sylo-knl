@@ -1,4 +1,5 @@
-export * from './library-nav-sidebar';
+export * from './library-sidebar';
+export * from './sidebar-library-nav';
 export * from './library-breadcrumb-nav';
 export * from './invite-section';
 export * from './invite-section-client';

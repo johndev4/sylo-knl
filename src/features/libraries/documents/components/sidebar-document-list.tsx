@@ -11,7 +11,6 @@ import {
   Calendar,
   MessageSquare,
   Info,
-  Library,
   ChevronRightIcon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -24,13 +23,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
-  Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
-  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -48,13 +45,12 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { getLibraryName } from '@/features/libraries/queries';
 
-interface DocumentsSidebarProps {
+interface SidebarDocumentListProps {
   userRole: string;
 }
 
-export function DocumentsSidebar({ userRole }: DocumentsSidebarProps) {
+export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
   const params = useParams();
   const libraryId = params?.id as string;
   const pathname = usePathname();
@@ -66,19 +62,7 @@ export function DocumentsSidebar({ userRole }: DocumentsSidebarProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTag, setSelectedTag] = useState<string>('ALL');
 
-  const [libraryName, setLibraryName] = useState<string | null>(null);
   const { refreshKey } = useSidebarRefresh();
-
-  const fetchLibrary = useCallback(async () => {
-    if (!libraryId) return;
-    try {
-      const supabase = await createClient();
-      const libraryName = await getLibraryName(libraryId, supabase);
-      setLibraryName(libraryName);
-    } catch (error) {
-      console.error('Failed to fetch library:', error);
-    }
-  }, [libraryId]);
 
   const fetchDocuments = useCallback(
     async (pageToLoad = 1) => {
@@ -124,9 +108,8 @@ export function DocumentsSidebar({ userRole }: DocumentsSidebarProps) {
     (async () => {
       setPage(1); // Reset to page 1 on refresh
       fetchDocuments(1);
-      fetchLibrary();
     })();
-  }, [fetchDocuments, fetchLibrary, refreshKey]);
+  }, [fetchDocuments, refreshKey]);
 
   // Extract all unique tags
   const allTags = useMemo(() => {
@@ -154,77 +137,7 @@ export function DocumentsSidebar({ userRole }: DocumentsSidebarProps) {
   const newDocumentPath = `/hub/libraries/${libraryId}/documents/new`;
 
   return (
-    <Sidebar
-      collapsible="icon"
-      className="top-[4.1rem] h-[calc(100vh-4.1rem)]"
-      aria-label="Documents Sidebar"
-    >
-      {/* Header */}
-      <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <div className="flex min-w-0 items-center justify-between gap-2 p-0 group-data-[collapsible=icon]:justify-center">
-              <div className="flex min-w-0 items-center gap-2">
-                <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 shrink-0 items-center justify-center rounded-lg">
-                  <Library className="size-4" />
-                </div>
-                <div className="grid flex-1 overflow-hidden text-left text-xs leading-tight group-data-[collapsible=icon]:hidden">
-                  <span className="text-muted-foreground/70 text-[10px] font-bold tracking-wider uppercase">
-                    Library
-                  </span>
-                  <span className="truncate text-sm font-semibold">
-                    {libraryName ? (
-                      libraryName
-                    ) : (
-                      <Skeleton className="h-4 w-24" />
-                    )}
-                  </span>
-                </div>
-              </div>
-
-              {/* Create New Document Button */}
-              {!!userRole && userRole !== 'VIEWER' && (
-                <div className="group-data-[collapsible=icon]:hidden">
-                  {isAtLimit ? (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-muted-foreground/50 h-7 w-7 cursor-not-allowed"
-                      title="Maximum limit of 500 documents reached."
-                      disabled
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  ) : (
-                    <Button
-                      asChild
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7"
-                      title="New Document"
-                    >
-                      <Link
-                        href={newDocumentPath}
-                        onClick={(e) => {
-                          if (pathname === newDocumentPath) {
-                            e.preventDefault();
-                            window.dispatchEvent(
-                              new CustomEvent('sylo:new-document:reset-request')
-                            );
-                          }
-                        }}
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Link>
-                    </Button>
-                  )}
-                </div>
-              )}
-            </div>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarHeader>
-
+    <>
       <SidebarContent>
         {/* Fixed Filters Area (Hidden when collapsed into icon mode) */}
         <div className="border-sidebar-border flex shrink-0 flex-col gap-2.5 border-b p-3 group-data-[collapsible=icon]:hidden">
@@ -245,22 +158,65 @@ export function DocumentsSidebar({ userRole }: DocumentsSidebarProps) {
                 />
               </div>
 
-              <Select value={selectedTag} onValueChange={setSelectedTag}>
-                <SelectTrigger className="border-sidebar-border bg-sidebar-accent/50 h-8 text-xs font-bold tracking-wider">
-                  <SelectValue placeholder="FILTER BY TAG" />
-                </SelectTrigger>
-                <SelectContent>
-                  {allTags.map((tag) => (
-                    <SelectItem
-                      key={tag}
-                      value={tag}
-                      className="text-[10px] font-bold tracking-wider uppercase"
-                    >
-                      {tag}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="flex items-end justify-between">
+                <Select value={selectedTag} onValueChange={setSelectedTag}>
+                  <SelectTrigger className="border-sidebar-border bg-sidebar-accent/50 h-8 text-xs font-bold tracking-wider">
+                    <SelectValue placeholder="FILTER BY TAG" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {allTags.map((tag) => (
+                      <SelectItem
+                        key={tag}
+                        value={tag}
+                        className="text-[10px] font-bold tracking-wider uppercase"
+                      >
+                        {tag}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {/* Create New Document Button */}
+                {!!userRole && userRole !== 'VIEWER' && (
+                  <>
+                    {isAtLimit ? (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-muted-foreground/50 h-7 w-7 cursor-not-allowed"
+                        title="Maximum limit of 500 documents reached."
+                        disabled
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    ) : (
+                      <Button
+                        asChild
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        title="New Document"
+                      >
+                        <Link
+                          href={newDocumentPath}
+                          onClick={(e) => {
+                            if (pathname === newDocumentPath) {
+                              e.preventDefault();
+                              window.dispatchEvent(
+                                new CustomEvent(
+                                  'sylo:new-document:reset-request'
+                                )
+                              );
+                            }
+                          }}
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Link>
+                      </Button>
+                    )}
+                  </>
+                )}
+              </div>
             </>
           )}
         </div>
@@ -433,6 +389,6 @@ export function DocumentsSidebar({ userRole }: DocumentsSidebarProps) {
       </SidebarFooter>
 
       {/* <SidebarRail /> */}
-    </Sidebar>
+    </>
   );
 }

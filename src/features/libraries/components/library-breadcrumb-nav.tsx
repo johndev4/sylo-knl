@@ -16,7 +16,6 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { UrlObject } from 'url';
 import { getDocument } from '@/features/libraries/documents/queries';
-import { getLibraryName } from '@/features/libraries/queries';
 import { createClient } from '@/lib/supabase/client';
 
 // Helper to capitalize first letter
@@ -29,15 +28,15 @@ const isUUID = (str: string) => {
   return regex.test(str);
 };
 
-async function fetchLibraryName(id: string): Promise<string | null> {
-  try {
-    const supabase = createClient();
-    const libraryName = await getLibraryName(id, supabase);
-    return libraryName ?? null;
-  } catch {
-    return null;
-  }
-}
+// async function fetchLibraryName(id: string): Promise<string | null> {
+//   try {
+//     const supabase = createClient();
+//     const libraryName = await getLibraryName(id, supabase);
+//     return libraryName ?? null;
+//   } catch {
+//     return null;
+//   }
+// }
 
 async function fetchDocumentTitle(id: string): Promise<string | null> {
   try {
@@ -64,7 +63,13 @@ async function fetchDocumentTitle(id: string): Promise<string | null> {
   }
 }
 
-export function LibraryBreadcrumbNav() {
+interface LibraryBreadcrumbNavProps {
+  libraryName: string;
+}
+
+export function LibraryBreadcrumbNav({
+  libraryName,
+}: LibraryBreadcrumbNavProps) {
   const pathname = usePathname();
   // State to hold dynamic names for library and document IDs
   const [dynamicNames, setDynamicNames] = React.useState<
@@ -127,9 +132,7 @@ export function LibraryBreadcrumbNav() {
       await Promise.all(
         toFetch.map(async ({ segment, prevSegment }) => {
           let name: string | null = null;
-          if (prevSegment === 'libraries') {
-            name = await fetchLibraryName(segment);
-          } else if (prevSegment === 'documents') {
+          if (prevSegment === 'documents') {
             name = await fetchDocumentTitle(segment);
           }
           if (name) newNames[segment] = name;
@@ -150,15 +153,9 @@ export function LibraryBreadcrumbNav() {
   }> = [];
 
   if (isLibraryRoute && libraryId) {
-    const libraryLabel = loadingIds.has(libraryId) ? (
-      <Skeleton className="h-4 w-24" />
-    ) : (
-      (dynamicNames[libraryId] ?? '')
-    );
-
     breadcrumbItems.push({
       key: 'library',
-      label: libraryLabel,
+      label: libraryName,
       href: `/hub/libraries/${libraryId}`,
     });
 

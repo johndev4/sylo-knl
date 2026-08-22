@@ -11,7 +11,6 @@ import {
   Target,
   Settings,
   Users,
-  Library,
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -25,12 +24,10 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import {
-  Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -38,11 +35,11 @@ import {
 import { leaveLibrary } from '@/features/libraries/actions';
 import { getLibraryName } from '@/features/libraries/queries';
 import { createClient } from '@/lib/supabase/client';
-interface LibraryNavSidebarProps {
+interface SidebarLibraryNavProps {
   userRole: string;
 }
 
-export function LibraryNavSidebar({ userRole }: LibraryNavSidebarProps) {
+export function SidebarLibraryNav({ userRole }: SidebarLibraryNavProps) {
   const params = useParams();
   const pathname = usePathname();
   const router = useRouter();
@@ -110,38 +107,7 @@ export function LibraryNavSidebar({ userRole }: LibraryNavSidebarProps) {
   const isOwner = userRole === 'OWNER';
 
   return (
-    <Sidebar
-      collapsible="icon"
-      className="top-[4.1rem] h-[calc(100vh-4.1rem)]"
-      aria-label="Library Sidebar"
-    >
-      {/* Header */}
-      <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <div className="flex min-w-0 items-center justify-between gap-2 p-0 group-data-[collapsible=icon]:justify-center">
-              <div className="flex min-w-0 items-center gap-2">
-                <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 shrink-0 items-center justify-center rounded-lg">
-                  <Library className="size-4" />
-                </div>
-                <div className="grid flex-1 overflow-hidden text-left text-xs leading-tight group-data-[collapsible=icon]:hidden">
-                  <span className="text-muted-foreground/70 text-[10px] font-bold tracking-wider uppercase">
-                    Library
-                  </span>
-                  <span className="truncate text-sm font-semibold">
-                    {libraryName ? (
-                      libraryName
-                    ) : (
-                      <Skeleton className="h-4 w-24" />
-                    )}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarHeader>
-
+    <>
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupContent>
@@ -172,11 +138,11 @@ export function LibraryNavSidebar({ userRole }: LibraryNavSidebarProps) {
                     <SidebarMenuButton
                       asChild
                       isActive={
-                        pathname === `/hub/libraries/${libraryId}`
+                        pathname === `/hub/libraries/${libraryId}/overview`
                       }
                       tooltip="Overview"
                     >
-                      <Link href={`/hub/libraries/${libraryId}`}>
+                      <Link href={`/hub/libraries/${libraryId}/overview`}>
                         <Target />
                         <span>Overview</span>
                       </Link>
@@ -291,6 +257,6 @@ export function LibraryNavSidebar({ userRole }: LibraryNavSidebarProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </Sidebar>
+    </>
   );
 }
