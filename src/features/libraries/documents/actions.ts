@@ -4,7 +4,11 @@ import { createClient } from '@/lib/supabase/server';
 import { chunkText } from '@/lib/ai/chunking';
 import { generateEmbeddings } from '@/lib/ai/embeddings';
 import { revalidatePath } from 'next/cache';
-import { createSchema, updateSchema } from '@/features/libraries/documents/document-schema';
+import {
+  createSchema,
+  updateSchema,
+} from '@/features/libraries/documents/document-schema';
+import { getUser } from '@/lib/auth/get-user';
 
 // ---------------------------------------------------------------------------
 // createDocument — mirrors POST /api/documents
@@ -25,12 +29,7 @@ export async function createDocument(input: {
   tags?: string[];
 }): Promise<{ success: true; documentId: string }> {
   const supabase = await createClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) throw new Error('Unauthorized');
+  const user = await getUser();
 
   const { title, content, libraryId, tags } = createSchema.parse(input);
 
@@ -149,12 +148,7 @@ export async function updateDocument(
   }
 ): Promise<{ success: true; document: { updated_at: string } }> {
   const supabase = await createClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) throw new Error('Unauthorized');
+  const user = await getUser();
 
   const { title, content, tags, lastUpdatedAt } = updateSchema.parse(input);
 
@@ -275,12 +269,7 @@ export async function deleteDocument(
   docId: string
 ): Promise<{ success: true }> {
   const supabase = await createClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) throw new Error('Unauthorized');
+  const user = await getUser();
 
   const { data: currentDoc, error: docError } = await supabase
     .from('documents')

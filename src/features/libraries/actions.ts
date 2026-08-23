@@ -3,6 +3,7 @@
 import crypto from 'crypto';
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { getUser } from '@/lib/auth/get-user';
 
 /**
  * Creates a new library with the current user as the owner.
@@ -12,11 +13,7 @@ import { revalidatePath } from 'next/cache';
  */
 export async function createLibrary(name: string) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) throw new Error('Unauthorized');
+  const user = await getUser();
 
   // Duplicate name check — scoped to this user's existing libraries (case-insensitive)
   const { data: existing } = await supabase
@@ -56,11 +53,7 @@ export async function createLibrary(name: string) {
  */
 export async function deleteLibrary(libraryId: string) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) throw new Error('Unauthorized');
+  await getUser();
 
   // RLS will ensure only OWNER can delete
   const { error } = await supabase
@@ -84,11 +77,7 @@ export async function deleteLibraries(ids: string[]) {
   if (!ids.length) return { success: true };
 
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) throw new Error('Unauthorized');
+  await getUser();
 
   // RLS ensures only libraries where user is OWNER are deleted
   const { error } = await supabase.from('libraries').delete().in('id', ids);
@@ -108,11 +97,7 @@ export async function deleteLibraries(ids: string[]) {
  */
 export async function updateLibraryName(libraryId: string, newName: string) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) throw new Error('Unauthorized');
+  const user = await getUser();
 
   // Check if requester is OWNER or ADMIN of library
   const { data: membership } = await supabase
@@ -156,11 +141,7 @@ export async function updateLibraryMemberRole(
   role: 'ADMIN' | 'EDITOR' | 'VIEWER'
 ) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) throw new Error('Unauthorized');
+  const user = await getUser();
 
   // Check if requester is OWNER or ADMIN of library
   const { data: requesterMembership } = await supabase
@@ -237,11 +218,7 @@ export async function updateLibraryMemberRole(
  */
 export async function removeLibraryMember(libraryId: string, userId: string) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) throw new Error('Unauthorized');
+  const user = await getUser();
 
   // Check requester
   const { data: requesterMembership } = await supabase
@@ -329,11 +306,7 @@ export async function removeMultipleLibraryMembers(
  */
 export async function leaveLibrary(libraryId: string) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) throw new Error('Unauthorized');
+  const user = await getUser();
 
   const { data: membership, error: membershipError } = await supabase
     .from('library_members')
@@ -381,11 +354,7 @@ export async function createLibraryInvite(
   maxUses?: number | null
 ) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) throw new Error('Unauthorized');
+  const user = await getUser();
 
   const { data: membership } = await supabase
     .from('library_members')
@@ -436,11 +405,7 @@ export async function createLibraryInvite(
  */
 export async function revokeLibraryInvite(libraryId: string, inviteId: string) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) throw new Error('Unauthorized');
+  const user = await getUser();
 
   const { data: membership } = await supabase
     .from('library_members')

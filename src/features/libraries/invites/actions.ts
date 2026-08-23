@@ -6,6 +6,7 @@ import {
   joinInviteOutputSchema,
   JoinInviteResult,
 } from '@/features/libraries/invites/invite-schema';
+import { getUser } from '@/lib/auth/get-user';
 
 export async function joinLibraryAction(
   rawInviteCode: string
@@ -21,13 +22,7 @@ export async function joinLibraryAction(
 
     // 2. Auth Check
     const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return { success: false, error: 'Unauthorized' };
-    }
+    await getUser();
 
     // 3. RPC Call
     const { data, error } = await supabase.rpc('join_library_via_invite', {
