@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { chunkText } from '@/lib/ai/chunking';
 import { generateEmbeddings } from '@/lib/ai/embeddings';
 import { revalidatePath } from 'next/cache';
-import { createSchema, updateSchema } from '@/lib/validation/document-schema';
+import { createSchema, updateSchema } from '@/features/libraries/documents/document-schema';
 
 // ---------------------------------------------------------------------------
 // createDocument — mirrors POST /api/documents

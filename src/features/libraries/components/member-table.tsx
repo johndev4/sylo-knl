@@ -30,7 +30,7 @@ import {
   removeLibraryMember,
   removeMultipleLibraryMembers,
 } from '@/features/libraries/actions';
-import { LibraryMember } from '@/lib/validation/library-schema';
+import { LibraryMember } from '@/features/libraries/library-schema';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 interface MemberTableProps {

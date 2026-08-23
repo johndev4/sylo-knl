@@ -5,7 +5,7 @@ import {
   LibraryIdSchema,
   ListLibraryMembersSchema,
   TagSuggestionsQuerySchema,
-} from '@/lib/validation/library-schema';
+} from '@/features/libraries/library-schema';
 
 /**
  * Retrieves the name of a library by its ID.

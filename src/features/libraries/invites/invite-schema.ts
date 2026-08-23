@@ -1,10 +1,10 @@
 import { z } from 'zod';
 
 // ------------------------------------------------------------------------------
-// GetInviteDetails schemas
+// Schemas
 // ------------------------------------------------------------------------------
 
-// Input schema
+// GetInviteDetails Input schema
 export const inviteCodeSchema = z.string().refine(
   (code) => {
     if (code.length !== 8) return false;
@@ -14,7 +14,7 @@ export const inviteCodeSchema = z.string().refine(
   { message: 'Invalid invite code format' }
 );
 
-// Output schema (safe details)
+// GetInviteDetails Output schema (safe details)
 export const inviteDetailsSchema = z.object({
   libraryName: z.string(),
   role: z.string(),
@@ -25,24 +25,21 @@ export const inviteDetailsSchema = z.object({
   inviteCode: z.string(),
 });
 
-// Infer TypeScript type automatically from schema
-export type InviteDetails = z.infer<typeof inviteDetailsSchema>;
-
-// ------------------------------------------------------------------------------
-// JoinLibraryAction schemas
-// ------------------------------------------------------------------------------
-
-// Input Schema
+// JoinLibraryAction Input Schema
 export const joinInviteInputSchema = z
   .string()
   .min(1, 'Invite code is required');
 
-// Output Schema
+// JoinLibraryAction Output Schema
 export const joinInviteOutputSchema = z.object({
   success: z.boolean(),
   data: z.unknown().optional(),
   error: z.string().optional(),
 });
 
-// Infer TypeScript type automatically from schema
+// ------------------------------------------------------------------------------
+// Types
+// ------------------------------------------------------------------------------
+
+export type InviteDetails = z.infer<typeof inviteDetailsSchema>;
 export type JoinInviteResult = z.infer<typeof joinInviteOutputSchema>;

@@ -1,11 +1,11 @@
 import {
-  DocumentsResult,
-  DocumentsResultSchema,
+  DocumentListResult,
+  DocumentListResultSchema,
   DocumentResult,
   DocumentAuthor,
   DocumentAuthorSchema,
   DocumentResultSchema,
-} from '@/lib/validation/document-schema';
+} from '@/features/libraries/documents/document-schema';
 import { SupabaseClient, User } from '@supabase/supabase-js';
 
 /**
@@ -25,7 +25,7 @@ export async function getDocuments(
   },
   supabase: SupabaseClient,
   user: User
-): Promise<DocumentsResult> {
+): Promise<DocumentListResult> {
   const { libraryId, page = 1, limit = 10, search = '', tags } = params;
 
   // Check RBAC
@@ -66,7 +66,7 @@ export async function getDocuments(
     throw error;
   }
 
-  return DocumentsResultSchema.parse({
+  return DocumentListResultSchema.parse({
     data: data ?? [],
     metadata: {
       total: count ?? 0,

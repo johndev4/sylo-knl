@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import {
   inviteDetailsSchema,
   inviteCodeSchema,
-} from '@/lib/validation/invite-schema';
+} from '@/features/libraries/invites/invite-schema';
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceKey = process.env.SUPABASE_SECRET_KEY;

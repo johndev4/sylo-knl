@@ -2,41 +2,24 @@ import { z } from 'zod';
 
 // User roles enum
 export const UserRoleEnum = z.enum(['OWNER', 'ADMIN', 'EDITOR', 'VIEWER']);
-export type UserRole = z.infer<typeof UserRoleEnum>;
 
-// Library schemas
+// -----------------------------------------------------------------------------
+// Schemas
+// -----------------------------------------------------------------------------
+
 export const LibraryIdSchema = z.uuid('Invalid library id');
 
-// Tag Schema
 export const TagSuggestionsQuerySchema = z.string();
 
-// // Add member to library
-// export const AddLibraryMemberSchema = z.object({
-//   email: z.string().email('Invalid email address'),
-//   role: UserRoleEnum.refine((role) => role !== 'OWNER', {
-//     message:
-//       'Cannot assign OWNER role when adding members. Only library creator can be OWNER.',
-//   }),
-// });
-// export type AddLibraryMemberInput = z.infer<typeof AddLibraryMemberSchema>;
-
-// Update member role
 export const UpdateLibraryMemberRoleSchema = z.object({
   role: UserRoleEnum.refine((role) => role !== 'OWNER', {
     message: 'Cannot change role to OWNER. Only one owner per library allowed.',
   }),
 });
-export type UpdateLibraryMemberRoleInput = z.infer<
-  typeof UpdateLibraryMemberRoleSchema
->;
 
-// Delete member
 export const DeleteLibraryMemberSchema = z.object({
   userId: z.string().uuid('Invalid user ID'),
 });
-export type DeleteLibraryMemberInput = z.infer<
-  typeof DeleteLibraryMemberSchema
->;
 
 // Library member (from database)
 export const LibraryMemberSchema = z.object({
@@ -53,24 +36,15 @@ export const LibraryMemberSchema = z.object({
     })
     .optional(),
 });
-export type LibraryMember = z.infer<typeof LibraryMemberSchema>;
 
 // List library members response
 export const ListLibraryMembersSchema = z.array(LibraryMemberSchema);
-export type ListLibraryMembers = z.infer<typeof ListLibraryMembersSchema>;
 
-// Invite Schemas
 export const CreateInviteSchema = z.object({
   role: z.enum(['VIEWER', 'EDITOR']),
   expiresAt: z.string().datetime().optional().nullable(),
   maxUses: z.number().int().positive().optional().nullable(),
 });
-export type CreateInviteInput = z.infer<typeof CreateInviteSchema>;
-
-export const JoinInviteSchema = z.object({
-  inviteCode: z.string().min(1, 'Invite code is required'),
-});
-export type JoinInviteInput = z.infer<typeof JoinInviteSchema>;
 
 export const InviteResponseSchema = z.object({
   id: z.string().uuid(),
@@ -93,4 +67,19 @@ export const InviteResponseSchema = z.object({
     })
     .optional(),
 });
+
+// -----------------------------------------------------------------------------
+// Types
+// -----------------------------------------------------------------------------
+
+export type UserRole = z.infer<typeof UserRoleEnum>;
+export type UpdateLibraryMemberRoleInput = z.infer<
+  typeof UpdateLibraryMemberRoleSchema
+>;
+export type DeleteLibraryMemberInput = z.infer<
+  typeof DeleteLibraryMemberSchema
+>;
+export type LibraryMember = z.infer<typeof LibraryMemberSchema>;
+export type ListLibraryMembers = z.infer<typeof ListLibraryMembersSchema>;
+export type CreateInviteInput = z.infer<typeof CreateInviteSchema>;
 export type InviteResponse = z.infer<typeof InviteResponseSchema>;

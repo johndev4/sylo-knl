@@ -30,7 +30,7 @@ import {
 import { createLibraryInvite, revokeLibraryInvite } from '@/features/libraries/actions';
 
 import { getURL } from '@/lib/auth/utils';
-import { InviteResponse } from '@/lib/validation/library-schema';
+import { InviteResponse } from '@/features/libraries/library-schema';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 interface InviteSectionClientProps {

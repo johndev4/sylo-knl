@@ -5,7 +5,7 @@ import {
   joinInviteInputSchema,
   joinInviteOutputSchema,
   JoinInviteResult,
-} from '@/lib/validation/invite-schema';
+} from '@/features/libraries/invites/invite-schema';
 
 export async function joinLibraryAction(
   rawInviteCode: string

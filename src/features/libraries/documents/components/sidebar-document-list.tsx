@@ -38,7 +38,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Spinner } from '@/components/ui/spinner';
 import { getDocuments } from '@/features/libraries/documents/queries';
-import { DocumentListItem } from '@/lib/validation/document-schema';
+import { DocumentListItem } from '@/features/libraries/documents/document-schema';
 import { createClient } from '@/lib/supabase/client';
 import {
   Collapsible,
