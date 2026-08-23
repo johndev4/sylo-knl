@@ -21,9 +21,9 @@ export default function Forbidden() {
             You don&apos;t have permission to access this page.
           </p>
 
-          <Link href="/">
+          <Link href="/hub">
             <Button size="lg" className="gap-2">
-              Go Home
+              Go to Hub
             </Button>
           </Link>
         </div>
