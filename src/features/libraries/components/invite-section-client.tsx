@@ -27,7 +27,10 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
-import { createLibraryInvite, revokeLibraryInvite } from '@/features/libraries/actions';
+import {
+  createLibraryInvite,
+  revokeLibraryInvite,
+} from '@/features/libraries/actions';
 
 import { getURL } from '@/lib/auth/utils';
 import { InviteResponse } from '@/features/libraries/library-schema';

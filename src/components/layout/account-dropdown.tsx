@@ -178,9 +178,7 @@ export function AccountDropdown() {
         <DropdownMenuSeparator />
 
         {/* Account Settings */}
-        <DropdownMenuItem
-          onClick={() => router.push('/account/settings')}
-        >
+        <DropdownMenuItem onClick={() => router.push('/account/settings')}>
           <Settings className="h-4 w-4" />
           <span>Account Settings</span>
         </DropdownMenuItem>

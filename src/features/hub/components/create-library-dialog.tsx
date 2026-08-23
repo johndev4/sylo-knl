@@ -22,12 +22,7 @@ import { cn } from '@/lib/utils';
 interface CreateLibraryDialogProps {
   triggerClassName?: string;
   variant?:
-    | 'default'
-    | 'outline'
-    | 'secondary'
-    | 'ghost'
-    | 'destructive'
-    | 'link';
+    'default' | 'outline' | 'secondary' | 'ghost' | 'destructive' | 'link';
   size?: 'default' | 'sm' | 'lg' | 'icon';
   triggerText?: string;
 }

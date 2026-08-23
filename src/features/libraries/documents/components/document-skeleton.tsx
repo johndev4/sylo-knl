@@ -57,7 +57,7 @@ export function DocumentSkeleton() {
 
           {/* Subheading / H2 */}
           <div className="space-y-3 pt-4">
-            <Skeleton className="h-6 w-1/3 rounded-md mb-2" />
+            <Skeleton className="mb-2 h-6 w-1/3 rounded-md" />
             <Skeleton className="h-4 w-full rounded" />
             <Skeleton className="h-4 w-[96%] rounded" />
             <Skeleton className="h-4 w-[90%] rounded" />
