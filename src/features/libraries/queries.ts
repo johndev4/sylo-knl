@@ -137,14 +137,10 @@ export async function getLibraryOverview(
 // ---------------------------------------------------------------------------
 
 const MAX_TAG_SUGGESTIONS = 20;
-const MIN_TAG_QUERY_LENGTH = 3;
 
 /**
  * Returns up to {@link MAX_TAG_SUGGESTIONS} tag suggestions for a library,
  * matched (case-insensitively, substring) against the trimmed query.
- *
- * Replaces the deprecated `GET /api/libraries/[id]/tags?q=<query>` route.
- * Empty array returned when query length < {@link MIN_TAG_QUERY_LENGTH}.
  *
  * @param libraryId - UUID of the library to search tags within
  * @param query - Raw query string from the client (will be trimmed)
@@ -166,10 +162,6 @@ export async function getLibraryTagSuggestions(
   }
 
   const trimmedQuery = parsedQuery.data.trim();
-
-  if (trimmedQuery.length < MIN_TAG_QUERY_LENGTH) {
-    return [];
-  }
 
   const { data: documents, error } = await supabase
     .from('documents')
