@@ -6,9 +6,9 @@ import {
   createDocument,
   updateDocument,
   deleteDocument,
-} from '@/features/libraries/documents/actions';
+} from '@/features/library/document/actions';
 import { Badge } from '@/components/ui/badge';
-import { useTagSuggestions } from '@/features/libraries/documents/hooks/use-tag-suggestions';
+import { useTagSuggestions } from '@/features/library/document/hooks/use-tag-suggestions';
 import {
   Calendar,
   Clock,

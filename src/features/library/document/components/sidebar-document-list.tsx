@@ -37,8 +37,8 @@ import { useSidebarRefresh } from '@/components/providers/sidebar-refresh-provid
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Spinner } from '@/components/ui/spinner';
-import { getDocuments } from '@/features/libraries/documents/queries';
-import { DocumentListItem } from '@/features/libraries/documents/document-schema';
+import { getDocuments } from '@/features/library/document/queries';
+import { DocumentListItem } from '@/features/library/document/document-schema';
 import { createClient } from '@/lib/supabase/client';
 import {
   Collapsible,

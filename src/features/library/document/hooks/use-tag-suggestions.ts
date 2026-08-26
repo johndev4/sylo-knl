@@ -1,7 +1,7 @@
 'use client';
 
 import { createClient } from '@/lib/supabase/client';
-import { getLibraryTagSuggestions } from '@/features/libraries/queries';
+import { getLibraryTagSuggestions } from '@/features/library/queries';
 import { useEffect, useMemo, useState } from 'react';
 
 const MIN_TAG_QUERY_LENGTH = 3;

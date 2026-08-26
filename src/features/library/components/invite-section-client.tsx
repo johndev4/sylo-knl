@@ -30,15 +30,15 @@ import {
 import {
   createLibraryInvite,
   revokeLibraryInvite,
-} from '@/features/libraries/actions';
+} from '@/features/library/actions';
 
 import { getURL } from '@/lib/auth/utils';
-import { InviteResponse } from '@/features/libraries/library-schema';
+import { Invite } from '@/features/library/library-schema';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 interface InviteSectionClientProps {
   libraryId: string;
-  initialInvites: InviteResponse[];
+  initialInvites: Invite[];
 }
 
 const roleOptions = [
@@ -63,7 +63,7 @@ export function InviteSectionClient({
   const [expiresAt, setExpiresAt] = useState('');
   const [maxUses, setMaxUses] = useState('');
 
-  const [inviteToRevoke, setInviteToRevoke] = useState<InviteResponse | null>(
+  const [inviteToRevoke, setInviteToRevoke] = useState<Invite | null>(
     null
   );
 

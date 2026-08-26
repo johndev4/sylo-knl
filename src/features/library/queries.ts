@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { SupabaseClient } from '@supabase/supabase-js';
 import {
-  InviteResponseSchema,
+  InviteSchema,
   LibraryIdSchema,
-  ListLibraryMembersSchema,
+  LibraryMemberListSchema,
   TagSuggestionsQuerySchema,
-} from '@/features/libraries/library-schema';
+} from '@/features/library/library-schema';
 
 /**
  * Retrieves the name of a library by its ID.
@@ -61,7 +61,7 @@ export async function getLibraryMembers(
     throw new Error('Failed to fetch members');
   }
 
-  return ListLibraryMembersSchema.parse(members ?? []);
+  return LibraryMemberListSchema.parse(members ?? []);
 }
 
 /**
@@ -97,7 +97,7 @@ export async function getLibraryInvites(
     throw new Error('Failed to fetch invites');
   }
 
-  return InviteResponseSchema.array().parse(invites ?? []);
+  return InviteSchema.array().parse(invites ?? []);
 }
 
 /**

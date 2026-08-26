@@ -5,9 +5,11 @@ import { chunkText } from '@/lib/ai/chunking';
 import { generateEmbeddings } from '@/lib/ai/embeddings';
 import { revalidatePath } from 'next/cache';
 import {
-  createSchema,
-  updateSchema,
-} from '@/features/libraries/documents/document-schema';
+  CreateDocumentInput,
+  CreateDocumentInputSchema,
+  UpdateDocumentInput,
+  UpdateDocumentInputSchema,
+} from '@/features/library/document/document-schema';
 import { getUser } from '@/lib/auth/get-user';
 
 // ---------------------------------------------------------------------------
@@ -22,16 +24,14 @@ import { getUser } from '@/lib/auth/get-user';
  * @param input.libraryId - The UUID of the library where the document will be created
  * @param input.tags - Optional array of tags to associate with the document
  */
-export async function createDocument(input: {
-  title: string;
-  content: string;
-  libraryId: string;
-  tags?: string[];
-}): Promise<{ success: true; documentId: string }> {
+export async function createDocument(
+  input: CreateDocumentInput
+): Promise<{ success: true; documentId: string }> {
   const supabase = await createClient();
   const user = await getUser();
 
-  const { title, content, libraryId, tags } = createSchema.parse(input);
+  const { title, content, libraryId, tags } =
+    CreateDocumentInputSchema.parse(input);
 
   // Ensure personal space exists when targeting it
   if (libraryId === user.id) {
@@ -140,17 +140,13 @@ export async function createDocument(input: {
  */
 export async function updateDocument(
   docId: string,
-  input: {
-    title: string;
-    content: string;
-    tags?: string[];
-    lastUpdatedAt?: string;
-  }
+  input: UpdateDocumentInput
 ): Promise<{ success: true; document: { updated_at: string } }> {
   const supabase = await createClient();
   const user = await getUser();
 
-  const { title, content, tags, lastUpdatedAt } = updateSchema.parse(input);
+  const { title, content, tags, lastUpdatedAt } =
+    UpdateDocumentInputSchema.parse(input);
 
   const { data: currentDoc, error: docError } = await supabase
     .from('documents')

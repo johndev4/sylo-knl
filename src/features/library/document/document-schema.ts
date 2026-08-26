@@ -4,14 +4,14 @@ import { z } from 'zod';
 // Schemas
 // -----------------------------------------------------------------------------
 
-export const createSchema = z.object({
+export const CreateDocumentInputSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   content: z.string().min(10, 'Content is too short'),
   libraryId: z.string().uuid('Invalid Library ID'),
   tags: z.array(z.string()).optional(),
 });
 
-export const updateSchema = z.object({
+export const UpdateDocumentInputSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   content: z.string().min(10, 'Content is too short'),
   tags: z.array(z.string()).optional(),
@@ -62,6 +62,8 @@ export const DocumentResultSchema = z.object({
 // Types
 // -----------------------------------------------------------------------------
 
+export type CreateDocumentInput = z.infer<typeof CreateDocumentInputSchema>;
+export type UpdateDocumentInput = z.infer<typeof UpdateDocumentInputSchema>;
 export type DocumentListItem = z.infer<typeof DocumentListItemSchema>;
 export type DocumentListResult = z.infer<typeof DocumentListResultSchema>;
 export type DocumentAuthor = z.infer<typeof DocumentAuthorSchema>;

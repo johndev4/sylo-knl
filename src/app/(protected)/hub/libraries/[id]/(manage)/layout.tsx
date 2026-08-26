@@ -9,11 +9,11 @@ import {
   LibraryBreadcrumbNav,
   LibrarySidebar,
   SidebarLibraryNav,
-} from '@/features/libraries/components';
+} from '@/features/library/components';
 import { Suspense } from 'react';
 import { requireLibraryRole } from '@/lib/auth/library-role';
 import { Spinner } from '@/components/ui/spinner';
-import { getCachedLibraryName } from '@/features/libraries/queries.server';
+import { getCachedLibraryName } from '@/features/library/queries.server';
 
 export default function LibraryLayout({
   children,

@@ -8,12 +8,12 @@ import { Separator } from '@/components/ui/separator';
 import {
   LibraryBreadcrumbNav,
   LibrarySidebar,
-} from '@/features/libraries/components';
+} from '@/features/library/components';
 import { Suspense } from 'react';
 import { requireLibraryRole } from '@/lib/auth/library-role';
 import { Spinner } from '@/components/ui/spinner';
-import { SidebarDocumentList } from '@/features/libraries/documents/components';
-import { getCachedLibraryName } from '@/features/libraries/queries.server';
+import { SidebarDocumentList } from '@/features/library/document/components';
+import { getCachedLibraryName } from '@/features/library/queries.server';
 
 export default function LibraryLayout({
   children,

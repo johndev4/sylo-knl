@@ -32,8 +32,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { leaveLibrary } from '@/features/libraries/actions';
-import { getLibraryName } from '@/features/libraries/queries';
+import { leaveLibrary } from '@/features/library/actions';
+import { getLibraryName } from '@/features/library/queries';
 import { createClient } from '@/lib/supabase/client';
 interface SidebarLibraryNavProps {
   userRole: string;

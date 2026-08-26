@@ -1,8 +1,8 @@
-import { InviteSection, MemberTable } from '@/features/libraries/components';
+import { InviteSection, MemberTable } from '@/features/library/components';
 import { Suspense } from 'react';
 import { requireLibraryRole } from '@/lib/auth/library-role';
 import { notFound } from 'next/navigation';
-import { getLibraryMembers } from '@/features/libraries/queries';
+import { getLibraryMembers } from '@/features/library/queries';
 import { createClient } from '@/lib/supabase/server';
 import { Spinner } from '@/components/ui/spinner';
 

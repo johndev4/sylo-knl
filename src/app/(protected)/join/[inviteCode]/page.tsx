@@ -5,9 +5,9 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { createClient } from '@/lib/supabase/server';
-import { getInviteDetails } from '@/features/libraries/invites/queries';
-import { joinLibraryAction } from '@/features/libraries/invites/actions';
 import { Suspense } from 'react';
+import { getInviteDetails } from '@/features/library/invite/queries';
+import { joinLibraryAction } from '@/features/library/invite/actions';
 
 export default function JoinPage({
   params,

@@ -29,8 +29,8 @@ import {
   updateLibraryMemberRole,
   removeLibraryMember,
   removeMultipleLibraryMembers,
-} from '@/features/libraries/actions';
-import { LibraryMember } from '@/features/libraries/library-schema';
+} from '@/features/library/actions';
+import { LibraryMember } from '@/features/library/library-schema';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 interface MemberTableProps {

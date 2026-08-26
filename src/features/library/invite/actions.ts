@@ -5,7 +5,7 @@ import {
   joinInviteInputSchema,
   joinInviteOutputSchema,
   JoinInviteResult,
-} from '@/features/libraries/invites/invite-schema';
+} from '@/features/library/invite/invite-schema';
 import { getUser } from '@/lib/auth/get-user';
 
 export async function joinLibraryAction(

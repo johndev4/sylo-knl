@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Card } from '@/components/ui/card';
-import { getLibraryInvites } from '@/features/libraries/queries';
+import { getLibraryInvites } from '@/features/library/queries';
 import { InviteSectionClient } from './invite-section-client';
 import { createClient } from '@/lib/supabase/server';
 

@@ -4,9 +4,9 @@ import { notFound } from 'next/navigation';
 import {
   DocumentManager,
   DocumentSkeleton,
-} from '@/features/libraries/documents/components';
+} from '@/features/library/document/components';
 import { Button } from '@/components/ui/button';
-import { getDocument } from '@/features/libraries/documents/queries';
+import { getDocument } from '@/features/library/document/queries';
 import { createClient } from '@/lib/supabase/server';
 import { randomUUID } from 'crypto';
 import { getUser } from '@/lib/auth/get-user';

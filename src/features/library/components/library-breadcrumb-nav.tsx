@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/breadcrumb';
 import { Skeleton } from '@/components/ui/skeleton';
 import { UrlObject } from 'url';
-import { getDocument } from '@/features/libraries/documents/queries';
+import { getDocument } from '@/features/library/document/queries';
 import { createClient } from '@/lib/supabase/client';
 
 // Helper to capitalize first letter

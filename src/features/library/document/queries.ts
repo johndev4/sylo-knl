@@ -5,7 +5,7 @@ import {
   DocumentAuthor,
   DocumentAuthorSchema,
   DocumentResultSchema,
-} from '@/features/libraries/documents/document-schema';
+} from '@/features/library/document/document-schema';
 import { SupabaseClient, User } from '@supabase/supabase-js';
 
 /**

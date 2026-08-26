@@ -15,7 +15,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { AlertTriangle, Loader2 } from 'lucide-react';
-import { deleteLibrary } from '@/features/libraries/actions';
+import { deleteLibrary } from '@/features/library/actions';
 
 interface DeleteLibraryFormProps {
   libraryId: string;

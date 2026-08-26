@@ -2,10 +2,10 @@ import { LIBRARY_ROLES, requireLibraryRole } from '@/lib/auth/library-role';
 import {
   DeleteLibraryForm,
   RenameLibraryForm,
-} from '@/features/libraries/components';
+} from '@/features/library/components';
 import { Suspense } from 'react';
 import { forbidden, notFound } from 'next/navigation';
-import { getLibraryName } from '@/features/libraries/queries';
+import { getLibraryName } from '@/features/library/queries';
 import { createClient } from '@/lib/supabase/server';
 import { Spinner } from '@/components/ui/spinner';
 
