@@ -5,6 +5,7 @@ import AccountSettingsForm from '@/features/user/components/account-settings-for
 import { Suspense } from 'react';
 import { Spinner } from '@/components/ui/spinner';
 import { getUser } from '@/lib/auth/get-user';
+import { randomUUID } from 'crypto';
 
 export default function AccountSettingsPage() {
   return (
@@ -42,5 +43,5 @@ async function AccountSettingsPageContent() {
     );
   }
 
-  return <AccountSettingsForm profile={profile} />;
+  return <AccountSettingsForm key={randomUUID()} profile={profile} />;
 }
