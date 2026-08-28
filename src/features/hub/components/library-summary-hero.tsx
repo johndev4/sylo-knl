@@ -5,22 +5,16 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-
-type Membership = {
-  role: string;
-  library: { id: string; name: string; created_at: string };
-  memberCount: number;
-  docCount: number;
-};
+import { HubData } from '../hub-schema';
 
 interface LibrarySummaryHeroProps {
-  memberships: Membership[];
+  hubData: HubData;
 }
 
-export function LibrarySummaryHero({ memberships }: LibrarySummaryHeroProps) {
-  const totalLibraries = memberships.length;
-  const totalDocs = memberships.reduce(
-    (sum, membership) => sum + membership.docCount,
+export function LibrarySummaryHero({ hubData }: LibrarySummaryHeroProps) {
+  const totalLibraries = hubData.length;
+  const totalDocs = hubData.reduce(
+    (sum, dataItem) => sum + dataItem.docCount,
     0
   );
 

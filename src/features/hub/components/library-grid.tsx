@@ -21,10 +21,10 @@ type Membership = {
 };
 
 interface LibraryGridProps {
-  memberships: Membership[];
+  hubData: Membership[];
 }
 
-export function LibrariesBentoGrid({ memberships }: LibraryGridProps) {
+export function LibrariesBentoGrid({ hubData }: LibraryGridProps) {
   const prefersReducedMotion = useReducedMotion();
 
   const containerVariants = {
@@ -67,9 +67,9 @@ export function LibrariesBentoGrid({ memberships }: LibraryGridProps) {
           initial="hidden"
           animate="visible"
         >
-          {memberships.map((membership, index) => {
-            const space = membership.library;
-            const isFeatured = index === 0 && memberships.length > 2;
+          {hubData.map((dataItem, index) => {
+            const space = dataItem.library;
+            const isFeatured = index === 0 && hubData.length > 2;
 
             return (
               <motion.article
@@ -90,7 +90,7 @@ export function LibrariesBentoGrid({ memberships }: LibraryGridProps) {
                         </CardTitle>
                         <CardDescription className="text-sm text-zinc-500 dark:text-zinc-400">
                           <div className="w-fit shrink-0 rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-600 dark:bg-zinc-900 dark:text-zinc-300">
-                            {membership.role}
+                            {dataItem.role}
                           </div>
                         </CardDescription>
                       </div>
@@ -98,8 +98,8 @@ export function LibrariesBentoGrid({ memberships }: LibraryGridProps) {
 
                     <div className="text-sm text-zinc-500 dark:text-zinc-400">
                       Created {new Date(space.created_at).toLocaleDateString()}{' '}
-                      &middot; {membership.memberCount} members &middot;{' '}
-                      {membership.docCount} docs
+                      &middot; {dataItem.memberCount} members &middot;{' '}
+                      {dataItem.docCount} docs
                     </div>
                     <div
                       className={cn(

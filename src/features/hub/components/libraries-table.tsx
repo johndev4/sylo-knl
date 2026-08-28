@@ -14,7 +14,7 @@ type Membership = {
 };
 
 interface LibrariesTableProps {
-  memberships: Membership[];
+  hubData: Membership[];
 }
 
 // Simple date formatter
@@ -31,7 +31,7 @@ function formatRelativeDate(dateString: string): string {
   return date.toLocaleDateString();
 }
 
-export function LibrariesTable({ memberships }: LibrariesTableProps) {
+export function LibrariesTable({ hubData }: LibrariesTableProps) {
   const prefersReducedMotion = useReducedMotion();
 
   const rowVariants = {
@@ -87,9 +87,9 @@ export function LibrariesTable({ memberships }: LibrariesTableProps) {
           </thead>
           <tbody>
             <AnimatePresence initial={false}>
-              {memberships.map((membership) => {
-                const library = membership.library;
-                const space = membership.library;
+              {hubData.map((dataItem) => {
+                const library = dataItem.library;
+                const space = dataItem.library;
 
                 return (
                   <motion.tr
@@ -104,16 +104,16 @@ export function LibrariesTable({ memberships }: LibrariesTableProps) {
                     <td className="px-4 py-3 font-medium">{library.name}</td>
                     <td className="px-4 py-3">
                       <span
-                        className={`inline-block rounded-full px-2.5 py-1 text-xs font-medium ${getRoleBadgeColor(membership.role)}`}
+                        className={`inline-block rounded-full px-2.5 py-1 text-xs font-medium ${getRoleBadgeColor(dataItem.role)}`}
                       >
-                        {membership.role}
+                        {dataItem.role}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-center text-zinc-600 dark:text-zinc-400">
-                      {membership.memberCount}
+                      {dataItem.memberCount}
                     </td>
                     <td className="px-4 py-3 text-center text-zinc-600 dark:text-zinc-400">
-                      {membership.docCount}
+                      {dataItem.docCount}
                     </td>
                     <td className="px-4 py-3 text-xs text-zinc-600 dark:text-zinc-400">
                       {formatRelativeDate(library.created_at)}

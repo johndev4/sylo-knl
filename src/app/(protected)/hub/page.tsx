@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createClient } from '@/lib/supabase/server';
 import {
   Card,
@@ -13,68 +12,17 @@ import {
   LibrarySummaryHero,
 } from '@/features/hub/components';
 import { getUser } from '@/lib/auth/get-user';
+import { getHubData } from '@/features/hub/queries';
 
 export default async function HubPage() {
   const user = await getUser();
   const supabase = await createClient();
 
-  // Fetch libraries user is a member of with counts
-  const { data: libraryMemberships } = await supabase
-    .from('library_members')
-    .select('role, library:libraries ( id, name, created_at )')
-    .eq('user_id', user.id);
-
-  // Fetch member counts and document counts for each library
-  const libraryIds = (libraryMemberships || []).map((m: any) => m.library.id);
-
-  let memberCounts: Record<string, number> = {};
-  let docCounts: Record<string, number> = {};
-
-  if (libraryIds.length > 0) {
-    // Get member counts
-    const { data: memberCountData } = await supabase
-      .from('library_members')
-      .select('library_id')
-      .in('library_id', libraryIds);
-
-    memberCounts = (memberCountData || []).reduce(
-      (acc: Record<string, number>, item: any) => {
-        acc[item.library_id] = (acc[item.library_id] || 0) + 1;
-        return acc;
-      },
-      {}
-    );
-
-    // Get document counts
-    const { data: docCountData } = await supabase
-      .from('documents')
-      .select('library_id')
-      .in('library_id', libraryIds);
-
-    docCounts = (docCountData || []).reduce(
-      (acc: Record<string, number>, item: any) => {
-        acc[item.library_id] = (acc[item.library_id] || 0) + 1;
-        return acc;
-      },
-      {}
-    );
-  }
-
-  const memberships = (libraryMemberships || []).map((m: any) => ({
-    role: m.role,
-    library: m.library,
-    memberCount: memberCounts[m.library.id] || 0,
-    docCount: docCounts[m.library.id] || 0,
-  })) as Array<{
-    role: string;
-    library: { id: string; name: string; created_at: string };
-    memberCount: number;
-    docCount: number;
-  }>;
+  const hubData = await getHubData(supabase, user);
 
   return (
     <div className="container mx-auto max-w-6xl p-6">
-      {memberships.length === 0 ? (
+      {hubData.length === 0 ? (
         <div className="grid items-start gap-6 lg:grid-cols-[1.8fr_1fr]">
           <div className="rounded-3xl border border-zinc-200/50 bg-white/60 p-10 text-center shadow-lg shadow-slate-900/5 backdrop-blur-md dark:border-zinc-800/50 dark:bg-zinc-950/60">
             <div className="bg-primary/10 text-primary mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full">
@@ -145,8 +93,8 @@ export default async function HubPage() {
         </div>
       ) : (
         <>
-          <LibrarySummaryHero memberships={memberships} />
-          <LibrariesContainer memberships={memberships} />
+          <LibrarySummaryHero hubData={hubData} />
+          <LibrariesContainer hubData={hubData} />
         </>
       )}
     </div>

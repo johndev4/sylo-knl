@@ -16,19 +16,13 @@ import { LibrariesTable } from './libraries-table';
 import { Grid3x3, Table2, ChevronDown } from 'lucide-react';
 import { CreateLibraryDialog } from './create-library-dialog';
 import { cn } from '@/lib/utils';
-
-type Membership = {
-  role: string;
-  library: { id: string; name: string; created_at: string };
-  memberCount: number;
-  docCount: number;
-};
+import { HubData } from '../hub-schema';
 
 interface LibrariesContainerProps {
-  memberships: Membership[];
+  hubData: HubData;
 }
 
-export function LibrariesContainer({ memberships }: LibrariesContainerProps) {
+export function LibrariesContainer({ hubData }: LibrariesContainerProps) {
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<string | null>(null);
@@ -38,13 +32,13 @@ export function LibrariesContainer({ memberships }: LibrariesContainerProps) {
 
   // Get unique roles
   const availableRoles = useMemo(() => {
-    const roles = new Set(memberships.map((m) => m.role));
+    const roles = new Set(hubData.map((m) => m.role));
     return Array.from(roles).sort();
-  }, [memberships]);
+  }, [hubData]);
 
-  // Filter and sort memberships
+  // Filter and sort hubData
   const filtered = useMemo(() => {
-    let result = memberships;
+    let result = hubData;
 
     // Search by library name
     if (search) {
@@ -81,7 +75,7 @@ export function LibrariesContainer({ memberships }: LibrariesContainerProps) {
     }
 
     return result;
-  }, [memberships, search, roleFilter, sortBy]);
+  }, [hubData, search, roleFilter, sortBy]);
 
   const prefersReducedMotion = useReducedMotion();
 
@@ -241,8 +235,8 @@ export function LibrariesContainer({ memberships }: LibrariesContainerProps) {
         variants={panelVariants}
         layout
       >
-        Showing {filtered.length} of {memberships.length} librar
-        {memberships.length !== 1 ? 'ies' : 'y'}
+        Showing {filtered.length} of {hubData.length} librar
+        {hubData.length !== 1 ? 'ies' : 'y'}
       </motion.div>
 
       {/* View */}
@@ -272,7 +266,7 @@ export function LibrariesContainer({ memberships }: LibrariesContainerProps) {
             exit="exit"
             layout
           >
-            <LibrariesBentoGrid memberships={filtered} />
+            <LibrariesBentoGrid hubData={filtered} />
           </motion.div>
         ) : (
           <motion.div
@@ -283,7 +277,7 @@ export function LibrariesContainer({ memberships }: LibrariesContainerProps) {
             exit="exit"
             layout
           >
-            <LibrariesTable memberships={filtered} />
+            <LibrariesTable hubData={filtered} />
           </motion.div>
         )}
       </AnimatePresence>
