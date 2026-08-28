@@ -24,7 +24,7 @@ export default function NotFound() {
             moved.
           </p>
 
-          <Link href="/hub">
+          <Link href="/">
             <Button size="lg" className="gap-2">
               Go to Hub
             </Button>

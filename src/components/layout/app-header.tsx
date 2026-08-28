@@ -20,7 +20,7 @@ export function AppHeader() {
         <div className="flex items-center gap-2 md:gap-4">
           {/* Logo / Brand */}
           <Link
-            href="/hub"
+            href="/"
             className={cn(
               'flex items-center gap-2 text-lg font-bold',
               'text-foreground',
@@ -53,10 +53,20 @@ export function AppHeader() {
 
 async function NavbarAsync() {
   const user = await getUserNonRedirect();
+
+  if (!user) {
+    return null;
+  }
+
   return user && <Navbar user={user} />;
 }
 
 async function AccountDropdownAsync() {
   const user = await getUserNonRedirect();
+
+  if (!user) {
+    return null;
+  }
+
   return user && <AccountDropdown user={user} />;
 }

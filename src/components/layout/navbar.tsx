@@ -30,7 +30,7 @@ export function Navbar({ user }: NavbarProps) {
             : 'text-muted-foreground hover:text-foreground hover:bg-zinc-100/50 dark:hover:bg-zinc-800/30'
         )}
       >
-        Library Hub
+        Hub
       </Link>
       {/* Chat Nav Item */}
       <Link
