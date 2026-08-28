@@ -1,10 +1,13 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   cacheComponents: true,
   allowedDevOrigins: ['127.0.0.1'],
   experimental: {
-    instantNavigationDevToolsToggle: true,
+    authInterrupts: true,
+    instantInsights: {
+      validationLevel: 'warning',
+    },
   },
 };
 

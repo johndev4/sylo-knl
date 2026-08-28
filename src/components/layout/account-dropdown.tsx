@@ -1,10 +1,11 @@
 'use client';
 
 import Image from 'next/image';
-
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { LogOut, Settings } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { getProfileDropdownUserInfo } from '@/features/user/queries';
 import { ThemeSubmenu } from '@/components/layout/theme-submenu';
 import {
   DropdownMenu,
@@ -15,44 +16,36 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+import { User } from '@supabase/supabase-js';
+import { Spinner } from '../ui/spinner';
+import { ProfileDropdownUserInfo } from '@/features/user/user-schema';
 
-interface UserProfile {
-  id: string;
-  email: string;
-  name: string | null;
-  avatarUrl: string | null;
-  useAvatarUrl: boolean;
+interface AccountDropdownProps {
+  user: User | null;
 }
 
-export function AccountDropdown() {
+export function AccountDropdown({ user }: AccountDropdownProps) {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [userInfo, setUserInfo] = useState<ProfileDropdownUserInfo | null>(
+    null
+  );
   const [isLoading, setIsLoading] = useState(true);
 
   // Fetch user profile on mount
   useEffect(() => {
     const supabase = createClient();
 
-    const fetchUserProfile = async () => {
+    const fetchUserInfo = async () => {
       try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-
         if (!user) {
-          setUserProfile(null);
+          setUserInfo(null);
           setIsLoading(false);
           return;
         }
 
-        const response = await fetch('/api/user/profile');
-
-        if (!response.ok) {
-          throw new Error(`Failed to fetch profile: ${response.status}`);
-        }
-
-        const data: UserProfile = await response.json();
-        setUserProfile(data);
+        const data = await getProfileDropdownUserInfo(supabase, user);
+        setUserInfo(data);
       } catch (err) {
         console.error('Failed to fetch user profile:', err);
       } finally {
@@ -60,34 +53,35 @@ export function AccountDropdown() {
       }
     };
 
-    fetchUserProfile();
+    fetchUserInfo();
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.user) {
-        fetchUserProfile();
+        fetchUserInfo();
       } else {
-        setUserProfile(null);
+        setUserInfo(null);
         setIsLoading(false);
       }
     });
 
     // Listen for profile updates from other components (like Settings page)
-    window.addEventListener('profile-updated', fetchUserProfile);
+    window.addEventListener('profile-updated', fetchUserInfo);
 
     return () => {
       subscription.unsubscribe();
-      window.removeEventListener('profile-updated', fetchUserProfile);
+      window.removeEventListener('profile-updated', fetchUserInfo);
     };
-  }, []);
+  }, [user]);
 
   const handleLogout = async () => {
     try {
       const supabase = createClient();
       await supabase.auth.signOut();
       setIsOpen(false);
-      window.location.href = '/login';
+      window.location.replace('/login');
+      window.history.replaceState(null, '', '/login');
     } catch (err) {
       console.error('Logout failed:', err);
     }
@@ -104,34 +98,57 @@ export function AccountDropdown() {
       .slice(0, 2);
   };
 
-  const initials = userProfile
-    ? getInitials(userProfile.name, userProfile.email)
-    : '??';
-  const shouldUseAvatarUrl =
-    userProfile?.useAvatarUrl && userProfile?.avatarUrl;
+  if (isLoading) {
+    return (
+      <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+        <DropdownMenuTrigger asChild>
+          <button
+            className={cn(
+              'flex items-center gap-2 rounded-full py-1.5 pr-3 pl-1.5',
+              'bg-zinc-100/80 hover:bg-zinc-200/80 dark:bg-zinc-800/50 dark:hover:bg-zinc-800',
+              'border border-zinc-200/50 transition-colors outline-none dark:border-zinc-700/50'
+            )}
+            aria-label="Account menu"
+          >
+            {/* Avatar */}
+            <div
+              className={cn(
+                'flex size-7 items-center justify-center rounded-full text-xs font-semibold',
+                'border border-zinc-200/50 bg-white text-zinc-700 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300'
+              )}
+            >
+              <Spinner className="h-7 w-7" />
+            </div>
+          </button>
+        </DropdownMenuTrigger>
+      </DropdownMenu>
+    );
+  }
 
   // Don't render if user is not authenticated
-  if (!isLoading && !userProfile) {
+  if (!userInfo) {
     return null;
   }
 
-  return userProfile ? (
+  const initials = getInitials(userInfo.name!, userInfo.email);
+  const shouldUseAvatarUrl = userInfo?.useAvatarUrl && userInfo?.avatarUrl;
+
+  return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
         <button
           className={cn(
             'flex items-center gap-2 rounded-full py-1.5 pr-3 pl-1.5',
             'bg-zinc-100/80 hover:bg-zinc-200/80 dark:bg-zinc-800/50 dark:hover:bg-zinc-800',
-            'border border-zinc-200/50 transition-colors outline-none dark:border-zinc-700/50',
-            'focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-1'
+            'border border-zinc-200/50 transition-colors outline-none dark:border-zinc-700/50'
           )}
           aria-label="Account menu"
         >
           {/* Avatar */}
           {shouldUseAvatarUrl ? (
             <Image
-              src={userProfile.avatarUrl!}
-              alt={userProfile.name || 'User avatar'}
+              src={userInfo.avatarUrl!}
+              alt={userInfo.name || 'User avatar'}
               width={28}
               height={28}
               unoptimized
@@ -149,9 +166,9 @@ export function AccountDropdown() {
           )}
 
           {/* Display Name (hidden on mobile) */}
-          {!isLoading && userProfile && (
+          {userInfo && (
             <span className="text-foreground hidden max-w-[150px] truncate text-sm font-medium sm:inline">
-              {userProfile.name || userProfile.email}
+              {userInfo.name || userInfo.email}
             </span>
           )}
         </button>
@@ -161,13 +178,13 @@ export function AccountDropdown() {
         {/* User Profile Header */}
         <DropdownMenuLabel>Account</DropdownMenuLabel>
         <div className="px-3 py-2">
-          {userProfile && (
+          {userInfo && (
             <>
               <p className="text-foreground truncate text-sm font-semibold">
-                {userProfile.name || 'User'}
+                {userInfo.name || 'User'}
               </p>
               <p className="text-foreground/60 truncate text-xs">
-                {userProfile.email}
+                {userInfo.email}
               </p>
             </>
           )}
@@ -176,9 +193,7 @@ export function AccountDropdown() {
         <DropdownMenuSeparator />
 
         {/* Account Settings */}
-        <DropdownMenuItem
-          onClick={() => (window.location.href = '/account/settings')}
-        >
+        <DropdownMenuItem onClick={() => router.push('/account/settings')}>
           <Settings className="h-4 w-4" />
           <span>Account Settings</span>
         </DropdownMenuItem>
@@ -200,7 +215,5 @@ export function AccountDropdown() {
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-  ) : (
-    <div></div>
   );
 }

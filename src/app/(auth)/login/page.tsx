@@ -1,18 +1,22 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Auth } from '@supabase/auth-ui-react';
 import { getAuthTheme } from '@/lib/themes/auth-theme';
-import { LoginHero } from '@/app/(auth)/login/_components/login-hero';
 import { useTheme } from 'next-themes';
 import { getURL } from '@/lib/auth/utils';
+import { LoginHero } from '@/features/auth/components';
 
 export default function LoginPage() {
   const router = useRouter();
   const supabase = createClient();
   const { resolvedTheme } = useTheme();
+
+  const [encodedAuthNextParam, setEncodedAuthNextParam] = useState<string>(
+    encodeURIComponent('/hub')
+  );
 
   useEffect(() => {
     const authClient = createClient();
@@ -21,6 +25,10 @@ export default function LoginPage() {
       typeof window !== 'undefined' ? window.location.search : ''
     );
     const redirectParam = searchParams.get('redirect') || '/hub';
+
+    (async () => {
+      setEncodedAuthNextParam(encodeURIComponent(redirectParam));
+    })();
 
     const checkSession = async () => {
       const {
@@ -64,7 +72,7 @@ export default function LoginPage() {
               process.env.NEXT_PUBLIC_SUPABASE_URL!
             )
           }
-          redirectTo={`${getURL()}/auth/callback`}
+          redirectTo={`${getURL()}/auth/callback?next=${encodedAuthNextParam}`}
         />
       </div>
     </LoginHero>

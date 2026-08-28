@@ -221,7 +221,7 @@ export * from "./ComponentA";
 
 ### Component Names
 
-- **PascalCase** for React components: `DocumentForm`, `MemberTable`
+- **PascalCase** for React components: `DocumentManager`, `MemberTable`
 - **camelCase** for React hooks: `useAuth`, `useSidebarRefresh`
 - **Descriptive Names**: `InviteMemberForm` not `MemberForm`
 

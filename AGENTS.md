@@ -12,7 +12,7 @@ This document helps agents understand the **Sylo** knowledge library application
 
 ## Project Overview
 
-**Sylo** is an AI-powered knowledge library MVP that helps users compile knowledge into one searchable library and retrieve it via a chatbot powered by RAG (Retrieval-Augmented Generation).
+**Sylo** is an AI-powered knowledge library for building searchable knowledge bases and retrieving information through an intelligent chat interface. It is built with Next.js App Router, Supabase auth/database, and a RAG retrieval pipeline using vector search.
 
 ### The WHAT
 
@@ -25,7 +25,6 @@ This document helps agents understand the **Sylo** knowledge library application
 - **Block Editor**: BlockNote (Markdown-in/out, `editable` toggle for view/edit)
 - **Key Features**:
   - Document management with uppercase tagging, search, and navigation guard for unsaved changes
-  - Unified Create/Edit/View mode via `DocumentManager` component
   - RAG-powered chatbot with vector similarity retrieval
   - Library-based RBAC system
   - Multi-provider LLM support
@@ -70,7 +69,7 @@ supabase db pull                # Sync schema changes
 
 - Vercel AI SDK: Handles streaming responses and provider abstraction
 - pgvector: PostgreSQL extension for vector similarity search
-- Zod: Schema validation on all API inputs
+- Zod: Schema validation on all API inputs & responses
 
 ---
 
@@ -78,7 +77,7 @@ supabase db pull                # Sync schema changes
 
 ### 1. Data Ingestion Flow
 
-1. User uploads documents via web interface → `src/app/api/documents/route.ts`
+1. User uploads documents via web interface → `src/features/libraries/documents/actions.ts`
 2. Documents stored in Supabase with metadata (tags, title, libraryId)
 3. Document chunked and embedded → `src/lib/ai/chunking.ts` + `src/lib/ai/embeddings.ts`
 4. Embeddings stored in pgvector column for similarity search
@@ -101,59 +100,55 @@ supabase db pull                # Sync schema changes
 
 ---
 
-## Critical Folders & Files
+## Project Structure
 
-### Application Core
-
-| Path                                                    | Purpose                                           |
-| ------------------------------------------------------- | ------------------------------------------------- |
-| `src/app/`                                              | Next.js routes & API handlers                     |
-| `src/app/hub/`                                          | Main application hub (libraries, documents, chat) |
-| `src/app/hub/_components/`                              | Feature-local components (documents, libraries)   |
-| `src/app/hub/_components/documents/document-manager.tsx` | Unified Create/Edit/View document component       |
-| `src/app/chat/page.tsx`                             | **Unified multi-library chat page**               |
-| `src/app/chat/_components/chat-client.tsx`           | Interactive chat UI with library multi-select     |
-| `src/app/hub/libraries/[id]/`                           | Library-specific routes (documents, settings)     |
-| `src/app/hub/libraries/[id]/chat/page.tsx`              | Redirects to `/chat?libraryId=[id]`           |
-| `src/app/api/`                                          | API route handlers                                |
-| `src/app/api/chat/`                                     | RAG chat endpoint — accepts `libraryIds[]` array  |
-| `src/app/api/documents/`                                | Document CRUD endpoints                           |
-| `src/app/api/libraries/`                                | Library & member management                       |
-
-### Shared Components
-
-| Path                        | Purpose                                          |
-| --------------------------- | ------------------------------------------------ |
-| `src/components/ui/`        | shadcn/ui primitives                             |
-| `src/components/kokonutui/` | Kokonut UI components (`ai-text-loading`, etc.)  |
-| `src/components/layout/`    | App-wide layout components (Navbar, ThemeToggle) |
-| `src/components/providers/` | React context providers (ThemeProvider)          |
-
-### Libraries & Utilities
-
-| Path                                  | Purpose                                                         |
-| ------------------------------------- | --------------------------------------------------------------- |
-| `src/lib/ai/`                         | LLM core, providers, RAG pipeline                               |
-| `src/lib/ai/rag/pipeline.ts`          | Full RAG orchestration (query → embed → retrieve → stream)      |
-| `src/lib/ai/rag/retrieve.ts`          | Multi-library retrieval using `match_document_chunks_multi` RPC |
-| `src/lib/ai/core/llm.ts`              | Provider-agnostic LLM interface                                 |
-| `src/lib/supabase/`                   | Supabase client (server/client modes)                           |
-| `src/lib/actions/libraries.ts`        | Server actions for libraries (incl. `getUserLibraries`)         |
-| `src/lib/hooks/`                      | Custom React hooks (e.g. `use-auth.ts`)         |
-| `src/lib/hooks/use-navigation-guard.ts` | Prevents data loss with unsaved changes prompt                  |
-| `src/lib/validation/`                 | Zod schemas for input validation                                |
-| `src/lib/themes/`                     | Auth UI theming                                                 |
-| `src/lib/utils.ts`                    | Utility functions (cn helper)                                   |
-
-### Configuration & Testing
-
-| Path                   | Purpose                      |
-| ---------------------- | ---------------------------- |
-| `components.json`      | shadcn/ui configuration      |
-| `playwright.config.ts` | Playwright E2E configuration |
-| `tests/e2e/`           | End-to-end browser tests     |
-| `supabase/`            | Supabase config & migrations |
-| `docs/`                | Project documentation        |
+```
+sylo-knl/
+│
+├── src/
+│   ├── app/                              → App Router (pages, layouts) & API routes
+│   │   ├── (auth)/                       → Authentication App routes
+│   │   ├── (protected)/                  → Authenticated App routes
+│   │   └── api/                          → API routes (e.g. chat/route.ts)
+│   │
+│   ├── components/                       → Reusable UI components
+│   │   ├── ui/                           → shadcn/ui primitives (Radix UI or Base UI)
+│   │   ├── kokonutui/                    → Kokonut UI components
+│   │   ├── layout/                       → App-wide layout components
+│   │   ├── providers/                    → React context providers
+│   │   └── shared/                       → Shared components
+│   │
+│   ├── features/                         → Feature-based application modules
+│   │   ├── auth/                         → Login, Register, Auth logic
+│   │   ├── user/                         → User-related logic
+│   │   ├── chat/                         → RAG chatbot and chat UI
+│   │   ├── hub/                          → Library hub and overview related logic
+│   │   └── library/                      → Library management (info, members) related logic
+│   │       ├── document/                 → Document management related logic (sub-feature)
+│   │       ├── invite/                   → Library invitation page related logic (sub-feature)
+│   │       ├── components/               → UI components for library management
+│   │       ├── actions.ts                → Server actions (data mutation using Supabase SDK server client)
+│   │       └── queries.ts                → Fetch data using using injectable Supabase SDK client (server/browser)
+│   │
+│   └── lib/                              → Utilities and configurations
+│       ├── ai/                           → LLM core, providers, RAG pipeline
+│       │   ├── rag/
+│       │   │   ├── pipeline.ts           → Full RAG orchestration
+│       │   │   └── retrieve.ts           → Multi-library document retrieval
+│       │   └── core/
+│       │       └── llm.ts                 → Provider-agnostic LLM interface
+│       │
+│       ├── supabase/                     → Supabase SDK client
+│       ├── themes/                       → Custom UI theming
+│       └── utils.ts                      → Style utility functions
+│
+├── components.json                       → shadcn/ui configuration
+├── playwright.config.ts                  → Playwright E2E configuration
+├── tests/
+│   └── e2e/                              → End-to-end browser tests
+├── supabase/                             → Supabase config & migrations
+└── docs/                                 → Project documentation
+```
 
 ---
 
@@ -197,16 +192,17 @@ Every API endpoint should follow this:
 4. Call service layer
 5. Return typed response (or error)
 
-**Example:** `src/app/api/documents/route.ts`
+**Example:** `src/app/api/[endpoint_path]/route.ts`
 
 ### Frontend Fetch Pattern
 
-1. On mount, fetch data from API with filters
-2. Check user permissions and show PermissionDenied if needed
-3. Show loading/error states
-4. Render with proper accessibility (labels, roles, ARIA)
+1. Import query functions from feature-specific locations (e.g. getDocuments, getDocument)
+2. Call query functions directly from client components — they handle auth and RBAC internally
+3. Check user permissions and show PermissionDenied if needed
+4. Show loading/error states
+5. Render with proper accessibility (labels, roles, ARIA)
 
-**Example:** `src/app/hub/libraries/[id]/documents/[docId]/page.tsx`
+Example: `src/features/[feature_name]/[sub-feature_name]/queries.ts`
 
 ### RAG Chat Pattern
 
@@ -215,7 +211,7 @@ Every API endpoint should follow this:
 3. Stream chunks back to client
 4. Display streamed response in real-time
 
-**Example:** `src/app/api/chat/route.ts`
+**Example:** `src/app/api/[endpoint_path]/route.ts`
 
 ---
 

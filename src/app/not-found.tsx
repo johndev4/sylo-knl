@@ -1,36 +1,8 @@
-'use client';
-
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 export default function NotFound() {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    // Read theme from localStorage or system preference
-    const stored = localStorage.getItem('app-theme');
-    const isDarkMode =
-      stored === 'dark' ||
-      (stored !== 'light' &&
-        window.matchMedia('(prefers-color-scheme: dark)').matches);
-
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setMounted(true);
-
-    // Apply theme class to html
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, []);
-
-  if (!mounted) {
-    return null;
-  }
-
   return (
     <div
       className={cn(
@@ -51,9 +23,10 @@ export default function NotFound() {
             The page you&apos;re looking for doesn&apos;t exist or has been
             moved.
           </p>
+
           <Link href="/">
             <Button size="lg" className="gap-2">
-              Go Home
+              Go to Hub
             </Button>
           </Link>
         </div>

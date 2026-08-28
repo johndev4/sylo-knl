@@ -1,11 +1,10 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
-import { Suspense } from 'react';
 import { ThemeProvider } from 'next-themes';
-import { Navbar } from '@/components/layout/navbar';
 import { cn } from '@/lib/utils';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { AppHeader } from '@/components/layout/app-header';
 
 const geist = Geist({ subsets: ['latin'], variable: '--font-sans' });
 
@@ -52,10 +51,8 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <TooltipProvider>
-            <Navbar />
-            <main className="flex-1">
-              <Suspense fallback={null}>{children}</Suspense>
-            </main>
+            <AppHeader />
+            <main className="flex-1">{children}</main>
           </TooltipProvider>
         </ThemeProvider>
       </body>

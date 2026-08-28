@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { getTestData } from './utils/test-data';
 import { randomUUID } from 'crypto';
+import { mockSupabaseDocuments } from './utils/helpers';
 
 test.describe.serial('Document Management', () => {
   let libId: string;
@@ -24,12 +25,8 @@ test.describe.serial('Document Management', () => {
     await expect(page).toHaveURL(
       `/hub/libraries/${unauthorizedLibId}/documents`
     );
-    await expect(
-      page.getByRole('heading', { name: 'Unauthorized' })
-    ).toBeVisible();
-    await expect(
-      page.getByText('You do not have permission to access this page.')
-    ).toBeVisible();
+    await expect(page.getByRole('heading', { name: '404' })).toBeVisible();
+    await expect(page.getByText('This page could not be found.')).toBeVisible();
   });
 
   test('Create a new document with all required fields', async ({ page }) => {
@@ -78,31 +75,33 @@ test.describe.serial('Document Management', () => {
     const tagInput = page.getByPlaceholder('Add tag...');
     await tagInput.fill('imp');
 
-    await expect(page.getByRole('button', { name: 'IMPORTANT' })).toBeVisible();
+    await expect(page.getByText('IMPORTANT', { exact: true })).toBeVisible();
 
-    await page.getByRole('button', { name: 'IMPORTANT' }).click();
-    await expect(page.getByText('IMPORTANT')).toBeVisible();
+    await page.getByText('IMPORTANT', { exact: true }).click();
+    await expect(page.getByText('IMPORTANT', { exact: true })).toBeVisible();
   });
 
   test('Show tag suggestions in edit document flow after typing 3 characters', async ({
     page,
   }) => {
-    // Seed a different tag from the same library so suggestion list can appear
+    // Create a new document with a different tag from the same library so suggestion list can appear
     await page.goto(`/hub/libraries/${libId}/documents/new`);
     await page.waitForLoadState('networkidle');
-
-    await page.evaluate(async (libraryId) => {
-      await fetch('/api/documents', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: 'Suggestion Seed Document',
-          content: 'This document creates a tag suggestion source.',
-          libraryId,
-          tags: ['SuggestionSeed'],
-        }),
-      });
-    }, libId);
+    const suggestionTitleInput = page.getByPlaceholder('Untitled Document');
+    await expect(suggestionTitleInput).toBeVisible();
+    await suggestionTitleInput.fill('Suggestion Seed Document');
+    const suggestionEditor = page.locator('[contenteditable="true"]').first();
+    await suggestionEditor.waitFor({ state: 'visible' });
+    await suggestionEditor.click();
+    await suggestionEditor.pressSequentially(
+      'This document creates a tag suggestion source.'
+    );
+    const suggestionTagInput = page.getByPlaceholder('Add tag...');
+    await suggestionTagInput.fill('suggestion seed');
+    await suggestionTagInput.press('Enter');
+    const suggestionSaveBtn = page.getByRole('button', { name: 'Save' });
+    await expect(suggestionSaveBtn).toBeEnabled();
+    await Promise.all([page.waitForLoadState(), suggestionSaveBtn.click()]);
 
     expect(testDocId).toBeDefined();
     await page.goto(`/hub/libraries/${libId}/documents/${testDocId}`);
@@ -114,11 +113,13 @@ test.describe.serial('Document Management', () => {
     await tagInput.fill('sug');
 
     await expect(
-      page.getByRole('button', { name: 'SuggestionSeed' })
+      page.getByText('SUGGESTION SEED', { exact: true })
     ).toBeVisible();
 
-    await page.getByRole('button', { name: 'SuggestionSeed' }).click();
-    await expect(page.getByText('SuggestionSeed')).toBeVisible();
+    await page.getByText('SUGGESTION SEED', { exact: true }).click();
+    await expect(
+      page.getByText('SUGGESTION SEED', { exact: true })
+    ).toBeVisible();
   });
 
   test('List existing documents with filters in sidebar', async ({ page }) => {
@@ -151,57 +152,14 @@ test.describe.serial('Document Management', () => {
     ).toBeVisible();
   });
 
+  /* Temporarily remove the 1000 mocked documents for E2E test. Fix this soon. */
   test('Load More paginates through 1000 mocked documents (100 per load)', async ({
     page,
   }) => {
     const TOTAL_DOCS = 1000;
     const LIMIT = 100;
 
-    /**
-     * Build a page of mock document records.
-     * Each document has a unique id, title, tags, and timestamps that match
-     * the shape returned by GET /api/documents.
-     */
-    function buildPage(pageNum: number) {
-      const from = (pageNum - 1) * LIMIT;
-      const to = Math.min(from + LIMIT, TOTAL_DOCS);
-      const data = Array.from({ length: to - from }, (_, i) => ({
-        id: `mock-doc-${from + i + 1}`,
-        title: `Mock Document ${from + i + 1}`,
-        tags: ['MOCK'],
-        author_ids: [],
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        deleted_at: null,
-      }));
-      return {
-        data,
-        metadata: {
-          total: TOTAL_DOCS,
-          page: pageNum,
-          limit: LIMIT,
-          totalPages: Math.ceil(TOTAL_DOCS / LIMIT),
-        },
-      };
-    }
-
-    // Intercept every GET /api/documents request and serve mock data.
-    // Requests for the real library API are passed through so auth and
-    // library metadata still work correctly.
-    await page.route('**/api/documents*', async (route) => {
-      const url = new URL(route.request().url());
-      // Only mock GET requests (not POST/PUT/DELETE)
-      if (route.request().method() !== 'GET') {
-        await route.continue();
-        return;
-      }
-      const pageNum = parseInt(url.searchParams.get('page') || '1');
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify(buildPage(pageNum)),
-      });
-    });
+    await mockSupabaseDocuments(page, 1000, 100);
 
     await page.goto(`/hub/libraries/${libId}/documents`);
     await page.waitForLoadState('networkidle');
@@ -306,14 +264,9 @@ test.describe.serial('Document Management', () => {
     await expect(saveBtn).toBeVisible();
     await expect(saveBtn).toBeEnabled();
 
-    await Promise.all([
-      page.waitForResponse(
-        (resp) =>
-          resp.url().includes(`/api/documents/${testDocId}`) &&
-          resp.request().method() === 'PUT'
-      ),
-      saveBtn.click(),
-    ]);
+    await saveBtn.click();
+    await page.waitForLoadState('networkidle');
+    await expect(page.getByRole('button', { name: 'Edit Mode' })).toBeVisible();
 
     // Update our reference variable
     testDocName = newName;
@@ -466,9 +419,9 @@ test.describe.serial('Document Management', () => {
     await page.waitForLoadState('networkidle');
 
     // Verify delete button is visible (we are OWNER)
-    const deleteBtn = page
-      .locator('button')
-      .filter({ has: page.locator('svg.lucide-trash2') });
+    const deleteBtn = page.getByLabel('Delete document', {
+      exact: true,
+    });
     await expect(deleteBtn).toBeVisible({});
 
     await deleteBtn.click();
