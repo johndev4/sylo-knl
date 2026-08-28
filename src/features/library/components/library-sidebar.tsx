@@ -77,16 +77,13 @@ function LibrarySidebarLoading() {
   return (
     <Sidebar className="top-[4.1rem] h-[calc(100vh-4.1rem)]">
       <div className="space-y-2 p-4">
-        {/* Search skeleton */}
         <Skeleton className="h-9 w-full rounded" />
 
-        {/* Filter + button row */}
         <div className="flex items-center justify-between">
           <Skeleton className="h-8 w-12" />
           <Skeleton className="h-8 w-8 rounded" />
         </div>
 
-        {/* Documents list */}
         <div className="mt-4 space-y-2">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="space-y-1">
