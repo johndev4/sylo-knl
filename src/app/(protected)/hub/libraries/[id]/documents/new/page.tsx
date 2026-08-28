@@ -2,19 +2,9 @@ import { redirect } from 'next/navigation';
 import { DocumentManager } from '@/features/library/document/components/document-manager';
 import { requireLibraryRole, LIBRARY_ROLES } from '@/lib/auth/library-role';
 import { Suspense } from 'react';
-import { DocumentSkeleton } from '@/features/library/document/components/document-skeleton';
+import { DocumentSkeleton } from '@/features/library/document/components';
 
-export default function NewDocumentViewPage(props: {
-  params: Promise<{ id: string }>;
-}) {
-  return (
-    <Suspense fallback={<DocumentSkeleton />}>
-      <NewDocumentViewPageContent params={props.params} />
-    </Suspense>
-  );
-}
-
-async function NewDocumentViewPageContent(props: {
+export default async function NewDocumentPage(props: {
   params: Promise<{ id: string }>;
 }) {
   const { id: libraryId } = await props.params;
@@ -22,11 +12,13 @@ async function NewDocumentViewPageContent(props: {
   if (!membership) redirect(`/hub/libraries/${libraryId}/documents`);
 
   return (
-    <DocumentManager
-      key="new"
-      libraryId={libraryId}
-      isNew={true}
-      userRole={membership.role}
-    />
+    <Suspense fallback={<DocumentSkeleton />}>
+      <DocumentManager
+        key="new"
+        libraryId={libraryId}
+        isNew={true}
+        userRole={membership.role}
+      />
+    </Suspense>
   );
 }

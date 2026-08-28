@@ -3,21 +3,8 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { requireLibraryRole } from '@/lib/auth/library-role';
 import { notFound } from 'next/navigation';
-import { Suspense } from 'react';
 
-export default function DocumentsPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  return (
-    <Suspense fallback={null}>
-      <DocumentsPageContent params={params} />
-    </Suspense>
-  );
-}
-
-async function DocumentsPageContent({
+export default async function DocumentsPage({
   params,
 }: {
   params: Promise<{ id: string }>;

@@ -379,7 +379,7 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
 
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip="Library Info">
-              <Link href={`/hub/libraries/${libraryId}/overview`}>
+              <Link href={`/hub/libraries/${libraryId}`}>
                 <Info />
                 <span>Library Info</span>
               </Link>

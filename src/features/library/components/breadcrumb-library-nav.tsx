@@ -19,7 +19,8 @@ import { getDocument } from '@/features/library/document/queries';
 import { createClient } from '@/lib/supabase/client';
 
 // Helper to capitalize first letter
-const capFirst = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
+const capFirst = (str: string | null | undefined) =>
+  str ? str.charAt(0).toUpperCase() + str.slice(1) : '';
 
 // Helper to determine if a string is a UUID
 const isUUID = (str: string) => {
@@ -63,13 +64,13 @@ async function fetchDocumentTitle(id: string): Promise<string | null> {
   }
 }
 
-interface LibraryBreadcrumbNavProps {
+interface BreadcrumbLibraryNavProps {
   libraryName: string;
 }
 
-export function LibraryBreadcrumbNav({
+export function BreadcrumbLibraryNav({
   libraryName,
-}: LibraryBreadcrumbNavProps) {
+}: BreadcrumbLibraryNavProps) {
   const pathname = usePathname();
   // State to hold dynamic names for library and document IDs
   const [dynamicNames, setDynamicNames] = React.useState<
@@ -88,7 +89,7 @@ export function LibraryBreadcrumbNav({
   const isLibraryRoute =
     segments[0] === 'hub' &&
     segments[1] === 'libraries' &&
-    segments.length >= 4;
+    segments.length >= 3;
   const libraryId = isLibraryRoute ? segments[2] : null;
   // Determine if we are on a library documents route and extract the document ID
   const isLibraryDocumentsRoute = libraryId && segments[3] === 'documents';
@@ -159,7 +160,7 @@ export function LibraryBreadcrumbNav({
       href: `/hub/libraries/${libraryId}`,
     });
 
-    if (segments[3] !== '~') {
+    if (segments[3]?.trim()) {
       breadcrumbItems.push({
         key: segments[3],
         label: capFirst(segments[3]),
@@ -192,12 +193,6 @@ export function LibraryBreadcrumbNav({
         key: 'document',
         label: documentLabel,
         href: `/hub/libraries/${libraryId}/documents/${documentId}`,
-      });
-    } else if (segments[3] === '~' && segments[4]) {
-      breadcrumbItems.push({
-        key: `${segments[3]}`,
-        label: capFirst(segments[4]),
-        href: `/hub/libraries/${libraryId}/${segments[3]}/${segments[4]}`,
       });
     }
   }

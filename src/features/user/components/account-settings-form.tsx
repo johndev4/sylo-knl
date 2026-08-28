@@ -478,9 +478,7 @@ export default function AccountSettingsForm({
                         'flex-1 transition-all duration-200 sm:min-w-[140px]',
                         !canSave &&
                           !submitting &&
-                          'cursor-not-allowed opacity-50 contrast-more:opacity-70',
-                        saveSuccess &&
-                          'border-green-600 bg-green-600 hover:bg-green-600'
+                          'cursor-not-allowed opacity-50 contrast-more:opacity-70'
                       )}
                       onClick={(e) => {
                         if (!canSave && !submitting) {
@@ -493,11 +491,6 @@ export default function AccountSettingsForm({
                         <div className="flex items-center gap-2">
                           <div className="h-4 w-4 animate-spin rounded-full border-2 border-solid border-current border-r-transparent" />
                           <span>Saving...</span>
-                        </div>
-                      ) : saveSuccess ? (
-                        <div className="flex items-center gap-2">
-                          <Check className="h-4 w-4" />
-                          <span>Saved!</span>
                         </div>
                       ) : (
                         'Save Changes'

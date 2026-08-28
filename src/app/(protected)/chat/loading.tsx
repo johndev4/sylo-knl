@@ -1,6 +1,6 @@
 import { Skeleton } from '@/components/ui/skeleton';
 
-export function ChatSkeleton() {
+export default function JoinPageLoading() {
   return (
     <div
       className="flex h-full w-full flex-col"

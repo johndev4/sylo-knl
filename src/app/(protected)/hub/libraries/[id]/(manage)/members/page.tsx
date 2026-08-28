@@ -2,30 +2,25 @@ import { InviteSection, MemberTable } from '@/features/library/components';
 import { Suspense } from 'react';
 import { requireLibraryRole } from '@/lib/auth/library-role';
 import { notFound } from 'next/navigation';
-import { getLibraryMembers } from '@/features/library/queries';
+import {
+  getLibraryInvites,
+  getLibraryMembers,
+} from '@/features/library/queries';
 import { createClient } from '@/lib/supabase/server';
-import { Spinner } from '@/components/ui/spinner';
+import { MemberTableSkeleton, InviteSectionSkeleton } from './loading';
 
-export default async function LibraryMembersPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  return (
-    <Suspense
-      fallback={
-        <div className="text-muted-foreground flex flex-1 flex-col items-center justify-center p-8 py-8 text-center text-sm">
-          <Spinner className="text-muted-foreground h-8 w-8" />
-          Loading…
-        </div>
-      }
-    >
-      <LibraryMembersPageContent params={params} />
-    </Suspense>
-  );
+interface InviteSectionProps {
+  libraryId: string;
+  membership: { role: string } | null;
 }
 
-async function LibraryMembersPageContent({
+interface MemberTableProps {
+  libraryId: string;
+  membership: { role: string } | null;
+  isOwnerOrHasAdminRole: boolean;
+}
+
+export default async function LibraryMembersPage({
   params,
 }: {
   params: Promise<{ id: string }>;
@@ -37,34 +32,50 @@ async function LibraryMembersPageContent({
   const currentUserRole = membership?.role || '';
   const isOwnerOrHasAdminRole = ['OWNER', 'ADMIN'].includes(currentUserRole);
 
-  const supabase = await createClient();
-  const members = await getLibraryMembers(id, supabase, membership);
-
   return (
     <div className="container mx-auto max-w-4xl space-y-8 p-6">
-      {/* Header */}
-      <div className="mb-8 flex flex-col gap-3">
-        <div className="flex items-center justify-between gap-3">
-          <div className="space-y-2">
-            <h1 className="text-3xl font-bold tracking-tight">
-              Library Members
-            </h1>
-            <p className="text-muted-foreground">Manage library members</p>
-          </div>
-        </div>
-      </div>
-
       {/* Members List Section */}
-      <MemberTable
-        libraryId={id}
-        members={members}
-        canManageMembers={isOwnerOrHasAdminRole}
-      />
+      <Suspense fallback={<MemberTableSkeleton />}>
+        <MemberTableAsync
+          libraryId={id}
+          membership={membership}
+          isOwnerOrHasAdminRole={isOwnerOrHasAdminRole}
+        />
+      </Suspense>
 
       {/* Invite Links Section */}
       {isOwnerOrHasAdminRole && (
-        <InviteSection libraryId={id} membership={membership} />
+        <Suspense fallback={<InviteSectionSkeleton />}>
+          <InviteSectionAsync libraryId={id} membership={membership} />
+        </Suspense>
       )}
     </div>
   );
+}
+
+async function MemberTableAsync({
+  libraryId,
+  membership,
+  isOwnerOrHasAdminRole,
+}: MemberTableProps) {
+  const supabase = await createClient();
+  const members = await getLibraryMembers(libraryId, supabase, membership);
+
+  return (
+    <MemberTable
+      libraryId={libraryId}
+      members={members}
+      canManageMembers={isOwnerOrHasAdminRole}
+    />
+  );
+}
+
+async function InviteSectionAsync({
+  libraryId,
+  membership,
+}: InviteSectionProps) {
+  const supabase = await createClient();
+  const invites = await getLibraryInvites(libraryId, supabase, membership);
+
+  return <InviteSection libraryId={libraryId} initialInvites={invites} />;
 }

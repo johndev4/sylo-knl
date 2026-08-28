@@ -5,7 +5,6 @@ import { ThemeProvider } from 'next-themes';
 import { cn } from '@/lib/utils';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { AppHeader } from '@/components/layout/app-header';
-import { Suspense } from 'react';
 
 const geist = Geist({ subsets: ['latin'], variable: '--font-sans' });
 
@@ -52,10 +51,8 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <TooltipProvider>
-            <Suspense fallback={null}>
-              <AppHeader />
-              <main className="flex-1">{children}</main>
-            </Suspense>
+            <AppHeader />
+            <main className="flex-1">{children}</main>
           </TooltipProvider>
         </ThemeProvider>
       </body>

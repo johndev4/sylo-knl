@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useParams, usePathname, useRouter } from 'next/navigation';
 import {
@@ -33,41 +33,23 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { leaveLibrary } from '@/features/library/actions';
-import { getLibraryName } from '@/features/library/queries';
-import { createClient } from '@/lib/supabase/client';
 interface SidebarLibraryNavProps {
   userRole: string;
+  libraryName: string;
 }
 
-export function SidebarLibraryNav({ userRole }: SidebarLibraryNavProps) {
+export function SidebarLibraryNav({
+  userRole,
+  libraryName,
+}: SidebarLibraryNavProps) {
   const params = useParams();
   const pathname = usePathname();
   const router = useRouter();
   const libraryId = params?.id as string;
 
-  const [libraryName, setLibraryName] = useState<string | null>(null);
   const [isLeaveDialogOpen, setIsLeaveDialogOpen] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
   const [leaveError, setLeaveError] = useState<string | null>(null);
-
-  const fetchLibrary = useCallback(async () => {
-    if (!libraryId) return;
-    try {
-      const supabase = await createClient();
-      const libraryName = await getLibraryName(libraryId, supabase);
-      setLibraryName(libraryName);
-    } catch (error) {
-      console.error('Failed to fetch library:', error);
-    }
-  }, [libraryId]);
-
-  useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      void fetchLibrary();
-    }, 0);
-
-    return () => window.clearTimeout(timeoutId);
-  }, [fetchLibrary]);
 
   const handleOpenLeaveDialog = () => {
     setLeaveError(null);
@@ -138,11 +120,11 @@ export function SidebarLibraryNav({ userRole }: SidebarLibraryNavProps) {
                     <SidebarMenuButton
                       asChild
                       isActive={
-                        pathname === `/hub/libraries/${libraryId}/overview`
+                        pathname === `/hub/libraries/${libraryId}`
                       }
                       tooltip="Overview"
                     >
-                      <Link href={`/hub/libraries/${libraryId}/overview`}>
+                      <Link href={`/hub/libraries/${libraryId}`}>
                         <Target />
                         <span>Overview</span>
                       </Link>

@@ -6,16 +6,31 @@ import {
 } from '@/components/ui/sidebar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Library } from 'lucide-react';
+import { Suspense } from 'react';
+import { getCachedLibraryName } from '../queries.server';
+import { LibrarySidebarContent } from './library-sidebar-content';
+import { requireLibraryRole } from '@/lib/auth/library-role';
 
 interface LibrarySidebarProps {
-  libraryName: string;
-  sidebarContent: React.ReactNode;
+  params: Promise<{ id: string }>;
 }
 
-export async function LibrarySidebar({
-  libraryName,
-  sidebarContent,
-}: LibrarySidebarProps) {
+export function LibrarySidebar({ params }: LibrarySidebarProps) {
+  return (
+    <Suspense fallback={<LibrarySidebarLoading />}>
+      <LibrarySidebarAsync params={params} />
+    </Suspense>
+  );
+}
+
+async function LibrarySidebarAsync({ params }: LibrarySidebarProps) {
+  const { id: libraryId } = await params;
+  const membership = await requireLibraryRole(libraryId);
+  if (!membership) return null;
+
+  const libraryName = await getCachedLibraryName(libraryId);
+  if (!libraryName) throw new Error('Library not found');
+
   return (
     <Sidebar
       collapsible="icon"
@@ -50,7 +65,37 @@ export async function LibrarySidebar({
       </SidebarHeader>
 
       {/* Content */}
-      {sidebarContent}
+      <LibrarySidebarContent
+        userRole={membership.role}
+        libraryName={libraryName}
+      />
+    </Sidebar>
+  );
+}
+
+function LibrarySidebarLoading() {
+  return (
+    <Sidebar className="top-[4.1rem] h-[calc(100vh-4.1rem)]">
+      <div className="space-y-2 p-4">
+        {/* Search skeleton */}
+        <Skeleton className="h-9 w-full rounded" />
+
+        {/* Filter + button row */}
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-8 w-12" />
+          <Skeleton className="h-8 w-8 rounded" />
+        </div>
+
+        {/* Documents list */}
+        <div className="mt-4 space-y-2">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="space-y-1">
+              <Skeleton className="h-5 w-40" />
+              <Skeleton className="h-4 w-20" />
+            </div>
+          ))}
+        </div>
+      </div>
     </Sidebar>
   );
 }

@@ -13,19 +13,7 @@ import { getUser } from '@/lib/auth/get-user';
 import { requireLibraryRole } from '@/lib/auth/library-role';
 import Link from 'next/link';
 
-export default function Document({
-  params,
-}: {
-  params: Promise<{ id: string; docId: string }>;
-}) {
-  return (
-    <Suspense fallback={<DocumentSkeleton />}>
-      <DocumentContent params={params} />
-    </Suspense>
-  );
-}
-
-async function DocumentContent({
+export default async function DocumentPage({
   params,
 }: {
   params: Promise<{ id: string; docId: string }>;
@@ -34,6 +22,26 @@ async function DocumentContent({
   const membership = await requireLibraryRole(libraryId);
   if (!membership) return notFound();
 
+  return (
+    <Suspense fallback={<DocumentSkeleton />}>
+      <DocumentPageContent
+        libraryId={libraryId}
+        docId={docId}
+        userRole={membership.role}
+      />
+    </Suspense>
+  );
+}
+
+async function DocumentPageContent({
+  libraryId,
+  docId,
+  userRole,
+}: {
+  libraryId: string;
+  docId: string;
+  userRole: string;
+}) {
   let document: any = null;
   let error: string | null = null;
 
@@ -73,7 +81,7 @@ async function DocumentContent({
         updated_at: document.updated_at,
         authors: document.authors,
       }}
-      userRole={membership.role}
+      userRole={userRole}
     />
   );
 }

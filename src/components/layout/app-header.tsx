@@ -4,10 +4,9 @@ import { ThemeToggle } from './theme-toggle';
 import { AccountDropdown } from './account-dropdown';
 import { Navbar } from './navbar';
 import { getUserNonRedirect } from '@/lib/auth/get-user';
+import { Suspense } from 'react';
 
-export async function AppHeader() {
-  const user = await getUserNonRedirect();
-
+export function AppHeader() {
   return (
     <nav
       className={cn(
@@ -35,15 +34,29 @@ export async function AppHeader() {
           </Link>
 
           {/* Global Navigation */}
-          <Navbar user={user} />
+          <Suspense fallback={null}>
+            <NavbarAsync />
+          </Suspense>
         </div>
 
         {/* Theme Toggle & Account Dropdown */}
         <div className="flex items-center gap-3">
           <ThemeToggle />
-          <AccountDropdown user={user} />
+          <Suspense fallback={null}>
+            <AccountDropdownAsync />
+          </Suspense>
         </div>
       </div>
     </nav>
   );
+}
+
+async function NavbarAsync() {
+  const user = await getUserNonRedirect();
+  return user && <Navbar user={user} />;
+}
+
+async function AccountDropdownAsync() {
+  const user = await getUserNonRedirect();
+  return user && <AccountDropdown user={user} />;
 }

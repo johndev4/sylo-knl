@@ -5,25 +5,10 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { createClient } from '@/lib/supabase/server';
-import { Suspense } from 'react';
 import { getInviteDetails } from '@/features/library/invite/queries';
 import { joinLibraryAction } from '@/features/library/invite/actions';
 
-export default function JoinPage({
-  params,
-  searchParams,
-}: {
-  params: Promise<{ inviteCode: string }>;
-  searchParams: Promise<{ error?: string }>;
-}) {
-  return (
-    <Suspense fallback={null}>
-      <JoinPageContent params={params} searchParams={searchParams} />
-    </Suspense>
-  );
-}
-
-async function JoinPageContent({
+export default async function JoinPage({
   params,
   searchParams,
 }: {

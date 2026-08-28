@@ -22,7 +22,7 @@ export async function getLibraryName(
     .select('name')
     .eq('id', libraryId)
     .single();
-  return data?.name ?? '';
+  return data?.name ?? null;
 }
 
 /**
