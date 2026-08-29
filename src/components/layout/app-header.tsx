@@ -19,19 +19,18 @@ export function AppHeader() {
       <div className="flex h-16 w-full items-center justify-between px-4">
         <div className="flex items-center gap-2 md:gap-4">
           {/* Logo / Brand */}
-          <Link
-            href="/"
+          <div
             className={cn(
               'flex items-center gap-2 text-lg font-bold',
               'text-foreground',
-              'focus-visible:ring-ring rounded-lg transition-opacity hover:opacity-80 focus-visible:ring-1 focus-visible:outline-none'
+              'cursor-default'
             )}
           >
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-zinc-900 text-zinc-50 shadow-sm dark:bg-zinc-100 dark:text-zinc-900">
               <span className="text-xs font-bold">Sy</span>
             </div>
             <span className="hidden tracking-tight sm:inline">Sylo</span>
-          </Link>
+          </div>
 
           {/* Global Navigation */}
           <Suspense fallback={null}>
