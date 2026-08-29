@@ -176,7 +176,6 @@ All agents MUST follow the GitHub instructions referenced below. These are injec
 - **[security-and-owasp.instructions.md](.github/instructions/security-and-owasp.instructions.md)** — OWASP Top 10 2025 (55+ anti-patterns, SQL injection, XSS, CSRF, auth failures)
 - **[nextjs.instructions.md](.github/instructions/nextjs.instructions.md)** — Next.js 16+ App Router best practices
 - **[nextjs-tailwind.instructions.md](.github/instructions/nextjs-tailwind.instructions.md)** — Tailwind + Shadcn conventions
-- **[sql-sp-generation.instructions.md](.github/instructions/sql-sp-generation.instructions.md)** — SQL & stored procedure patterns
 
 ---
 
