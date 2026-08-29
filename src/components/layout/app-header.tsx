@@ -1,5 +1,4 @@
 import { cn } from '@/lib/utils';
-import Link from 'next/link';
 import { ThemeToggle } from './theme-toggle';
 import { AccountDropdown } from './account-dropdown';
 import { Navbar } from './navbar';

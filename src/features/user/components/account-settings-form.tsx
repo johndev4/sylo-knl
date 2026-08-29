@@ -286,7 +286,7 @@ export default function AccountSettingsForm({
                               : 'text-muted-foreground'
                           )}
                         >
-                          Google Picture
+                          Google
                         </span>
                       </button>
 

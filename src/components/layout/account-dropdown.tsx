@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { LogOut, Settings } from 'lucide-react';
@@ -19,6 +18,7 @@ import { cn } from '@/lib/utils';
 import { User } from '@supabase/supabase-js';
 import { Spinner } from '../ui/spinner';
 import { ProfileDropdownUserInfo } from '@/features/user/user-schema';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 
 interface AccountDropdownProps {
   user: User | null;
@@ -145,7 +145,7 @@ export function AccountDropdown({ user }: AccountDropdownProps) {
           aria-label="Account menu"
         >
           {/* Avatar */}
-          {shouldUseAvatarUrl ? (
+          {/* {shouldUseAvatarUrl ? (
             <Image
               src={userInfo.avatarUrl!}
               alt={userInfo.name || 'User avatar'}
@@ -163,7 +163,16 @@ export function AccountDropdown({ user }: AccountDropdownProps) {
             >
               {initials}
             </div>
-          )}
+          )} */}
+          <Avatar>
+            {shouldUseAvatarUrl && (
+              <AvatarImage
+                src={userInfo.avatarUrl!}
+                alt={userInfo.name || 'User avatar'}
+              />
+            )}
+            <AvatarFallback>{initials}</AvatarFallback>
+          </Avatar>
 
           {/* Display Name (hidden on mobile) */}
           {userInfo && (

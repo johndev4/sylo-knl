@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { User } from '@supabase/supabase-js';
-import { Separator } from '../ui/separator';
 import {
   NavigationMenu,
   NavigationMenuItem,
