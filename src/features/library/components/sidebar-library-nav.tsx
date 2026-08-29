@@ -119,9 +119,7 @@ export function SidebarLibraryNav({
                   <SidebarMenuItem>
                     <SidebarMenuButton
                       asChild
-                      isActive={
-                        pathname === `/hub/libraries/${libraryId}`
-                      }
+                      isActive={pathname === `/hub/libraries/${libraryId}`}
                       tooltip="Overview"
                     >
                       <Link href={`/hub/libraries/${libraryId}`}>

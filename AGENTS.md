@@ -20,7 +20,7 @@ This document helps agents understand the **Sylo** knowledge library application
 - **Auth & Database**: Supabase (PostgreSQL + pgvector for embeddings)
 - **AI System**: Vercel AI SDK with provider-agnostic LLM core (Google, Ollama)
 - **Styling**: Tailwind CSS v4 (Standard)
-- **Base Components**: shadcn/ui (Radix UI)
+- **Base Components**: shadcn/ui (Base UI)
 - **Interactive & Advanced UI**: Kokonut UI (Framer Motion)
 - **Block Editor**: BlockNote (Markdown-in/out, `editable` toggle for view/edit)
 - **Key Features**:
@@ -112,7 +112,7 @@ sylo-knl/
 │   │   └── api/                          → API routes (e.g. chat/route.ts)
 │   │
 │   ├── components/                       → Reusable UI components
-│   │   ├── ui/                           → shadcn/ui primitives (Radix UI or Base UI)
+│   │   ├── ui/                           → shadcn/ui primitives (Base UI)
 │   │   ├── kokonutui/                    → Kokonut UI components
 │   │   ├── layout/                       → App-wide layout components
 │   │   ├── providers/                    → React context providers
