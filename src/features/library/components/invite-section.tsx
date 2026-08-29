@@ -225,7 +225,9 @@ export function InviteSection({
 
             <Select
               value={role}
-              onValueChange={(value) => setRole(value as 'VIEWER' | 'EDITOR')}
+              onValueChange={(value) => {
+                if (value) setRole(value as 'VIEWER' | 'EDITOR');
+              }}
               disabled={isCreating}
             >
               <SelectTrigger

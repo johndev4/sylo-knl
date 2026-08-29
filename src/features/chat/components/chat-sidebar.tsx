@@ -72,16 +72,18 @@ export function ChatSidebar({
     return (
       <div className="sticky top-0 flex h-[calc(100vh-4.5rem)] w-16 shrink-0 flex-col items-center border-r border-zinc-200/10 bg-zinc-50 py-4 transition-all duration-300 dark:border-zinc-800/20 dark:bg-[#09090b]">
         <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsOpen(true)}
-              aria-label="Open sidebar"
-            >
-              <PanelLeft className="h-5 w-5" />
-            </Button>
-          </TooltipTrigger>
+          <TooltipTrigger
+            render={
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsOpen(true)}
+                aria-label="Open sidebar"
+              >
+                <PanelLeft className="h-5 w-5" />
+              </Button>
+            }
+          />
           <TooltipContent side="right">Open Sidebar</TooltipContent>
         </Tooltip>
 

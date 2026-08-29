@@ -159,7 +159,10 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
               </div>
 
               <div className="flex items-end justify-between">
-                <Select value={selectedTag} onValueChange={setSelectedTag}>
+                <Select
+                  value={selectedTag}
+                  onValueChange={(value) => setSelectedTag(value ?? '')}
+                >
                   <SelectTrigger className="border-sidebar-border bg-sidebar-accent/50 h-8 text-xs font-bold tracking-wider">
                     <SelectValue placeholder="FILTER BY TAG" />
                   </SelectTrigger>
@@ -191,28 +194,28 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
                       </Button>
                     ) : (
                       <Button
-                        asChild
+                        render={
+                          <Link
+                            href={newDocumentPath}
+                            onClick={(e) => {
+                              if (pathname === newDocumentPath) {
+                                e.preventDefault();
+                                window.dispatchEvent(
+                                  new CustomEvent(
+                                    'sylo:new-document:reset-request'
+                                  )
+                                );
+                              }
+                            }}
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Link>
+                        }
                         variant="ghost"
                         size="icon"
                         className="h-7 w-7"
                         title="New Document"
-                      >
-                        <Link
-                          href={newDocumentPath}
-                          onClick={(e) => {
-                            if (pathname === newDocumentPath) {
-                              e.preventDefault();
-                              window.dispatchEvent(
-                                new CustomEvent(
-                                  'sylo:new-document:reset-request'
-                                )
-                              );
-                            }
-                          }}
-                        >
-                          <Plus className="h-4 w-4" />
-                        </Link>
-                      </Button>
+                      />
                     )}
                   </>
                 )}
@@ -227,25 +230,25 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  asChild
+                  render={
+                    <Link
+                      href={newDocumentPath}
+                      onClick={(e) => {
+                        if (pathname === newDocumentPath) {
+                          e.preventDefault();
+                          window.dispatchEvent(
+                            new CustomEvent('sylo:new-document:reset-request')
+                          );
+                        }
+                      }}
+                    >
+                      <Plus />
+                      <span>New Document</span>
+                    </Link>
+                  }
                   tooltip="New Document"
                   disabled={isAtLimit}
-                >
-                  <Link
-                    href={newDocumentPath}
-                    onClick={(e) => {
-                      if (pathname === newDocumentPath) {
-                        e.preventDefault();
-                        window.dispatchEvent(
-                          new CustomEvent('sylo:new-document:reset-request')
-                        );
-                      }
-                    }}
-                  >
-                    <Plus />
-                    <span>New Document</span>
-                  </Link>
-                </SidebarMenuButton>
+                />
               </SidebarMenuItem>
             </SidebarMenu>
           </div>
@@ -260,14 +263,14 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
           {/* Documents Group */}
           <SidebarGroup>
             <SidebarGroupLabel
-              asChild
+              render={
+                <CollapsibleTrigger className="text-xs font-semibold transition-colors">
+                  <span>DOCUMENTS ({totalDocs})</span>
+                  <ChevronRightIcon className="ml-auto transition-transform group-data-open/collapsible:rotate-90 group-data-[state=open]/collapsible:rotate-90" />
+                </CollapsibleTrigger>
+              }
               className="group/label text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-sm"
-            >
-              <CollapsibleTrigger className="text-xs font-semibold transition-colors">
-                <span>DOCUMENTS ({totalDocs})</span>
-                <ChevronRightIcon className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
-              </CollapsibleTrigger>
-            </SidebarGroupLabel>
+            />
 
             <CollapsibleContent>
               <SidebarGroupContent className="flex min-h-0 flex-1 flex-col">
@@ -298,37 +301,37 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
                             return (
                               <SidebarMenuItem key={doc.id}>
                                 <SidebarMenuButton
-                                  asChild
+                                  render={
+                                    <Link
+                                      href={`/hub/libraries/${libraryId}/documents/${doc.id}`}
+                                      className="flex flex-col items-start gap-0.5"
+                                    >
+                                      <div className="flex w-full items-center gap-2">
+                                        <FileText className="text-muted-foreground h-4 w-4 shrink-0" />
+                                        <span
+                                          className="truncate text-xs font-medium group-data-[collapsible=icon]:hidden"
+                                          title={doc.title}
+                                        >
+                                          {doc.title}
+                                        </span>
+                                      </div>
+                                      <div className="text-muted-foreground/60 flex items-center pl-6 text-[10px] group-data-[collapsible=icon]:hidden">
+                                        <Calendar className="mr-1 h-3 w-3" />
+                                        {new Date(doc.created_at)
+                                          .toLocaleDateString(undefined, {
+                                            month: 'short',
+                                            day: 'numeric',
+                                            year: 'numeric',
+                                          })
+                                          .toUpperCase()}
+                                      </div>
+                                    </Link>
+                                  }
                                   isActive={isActive}
                                   tooltip={doc.title}
                                   size="lg"
                                   className="h-auto py-2"
-                                >
-                                  <Link
-                                    href={`/hub/libraries/${libraryId}/documents/${doc.id}`}
-                                    className="flex flex-col items-start gap-0.5"
-                                  >
-                                    <div className="flex w-full items-center gap-2">
-                                      <FileText className="text-muted-foreground h-4 w-4 shrink-0" />
-                                      <span
-                                        className="truncate text-xs font-medium group-data-[collapsible=icon]:hidden"
-                                        title={doc.title}
-                                      >
-                                        {doc.title}
-                                      </span>
-                                    </div>
-                                    <div className="text-muted-foreground/60 flex items-center pl-6 text-[10px] group-data-[collapsible=icon]:hidden">
-                                      <Calendar className="mr-1 h-3 w-3" />
-                                      {new Date(doc.created_at)
-                                        .toLocaleDateString(undefined, {
-                                          month: 'short',
-                                          day: 'numeric',
-                                          year: 'numeric',
-                                        })
-                                        .toUpperCase()}
-                                    </div>
-                                  </Link>
-                                </SidebarMenuButton>
+                                />
                               </SidebarMenuItem>
                             );
                           })
@@ -369,21 +372,27 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Chat">
-              <Link href={`/chat?libraryIds=${libraryId}`}>
-                <MessageSquare />
-                <span>Chat</span>
-              </Link>
-            </SidebarMenuButton>
+            <SidebarMenuButton
+              render={
+                <Link href={`/chat?libraryIds=${libraryId}`}>
+                  <MessageSquare />
+                  <span>Chat</span>
+                </Link>
+              }
+              tooltip="Chat"
+            />
           </SidebarMenuItem>
 
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Library Info">
-              <Link href={`/hub/libraries/${libraryId}`}>
-                <Info />
-                <span>Library Info</span>
-              </Link>
-            </SidebarMenuButton>
+            <SidebarMenuButton
+              render={
+                <Link href={`/hub/libraries/${libraryId}`}>
+                  <Info />
+                  <span>Library Info</span>
+                </Link>
+              }
+              tooltip="Library Info"
+            />
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>

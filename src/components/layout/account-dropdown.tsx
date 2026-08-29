@@ -13,6 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuGroup,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { User } from '@supabase/supabase-js';
@@ -101,26 +102,28 @@ export function AccountDropdown({ user }: AccountDropdownProps) {
   if (isLoading) {
     return (
       <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-        <DropdownMenuTrigger asChild>
-          <button
-            className={cn(
-              'flex items-center gap-2 rounded-full py-1.5 pr-3 pl-1.5',
-              'bg-zinc-100/80 hover:bg-zinc-200/80 dark:bg-zinc-800/50 dark:hover:bg-zinc-800',
-              'border border-zinc-200/50 transition-colors outline-none dark:border-zinc-700/50'
-            )}
-            aria-label="Account menu"
-          >
-            {/* Avatar */}
-            <div
+        <DropdownMenuTrigger
+          render={
+            <button
               className={cn(
-                'flex size-7 items-center justify-center rounded-full text-xs font-semibold',
-                'border border-zinc-200/50 bg-white text-zinc-700 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300'
+                'flex items-center gap-2 rounded-full py-1.5 pr-3 pl-1.5',
+                'bg-zinc-100/80 hover:bg-zinc-200/80 dark:bg-zinc-800/50 dark:hover:bg-zinc-800',
+                'border border-zinc-200/50 transition-colors outline-none dark:border-zinc-700/50'
               )}
+              aria-label="Account menu"
             >
-              <Spinner className="h-7 w-7" />
-            </div>
-          </button>
-        </DropdownMenuTrigger>
+              {/* Avatar */}
+              <div
+                className={cn(
+                  'flex size-7 items-center justify-center rounded-full text-xs font-semibold',
+                  'border border-zinc-200/50 bg-white text-zinc-700 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300'
+                )}
+              >
+                <Spinner className="h-7 w-7" />
+              </div>
+            </button>
+          }
+        />
       </DropdownMenu>
     );
   }
@@ -135,94 +138,78 @@ export function AccountDropdown({ user }: AccountDropdownProps) {
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-      <DropdownMenuTrigger asChild>
-        <button
-          className={cn(
-            'flex items-center gap-2 rounded-full py-1.5 pr-3 pl-1.5',
-            'bg-zinc-100/80 hover:bg-zinc-200/80 dark:bg-zinc-800/50 dark:hover:bg-zinc-800',
-            'border border-zinc-200/50 transition-colors outline-none dark:border-zinc-700/50'
-          )}
-          aria-label="Account menu"
-        >
-          {/* Avatar */}
-          {/* {shouldUseAvatarUrl ? (
-            <Image
-              src={userInfo.avatarUrl!}
-              alt={userInfo.name || 'User avatar'}
-              width={28}
-              height={28}
-              unoptimized
-              className="size-7 rounded-full object-cover"
-            />
-          ) : (
-            <div
-              className={cn(
-                'flex size-7 items-center justify-center rounded-full text-xs font-semibold',
-                'border border-zinc-200/50 bg-white text-zinc-700 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300'
-              )}
-            >
-              {initials}
-            </div>
-          )} */}
-          <Avatar>
-            {shouldUseAvatarUrl && (
-              <AvatarImage
-                src={userInfo.avatarUrl!}
-                alt={userInfo.name || 'User avatar'}
-              />
+      <DropdownMenuTrigger
+        render={
+          <button
+            className={cn(
+              'flex items-center gap-2 rounded-full py-1.5 pr-3 pl-1.5',
+              'bg-zinc-100/80 hover:bg-zinc-200/80 dark:bg-zinc-800/50 dark:hover:bg-zinc-800',
+              'border border-zinc-200/50 transition-colors outline-none dark:border-zinc-700/50'
             )}
-            <AvatarFallback>{initials}</AvatarFallback>
-          </Avatar>
+            aria-label="Account menu"
+          >
+            <Avatar>
+              {shouldUseAvatarUrl && (
+                <AvatarImage
+                  src={userInfo.avatarUrl!}
+                  alt={userInfo.name || 'User avatar'}
+                />
+              )}
+              <AvatarFallback>{initials}</AvatarFallback>
+            </Avatar>
 
-          {/* Display Name (hidden on mobile) */}
-          {userInfo && (
-            <span className="text-foreground hidden max-w-[150px] truncate text-sm font-medium sm:inline">
-              {userInfo.name || userInfo.email}
-            </span>
-          )}
-        </button>
-      </DropdownMenuTrigger>
+            {/* Display Name (hidden on mobile) */}
+            {userInfo && (
+              <span className="text-foreground hidden max-w-[150px] truncate text-sm font-medium sm:inline">
+                {userInfo.name || userInfo.email}
+              </span>
+            )}
+          </button>
+        }
+      />
 
-      <DropdownMenuContent align="end" className="w-56">
-        {/* User Profile Header */}
-        <DropdownMenuLabel>Account</DropdownMenuLabel>
-        <div className="px-3 py-2">
-          {userInfo && (
-            <>
-              <p className="text-foreground truncate text-sm font-semibold">
-                {userInfo.name || 'User'}
-              </p>
-              <p className="text-foreground/60 truncate text-xs">
-                {userInfo.email}
-              </p>
-            </>
-          )}
-        </div>
+      <DropdownMenuGroup>
+        <DropdownMenuContent align="end" className="w-56">
+          {/* User Profile Header */}
+          <DropdownMenuLabel>Account</DropdownMenuLabel>
+          <div className="px-3 py-2">
+            {userInfo && (
+              <>
+                <p className="text-foreground truncate text-sm font-semibold">
+                  {userInfo.name || 'User'}
+                </p>
+                <p className="text-foreground/60 truncate text-xs">
+                  {userInfo.email}
+                </p>
+              </>
+            )}
+          </div>
 
-        <DropdownMenuSeparator />
+          <DropdownMenuSeparator />
 
-        {/* Account Settings */}
-        <DropdownMenuItem onClick={() => router.push('/account/settings')}>
-          <Settings className="h-4 w-4" />
-          <span>Account Settings</span>
-        </DropdownMenuItem>
+          {/* Account Settings */}
+          <DropdownMenuItem onClick={() => router.push('/account/settings')}>
+            <Settings className="h-4 w-4" />
+            <span>Account Settings</span>
+          </DropdownMenuItem>
 
-        <DropdownMenuSeparator />
+          <DropdownMenuSeparator />
 
-        {/* Theme Selection */}
-        <ThemeSubmenu />
+          {/* Theme Selection */}
+          <ThemeSubmenu />
 
-        <DropdownMenuSeparator />
+          <DropdownMenuSeparator />
 
-        {/* Logout Button */}
-        <DropdownMenuItem
-          className="text-destructive focus:bg-destructive/10"
-          onClick={handleLogout}
-        >
-          <LogOut className="h-4 w-4" />
-          <span>Logout</span>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
+          {/* Logout Button */}
+          <DropdownMenuItem
+            className="text-destructive focus:bg-destructive/10"
+            onClick={handleLogout}
+          >
+            <LogOut className="h-4 w-4" />
+            <span>Logout</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenuGroup>
     </DropdownMenu>
   );
 }

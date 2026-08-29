@@ -93,7 +93,9 @@ test.describe.serial('Library Invites', () => {
       testData.testUser2Email,
       testData.testUser2Password,
       async () =>
-        await user2Page.getByRole('link', { name: 'Sign In to Join' }).click(),
+        await user2Page
+          .getByRole('button', { name: 'Sign In to Join', exact: true })
+          .click(),
       async () => await user2Page.waitForURL(`${inviteLinkPathname}`)
     );
 

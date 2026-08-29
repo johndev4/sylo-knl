@@ -414,7 +414,7 @@ export default function AccountSettingsForm({
                       onValueChange={(value) => {
                         setFormData((prev) => ({
                           ...prev,
-                          timezone: value,
+                          timezone: value ?? '',
                         }));
 
                         setErrors((prev) =>

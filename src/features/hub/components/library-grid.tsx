@@ -108,32 +108,32 @@ export function LibrariesBentoGrid({ hubData }: LibraryGridProps) {
                       )}
                     >
                       <Button
-                        asChild
+                        render={
+                          <Link href={`/chat?libraryIds=${space.id}`}>
+                            <MessageSquare className="mr-2 h-4 w-4" />
+                            Chat
+                          </Link>
+                        }
                         variant="default"
                         className="w-full"
                         size="sm"
                         aria-label={`Open chat for ${space.name}`}
                         onClick={(e) => e.stopPropagation()}
-                      >
-                        <Link href={`/chat?libraryIds=${space.id}`}>
-                          <MessageSquare className="mr-2 h-4 w-4" />
-                          Chat
-                        </Link>
-                      </Button>
+                      />
 
                       <Button
-                        asChild
+                        render={
+                          <Link href={`/hub/libraries/${space.id}/documents`}>
+                            <FileText className="mr-2 h-4 w-4" />
+                            Docs
+                          </Link>
+                        }
                         variant="outline"
                         className="w-full"
                         size="sm"
                         aria-label={`View documents for ${space.name}`}
                         onClick={(e) => e.stopPropagation()}
-                      >
-                        <Link href={`/hub/libraries/${space.id}/documents`}>
-                          <FileText className="mr-2 h-4 w-4" />
-                          Docs
-                        </Link>
-                      </Button>
+                      />
                     </div>
                   </CardContent>
                 </Card>

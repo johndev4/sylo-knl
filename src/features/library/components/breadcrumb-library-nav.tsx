@@ -214,9 +214,9 @@ export function BreadcrumbLibraryNav({
                 {isLast ? (
                   <BreadcrumbPage>{item.label}</BreadcrumbPage>
                 ) : (
-                  <BreadcrumbLink asChild>
-                    <Link href={item.href}>{item.label}</Link>
-                  </BreadcrumbLink>
+                  <BreadcrumbLink
+                    render={<Link href={item.href}>{item.label}</Link>}
+                  />
                 )}
               </BreadcrumbItem>
             </React.Fragment>

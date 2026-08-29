@@ -136,20 +136,26 @@ export function LibrariesContainer({ hubData }: LibrariesContainerProps) {
 
           {/* Role Filter */}
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="w-full sm:w-auto">
-                {roleFilter ? `Role: ${roleFilter}` : 'All Roles'}
-                <ChevronDown className="ml-1 h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full sm:w-auto"
+                >
+                  {roleFilter ? `Role: ${roleFilter}` : 'All Roles'}
+                  <ChevronDown className="ml-1 h-4 w-4" />
+                </Button>
+              }
+            />
             <DropdownMenuContent align="start">
-              <DropdownMenuItem onSelect={() => setRoleFilter(null)}>
+              <DropdownMenuItem onClick={() => setRoleFilter(null)}>
                 All Roles
               </DropdownMenuItem>
               {availableRoles.map((role) => (
                 <DropdownMenuItem
                   key={role}
-                  onSelect={() => setRoleFilter(role)}
+                  onClick={() => setRoleFilter(role)}
                 >
                   {role}
                 </DropdownMenuItem>
@@ -159,19 +165,25 @@ export function LibrariesContainer({ hubData }: LibrariesContainerProps) {
 
           {/* Sort By */}
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="w-full sm:w-auto">
-                Sort:{' '}
-                {sortBy === 'created'
-                  ? 'Date'
-                  : sortBy === 'members'
-                    ? 'Members'
-                    : sortBy === 'documents'
-                      ? 'Documents'
-                      : 'Name'}
-                <ChevronDown className="ml-1 h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full sm:w-auto"
+                >
+                  Sort:{' '}
+                  {sortBy === 'created'
+                    ? 'Date'
+                    : sortBy === 'members'
+                      ? 'Members'
+                      : sortBy === 'documents'
+                        ? 'Documents'
+                        : 'Name'}
+                  <ChevronDown className="ml-1 h-4 w-4" />
+                </Button>
+              }
+            />
             <DropdownMenuContent align="end">
               {[
                 { value: 'name', label: 'Name' },

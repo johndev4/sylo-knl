@@ -263,9 +263,11 @@ export function MemberTable({
                         <Select
                           value={member.role}
                           disabled={isUpdating}
-                          onValueChange={(value) =>
-                            handleRoleChange(member.user_id, value)
-                          }
+                          onValueChange={(value) => {
+                            if (value) {
+                              handleRoleChange(member.user_id, value);
+                            }
+                          }}
                         >
                           <SelectTrigger
                             className="h-8 w-[110px]"
@@ -299,17 +301,19 @@ export function MemberTable({
                       <td className="px-4 py-3">
                         {member.role !== 'OWNER' && (
                           <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                disabled={isUpdating}
-                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                aria-label={`Remove ${member.user?.email}`}
-                              >
-                                Remove
-                              </Button>
-                            </AlertDialogTrigger>
+                            <AlertDialogTrigger
+                              render={
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  disabled={isUpdating}
+                                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                  aria-label={`Remove ${member.user?.email}`}
+                                >
+                                  Remove
+                                </Button>
+                              }
+                            />
                             <AlertDialogContent>
                               <AlertDialogHeader>
                                 <AlertDialogTitle>

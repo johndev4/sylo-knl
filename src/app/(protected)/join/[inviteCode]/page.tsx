@@ -69,9 +69,11 @@ export default async function JoinPage({
           <p className="text-muted-foreground mb-6">
             {result.error || 'This invite link is invalid or no longer exists.'}
           </p>
-          <Button asChild variant="outline" className="w-full">
-            <Link href="/">Return Home</Link>
-          </Button>
+          <Button
+            render={<Link href="/">Return Home</Link>}
+            variant="outline"
+            className="w-full"
+          />
         </Card>
       </div>
     );
@@ -118,20 +120,25 @@ export default async function JoinPage({
                 ? 'This invite has expired.'
                 : 'This invite has reached its maximum uses or is inactive.'}
             </p>
-            <Button asChild variant="outline" className="w-full">
-              <Link href="/">Return Home</Link>
-            </Button>
+            <Button
+              render={<Link href="/">Return Home</Link>}
+              variant="outline"
+              className="w-full"
+            />
           </div>
         ) : !user ? (
           <div className="space-y-4 text-center">
             <p className="text-muted-foreground mb-2 text-sm">
               Please sign in or create an account to accept this invite.
             </p>
-            <Button asChild className="w-full">
-              <Link href={`/login?redirect=/join/${inviteCode}`}>
-                Sign In to Join
-              </Link>
-            </Button>
+            <Button
+              render={
+                <Link href={`/login?redirect=/join/${inviteCode}`}>
+                  Sign In to Join
+                </Link>
+              }
+              className="w-full"
+            />
           </div>
         ) : (
           <div className="space-y-4">

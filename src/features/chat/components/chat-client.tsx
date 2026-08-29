@@ -213,18 +213,20 @@ export default function ChatClient({
         <div className="flex items-center justify-end border-b border-zinc-200/10 px-6 py-2 dark:border-zinc-800/20">
           {messages.length > 0 && (
             <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setMessages([])}
-                  className="text-muted-foreground hover:text-foreground h-8 gap-1.5 text-[10px] font-bold tracking-widest uppercase"
-                  aria-label="Clear chat"
-                >
-                  <Trash2 className="size-3" />
-                  Clear History
-                </Button>
-              </TooltipTrigger>
+              <TooltipTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setMessages([])}
+                    className="text-muted-foreground hover:text-foreground h-8 gap-1.5 text-[10px] font-bold tracking-widest uppercase"
+                    aria-label="Clear chat"
+                  >
+                    <Trash2 className="size-3" />
+                    Clear History
+                  </Button>
+                }
+              />
               <TooltipContent>Clear all messages</TooltipContent>
             </Tooltip>
           )}

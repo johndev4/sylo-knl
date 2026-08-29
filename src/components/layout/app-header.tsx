@@ -11,8 +11,7 @@ export function AppHeader() {
       className={cn(
         'sticky top-0 z-40 w-full',
         'border-b border-zinc-200/50 dark:border-zinc-800/50',
-        'bg-background/80 backdrop-blur-md',
-        'shadow-sm dark:shadow-none'
+        'bg-background/80 backdrop-blur-md'
       )}
     >
       <div className="flex h-16 w-full items-center justify-between px-4">

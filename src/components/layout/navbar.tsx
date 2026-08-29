@@ -31,7 +31,7 @@ export function Navbar({ user }: NavbarProps) {
           {/* Hub Nav Item */}
           <NavigationMenuItem className="hidden md:flex">
             <NavigationMenuLink
-              asChild
+              render={<Link href="/hub">Hub</Link>}
               className={navigationMenuTriggerStyle({
                 className: cn(
                   'focus-visible:ring-ring mr-1 px-3 text-sm font-medium transition-colors focus-visible:ring-1 focus-visible:outline-none',
@@ -40,15 +40,13 @@ export function Navbar({ user }: NavbarProps) {
                     : 'text-muted-foreground hover:text-foreground hover:bg-zinc-100/50 dark:hover:bg-zinc-800/30'
                 ),
               })}
-            >
-              <Link href="/hub">Hub</Link>
-            </NavigationMenuLink>
+            />
           </NavigationMenuItem>
 
           {/* Chat Nav Item */}
           <NavigationMenuItem className="hidden md:flex">
             <NavigationMenuLink
-              asChild
+              render={<Link href="/chat">Chat</Link>}
               className={navigationMenuTriggerStyle({
                 className: cn(
                   'focus-visible:ring-ring mx-auto px-3 text-sm font-medium transition-colors focus-visible:ring-1 focus-visible:outline-none',
@@ -57,9 +55,7 @@ export function Navbar({ user }: NavbarProps) {
                     : 'text-muted-foreground hover:text-foreground hover:bg-zinc-100/50 dark:hover:bg-zinc-800/30'
                 ),
               })}
-            >
-              <Link href="/chat">Chat</Link>
-            </NavigationMenuLink>
+            />
           </NavigationMenuItem>
         </NavigationMenuList>
       </NavigationMenu>

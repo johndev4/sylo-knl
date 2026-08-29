@@ -73,12 +73,14 @@ export function CreateLibraryDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        <Button variant={variant} size={size} className={triggerClassName}>
-          <Plus className={cn('h-4 w-4', triggerText ? 'mr-2' : '')} />
-          {triggerText}
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <Button variant={variant} size={size} className={triggerClassName}>
+            <Plus className={cn('h-4 w-4', triggerText ? 'mr-2' : '')} />
+            {triggerText}
+          </Button>
+        }
+      />
 
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>

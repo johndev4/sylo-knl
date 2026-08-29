@@ -121,30 +121,30 @@ export function LibrariesTable({ hubData }: LibrariesTableProps) {
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <Button
-                          asChild
+                          render={
+                            <Link href={`/chat?libraryIds=${space.id}`}>
+                              <MessageSquare className="mr-2 h-4 w-4" />
+                              Chat
+                            </Link>
+                          }
                           variant="default"
                           size="sm"
                           aria-label={`Open chat for ${space.name}`}
                           onClick={(e) => e.stopPropagation()}
-                        >
-                          <Link href={`/chat?libraryIds=${space.id}`}>
-                            <MessageSquare className="mr-2 h-4 w-4" />
-                            Chat
-                          </Link>
-                        </Button>
+                        />
 
                         <Button
-                          asChild
+                          render={
+                            <Link href={`/hub/libraries/${space.id}/documents`}>
+                              <FileText className="mr-2 h-4 w-4" />
+                              Docs
+                            </Link>
+                          }
                           variant="outline"
                           size="sm"
                           aria-label={`View documents for ${space.name}`}
                           onClick={(e) => e.stopPropagation()}
-                        >
-                          <Link href={`/hub/libraries/${space.id}/documents`}>
-                            <FileText className="mr-2 h-4 w-4" />
-                            Docs
-                          </Link>
-                        </Button>
+                        />
                       </div>
                     </td>
                   </motion.tr>

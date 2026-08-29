@@ -99,68 +99,68 @@ export function SidebarLibraryNav({
                   {/* Back to Documents Button */}
                   <SidebarMenuItem className="group-data-[collapsible=icon]:hidden">
                     <SidebarMenuButton
-                      asChild
+                      render={
+                        <Link
+                          href={`/hub/libraries/${libraryId}/documents`}
+                          className="relative"
+                        >
+                          <ChevronLeft className="absolute left-0" />
+                          <span className="flex-1 text-center">
+                            Manage Documents
+                          </span>
+                        </Link>
+                      }
                       tooltip="Manage Documents"
                       className="font-semibold"
-                    >
-                      <Link
-                        href={`/hub/libraries/${libraryId}/documents`}
-                        className="relative"
-                      >
-                        <ChevronLeft className="absolute left-0" />
-                        <span className="flex-1 text-center">
-                          Manage Documents
-                        </span>
-                      </Link>
-                    </SidebarMenuButton>
+                    />
                   </SidebarMenuItem>
 
                   {/* Overview Menu Item */}
                   <SidebarMenuItem>
                     <SidebarMenuButton
-                      asChild
+                      render={
+                        <Link href={`/hub/libraries/${libraryId}`}>
+                          <Target />
+                          <span>Overview</span>
+                        </Link>
+                      }
                       isActive={pathname === `/hub/libraries/${libraryId}`}
                       tooltip="Overview"
-                    >
-                      <Link href={`/hub/libraries/${libraryId}`}>
-                        <Target />
-                        <span>Overview</span>
-                      </Link>
-                    </SidebarMenuButton>
+                    />
                   </SidebarMenuItem>
 
                   {/* Settings Menu Item */}
                   {canManageLibrarySettings && (
                     <SidebarMenuItem>
                       <SidebarMenuButton
-                        asChild
+                        render={
+                          <Link href={`/hub/libraries/${libraryId}/settings`}>
+                            <Settings />
+                            <span>Settings</span>
+                          </Link>
+                        }
                         isActive={pathname?.includes(
                           `/hub/libraries/${libraryId}/settings`
                         )}
                         tooltip="Settings"
-                      >
-                        <Link href={`/hub/libraries/${libraryId}/settings`}>
-                          <Settings />
-                          <span>Settings</span>
-                        </Link>
-                      </SidebarMenuButton>
+                      />
                     </SidebarMenuItem>
                   )}
 
                   {/* Members Menu Item */}
                   <SidebarMenuItem>
                     <SidebarMenuButton
-                      asChild
+                      render={
+                        <Link href={`/hub/libraries/${libraryId}/members`}>
+                          <Users />
+                          <span>Members</span>
+                        </Link>
+                      }
                       isActive={pathname?.includes(
                         `/hub/libraries/${libraryId}/members`
                       )}
                       tooltip="Members"
-                    >
-                      <Link href={`/hub/libraries/${libraryId}/members`}>
-                        <Users />
-                        <span>Members</span>
-                      </Link>
-                    </SidebarMenuButton>
+                    />
                   </SidebarMenuItem>
                 </SidebarMenu>
               ) : (
