@@ -35,7 +35,6 @@ async function LibraryLayoutAsync({ children, params }: LibraryLayoutProps) {
 
         <SidebarInset className="flex min-w-0 flex-1 flex-col overflow-hidden">
           <LibraryBreadcrumb params={params} />
-
           <div className="bg-background relative flex min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto">
             {children}
           </div>

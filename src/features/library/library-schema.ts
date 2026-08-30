@@ -73,6 +73,14 @@ export const InviteSchema = z.object({
     .optional(),
 });
 
+export const UserLibraryListSchema = z.array(
+  z.object({
+    id: z.string().uuid(),
+    name: z.string(),
+    role: UserLibraryRoleEnum,
+  })
+);
+
 // -----------------------------------------------------------------------------
 // Types
 // -----------------------------------------------------------------------------
@@ -88,3 +96,4 @@ export type LibraryMember = z.infer<typeof LibraryMemberSchema>;
 export type LibraryMemberList = z.infer<typeof LibraryMemberListSchema>;
 export type CreateInviteInput = z.infer<typeof CreateInviteInputSchema>;
 export type Invite = z.infer<typeof InviteSchema>;
+export type UserLibraryList = z.infer<typeof UserLibraryListSchema>;

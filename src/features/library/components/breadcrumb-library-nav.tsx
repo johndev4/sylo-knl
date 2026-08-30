@@ -2,7 +2,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 
-import * as React from 'react';
+import { Fragment, ReactNode, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { redirect, usePathname } from 'next/navigation';
 import {
@@ -17,6 +17,23 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { UrlObject } from 'url';
 import { getDocument } from '@/features/library/document/queries';
 import { createClient } from '@/lib/supabase/client';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  CheckIcon,
+  ChevronsUpDownIcon,
+  LibraryBigIcon,
+  SlashIcon,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { getUserLibraries } from '../queries';
+import { UserLibraryList } from '../library-schema';
+import { Spinner } from '@/components/ui/spinner';
 
 // Helper to capitalize first letter
 const capFirst = (str: string | null | undefined) =>
@@ -72,16 +89,14 @@ export function BreadcrumbLibraryNav({
   libraryName,
 }: BreadcrumbLibraryNavProps) {
   const pathname = usePathname();
+  // State of initial loading
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   // State to hold dynamic names for library and document IDs
-  const [dynamicNames, setDynamicNames] = React.useState<
-    Record<string, string>
-  >({});
+  const [dynamicNames, setDynamicNames] = useState<Record<string, string>>({});
   // State to track which IDs are currently loading
-  const [loadingIds, setLoadingIds] = React.useState<Set<string>>(new Set());
+  const [loadingIds, setLoadingIds] = useState<Set<string>>(new Set());
   // Live title overrides broadcast by DocumentManager while the user types
-  const [liveTitles, setLiveTitles] = React.useState<Record<string, string>>(
-    {}
-  );
+  const [liveTitles, setLiveTitles] = useState<Record<string, string>>({});
 
   // Split the pathname into segments and filter out empty strings
   const segments = pathname.split('/').filter(Boolean);
@@ -97,7 +112,7 @@ export function BreadcrumbLibraryNav({
     isLibraryDocumentsRoute && segments.length >= 5 ? segments[4] : null;
 
   // Listen for real-time title changes dispatched by DocumentManager
-  React.useEffect(() => {
+  useEffect(() => {
     const handler = (e: Event) => {
       const { documentId, title } = (
         e as CustomEvent<{ documentId: string; title: string }>
@@ -110,8 +125,9 @@ export function BreadcrumbLibraryNav({
   }, []);
 
   // Fetch dynamic names for library and document IDs when the pathname changes
-  React.useEffect(() => {
+  useEffect(() => {
     const resolveNames = async () => {
+      setIsLoading(true);
       const newNames: Record<string, string> = {};
       const newLoading = new Set<string>();
       const toFetch: Array<{ segment: string; prevSegment: string | null }> =
@@ -128,6 +144,7 @@ export function BreadcrumbLibraryNav({
 
       if (toFetch.length === 0) return;
 
+      setIsLoading(false);
       setLoadingIds(new Set(newLoading));
 
       await Promise.all(
@@ -149,17 +166,11 @@ export function BreadcrumbLibraryNav({
 
   const breadcrumbItems: Array<{
     key: string;
-    label: React.ReactNode;
+    label: ReactNode;
     href: string | UrlObject;
   }> = [];
 
   if (isLibraryRoute && libraryId) {
-    breadcrumbItems.push({
-      key: 'library',
-      label: libraryName,
-      href: `/hub/libraries/${libraryId}`,
-    });
-
     if (segments[3]?.trim()) {
       if (segments[3] === 'info') {
         breadcrumbItems.push({
@@ -217,15 +228,42 @@ export function BreadcrumbLibraryNav({
   // Render
   // ---------------------------------------------------------------------------
 
+  // Prevent to render the breadcrumbs on initial loading
+  if (isLoading) {
+    return <Skeleton className="h-4 w-24" />;
+  }
+
+  // Throw error if no library name and ID
+  if (!libraryName || !libraryId) {
+    throw new Error('Library name and ID was not found.');
+  }
+
   return (
     <Breadcrumb>
       <BreadcrumbList className="sm:gap-2">
+        {/* Library Selector */}
+        <BreadcrumbItem>
+          <LibraryBigIcon className="size-4" />
+          <div className="flex items-center gap-1">
+            <span>{libraryName}</span>
+            <LibrarySelectorDropdown libraryId={libraryId} />
+          </div>
+        </BreadcrumbItem>
+
+        <BreadcrumbSeparator>
+          <SlashIcon />
+        </BreadcrumbSeparator>
+
+        {/* Dynamic Breadcrumb Items  */}
         {breadcrumbItems.map((item, index) => {
           const isLast = index === breadcrumbItems.length - 1;
-
           return (
-            <React.Fragment key={item.key}>
-              {index > 0 && <BreadcrumbSeparator />}
+            <Fragment key={item.key}>
+              {index > 0 && (
+                <BreadcrumbSeparator>
+                  <SlashIcon />
+                </BreadcrumbSeparator>
+              )}
               <BreadcrumbItem>
                 {isLast ? (
                   <BreadcrumbPage>{item.label}</BreadcrumbPage>
@@ -235,10 +273,78 @@ export function BreadcrumbLibraryNav({
                   />
                 )}
               </BreadcrumbItem>
-            </React.Fragment>
+            </Fragment>
           );
         })}
       </BreadcrumbList>
     </Breadcrumb>
+  );
+}
+
+function LibrarySelectorDropdown({ libraryId }: { libraryId: string }) {
+  const [userLibraryList, setUserLibraryList] = useState<UserLibraryList>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  // Fetch all user libraries on mount
+  useEffect(() => {
+    (async () => {
+      setIsLoading(true);
+      const supabase = createClient();
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
+
+      if (error || !user) {
+        console.error('Error fetching user:', error);
+        redirect('/login');
+      }
+
+      const libraries = await getUserLibraries(supabase, user);
+      setUserLibraryList(libraries ?? []);
+    })().then(() => setIsLoading(false));
+  }, []);
+
+  // ---------------------------------------------------------------------------
+  // Render
+  // ---------------------------------------------------------------------------
+
+  if (!isLoading && userLibraryList.length === 0) {
+    console.error('[DEBUG] Not enough libraries to show dropdown menu.');
+    return null;
+  }
+
+  return (
+    <>
+      <DropdownMenu>
+        {isLoading ? (
+          <Spinner className="size-3.5" />
+        ) : (
+          <DropdownMenuTrigger
+            render={
+              <Button variant={'ghost'} size={'icon-xs'}>
+                <ChevronsUpDownIcon
+                  data-icon="inline-end"
+                  className="size-3.5"
+                />
+              </Button>
+            }
+          />
+        )}
+        <DropdownMenuContent align="start" className={'min-w-50'}>
+          <DropdownMenuGroup>
+            {userLibraryList.map((lib) => (
+              <DropdownMenuItem
+                key={lib.id}
+                className="flex items-center justify-between"
+              >
+                {lib.name}
+                {lib.id === libraryId && <CheckIcon className="size-3.5" />}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </>
   );
 }
