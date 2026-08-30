@@ -277,30 +277,42 @@ function SidebarTrigger({
   );
 }
 
-function SidebarRail({ className, ...props }: React.ComponentProps<'button'>) {
+// 🟢 CUSTOM MODIFICATION: Floating external rail handle
+// Warning: Do not auto-overwrite this component via shadcn CLI without backing this up!
+const SidebarRail = React.forwardRef<
+  HTMLButtonElement,
+  React.ComponentProps<'button'>
+>(({ className, ...props }, ref) => {
   const { toggleSidebar } = useSidebar();
 
   return (
     <button
+      ref={ref}
       data-sidebar="rail"
-      data-slot="sidebar-rail"
       aria-label="Toggle Sidebar"
       tabIndex={-1}
       onClick={toggleSidebar}
       title="Toggle Sidebar"
       className={cn(
-        'hover:after:bg-sidebar-border absolute inset-y-0 z-20 hidden w-4 transition-all ease-linear group-data-[side=left]:-end-4 group-data-[side=right]:start-0 after:absolute after:inset-y-0 after:start-1/2 after:w-[2px] sm:flex ltr:-translate-x-1/2 rtl:translate-x-1/2',
-        'in-data-[side=left]:cursor-w-resize in-data-[side=right]:cursor-e-resize',
-        '[[data-side=left][data-state=collapsed]_&]:cursor-e-resize [[data-side=right][data-state=collapsed]_&]:cursor-w-resize',
-        'hover:group-data-[collapsible=offcanvas]:bg-sidebar group-data-[collapsible=offcanvas]:translate-x-0 group-data-[collapsible=offcanvas]:after:start-full',
-        '[[data-side=left][data-collapsible=offcanvas]_&]:-end-2',
-        '[[data-side=right][data-collapsible=offcanvas]_&]:-start-2',
+        // Core structural baseline
+        'absolute inset-y-0 z-20 hidden w-4 cursor-col-resize transition-all ease-linear sm:flex',
+        // Expanded position (Left / Right)
+        'group-data-[side=left]:left-[var(--sidebar-width)] group-data-[side=left]:-translate-x-0',
+        'group-data-[side=right]:right-[var(--sidebar-width)] group-data-[side=right]:translate-x-0',
+        // Collapsed position (Icon mode)
+        'group-data-[collapsible=icon]:group-data-[state=collapsed]:group-data-[side=left]:left-[var(--sidebar-width-icon)]',
+        'group-data-[collapsible=icon]:group-data-[state=collapsed]:group-data-[side=right]:right-[var(--sidebar-width-icon)]',
+        // CUSTOM GRAB INDICATOR (Floating Capsule Pill)
+        'after:absolute after:top-1/2 after:left-1/2 after:-translate-x-1/2 after:-translate-y-1/2',
+        'after:h-8 after:w-[3px] after:rounded-full after:bg-transparent',
+        'transition-colors duration-200 hover:after:bg-neutral-500',
         className
       )}
       {...props}
     />
   );
-}
+});
+SidebarRail.displayName = 'SidebarRail';
 
 function SidebarInset({ className, ...props }: React.ComponentProps<'main'>) {
   return (

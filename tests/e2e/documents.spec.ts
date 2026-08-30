@@ -134,7 +134,7 @@ test.describe.serial('Document Management', () => {
     // Verify document appears in sidebar list
     await expect(
       page
-        .locator('div[aria-label="Documents Sidebar"]')
+        .locator('div[aria-label="Sidebar Document List Content"]')
         .getByText(testDocName.slice(0, 32))
     ).toBeVisible();
 
@@ -169,7 +169,7 @@ test.describe.serial('Document Management', () => {
     // Sidebar should show the total count label "DOCUMENTS (1000)"
     await expect(
       page
-        .locator('div[aria-label="Documents Sidebar"]')
+        .locator('div[aria-label="Sidebar Document List Content"]')
         .getByText('DOCUMENTS (1000)')
     ).toBeVisible({
       timeout: 10000,
@@ -178,13 +178,13 @@ test.describe.serial('Document Management', () => {
     // First mock document should appear immediately
     await expect(
       page
-        .locator('div[aria-label="Documents Sidebar"]')
+        .locator('div[aria-label="Sidebar Document List Content"]')
         .getByText('Mock Document 1', { exact: true })
     ).toBeVisible();
 
     // "Load More" button must be present showing 900 remaining
     const loadMoreBtn = page.locator(
-      'div[aria-label="Documents Sidebar"] button',
+      'div[aria-label="Sidebar Document List Content"] button',
       {
         hasText: /load more/i,
       }
@@ -197,7 +197,7 @@ test.describe.serial('Document Management', () => {
     await expect(loadMoreBtn).toContainText('800 Left');
     await expect(
       page
-        .locator('div[aria-label="Documents Sidebar"]')
+        .locator('div[aria-label="Sidebar Document List Content"]')
         .getByText('Mock Document 101', { exact: true })
     ).toBeVisible();
 
@@ -206,7 +206,7 @@ test.describe.serial('Document Management', () => {
     await expect(loadMoreBtn).toContainText('700 Left');
     await expect(
       page
-        .locator('div[aria-label="Documents Sidebar"]')
+        .locator('div[aria-label="Sidebar Document List Content"]')
         .getByText('Mock Document 201', { exact: true })
     ).toBeVisible();
 
@@ -227,7 +227,7 @@ test.describe.serial('Document Management', () => {
     // All 1000 docs are now rendered in the sidebar list
     await expect(
       page
-        .locator('div[aria-label="Documents Sidebar"]')
+        .locator('div[aria-label="Sidebar Document List Content"]')
         .getByText('Mock Document 1000', { exact: true })
     ).toBeVisible();
   });
@@ -290,8 +290,8 @@ test.describe.serial('Document Management', () => {
 
     // Click library name in sidebar
     await page
-      .locator('div[aria-label="Documents Sidebar"]')
-      .getByText(/Test Library|Mock Library/)
+      .locator('div[aria-label="Sidebar Document List Content"]')
+      .getByLabel('New Document', { exact: true })
       .first()
       .click();
 
@@ -299,13 +299,14 @@ test.describe.serial('Document Management', () => {
     expect(page.url()).toContain('/documents/new');
 
     // Now mock confirm to return true (leave)
-    await page.evaluate(() => {
-      window.confirm = () => true;
-    });
+    await page.getByRole('button', { name: 'Discard & Start New' }).click();
+    // await page.evaluate(() => {
+    //   window.confirm = () => true;
+    // });
 
     await page
-      .locator('div[aria-label="Documents Sidebar"]')
-      .getByText(/Test Library|Mock Library/)
+      .locator('div[aria-label="Sidebar Document List Content"]')
+      .getByLabel('New Document', { exact: true })
       .first()
       .click();
   });

@@ -161,11 +161,27 @@ export function BreadcrumbLibraryNav({
     });
 
     if (segments[3]?.trim()) {
-      breadcrumbItems.push({
-        key: segments[3],
-        label: capFirst(segments[3]),
-        href: `/hub/libraries/${libraryId}/${segments[3]}`,
-      });
+      if (segments[3] === 'info') {
+        breadcrumbItems.push({
+          key: segments[3],
+          label: 'Library Info',
+          href: `/hub/libraries/${libraryId}/${segments[3]}`,
+        });
+
+        if (segments[4]?.trim()) {
+          breadcrumbItems.push({
+            key: segments[4],
+            label: capFirst(segments[4]),
+            href: `/hub/libraries/${libraryId}/${segments[4]}`,
+          });
+        }
+      } else {
+        breadcrumbItems.push({
+          key: segments[3],
+          label: capFirst(segments[3]),
+          href: `/hub/libraries/${libraryId}/${segments[3]}`,
+        });
+      }
     }
 
     if (isLibraryDocumentsRoute && documentId) {

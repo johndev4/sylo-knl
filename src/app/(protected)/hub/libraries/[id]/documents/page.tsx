@@ -42,6 +42,7 @@ export default async function DocumentsPage({
               </Link>
             }
             size="lg"
+            title="New Document"
           />
         )}
       </div>

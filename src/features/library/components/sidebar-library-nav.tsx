@@ -4,15 +4,14 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useParams, usePathname, useRouter } from 'next/navigation';
 import {
-  ChevronLeft,
   LogOut,
   AlertTriangle,
   Loader2,
   Target,
   Settings,
   Users,
+  ChevronLeftIcon,
 } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,6 +30,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSkeleton,
 } from '@/components/ui/sidebar';
 import { leaveLibrary } from '@/features/library/actions';
 interface SidebarLibraryNavProps {
@@ -90,7 +90,7 @@ export function SidebarLibraryNav({
 
   return (
     <>
-      <SidebarContent>
+      <SidebarContent aria-label="Sidebar Library Nav Content">
         <SidebarGroup>
           <SidebarGroupContent>
             {libraryId &&
@@ -104,9 +104,9 @@ export function SidebarLibraryNav({
                           href={`/hub/libraries/${libraryId}/documents`}
                           className="relative"
                         >
-                          <ChevronLeft className="absolute left-0" />
+                          <ChevronLeftIcon className="absolute left-2" />
                           <span className="flex-1 text-center">
-                            Manage Documents
+                            Library Info
                           </span>
                         </Link>
                       }
@@ -119,12 +119,12 @@ export function SidebarLibraryNav({
                   <SidebarMenuItem>
                     <SidebarMenuButton
                       render={
-                        <Link href={`/hub/libraries/${libraryId}`}>
+                        <Link href={`/hub/libraries/${libraryId}/info`}>
                           <Target />
                           <span>Overview</span>
                         </Link>
                       }
-                      isActive={pathname === `/hub/libraries/${libraryId}`}
+                      isActive={pathname === `/hub/libraries/${libraryId}/info`}
                       tooltip="Overview"
                     />
                   </SidebarMenuItem>
@@ -134,7 +134,9 @@ export function SidebarLibraryNav({
                     <SidebarMenuItem>
                       <SidebarMenuButton
                         render={
-                          <Link href={`/hub/libraries/${libraryId}/settings`}>
+                          <Link
+                            href={`/hub/libraries/${libraryId}/info/settings`}
+                          >
                             <Settings />
                             <span>Settings</span>
                           </Link>
@@ -151,25 +153,24 @@ export function SidebarLibraryNav({
                   <SidebarMenuItem>
                     <SidebarMenuButton
                       render={
-                        <Link href={`/hub/libraries/${libraryId}/members`}>
+                        <Link href={`/hub/libraries/${libraryId}/info/members`}>
                           <Users />
                           <span>Members</span>
                         </Link>
                       }
                       isActive={pathname?.includes(
-                        `/hub/libraries/${libraryId}/members`
+                        `/hub/libraries/${libraryId}/info/members`
                       )}
                       tooltip="Members"
                     />
                   </SidebarMenuItem>
                 </SidebarMenu>
               ) : (
-                <div className="space-y-3 p-2">
-                  <Skeleton className="h-8 w-full rounded-md" />
-                  <Skeleton className="h-8 w-full rounded-md" />
-                  <Skeleton className="h-8 w-full rounded-md" />
-                  <Skeleton className="h-8 w-full rounded-md" />
-                </div>
+                <SidebarMenu className="gap-1">
+                  <SidebarMenuSkeleton />
+                  <SidebarMenuSkeleton />
+                  <SidebarMenuSkeleton />
+                </SidebarMenu>
               ))}
           </SidebarGroupContent>
         </SidebarGroup>

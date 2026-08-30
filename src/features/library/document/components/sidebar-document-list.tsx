@@ -138,7 +138,7 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
 
   return (
     <>
-      <SidebarContent>
+      <SidebarContent aria-label="Sidebar Document List Content">
         {/* Fixed Filters Area (Hidden when collapsed into icon mode) */}
         <div className="border-sidebar-border flex shrink-0 flex-col gap-2.5 border-b p-3 group-data-[collapsible=icon]:hidden">
           {isLoading ? (
@@ -215,6 +215,7 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
                         size="icon"
                         className="h-7 w-7"
                         title="New Document"
+                        aria-label="New Document"
                       />
                     )}
                   </>
@@ -284,6 +285,18 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
                       <SidebarMenu className="max-w-60 gap-1">
                         {isLoading && page === 1 ? (
                           <div className="space-y-3 p-2">
+                            <Skeleton className="h-8 w-full rounded-md" />
+                            <Skeleton className="h-8 w-full rounded-md" />
+                            <Skeleton className="h-8 w-full rounded-md" />
+                            <Skeleton className="h-8 w-full rounded-md" />
+                            <Skeleton className="h-8 w-full rounded-md" />
+                            <Skeleton className="h-8 w-full rounded-md" />
+                            <Skeleton className="h-8 w-full rounded-md" />
+                            <Skeleton className="h-8 w-full rounded-md" />
+                            <Skeleton className="h-8 w-full rounded-md" />
+                            <Skeleton className="h-8 w-full rounded-md" />
+                            <Skeleton className="h-8 w-full rounded-md" />
+                            <Skeleton className="h-8 w-full rounded-md" />
                             <Skeleton className="h-8 w-full rounded-md" />
                             <Skeleton className="h-8 w-full rounded-md" />
                             <Skeleton className="h-8 w-full rounded-md" />
@@ -386,9 +399,10 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
           <SidebarMenuItem>
             <SidebarMenuButton
               render={
-                <Link href={`/hub/libraries/${libraryId}`}>
+                <Link href={`/hub/libraries/${libraryId}/info`}>
                   <Info />
                   <span>Library Info</span>
+                  <ChevronRightIcon className="ml-auto" />
                 </Link>
               }
               tooltip="Library Info"
@@ -396,8 +410,6 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
-
-      {/* <SidebarRail /> */}
     </>
   );
 }

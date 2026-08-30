@@ -35,7 +35,7 @@ async function LibrarySidebarAsync({ params }: LibrarySidebarProps) {
     <Sidebar
       collapsible="icon"
       className="top-[4.1rem] h-[calc(100vh-4.1rem)]"
-      aria-label="Documents Sidebar"
+      aria-label="Library Sidebar"
     >
       {/* Header */}
       <SidebarHeader>
@@ -69,6 +69,8 @@ async function LibrarySidebarAsync({ params }: LibrarySidebarProps) {
         userRole={membership.role}
         libraryName={libraryName}
       />
+
+      {/* <SidebarRail /> */}
     </Sidebar>
   );
 }
