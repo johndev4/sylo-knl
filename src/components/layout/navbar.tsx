@@ -36,8 +36,8 @@ export function Navbar({ user }: NavbarProps) {
                 className: cn(
                   'focus-visible:ring-ring mr-1 px-3 text-sm font-medium transition-colors focus-visible:ring-1 focus-visible:outline-none',
                   pathname.startsWith('/hub')
-                    ? 'text-foreground bg-zinc-100 dark:bg-zinc-800/50'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-zinc-100/50 dark:hover:bg-zinc-800/30'
+                    ? 'text-foreground bg-neutral-100 dark:bg-neutral-800/50'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-neutral-100/50 dark:hover:bg-neutral-800/30'
                 ),
               })}
             />
@@ -51,8 +51,8 @@ export function Navbar({ user }: NavbarProps) {
                 className: cn(
                   'focus-visible:ring-ring mx-auto px-3 text-sm font-medium transition-colors focus-visible:ring-1 focus-visible:outline-none',
                   pathname.startsWith('/chat')
-                    ? 'text-foreground bg-zinc-100 dark:bg-zinc-800/50'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-zinc-100/50 dark:hover:bg-zinc-800/30'
+                    ? 'text-foreground bg-neutral-100 dark:bg-neutral-800/50'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-neutral-100/50 dark:hover:bg-neutral-800/30'
                 ),
               })}
             />

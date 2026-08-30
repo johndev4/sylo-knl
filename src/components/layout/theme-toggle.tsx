@@ -15,7 +15,7 @@ export function ThemeToggle() {
 
   if (!mounted) {
     return (
-      <div className="size-10 animate-pulse rounded-full bg-zinc-100 dark:bg-zinc-800" />
+      <div className="size-10 animate-pulse rounded-full bg-neutral-100 dark:bg-neutral-800" />
     );
   }
 

@@ -446,7 +446,7 @@ export function DocumentManager({
       {/* ── Top Fixed Header with Controls ──────────────────────────────────── */}
       <div className="bg-background/95 border-border supports-[backdrop-filter]:bg-background/60 z-0 flex shrink-0 items-center justify-between border-b py-1 pr-3 pl-1 shadow-sm backdrop-blur">
         <div
-          className={`mr-4 flex-1 px-3 py-1 ${isEditMode ? 'rounded-lg border bg-transparent focus-within:ring-1 focus-within:ring-zinc-400 dark:focus-within:ring-zinc-600' : ''}`}
+          className={`mr-4 flex-1 px-3 py-1 ${isEditMode ? 'rounded-lg border bg-transparent focus-within:ring-1 focus-within:ring-neutral-400 dark:focus-within:ring-neutral-600' : ''}`}
         >
           <input
             type="text"
@@ -477,7 +477,7 @@ export function DocumentManager({
       </div>
 
       {/* ── Metadata & Tags Header Bar ──────────────────────────────────────── */}
-      <div className="border-border relative shrink-0 border-b bg-zinc-50/50 dark:bg-zinc-900/20">
+      <div className="border-border relative shrink-0 border-b bg-neutral-50/50 dark:bg-neutral-900/20">
         {!isMetaOpen && <div className="h-7" />}
         <button
           onClick={() => setIsMetaOpen((v) => !v)}
@@ -550,7 +550,7 @@ export function DocumentManager({
                     <Badge
                       key={tag}
                       variant="secondary"
-                      className="text-muted-foreground rounded-full border-none bg-zinc-100 px-3 py-0.5 text-[10px] dark:bg-zinc-800"
+                      className="text-muted-foreground rounded-full border-none bg-neutral-100 px-3 py-0.5 text-[10px] dark:bg-neutral-800"
                     >
                       {tag}
                     </Badge>

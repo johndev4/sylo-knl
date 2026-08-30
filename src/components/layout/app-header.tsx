@@ -10,7 +10,7 @@ export function AppHeader() {
     <nav
       className={cn(
         'sticky top-0 z-40 w-full',
-        'border-b border-zinc-200/50 dark:border-zinc-800/50',
+        'border-b border-neutral-200/50 dark:border-neutral-800/50',
         'bg-background/80 backdrop-blur-md'
       )}
     >
@@ -24,7 +24,7 @@ export function AppHeader() {
               'cursor-default'
             )}
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-zinc-900 text-zinc-50 shadow-sm dark:bg-zinc-100 dark:text-zinc-900">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-neutral-900 text-neutral-50 shadow-sm dark:bg-neutral-100 dark:text-neutral-900">
               <span className="text-xs font-bold">Sy</span>
             </div>
             <span className="hidden tracking-tight sm:inline">Sylo</span>

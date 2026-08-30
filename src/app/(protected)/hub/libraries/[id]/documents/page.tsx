@@ -16,9 +16,9 @@ export default async function DocumentsPage({
   const isViewer = membership?.role === 'VIEWER';
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-center bg-zinc-50 p-8 dark:bg-zinc-950/50">
+    <div className="flex flex-1 flex-col items-center justify-center bg-neutral-50 p-8 dark:bg-neutral-950/50">
       <div className="mx-auto max-w-md space-y-6 text-center">
-        <div className="shadow-soft-sm mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-zinc-200 bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="shadow-soft-sm mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-neutral-200 bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900">
           <FileText className="text-muted-foreground h-10 w-10" />
         </div>
 

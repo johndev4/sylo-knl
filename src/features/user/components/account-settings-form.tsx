@@ -239,7 +239,7 @@ export default function AccountSettingsForm({
 
                 {/* Avatar Display Section */}
                 {profile.avatarUrl && (
-                  <div className="rounded-xl border border-zinc-200 bg-zinc-50/50 p-6 dark:border-zinc-800 dark:bg-zinc-900/50">
+                  <div className="rounded-xl border border-neutral-200 bg-neutral-50/50 p-6 dark:border-neutral-800 dark:bg-neutral-900/50">
                     <Label className="mb-4 block text-sm font-semibold tracking-tight">
                       Avatar Display
                     </Label>
@@ -258,7 +258,7 @@ export default function AccountSettingsForm({
                           'relative flex flex-col items-center gap-3 rounded-2xl border-2 p-4 transition-all duration-200',
                           formData.useAvatarUrl
                             ? 'border-primary bg-primary/5 shadow-sm'
-                            : 'border-transparent bg-white hover:border-zinc-300 dark:bg-zinc-950 dark:hover:border-zinc-700'
+                            : 'border-transparent bg-white hover:border-neutral-300 dark:bg-neutral-950 dark:hover:border-neutral-700'
                         )}
                       >
                         <div className="relative">
@@ -268,7 +268,7 @@ export default function AccountSettingsForm({
                             width={80}
                             height={80}
                             unoptimized
-                            className="h-20 w-20 rounded-full bg-zinc-100 object-cover shadow-sm dark:bg-zinc-800"
+                            className="h-20 w-20 rounded-full bg-neutral-100 object-cover shadow-sm dark:bg-neutral-800"
                           />
 
                           {formData.useAvatarUrl && (
@@ -303,7 +303,7 @@ export default function AccountSettingsForm({
                           'relative flex flex-col items-center gap-3 rounded-2xl border-2 p-4 transition-all duration-200',
                           !formData.useAvatarUrl
                             ? 'border-primary bg-primary/5 shadow-sm'
-                            : 'border-transparent bg-white hover:border-zinc-300 dark:bg-zinc-950 dark:hover:border-zinc-700'
+                            : 'border-transparent bg-white hover:border-neutral-300 dark:bg-neutral-950 dark:hover:border-neutral-700'
                         )}
                       >
                         <div className="relative">
@@ -312,7 +312,7 @@ export default function AccountSettingsForm({
                               'flex h-20 w-20 items-center justify-center rounded-full text-2xl font-bold shadow-sm',
                               !formData.useAvatarUrl
                                 ? 'bg-primary/10 text-primary'
-                                : 'text-foreground bg-zinc-200 dark:bg-zinc-800'
+                                : 'text-foreground bg-neutral-200 dark:bg-neutral-800'
                             )}
                           >
                             {initials}

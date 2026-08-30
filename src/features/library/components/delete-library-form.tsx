@@ -130,7 +130,7 @@ export function DeleteLibraryForm({
             className="cursor-text font-mono text-sm"
             disabled={isDeleting}
           />
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+          <p className="text-xs text-neutral-500 dark:text-neutral-400">
             Enter{' '}
             <span className="font-semibold">&quot;{libraryName}&quot;</span> to
             enable the delete button

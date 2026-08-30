@@ -107,8 +107,8 @@ export function AccountDropdown({ user }: AccountDropdownProps) {
             <button
               className={cn(
                 'flex items-center gap-2 rounded-full py-1.5 pr-3 pl-1.5',
-                'bg-zinc-100/80 hover:bg-zinc-200/80 dark:bg-zinc-800/50 dark:hover:bg-zinc-800',
-                'border border-zinc-200/50 transition-colors outline-none dark:border-zinc-700/50'
+                'bg-neutral-100/80 hover:bg-neutral-200/80 dark:bg-neutral-800/50 dark:hover:bg-neutral-800',
+                'border border-neutral-200/50 transition-colors outline-none dark:border-neutral-700/50'
               )}
               aria-label="Account menu"
             >
@@ -116,7 +116,7 @@ export function AccountDropdown({ user }: AccountDropdownProps) {
               <div
                 className={cn(
                   'flex size-7 items-center justify-center rounded-full text-xs font-semibold',
-                  'border border-zinc-200/50 bg-white text-zinc-700 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300'
+                  'border border-neutral-200/50 bg-white text-neutral-700 shadow-sm dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300'
                 )}
               >
                 <Spinner className="h-7 w-7" />
@@ -143,8 +143,8 @@ export function AccountDropdown({ user }: AccountDropdownProps) {
           <button
             className={cn(
               'flex items-center gap-2 rounded-full py-1.5 pr-3 pl-1.5',
-              'bg-zinc-100/80 hover:bg-zinc-200/80 dark:bg-zinc-800/50 dark:hover:bg-zinc-800',
-              'border border-zinc-200/50 transition-colors outline-none dark:border-zinc-700/50'
+              'bg-neutral-100/80 hover:bg-neutral-200/80 dark:bg-neutral-800/50 dark:hover:bg-neutral-800',
+              'border border-neutral-200/50 transition-colors outline-none dark:border-neutral-700/50'
             )}
             aria-label="Account menu"
           >

@@ -126,7 +126,7 @@ export function DocumentActions({
                   variant="outline"
                   size="sm"
                   disabled={isDeleting}
-                  className="text-destructive hover:bg-destructive/10 border-zinc-200 dark:border-zinc-800"
+                  className="text-destructive hover:bg-destructive/10 border-neutral-200 dark:border-neutral-800"
                   aria-label="Delete document"
                 >
                   {isDeleting ? (
@@ -190,7 +190,7 @@ export function DocumentActions({
                   variant="outline"
                   size="sm"
                   disabled={isDeleting}
-                  className="text-destructive hover:bg-destructive/10 border-zinc-200 dark:border-zinc-800"
+                  className="text-destructive hover:bg-destructive/10 border-neutral-200 dark:border-neutral-800"
                   aria-label="Delete document(mobile)"
                 >
                   {isDeleting ? (

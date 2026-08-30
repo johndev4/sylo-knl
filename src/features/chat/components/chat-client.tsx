@@ -210,7 +210,7 @@ export default function ChatClient({
       {/* ── Main Chat Area ─────────────────────────────────────────────────── */}
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Sub-header (Optional/Minimal) */}
-        <div className="flex items-center justify-end border-b border-zinc-200/10 px-6 py-2 dark:border-zinc-800/20">
+        <div className="flex items-center justify-end border-b border-neutral-200/10 px-6 py-2 dark:border-neutral-800/20">
           {messages.length > 0 && (
             <Tooltip>
               <TooltipTrigger
@@ -252,7 +252,7 @@ export default function ChatClient({
                   <div className="flex size-20 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500/20 to-violet-600/20 shadow-inner ring-1 ring-indigo-200 dark:ring-indigo-800">
                     <Bot className="size-10 text-indigo-500 dark:text-indigo-400" />
                   </div>
-                  <div className="absolute -top-1 -right-1 size-4 rounded-full bg-emerald-400 ring-2 ring-white dark:ring-zinc-950" />
+                  <div className="absolute -top-1 -right-1 size-4 rounded-full bg-emerald-400 ring-2 ring-white dark:ring-neutral-950" />
                 </div>
 
                 <div className="max-w-md space-y-2">
@@ -282,7 +282,7 @@ export default function ChatClient({
                           setInput(suggestion);
                           inputRef.current?.focus();
                         }}
-                        className="rounded-full border border-zinc-200 bg-white px-4 py-1.5 text-sm text-zinc-600 transition-colors hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-indigo-700 dark:hover:bg-indigo-950/40 dark:hover:text-indigo-400"
+                        className="rounded-full border border-neutral-200 bg-white px-4 py-1.5 text-sm text-neutral-600 transition-colors hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-400 dark:hover:border-indigo-700 dark:hover:bg-indigo-950/40 dark:hover:text-indigo-400"
                       >
                         {suggestion}
                       </button>
@@ -313,8 +313,8 @@ export default function ChatClient({
                       className={cn(
                         'max-w-[85%] rounded-2xl px-4 py-3 text-sm shadow-sm',
                         m.role === 'user'
-                          ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950'
-                          : 'border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900'
+                          ? 'bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-950'
+                          : 'border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900'
                       )}
                     >
                       {m.role === 'assistant' &&
@@ -338,8 +338,8 @@ export default function ChatClient({
                     </div>
 
                     {m.role === 'user' && (
-                      <div className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-zinc-900 shadow-sm dark:bg-zinc-100">
-                        <User className="size-4 text-white dark:text-zinc-950" />
+                      <div className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-neutral-900 shadow-sm dark:bg-neutral-100">
+                        <User className="size-4 text-white dark:text-neutral-950" />
                       </div>
                     )}
                   </motion.div>
@@ -356,7 +356,7 @@ export default function ChatClient({
                       <div className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 shadow-sm">
                         <Bot className="size-4 text-white" />
                       </div>
-                      <div className="rounded-2xl border border-zinc-200 bg-white px-4 dark:border-zinc-800 dark:bg-zinc-900">
+                      <div className="rounded-2xl border border-neutral-200 bg-white px-4 dark:border-neutral-800 dark:bg-neutral-900">
                         <AITextLoading
                           texts={[
                             'Searching libraries…',
@@ -377,7 +377,7 @@ export default function ChatClient({
         </main>
 
         {/* ── Input footer (Pinned) ────────────────────────────────────────── */}
-        <footer className="border-t border-zinc-200 bg-white/80 px-4 py-4 backdrop-blur-sm dark:border-zinc-800/50 dark:bg-zinc-950/80">
+        <footer className="border-t border-neutral-200 bg-white/80 px-4 py-4 backdrop-blur-sm dark:border-neutral-800/50 dark:bg-neutral-950/80">
           <form
             onSubmit={handleSubmit}
             className="mx-auto flex max-w-3xl items-center gap-2"
@@ -393,7 +393,7 @@ export default function ChatClient({
                     ? 'Select a library in the sidebar first…'
                     : 'Ask about your knowledge base…'
                 }
-                className="h-12 rounded-2xl border-zinc-200/60 bg-zinc-50/50 px-4 focus-visible:ring-indigo-400 dark:border-zinc-800/60 dark:bg-zinc-900/50"
+                className="h-12 rounded-2xl border-neutral-200/60 bg-neutral-50/50 px-4 focus-visible:ring-indigo-400 dark:border-neutral-800/60 dark:bg-neutral-900/50"
                 disabled={isLoading || noneSelected}
                 aria-label="Chat message input"
                 aria-disabled={isLoading || noneSelected}
