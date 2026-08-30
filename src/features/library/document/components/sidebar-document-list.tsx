@@ -279,7 +279,7 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
                       animate={{ height: 'auto', opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
                     >
-                      <SidebarMenu className="max-w-60 gap-1">
+                      <SidebarMenu className="gap-1">
                         {isLoading && page === 1 ? (
                           <div className="space-y-3 p-2">
                             <Skeleton className="h-8 w-full rounded-md" />
