@@ -9,6 +9,9 @@ interface LibrarySidebarContentProps {
   libraryName: string;
 }
 
+/**
+ * @deprecated
+ */
 export function LibrarySidebarContent({
   userRole,
   libraryName,

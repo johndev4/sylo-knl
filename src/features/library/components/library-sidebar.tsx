@@ -1,44 +1,57 @@
-import {
-  Sidebar,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuItem,
-} from '@/components/ui/sidebar';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Library } from 'lucide-react';
-import { Suspense } from 'react';
-import { getCachedLibraryName } from '../queries.server';
-import { LibrarySidebarContent } from './library-sidebar-content';
-import { requireLibraryRole } from '@/lib/auth/library-role';
+'use client';
+
+import { Sidebar, SidebarRail } from '@/components/ui/sidebar';
+import { usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { SidebarDocumentList } from '../document/components';
+import { SidebarLibraryNav } from './sidebar-library-nav';
+import { createClient } from '@/lib/supabase/client';
+import { getLibraryName } from '../queries';
 
 interface LibrarySidebarProps {
-  params: Promise<{ id: string }>;
+  userRole: string;
 }
 
-export function LibrarySidebar({ params }: LibrarySidebarProps) {
-  return (
-    <Suspense fallback={<LibrarySidebarLoading />}>
-      <LibrarySidebarAsync params={params} />
-    </Suspense>
-  );
-}
+export function LibrarySidebar({ userRole }: LibrarySidebarProps) {
+  const pathname = usePathname();
+  const [libraryName, setLibraryName] = useState<string>('');
 
-async function LibrarySidebarAsync({ params }: LibrarySidebarProps) {
-  const { id: libraryId } = await params;
-  const membership = await requireLibraryRole(libraryId);
-  if (!membership) return null;
+  // Split the pathname into segments and filter out empty strings
+  const segments = pathname.split('/').filter(Boolean);
+  // Determine if we are on a library route and extract the library ID
+  const isLibraryRoute =
+    segments[0] === 'hub' &&
+    segments[1] === 'libraries' &&
+    segments.length >= 3;
+  const libraryId = isLibraryRoute ? segments[2] : null;
+  // Determine if we are on a library documents route and extract the document ID
+  const isLibraryDocumentsRoute = libraryId && segments[3] === 'documents';
 
-  const libraryName = await getCachedLibraryName(libraryId);
-  if (!libraryName) throw new Error('Library not found');
+  useEffect(() => {
+    if (!userRole || !libraryId) return;
+    const supabase = createClient();
+
+    getLibraryName(libraryId, supabase)
+      .then((value) => setLibraryName(value || ''))
+      .catch(console.error);
+  }, [libraryId, userRole]);
+
+  // ---------------------------------------------------------------------------
+  // Render
+  // ---------------------------------------------------------------------------
+
+  if (!isLibraryRoute) {
+    return null;
+  }
 
   return (
     <Sidebar
-      collapsible="icon"
+      collapsible="offcanvas"
       className="top-[4.1rem] h-[calc(100vh-4.1rem)]"
       aria-label="Library Sidebar"
     >
       {/* Header */}
-      <SidebarHeader>
+      {/* <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
             <div className="flex min-w-0 items-center justify-between gap-2 p-0 group-data-[collapsible=icon]:justify-center">
@@ -62,39 +75,16 @@ async function LibrarySidebarAsync({ params }: LibrarySidebarProps) {
             </div>
           </SidebarMenuItem>
         </SidebarMenu>
-      </SidebarHeader>
+      </SidebarHeader> */}
 
       {/* Content */}
-      <LibrarySidebarContent
-        userRole={membership.role}
-        libraryName={libraryName}
-      />
+      {isLibraryDocumentsRoute ? (
+        <SidebarDocumentList userRole={userRole} />
+      ) : (
+        <SidebarLibraryNav userRole={userRole} libraryName={libraryName} />
+      )}
 
-      {/* <SidebarRail /> */}
-    </Sidebar>
-  );
-}
-
-function LibrarySidebarLoading() {
-  return (
-    <Sidebar className="top-[4.1rem] h-[calc(100vh-4.1rem)]">
-      <div className="space-y-2 p-4">
-        <Skeleton className="h-9 w-full rounded" />
-
-        <div className="flex items-center justify-between">
-          <Skeleton className="h-8 w-12" />
-          <Skeleton className="h-8 w-8 rounded" />
-        </div>
-
-        <div className="mt-4 space-y-2">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="space-y-1">
-              <Skeleton className="h-5 w-40" />
-              <Skeleton className="h-4 w-20" />
-            </div>
-          ))}
-        </div>
-      </div>
+      <SidebarRail />
     </Sidebar>
   );
 }

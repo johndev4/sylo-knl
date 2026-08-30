@@ -4,7 +4,7 @@
 
 import { Fragment, ReactNode, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { redirect, usePathname } from 'next/navigation';
+import { redirect, useParams, usePathname } from 'next/navigation';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -34,6 +34,12 @@ import { Button } from '@/components/ui/button';
 import { getUserLibraries } from '../queries';
 import { UserLibraryList } from '../library-schema';
 import { Spinner } from '@/components/ui/spinner';
+import { User } from '@supabase/supabase-js';
+import { useUser } from '@/hooks/use-user';
+
+interface BreadcrumbLibraryNavProps {
+  libraryName: string;
+}
 
 // Helper to capitalize first letter
 const capFirst = (str: string | null | undefined) =>
@@ -46,29 +52,12 @@ const isUUID = (str: string) => {
   return regex.test(str);
 };
 
-// async function fetchLibraryName(id: string): Promise<string | null> {
-//   try {
-//     const supabase = createClient();
-//     const libraryName = await getLibraryName(id, supabase);
-//     return libraryName ?? null;
-//   } catch {
-//     return null;
-//   }
-// }
-
-async function fetchDocumentTitle(id: string): Promise<string | null> {
+async function fetchDocumentTitle(
+  id: string,
+  user: User
+): Promise<string | null> {
   try {
     const supabase = await createClient();
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser();
-
-    if (error || !user) {
-      console.error('Error fetching user:', error);
-      redirect('/login');
-    }
-
     const data = await getDocument(id, supabase, user);
     return data?.document?.title ?? null;
   } catch (err: any) {
@@ -81,14 +70,17 @@ async function fetchDocumentTitle(id: string): Promise<string | null> {
   }
 }
 
-interface BreadcrumbLibraryNavProps {
-  libraryName: string;
-}
-
 export function BreadcrumbLibraryNav({
   libraryName,
 }: BreadcrumbLibraryNavProps) {
+  const { user } = useUser();
+
+  if (!user) {
+    redirect('/login');
+  }
+
   const pathname = usePathname();
+
   // State of initial loading
   const [isLoading, setIsLoading] = useState<boolean>(true);
   // State to hold dynamic names for library and document IDs
@@ -151,7 +143,7 @@ export function BreadcrumbLibraryNav({
         toFetch.map(async ({ segment, prevSegment }) => {
           let name: string | null = null;
           if (prevSegment === 'documents') {
-            name = await fetchDocumentTitle(segment);
+            name = await fetchDocumentTitle(segment, user);
           }
           if (name) newNames[segment] = name;
         })
@@ -246,7 +238,7 @@ export function BreadcrumbLibraryNav({
           <LibraryBigIcon className="size-4" />
           <div className="flex items-center gap-1">
             <span>{libraryName}</span>
-            <LibrarySelectorDropdown libraryId={libraryId} />
+            <LibrarySelectorDropdown />
           </div>
         </BreadcrumbItem>
 
@@ -281,7 +273,16 @@ export function BreadcrumbLibraryNav({
   );
 }
 
-function LibrarySelectorDropdown({ libraryId }: { libraryId: string }) {
+function LibrarySelectorDropdown() {
+  const { user } = useUser();
+
+  if (!user) {
+    redirect('/login');
+  }
+
+  const params = useParams();
+  const libraryId = params?.id || '';
+
   const [userLibraryList, setUserLibraryList] = useState<UserLibraryList>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
@@ -290,16 +291,6 @@ function LibrarySelectorDropdown({ libraryId }: { libraryId: string }) {
     (async () => {
       setIsLoading(true);
       const supabase = createClient();
-      const {
-        data: { user },
-        error,
-      } = await supabase.auth.getUser();
-
-      if (error || !user) {
-        console.error('Error fetching user:', error);
-        redirect('/login');
-      }
-
       const libraries = await getUserLibraries(supabase, user);
       setUserLibraryList(libraries ?? []);
     })().then(() => setIsLoading(false));

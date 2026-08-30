@@ -45,12 +45,19 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import { useUser } from '@/hooks/use-user';
 
 interface SidebarDocumentListProps {
   userRole: string;
 }
 
 export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
+  const { user } = useUser();
+
+  if (!user) {
+    redirect('/login');
+  }
+
   const params = useParams();
   const libraryId = params?.id as string;
   const pathname = usePathname();
@@ -70,16 +77,6 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
       setIsLoading(true);
       try {
         const supabase = await createClient();
-        const {
-          data: { user },
-          error,
-        } = await supabase.auth.getUser();
-
-        if (error || !user) {
-          console.error('Error fetching user:', error);
-          redirect('/login');
-        }
-
         const data = await getDocuments(
           {
             libraryId,
@@ -101,7 +98,7 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
         setIsLoading(false);
       }
     },
-    [libraryId]
+    [libraryId, user]
   );
 
   useEffect(() => {
@@ -257,7 +254,7 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
 
         <Collapsible
           key={'DOCUMENTS'}
-          title={'DOCUMENTS'}
+          title={'Document List'}
           defaultOpen
           className="group/collapsible group-data-[collapsible=icon]:hidden"
         >
