@@ -4,6 +4,7 @@ import { AccountDropdown } from './account-dropdown';
 import { Navbar } from './navbar';
 import { getUserNonRedirect } from '@/lib/auth/get-user';
 import { Suspense } from 'react';
+import { EggIcon } from 'lucide-react';
 
 export function AppHeader() {
   return (
@@ -24,10 +25,18 @@ export function AppHeader() {
               'cursor-default'
             )}
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-neutral-900 text-neutral-50 shadow-sm dark:bg-neutral-100 dark:text-neutral-900">
-              <span className="text-xs font-bold">Sy</span>
+            <div
+              className={cn(
+                'flex h-8 w-8 items-center justify-center shadow-xs',
+                'bg-background dark:bg-background',
+                'rounded-md border border-neutral-200 dark:border-neutral-800'
+              )}
+            >
+              <EggIcon className="size-4.5" />
             </div>
-            <span className="hidden tracking-tight sm:inline">Sylo</span>
+            <span className="hidden tracking-wider uppercase sm:inline">
+              Sylo
+            </span>
           </div>
 
           {/* Global Navigation */}

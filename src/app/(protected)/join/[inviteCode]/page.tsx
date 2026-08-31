@@ -18,14 +18,10 @@ export default async function JoinPage({
   const { inviteCode } = await params;
   const { error: actionError } = await searchParams;
 
-  // 1. Fetch invite details and user auth
+  // Fetch invite details and user auth
   const result = await getInviteDetails(inviteCode);
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
 
-  // 2. Handle join action form submission
+  // Handle join action form submission
   const handleJoin = async () => {
     'use server';
     const joinResult = await joinLibraryAction(inviteCode);
@@ -43,7 +39,11 @@ export default async function JoinPage({
     redirect(`/hub/libraries/${libraryId}/documents`);
   };
 
-  // 3. Render Invalid/Missing Invite
+  // ---------------------------------------------------------------------------
+  // Render
+  // ---------------------------------------------------------------------------
+
+  // Invalid/Missing Invite
   if (result.error || !result.data) {
     return (
       <div className="bg-muted/30 flex min-h-screen items-center justify-center p-4">
@@ -79,9 +79,15 @@ export default async function JoinPage({
     );
   }
 
+  // Fetch user without redirecting to login if user is not authenticated
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   const invite = result.data;
 
-  // 4. Render Valid Invite Page
+  // Valid Invite Page
   return (
     <div className="bg-muted/30 flex min-h-screen flex-col items-center justify-center p-4">
       <Card className="w-full max-w-md p-8 shadow-lg">
