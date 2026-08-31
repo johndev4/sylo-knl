@@ -48,7 +48,7 @@ function BreadcrumbLink({
     defaultTagName: 'a',
     props: mergeProps<'a'>(
       {
-        className: cn('hover:text-foreground transition-colors', className),
+        className: cn('transition-colors hover:text-foreground', className),
       },
       props
     ),
@@ -85,7 +85,7 @@ function BreadcrumbSeparator({
       className={cn('[&>svg]:size-3.5', className)}
       {...props}
     >
-      {children ?? <ChevronRightIcon className="rtl:rotate-180" />}
+      {children ?? <ChevronRightIcon />}
     </li>
   );
 }
