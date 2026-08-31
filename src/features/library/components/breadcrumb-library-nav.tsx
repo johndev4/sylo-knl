@@ -281,7 +281,7 @@ function LibrarySelectorDropdown() {
   }
 
   const params = useParams();
-  const libraryId = params?.id || '';
+  const libraryId = params?.id as string;
 
   const [userLibraryList, setUserLibraryList] = useState<UserLibraryList>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);

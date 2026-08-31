@@ -1,6 +1,5 @@
 // Sidebar
 export * from './library-sidebar';
-export * from './library-sidebar-content';
 export * from './sidebar-library-nav';
 // Breadcrumb
 export * from './library-breadcrumb';

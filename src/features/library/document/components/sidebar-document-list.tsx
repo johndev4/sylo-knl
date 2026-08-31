@@ -31,6 +31,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSkeleton,
 } from '@/components/ui/sidebar';
 import { Input } from '@/components/ui/input';
 import { useSidebarRefresh } from '@/components/providers/sidebar-refresh-provider';
@@ -52,6 +53,7 @@ interface SidebarDocumentListProps {
 }
 
 export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
+  const { refreshKey } = useSidebarRefresh();
   const { user } = useUser();
 
   if (!user) {
@@ -69,7 +71,11 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTag, setSelectedTag] = useState<string>('ALL');
 
-  const { refreshKey } = useSidebarRefresh();
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsClient(true);
+  }, []);
 
   const fetchDocuments = useCallback(
     async (pageToLoad = 1) => {
@@ -134,279 +140,272 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
   const newDocumentPath = `/hub/libraries/${libraryId}/documents/new`;
 
   return (
-    <>
-      <SidebarContent aria-label="Sidebar Document List Content">
-        {/* Fixed Filters Area (Hidden when collapsed into icon mode) */}
-        <div className="border-sidebar-border flex shrink-0 flex-col gap-2.5 border-b p-3 group-data-[collapsible=icon]:hidden">
-          {isLoading ? (
-            <div className="space-y-3 p-2">
-              <Skeleton className="h-5 w-full rounded-md" />
-              <Skeleton className="h-5 w-20 rounded-md" />
-            </div>
-          ) : (
-            <>
-              <div className="relative">
-                <Search className="text-muted-foreground absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2" />
-                <Input
-                  placeholder="Search docs..."
-                  className="focus-visible:ring-primary/30 border-sidebar-border bg-sidebar-accent/50 h-8 pl-8 text-xs focus-visible:ring-1"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
+    isClient && (
+      <>
+        <SidebarContent aria-label="Sidebar Document List Content">
+          {/* Fixed Filters Area (Hidden when collapsed into icon mode) */}
+          <div className="border-sidebar-border flex shrink-0 flex-col gap-2.5 border-b p-3 group-data-[collapsible=icon]:hidden">
+            {isLoading ? (
+              <div className="space-y-3 p-2">
+                <Skeleton className="h-5 w-full rounded-md" />
+                <Skeleton className="h-5 w-20 rounded-md" />
               </div>
+            ) : (
+              <>
+                <div className="relative">
+                  <Search className="text-muted-foreground absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2" />
+                  <Input
+                    placeholder="Search docs..."
+                    className="focus-visible:ring-primary/30 border-sidebar-border bg-sidebar-accent/50 h-8 pl-8 text-xs focus-visible:ring-1"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
 
-              <div className="flex items-end justify-between">
-                <Select
-                  value={selectedTag}
-                  onValueChange={(value) => setSelectedTag(value ?? '')}
-                >
-                  <SelectTrigger className="border-sidebar-border bg-sidebar-accent/50 h-8 text-xs font-bold tracking-wider">
-                    <SelectValue placeholder="FILTER BY TAG" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {allTags.map((tag) => (
-                      <SelectItem
-                        key={tag}
-                        value={tag}
-                        className="text-[10px] font-bold tracking-wider uppercase"
-                      >
-                        {tag}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="flex items-end justify-between">
+                  <Select
+                    value={selectedTag}
+                    onValueChange={(value) => setSelectedTag(value ?? '')}
+                  >
+                    <SelectTrigger className="border-sidebar-border bg-sidebar-accent/50 h-8 text-xs font-bold tracking-wider">
+                      <SelectValue placeholder="FILTER BY TAG" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {allTags.map((tag) => (
+                        <SelectItem
+                          key={tag}
+                          value={tag}
+                          className="text-[10px] font-bold tracking-wider uppercase"
+                        >
+                          {tag}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
 
-                {/* Create New Document Button */}
-                {!!userRole && userRole !== 'VIEWER' && (
-                  <>
-                    {isAtLimit ? (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-muted-foreground/50 h-7 w-7 cursor-not-allowed"
-                        title="Maximum limit of 500 documents reached."
-                        disabled
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    ) : (
-                      <Button
-                        render={
-                          <Link
-                            href={newDocumentPath}
-                            onClick={(e) => {
-                              if (pathname === newDocumentPath) {
-                                e.preventDefault();
-                                window.dispatchEvent(
-                                  new CustomEvent(
-                                    'sylo:new-document:reset-request'
-                                  )
-                                );
-                              }
-                            }}
-                          >
-                            <Plus className="h-4 w-4" />
-                          </Link>
-                        }
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        title="New Document"
-                        aria-label="New Document"
-                      />
-                    )}
-                  </>
-                )}
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* New Document Button in collapsed mode */}
-        {userRole !== 'VIEWER' && (
-          <div className="hidden p-2 group-data-[collapsible=icon]:block">
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  render={
-                    <Link
-                      href={newDocumentPath}
-                      onClick={(e) => {
-                        if (pathname === newDocumentPath) {
-                          e.preventDefault();
-                          window.dispatchEvent(
-                            new CustomEvent('sylo:new-document:reset-request')
-                          );
-                        }
-                      }}
-                    >
-                      <Plus />
-                      <span>New Document</span>
-                    </Link>
-                  }
-                  tooltip="New Document"
-                  disabled={isAtLimit}
-                />
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </div>
-        )}
-
-        <Collapsible
-          key={'DOCUMENTS'}
-          title={'Document List'}
-          defaultOpen
-          className="group/collapsible group-data-[collapsible=icon]:hidden"
-        >
-          {/* Documents Group */}
-          <SidebarGroup>
-            <SidebarGroupLabel
-              render={
-                <CollapsibleTrigger className="text-xs font-semibold transition-colors">
-                  <span>DOCUMENTS ({totalDocs})</span>
-                  <ChevronRightIcon className="ml-auto transition-transform group-data-open/collapsible:rotate-90 group-data-[state=open]/collapsible:rotate-90" />
-                </CollapsibleTrigger>
-              }
-              className="group/label text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-sm"
-            />
-
-            <CollapsibleContent>
-              <SidebarGroupContent className="flex min-h-0 flex-1 flex-col">
-                <ScrollArea className="min-h-0 flex-1">
-                  <AnimatePresence initial={false}>
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                    >
-                      <SidebarMenu className="gap-1">
-                        {isLoading && page === 1 ? (
-                          <div className="space-y-3 p-2">
-                            <Skeleton className="h-8 w-full rounded-md" />
-                            <Skeleton className="h-8 w-full rounded-md" />
-                            <Skeleton className="h-8 w-full rounded-md" />
-                            <Skeleton className="h-8 w-full rounded-md" />
-                            <Skeleton className="h-8 w-full rounded-md" />
-                            <Skeleton className="h-8 w-full rounded-md" />
-                            <Skeleton className="h-8 w-full rounded-md" />
-                            <Skeleton className="h-8 w-full rounded-md" />
-                            <Skeleton className="h-8 w-full rounded-md" />
-                            <Skeleton className="h-8 w-full rounded-md" />
-                            <Skeleton className="h-8 w-full rounded-md" />
-                            <Skeleton className="h-8 w-full rounded-md" />
-                            <Skeleton className="h-8 w-full rounded-md" />
-                            <Skeleton className="h-8 w-full rounded-md" />
-                            <Skeleton className="h-8 w-full rounded-md" />
-                            <Skeleton className="h-8 w-full rounded-md" />
-                          </div>
-                        ) : filteredDocuments.length === 0 ? (
-                          <div className="text-muted-foreground px-4 py-3 text-center text-xs group-data-[collapsible=icon]:hidden">
-                            No documents found.
-                          </div>
-                        ) : (
-                          filteredDocuments.map((doc) => {
-                            const isActive =
-                              pathname ===
-                              `/hub/libraries/${libraryId}/documents/${doc.id}`;
-                            return (
-                              <SidebarMenuItem key={doc.id}>
-                                <SidebarMenuButton
-                                  render={
-                                    <Link
-                                      href={`/hub/libraries/${libraryId}/documents/${doc.id}`}
-                                      className="flex flex-col items-start gap-0.5"
-                                    >
-                                      <div className="flex w-full items-center gap-2">
-                                        <FileText className="text-muted-foreground h-4 w-4 shrink-0" />
-                                        <span
-                                          className="truncate text-xs font-medium group-data-[collapsible=icon]:hidden"
-                                          title={doc.title}
-                                        >
-                                          {doc.title}
-                                        </span>
-                                      </div>
-                                      <div className="text-muted-foreground/60 flex items-center pl-6 text-[10px] group-data-[collapsible=icon]:hidden">
-                                        <Calendar className="mr-1 h-3 w-3" />
-                                        {new Date(doc.created_at)
-                                          .toLocaleDateString(undefined, {
-                                            month: 'short',
-                                            day: 'numeric',
-                                            year: 'numeric',
-                                          })
-                                          .toUpperCase()}
-                                      </div>
-                                    </Link>
-                                  }
-                                  isActive={isActive}
-                                  tooltip={doc.title}
-                                  size="lg"
-                                  className="h-auto py-2"
-                                />
-                              </SidebarMenuItem>
-                            );
-                          })
-                        )}
-
-                        {totalDocs > documents.length && (
-                          <div className="p-2 group-data-[collapsible=icon]:hidden">
-                            <Button
-                              variant="outline"
-                              onClick={() => {
-                                const next = page + 1;
-                                setPage(next);
-                                fetchDocuments(next);
+                  {/* Create New Document Button */}
+                  {!!userRole && userRole !== 'VIEWER' && (
+                    <>
+                      {isAtLimit ? (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-muted-foreground/50 h-7 w-7 cursor-not-allowed"
+                          title="Maximum limit of 500 documents reached."
+                          disabled
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      ) : (
+                        <Button
+                          render={
+                            <Link
+                              href={newDocumentPath}
+                              onClick={(e) => {
+                                if (pathname === newDocumentPath) {
+                                  e.preventDefault();
+                                  window.dispatchEvent(
+                                    new CustomEvent(
+                                      'sylo:new-document:reset-request'
+                                    )
+                                  );
+                                }
                               }}
-                              disabled={isLoading}
-                              className="h-8 w-full text-[10px] font-bold tracking-widest uppercase"
                             >
-                              {isLoading ? (
-                                <Spinner className="h-4 w-4" />
-                              ) : (
-                                `Load More (${totalDocs - documents.length} Left)`
-                              )}
-                            </Button>
-                          </div>
-                        )}
-                      </SidebarMenu>
-                    </motion.div>
-                  </AnimatePresence>
-                  <ScrollBar orientation="vertical" />
-                </ScrollArea>
-              </SidebarGroupContent>
-            </CollapsibleContent>
-          </SidebarGroup>
-        </Collapsible>
-      </SidebarContent>
+                              <Plus className="h-4 w-4" />
+                            </Link>
+                          }
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          title="New Document"
+                          aria-label="New Document"
+                        />
+                      )}
+                    </>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
 
-      {/* Footer Navigation */}
-      <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              render={
-                <Link href={`/chat?libraryIds=${libraryId}`}>
-                  <MessageSquare />
-                  <span>Chat</span>
-                </Link>
-              }
-              tooltip="Chat"
-            />
-          </SidebarMenuItem>
+          {/* New Document Button in collapsed mode */}
+          {userRole !== 'VIEWER' && (
+            <div className="hidden p-2 group-data-[collapsible=icon]:block">
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    render={
+                      <Link
+                        href={newDocumentPath}
+                        onClick={(e) => {
+                          if (pathname === newDocumentPath) {
+                            e.preventDefault();
+                            window.dispatchEvent(
+                              new CustomEvent('sylo:new-document:reset-request')
+                            );
+                          }
+                        }}
+                      >
+                        <Plus />
+                        <span>New Document</span>
+                      </Link>
+                    }
+                    tooltip="New Document"
+                    disabled={isAtLimit}
+                  />
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </div>
+          )}
 
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              render={
-                <Link href={`/hub/libraries/${libraryId}/info`}>
-                  <Info />
-                  <span>Library Info</span>
-                  <ChevronRightIcon className="ml-auto" />
-                </Link>
-              }
-              tooltip="Library Info"
-            />
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
-    </>
+          <Collapsible
+            key={'DOCUMENTS'}
+            title={'Document List'}
+            defaultOpen
+            className="group/collapsible group-data-[collapsible=icon]:hidden"
+          >
+            {/* Documents Group */}
+            {isLoading && page === 1 ? (
+              <SidebarMenu>
+                {Array.from({ length: 5 }).map((_, index) => (
+                  <SidebarMenuItem key={index}>
+                    <SidebarMenuSkeleton />
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            ) : (
+              <SidebarGroup>
+                <SidebarGroupLabel
+                  render={
+                    <CollapsibleTrigger className="text-xs font-semibold transition-colors">
+                      <span>DOCUMENTS ({totalDocs})</span>
+                      <ChevronRightIcon className="ml-auto transition-transform group-data-open/collapsible:rotate-90 group-data-[state=open]/collapsible:rotate-90" />
+                    </CollapsibleTrigger>
+                  }
+                  className="group/label text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-sm"
+                />
+
+                <CollapsibleContent>
+                  <SidebarGroupContent className="flex min-h-0 flex-1 flex-col">
+                    <ScrollArea className="min-h-0 flex-1">
+                      <AnimatePresence initial={false}>
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                        >
+                          <SidebarMenu className="gap-1">
+                            {filteredDocuments.length === 0 ? (
+                              <div className="text-muted-foreground px-4 py-3 text-center text-xs group-data-[collapsible=icon]:hidden">
+                                No documents found.
+                              </div>
+                            ) : (
+                              filteredDocuments.map((doc) => {
+                                const isActive =
+                                  pathname ===
+                                  `/hub/libraries/${libraryId}/documents/${doc.id}`;
+                                return (
+                                  <SidebarMenuItem key={doc.id}>
+                                    <SidebarMenuButton
+                                      render={
+                                        <Link
+                                          href={`/hub/libraries/${libraryId}/documents/${doc.id}`}
+                                          className="flex flex-col items-start gap-0.5"
+                                        >
+                                          <div className="flex w-full items-center gap-2">
+                                            <FileText className="text-muted-foreground h-4 w-4 shrink-0" />
+                                            <span
+                                              className="truncate text-xs font-medium group-data-[collapsible=icon]:hidden"
+                                              title={doc.title}
+                                            >
+                                              {doc.title}
+                                            </span>
+                                          </div>
+                                          <div className="text-muted-foreground/60 flex items-center pl-6 text-[10px] group-data-[collapsible=icon]:hidden">
+                                            <Calendar className="mr-1 h-3 w-3" />
+                                            {new Date(doc.created_at)
+                                              .toLocaleDateString(undefined, {
+                                                month: 'short',
+                                                day: 'numeric',
+                                                year: 'numeric',
+                                              })
+                                              .toUpperCase()}
+                                          </div>
+                                        </Link>
+                                      }
+                                      isActive={isActive}
+                                      tooltip={doc.title}
+                                      size="lg"
+                                      className="h-auto py-2"
+                                    />
+                                  </SidebarMenuItem>
+                                );
+                              })
+                            )}
+
+                            {totalDocs > documents.length && (
+                              <div className="p-2 group-data-[collapsible=icon]:hidden">
+                                <Button
+                                  variant="outline"
+                                  onClick={() => {
+                                    const next = page + 1;
+                                    setPage(next);
+                                    fetchDocuments(next);
+                                  }}
+                                  disabled={isLoading}
+                                  className="h-8 w-full text-[10px] font-bold tracking-widest uppercase"
+                                >
+                                  {isLoading ? (
+                                    <Spinner className="h-4 w-4" />
+                                  ) : (
+                                    `Load More (${totalDocs - documents.length} Left)`
+                                  )}
+                                </Button>
+                              </div>
+                            )}
+                          </SidebarMenu>
+                        </motion.div>
+                      </AnimatePresence>
+                      <ScrollBar orientation="vertical" />
+                    </ScrollArea>
+                  </SidebarGroupContent>
+                </CollapsibleContent>
+              </SidebarGroup>
+            )}
+          </Collapsible>
+        </SidebarContent>
+
+        {/* Footer Navigation */}
+        <SidebarFooter>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                render={
+                  <Link href={`/chat?libraryIds=${libraryId}`}>
+                    <MessageSquare />
+                    <span>Chat</span>
+                  </Link>
+                }
+                tooltip="Chat"
+              />
+            </SidebarMenuItem>
+
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                render={
+                  <Link href={`/hub/libraries/${libraryId}/info`}>
+                    <Info />
+                    <span>Library Info</span>
+                    <ChevronRightIcon className="ml-auto" />
+                  </Link>
+                }
+                tooltip="Library Info"
+              />
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarFooter>
+      </>
+    )
   );
 }
