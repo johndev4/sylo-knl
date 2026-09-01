@@ -35,7 +35,7 @@ import { getUserLibraries } from '../queries';
 import { UserLibraryList } from '../library-schema';
 import { Spinner } from '@/components/ui/spinner';
 import { User } from '@supabase/supabase-js';
-import { useUser } from '@/hooks/use-user';
+import { useUser } from '@/components/providers/user-provider';
 import { Badge } from '@/components/ui/badge';
 
 interface BreadcrumbLibraryNavProps {

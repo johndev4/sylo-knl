@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import { User } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
 
@@ -8,7 +8,7 @@ type UserContextType = {
   user: User | null;
 };
 
-export const UserContext = createContext<UserContextType>({
+const UserContext = createContext<UserContextType>({
   user: null,
 });
 
@@ -37,4 +37,9 @@ export function UserProvider({
   return (
     <UserContext.Provider value={{ user }}>{children}</UserContext.Provider>
   );
+}
+
+// Custom hook to consume the user in any Client Component
+export function useUser() {
+  return useContext(UserContext);
 }

@@ -46,7 +46,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { useUser } from '@/hooks/use-user';
+import { useUser } from '@/components/providers/user-provider';
 
 interface SidebarDocumentListProps {
   userRole: string;
