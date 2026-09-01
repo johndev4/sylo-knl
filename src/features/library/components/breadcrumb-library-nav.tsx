@@ -36,6 +36,7 @@ import { UserLibraryList } from '../library-schema';
 import { Spinner } from '@/components/ui/spinner';
 import { User } from '@supabase/supabase-js';
 import { useUser } from '@/hooks/use-user';
+import { Badge } from '@/components/ui/badge';
 
 interface BreadcrumbLibraryNavProps {
   libraryName: string;
@@ -322,16 +323,23 @@ function LibrarySelectorDropdown() {
             }
           />
         )}
-        <DropdownMenuContent align="start" className={'min-w-50'}>
+        <DropdownMenuContent align="start" className={'w-auto'}>
           <DropdownMenuGroup>
             {userLibraryList.map((lib) => (
               <DropdownMenuItem
                 key={lib.id}
                 className="flex items-center justify-between"
-              >
-                {lib.name}
-                {lib.id === libraryId && <CheckIcon className="size-3.5" />}
-              </DropdownMenuItem>
+                disabled={lib.id === libraryId}
+                render={
+                  <Link href={`/hub/libraries/${lib.id}/documents`}>
+                    <div className="flex-start mr-4 flex gap-2">
+                      {lib.name}
+                      <Badge variant="outline">{lib.role}</Badge>
+                    </div>
+                    {lib.id === libraryId && <CheckIcon className="size-3.5" />}
+                  </Link>
+                }
+              />
             ))}
           </DropdownMenuGroup>
         </DropdownMenuContent>
