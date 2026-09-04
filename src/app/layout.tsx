@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import { ThemeProvider } from 'next-themes';
+import { AppThemeProvider } from '@/components/providers/app-theme-provider';
 import { cn } from '@/lib/utils';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { AppHeader } from '@/components/layout/app-header';
@@ -26,18 +26,12 @@ export default function RootLayout({
     >
       <head />
       <body className="bg-background text-foreground flex min-h-full flex-col">
-        <ThemeProvider
-          enableSystem
-          attribute="class"
-          storageKey="app-theme"
-          defaultTheme="system"
-          disableTransitionOnChange
-        >
+        <AppThemeProvider>
           <TooltipProvider>
             <AppHeader />
             <main className="flex-1">{children}</main>
           </TooltipProvider>
-        </ThemeProvider>
+        </AppThemeProvider>
       </body>
     </html>
   );
