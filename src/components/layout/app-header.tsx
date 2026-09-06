@@ -5,6 +5,7 @@ import { Navbar } from './navbar';
 import { getUserNonRedirect } from '@/lib/auth/get-user';
 import { Suspense } from 'react';
 import { EggIcon } from 'lucide-react';
+import Link from 'next/link';
 
 export function AppHeader() {
   return (
@@ -18,12 +19,12 @@ export function AppHeader() {
       <div className="flex h-16 w-full items-center justify-between px-4">
         <div className="flex items-center gap-2 md:gap-4">
           {/* Logo / Brand */}
-          <div
+          <Link
             className={cn(
               'flex items-center gap-2 text-lg font-bold',
-              'text-foreground',
-              'cursor-default'
+              'text-foreground'
             )}
+            href="/"
           >
             <div
               className={cn(
@@ -37,7 +38,7 @@ export function AppHeader() {
             <span className="hidden tracking-wider uppercase sm:inline">
               Sylo
             </span>
-          </div>
+          </Link>
 
           {/* Global Navigation */}
           <Suspense fallback={null}>
