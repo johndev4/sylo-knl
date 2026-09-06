@@ -6,8 +6,6 @@ import {
   LibraryBreadcrumb,
   LibrarySidebar,
 } from '@/features/library/components';
-import { UserProvider } from '@/components/providers/user-provider';
-import { getUser } from '@/lib/auth/get-user';
 
 interface LibraryLayoutProps {
   children: React.ReactNode;
@@ -26,30 +24,26 @@ export default function LibraryLayout({
 }
 
 async function LibraryLayoutAsync({ children, params }: LibraryLayoutProps) {
-  const user = await getUser();
-
   const { id } = await params;
   const membership = await requireLibraryRole(id);
   if (!membership) return <>{children}</>;
 
   return (
-    <UserProvider initialUser={user}>
-      <SidebarRefreshProvider>
-        <SidebarProvider className="h-[calc(100vh-4.1rem)] min-h-0 flex-1">
-          <LibrarySidebar userRole={membership.role} />
+    <SidebarRefreshProvider>
+      <SidebarProvider className="h-[calc(100vh-4.1rem)] min-h-0 flex-1">
+        <LibrarySidebar userRole={membership.role} />
 
-          <SidebarInset className="flex min-w-0 flex-1 flex-col overflow-hidden">
-            <LibraryBreadcrumb params={params} />
-            <div
-              className={
-                'bg-background relative flex min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto'
-              }
-            >
-              {children}
-            </div>
-          </SidebarInset>
-        </SidebarProvider>
-      </SidebarRefreshProvider>
-    </UserProvider>
+        <SidebarInset className="flex min-w-0 flex-1 flex-col overflow-hidden">
+          <LibraryBreadcrumb params={params} />
+          <div
+            className={
+              'bg-background relative flex min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto'
+            }
+          >
+            {children}
+          </div>
+        </SidebarInset>
+      </SidebarProvider>
+    </SidebarRefreshProvider>
   );
 }

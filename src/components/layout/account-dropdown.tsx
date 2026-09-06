@@ -20,6 +20,7 @@ import { User } from '@supabase/supabase-js';
 import { Spinner } from '../ui/spinner';
 import { ProfileDropdownUserInfo } from '@/features/user/user-schema';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { logout } from '@/features/auth/actions';
 
 interface AccountDropdownProps {
   user: User | null;
@@ -39,9 +40,10 @@ export function AccountDropdown({ user }: AccountDropdownProps) {
 
     const fetchUserInfo = async () => {
       try {
+        setUserInfo(null);
+        setIsLoading(true);
+
         if (!user) {
-          setUserInfo(null);
-          setIsLoading(false);
           return;
         }
 
@@ -55,34 +57,13 @@ export function AccountDropdown({ user }: AccountDropdownProps) {
     };
 
     fetchUserInfo();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session?.user) {
-        fetchUserInfo();
-      } else {
-        setUserInfo(null);
-        setIsLoading(false);
-      }
-    });
-
-    // Listen for profile updates from other components (like Settings page)
-    window.addEventListener('profile-updated', fetchUserInfo);
-
-    return () => {
-      subscription.unsubscribe();
-      window.removeEventListener('profile-updated', fetchUserInfo);
-    };
   }, [user]);
 
   const handleLogout = async () => {
     try {
-      const supabase = createClient();
-      await supabase.auth.signOut();
       setIsOpen(false);
+      await logout();
       window.location.replace('/login');
-      window.history.replaceState(null, '', '/login');
     } catch (err) {
       console.error('Logout failed:', err);
     }
@@ -99,6 +80,12 @@ export function AccountDropdown({ user }: AccountDropdownProps) {
       .slice(0, 2);
   };
 
+  // Don't render if user is not authenticated
+  if (!user) {
+    return null;
+  }
+
+  // Show loading state while fetching user info
   if (isLoading) {
     return (
       <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
@@ -128,13 +115,13 @@ export function AccountDropdown({ user }: AccountDropdownProps) {
     );
   }
 
-  // Don't render if user is not authenticated
+  // Don't render if userInfo is not found
   if (!userInfo) {
     return null;
   }
 
   const initials = getInitials(userInfo.name!, userInfo.email);
-  const shouldUseAvatarUrl = userInfo?.useAvatarUrl && userInfo?.avatarUrl;
+  const shouldUseAvatarUrl = userInfo.useAvatarUrl && userInfo.avatarUrl;
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>

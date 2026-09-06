@@ -20,12 +20,9 @@ export function Navbar({ user }: NavbarProps) {
   const pathname = usePathname();
 
   const showNav = !!user && pathname !== '/login';
-  if (!showNav) {
-    return null;
-  }
 
   return (
-    <>
+    showNav && (
       <NavigationMenu className="ml-4 hidden items-center gap-1 md:flex">
         <NavigationMenuList className="">
           {/* Hub Nav Item */}
@@ -59,6 +56,6 @@ export function Navbar({ user }: NavbarProps) {
           </NavigationMenuItem>
         </NavigationMenuList>
       </NavigationMenu>
-    </>
+    )
   );
 }

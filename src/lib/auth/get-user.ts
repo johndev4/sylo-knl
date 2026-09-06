@@ -29,7 +29,6 @@ export async function getUser() {
  *
  * @returns A promise that resolves to the current user object or null.
  */
-
 export const getUserNonRedirect = cache(async () => {
   const supabase = await createClient();
   const {

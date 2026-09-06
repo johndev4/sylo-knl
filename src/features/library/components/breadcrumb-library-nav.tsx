@@ -35,7 +35,7 @@ import { getUserLibraries } from '../queries';
 import { UserLibraryList } from '../library-schema';
 import { Spinner } from '@/components/ui/spinner';
 import { User } from '@supabase/supabase-js';
-import { useUser } from '@/components/providers/user-provider';
+import { useSession } from '@/components/providers/auth-provider';
 import { Badge } from '@/components/ui/badge';
 
 interface BreadcrumbLibraryNavProps {
@@ -74,7 +74,7 @@ async function fetchDocumentTitle(
 export function BreadcrumbLibraryNav({
   libraryName,
 }: BreadcrumbLibraryNavProps) {
-  const { user } = useUser();
+  const { user } = useSession();
 
   if (!user) {
     redirect('/login');
@@ -275,7 +275,7 @@ export function BreadcrumbLibraryNav({
 }
 
 function LibrarySelectorDropdown() {
-  const { user } = useUser();
+  const { user } = useSession();
 
   if (!user) {
     redirect('/login');

@@ -3,8 +3,10 @@ import './globals.css';
 import { AppThemeProvider } from '@/components/providers/app-theme-provider';
 import { cn } from '@/lib/utils';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { AppHeader } from '@/components/layout/app-header';
 import { Inter } from 'next/font/google';
+import { AuthProvider } from '@/components/providers/auth-provider';
+import { getUserNonRedirect } from '@/lib/auth/get-user';
+import { Suspense } from 'react';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
@@ -28,11 +30,21 @@ export default function RootLayout({
       <body className="bg-background text-foreground flex min-h-full flex-col">
         <AppThemeProvider>
           <TooltipProvider>
-            <AppHeader />
-            <main className="flex-1">{children}</main>
+            <Suspense fallback={null}>
+              <AuthProviderWrapper>{children}</AuthProviderWrapper>
+            </Suspense>
           </TooltipProvider>
         </AppThemeProvider>
       </body>
     </html>
   );
+}
+
+async function AuthProviderWrapper({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  const user = await getUserNonRedirect();
+  return <AuthProvider initialUser={user}>{children}</AuthProvider>;
 }

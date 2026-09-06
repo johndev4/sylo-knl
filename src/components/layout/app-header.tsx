@@ -8,7 +8,7 @@ import { EggIcon } from 'lucide-react';
 
 export function AppHeader() {
   return (
-    <nav
+    <div
       className={cn(
         'sticky top-0 z-40 w-full',
         'border-b border-neutral-200/50 dark:border-neutral-800/50',
@@ -41,7 +41,7 @@ export function AppHeader() {
 
           {/* Global Navigation */}
           <Suspense fallback={null}>
-            <NavbarAsync />
+            <NavbarWrapper />
           </Suspense>
         </div>
 
@@ -49,30 +49,20 @@ export function AppHeader() {
         <div className="flex items-center gap-3">
           <ThemeToggle />
           <Suspense fallback={null}>
-            <AccountDropdownAsync />
+            <AccountDropdownWrapper />
           </Suspense>
         </div>
       </div>
-    </nav>
+    </div>
   );
 }
 
-async function NavbarAsync() {
+async function NavbarWrapper() {
   const user = await getUserNonRedirect();
-
-  if (!user) {
-    return null;
-  }
-
   return user && <Navbar user={user} />;
 }
 
-async function AccountDropdownAsync() {
+async function AccountDropdownWrapper() {
   const user = await getUserNonRedirect();
-
-  if (!user) {
-    return null;
-  }
-
   return user && <AccountDropdown user={user} />;
 }

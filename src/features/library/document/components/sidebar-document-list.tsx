@@ -46,7 +46,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { useUser } from '@/components/providers/user-provider';
+import { useSession } from '@/components/providers/auth-provider';
 
 interface SidebarDocumentListProps {
   userRole: string;
@@ -54,7 +54,7 @@ interface SidebarDocumentListProps {
 
 export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
   const { refreshKey } = useSidebarRefresh();
-  const { user } = useUser();
+  const { user } = useSession();
 
   if (!user) {
     redirect('/login');

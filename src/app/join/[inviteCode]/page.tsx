@@ -4,9 +4,9 @@ import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { createClient } from '@/lib/supabase/server';
 import { getInviteDetails } from '@/features/library/invite/queries';
 import { joinLibraryAction } from '@/features/library/invite/actions';
+import { getUserNonRedirect } from '@/lib/auth/get-user';
 
 export default async function JoinPage({
   params,
@@ -80,10 +80,7 @@ export default async function JoinPage({
   }
 
   // Fetch user without redirecting to login if user is not authenticated
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getUserNonRedirect();
 
   const invite = result.data;
 

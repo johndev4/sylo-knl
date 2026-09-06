@@ -51,6 +51,7 @@ export async function proxy(request: NextRequest) {
   if (pathname === LOGIN_PATH && isAuthenticated) {
     const hubUrl = request.nextUrl.clone();
     hubUrl.pathname = '/hub';
+    hubUrl.searchParams.delete('redirect'); // Remove the redirect param to avoid redirect loops
     return NextResponse.redirect(hubUrl);
   }
 
