@@ -52,7 +52,7 @@ import {
   SortingState,
   useTable,
 } from '@tanstack/react-table';
-import { ChevronDown } from 'lucide-react';
+import { CheckIcon, ChevronDown } from 'lucide-react';
 
 interface InviteSectionProps {
   libraryId: string;
@@ -384,8 +384,11 @@ export function InviteSection({
                       onClick={() =>
                         setRole(option.value as 'VIEWER' | 'EDITOR')
                       }
+
+                      className="flex justify-between"
                     >
-                      {option.label}
+                      <span>{option.label}</span>
+                      <span>{option.value === role && <CheckIcon />}</span>
                     </DropdownMenuItem>
                   ))}
                 </DropdownMenuGroup>
@@ -455,8 +458,10 @@ export function InviteSection({
                           setExpiresAt('');
                         }
                       }}
+                      className="flex justify-between"
                     >
-                      {label}
+                      <span>{label}</span>
+                      <span>{key === expiryOption && <CheckIcon />}</span>
                     </DropdownMenuItem>
                   ))}
                 </DropdownMenuGroup>

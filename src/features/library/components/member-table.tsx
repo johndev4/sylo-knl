@@ -51,7 +51,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ChevronDown } from 'lucide-react';
+import { CheckIcon, ChevronDown } from 'lucide-react';
 
 interface MemberTableProps {
   libraryId: string;
@@ -60,6 +60,10 @@ interface MemberTableProps {
 }
 
 const roleOptions = [
+  {
+    value: 'ADMIN',
+    label: 'Admin',
+  },
   {
     value: 'EDITOR',
     label: 'Editor',
@@ -252,8 +256,13 @@ export function MemberTable({
                         onClick={() =>
                           handleRoleChange(member.user_id, option.value)
                         }
+                        disabled={option.value === member.role}
+                        className="flex justify-between"
                       >
-                        {option.label}
+                        <span>{option.label}</span>
+                        <span>
+                          {option.value === member.role && <CheckIcon />}
+                        </span>
                       </DropdownMenuItem>
                     ))}
                   </DropdownMenuGroup>
