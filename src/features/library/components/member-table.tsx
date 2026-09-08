@@ -38,6 +38,7 @@ import {
 } from '@/components/reui/data-grid/data-grid';
 import { DataGridPagination } from '@/components/reui/data-grid/data-grid-pagination';
 import { DataGridScrollArea } from '@/components/reui/data-grid/data-grid-scroll-area';
+import { DataGridColumnHeader } from '@/components/reui/data-grid/data-grid-column-header';
 import {
   DataGridTable,
   DataGridTableRowSelect,
@@ -47,6 +48,7 @@ import type {
   ColumnDef,
   PaginationState,
   RowSelectionState,
+  SortingState,
 } from '@tanstack/react-table';
 import { useTable } from '@tanstack/react-table';
 
@@ -68,6 +70,7 @@ export function MemberTable({
     pageIndex: 0,
     pageSize: 5,
   });
+  const [sorting, setSorting] = useState<SortingState>([]);
   const [isUpdating, setIsUpdating] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -160,8 +163,11 @@ export function MemberTable({
         size: canManageMembers ? 48 : 0,
       },
       {
-        accessorKey: 'name',
-        header: 'Name',
+        id: 'name',
+        accessorFn: (member) => member.user?.name ?? '',
+        header: ({ column }) => (
+          <DataGridColumnHeader title="Name" column={column} />
+        ),
         cell: ({ row }) => {
           const member = row.original;
           return (
@@ -183,16 +189,23 @@ export function MemberTable({
           );
         },
         size: 220,
+        enableSorting: true,
+        sortFn: 'alphanumeric',
       },
       {
-        accessorKey: 'email',
-        header: 'Email',
+        id: 'email',
+        accessorFn: (member) => member.user?.email ?? '',
+        header: ({ column }) => (
+          <DataGridColumnHeader title="Email" column={column} />
+        ),
         cell: ({ row }) => (
           <span className="text-muted-foreground">
             {row.original.user?.email}
           </span>
         ),
         size: 240,
+        enableSorting: true,
+        sortFn: 'alphanumeric',
       },
       {
         accessorKey: 'role',
@@ -240,13 +253,17 @@ export function MemberTable({
       },
       {
         accessorKey: 'created_at',
-        header: 'Joined',
+        header: ({ column }) => (
+          <DataGridColumnHeader title="Joined" column={column} />
+        ),
         cell: ({ row }) => (
           <span className="text-muted-foreground text-xs">
             {new Date(row.original.created_at).toLocaleDateString()}
           </span>
         ),
         size: 120,
+        enableSorting: true,
+        sortFn: 'datetime',
       },
       {
         id: 'actions',
@@ -306,11 +323,12 @@ export function MemberTable({
     data: members,
     getRowId: (member) => member.user_id,
     pageCount: Math.ceil(members.length / pagination.pageSize),
-    state: { pagination, rowSelection },
+    state: { pagination, rowSelection, sorting },
     enableRowSelection: (row) =>
       canManageMembers && row.original.role !== 'OWNER',
     onPaginationChange: setPagination,
     onRowSelectionChange: setRowSelection,
+    onSortingChange: setSorting,
   });
 
   // ---------------------------------------------------------------------------

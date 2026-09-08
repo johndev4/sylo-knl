@@ -43,8 +43,14 @@ import {
 } from '@/components/reui/data-grid/data-grid';
 import { DataGridPagination } from '@/components/reui/data-grid/data-grid-pagination';
 import { DataGridScrollArea } from '@/components/reui/data-grid/data-grid-scroll-area';
+import { DataGridColumnHeader } from '@/components/reui/data-grid/data-grid-column-header';
 import { DataGridTable } from '@/components/reui/data-grid/data-grid-table';
-import { ColumnDef, PaginationState, useTable } from '@tanstack/react-table';
+import {
+  ColumnDef,
+  PaginationState,
+  SortingState,
+  useTable,
+} from '@tanstack/react-table';
 
 interface InviteSectionProps {
   libraryId: string;
@@ -84,6 +90,7 @@ export function InviteSection({
     pageIndex: 0,
     pageSize: 5,
   });
+  const [sorting, setSorting] = useState<SortingState>([]);
 
   const prefersReducedMotion = useReducedMotion();
 
@@ -213,7 +220,9 @@ export function InviteSection({
       },
       {
         accessorKey: 'expires_at',
-        header: 'Expires',
+        header: ({ column }) => (
+          <DataGridColumnHeader title="Expires" column={column} />
+        ),
         cell: ({ row }) => (
           <span>
             {row.original.expires_at
@@ -222,6 +231,8 @@ export function InviteSection({
           </span>
         ),
         size: 180,
+        enableSorting: true,
+        sortFn: 'datetime',
       },
       {
         id: 'actions',
@@ -259,8 +270,9 @@ export function InviteSection({
     data: invites,
     getRowId: (invite) => invite.id,
     pageCount: Math.ceil(invites.length / pagination.pageSize),
-    state: { pagination },
+    state: { pagination, sorting },
     onPaginationChange: setPagination,
+    onSortingChange: setSorting,
   });
 
   // ---------------------------------------------------------------------------
@@ -390,7 +402,7 @@ export function InviteSection({
         {invites.length === 0 ? (
           <p className="text-muted-foreground text-sm">No active invites.</p>
         ) : (
-          <DataGrid table={table} recordCount={invites.length}>
+          <DataGrid table={table} recordCount={invites.length || 0}>
             <div className="w-full space-y-2.5">
               <DataGridContainer>
                 <DataGridScrollArea>
