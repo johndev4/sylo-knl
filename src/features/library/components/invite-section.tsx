@@ -6,15 +6,16 @@ import { useReducedMotion } from '@/hooks/use-reduced-motion';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { DatePicker } from '@/components/ui/date-picker';
 import { Label } from '@/components/ui/label';
 
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 import {
   AlertDialog,
@@ -51,6 +52,7 @@ import {
   SortingState,
   useTable,
 } from '@tanstack/react-table';
+import { ChevronDown } from 'lucide-react';
 
 interface InviteSectionProps {
   libraryId: string;
@@ -77,6 +79,9 @@ export function InviteSection({
   const [isCreating, setIsCreating] = useState(false);
   const [role, setRole] = useState<'VIEWER' | 'EDITOR'>('VIEWER');
   const [expiresAt, setExpiresAt] = useState('');
+  const [expiryOption, setExpiryOption] = useState<
+    'never' | '24h' | '7d' | '30d' | 'custom'
+  >('never');
   const [maxUses, setMaxUses] = useState('');
 
   const [inviteToRevoke, setInviteToRevoke] = useState<Invite | null>(null);
@@ -99,6 +104,7 @@ export function InviteSection({
     setIsCreating(false);
     setRole('VIEWER');
     setExpiresAt('');
+    setExpiryOption('never');
     setMaxUses('');
     setInviteToRevoke(null);
     setIsRevoking(false);
@@ -147,6 +153,7 @@ export function InviteSection({
       setSuccess('Invite created successfully');
       setRole('VIEWER');
       setExpiresAt('');
+      setExpiryOption('never');
       setMaxUses('');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create invite');
@@ -288,92 +295,194 @@ export function InviteSection({
         </p>
       </div>
 
-      {error && (
-        <motion.div
-          className="rounded border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-900/20"
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          transition={{
-            duration: prefersReducedMotion ? 0 : 0.2,
-          }}
-        >
-          <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
-        </motion.div>
-      )}
+      <div aria-live="polite" aria-atomic="true">
+        {
+          // Accessible feedback region for invite form
+          // Wrapper <div aria-live="polite" aria-atomic="true">
+          // - aria-live="polite": screen readers announce changes politely
+          // - aria-atomic="true": read entire region on update
+          //
+          // Children:
+          // - error banner (red, slides in on failure)
+          // - success banner (green, slides in on success)
+          //
+          // Purpose: ensures async updates (API responses) are announced.
+          // Motion respects prefersReducedMotion (duration=0 if enabled).
+        }
+        {error && (
+          <motion.div
+            className="rounded border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-900/20"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{
+              duration: prefersReducedMotion ? 0 : 0.2,
+            }}
+          >
+            <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
+          </motion.div>
+        )}
 
-      {success && (
-        <motion.div
-          className="rounded border border-green-200 bg-green-50 p-3 dark:border-green-800 dark:bg-green-900/20"
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          transition={{
-            duration: prefersReducedMotion ? 0 : 0.2,
-          }}
-        >
-          <p className="text-sm text-green-700 dark:text-green-400">
-            {success}
-          </p>
-        </motion.div>
-      )}
+        {success && (
+          <motion.div
+            className="rounded border border-green-200 bg-green-50 p-3 dark:border-green-800 dark:bg-green-900/20"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{
+              duration: prefersReducedMotion ? 0 : 0.2,
+            }}
+          >
+            <p className="text-sm text-green-700 dark:text-green-400">
+              {success}
+            </p>
+          </motion.div>
+        )}
+      </div>
 
       {/* Generate Invite Link Form */}
       <form
         onSubmit={handleCreateInvite}
-        className="bg-muted/20 space-y-4 overflow-x-auto rounded-md border p-4"
+        className="bg-muted/20 space-y-4 rounded-md border p-4"
       >
         <h3 className="font-medium">Generate New Invite</h3>
 
-        <div className="flex flex-wrap gap-2.5">
-          <div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {/* Role */}
+          <div className="flex flex-col gap-1.5">
             <Label htmlFor="inviteMemberRole" className="text-sm font-medium">
               Role
             </Label>
 
-            <Select
-              value={role}
-              onValueChange={(value) => {
-                if (value) setRole(value as 'VIEWER' | 'EDITOR');
-              }}
-              disabled={isCreating}
-            >
-              <SelectTrigger
+            <DropdownMenu disabled={isCreating}>
+              <DropdownMenuTrigger
                 id="inviteMemberRole"
-                className="mt-1"
+                className="border-input focus-visible:ring-ring/50 flex h-9 w-full items-center justify-between gap-1.5 rounded-md border bg-transparent px-2.5 py-2 text-sm outline-none focus-visible:ring-1"
                 aria-label="Invite member role"
-              >
-                <SelectValue placeholder="Select a role" />
-              </SelectTrigger>
+                render={
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-between"
+                  >
+                    <span className="min-w-0 truncate">
+                      {roleOptions
+                        .find((o) => o.value === role)
+                        ?.label?.split('-')?.[0]
+                        ?.trim() || 'Select a role'}
+                    </span>
+                    <ChevronDown data-icon="inline-end" />
+                  </Button>
+                }
+              />
 
-              <SelectContent>
-                {roleOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              <DropdownMenuContent align="start">
+                <DropdownMenuGroup>
+                  {roleOptions.map((option) => (
+                    <DropdownMenuItem
+                      key={option.value}
+                      onClick={() =>
+                        setRole(option.value as 'VIEWER' | 'EDITOR')
+                      }
+                    >
+                      {option.label}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
-          <div>
-            <Label htmlFor="expiresAt" className="text-sm font-medium">
-              Expiration (Optional)
+          {/* Expires in */}
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="expiresIn" className="text-sm font-medium">
+              Expires in
             </Label>
 
-            <Input
-              id="expiresAt"
-              type="datetime-local"
-              value={expiresAt}
-              onChange={(e) => setExpiresAt(e.target.value)}
-              disabled={isCreating}
-              className="mt-1"
-            />
+            <DropdownMenu disabled={isCreating}>
+              <DropdownMenuTrigger
+                id="expiresIn"
+                className="border-input focus-visible:ring-ring/50 flex h-9 w-full items-center justify-between gap-1.5 rounded-md border bg-transparent px-2.5 py-2 text-sm outline-none focus-visible:ring-1"
+                aria-label="Invite expiry duration"
+                render={
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-between"
+                  >
+                    <span className="min-w-0 truncate">
+                      {expiryOption === 'never' && 'Never'}
+                      {expiryOption === '24h' && '24 hours'}
+                      {expiryOption === '7d' && '7 days'}
+                      {expiryOption === '30d' && '30 days'}
+                      {expiryOption === 'custom' && 'Custom'}
+                    </span>
+                    <ChevronDown data-icon="inline-end" />
+                  </Button>
+                }
+              />
+
+              <DropdownMenuContent align="start">
+                <DropdownMenuGroup>
+                  {[
+                    { key: 'never', label: 'Never' },
+                    { key: '24h', label: '24 hours' },
+                    { key: '7d', label: '7 days' },
+                    { key: '30d', label: '30 days' },
+                    { key: 'custom', label: 'Custom' },
+                  ].map(({ key, label }) => (
+                    <DropdownMenuItem
+                      key={key}
+                      onClick={() => {
+                        const opt = key as typeof expiryOption;
+                        setExpiryOption(opt);
+                        if (opt === 'never') {
+                          setExpiresAt('');
+                        } else if (opt === '24h') {
+                          const d = new Date();
+                          d.setHours(d.getHours() + 24);
+                          setExpiresAt(d.toISOString());
+                        } else if (opt === '7d') {
+                          const d = new Date();
+                          d.setDate(d.getDate() + 7);
+                          setExpiresAt(d.toISOString());
+                        } else if (opt === '30d') {
+                          const d = new Date();
+                          d.setDate(d.getDate() + 30);
+                          setExpiresAt(d.toISOString());
+                        } else {
+                          // custom: clear and let DatePicker set it
+                          setExpiresAt('');
+                        }
+                      }}
+                    >
+                      {label}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {expiryOption === 'custom' && (
+              <DatePicker
+                disabled={isCreating}
+                placeholder="Pick expiry date"
+                value={expiresAt ? new Date(expiresAt) : undefined}
+                onChange={(date) =>
+                  setExpiresAt(date ? date.toISOString() : '')
+                }
+                className="mt-1 w-full"
+              />
+            )}
           </div>
 
-          <div>
+          {/* Max uses (Optional) */}
+          <div className="flex flex-col gap-1.5">
             <Label htmlFor="maxUses" className="text-sm font-medium">
-              Max Uses (Optional)
+              Max uses{' '}
+              <span className="text-muted-foreground font-normal">
+                (Optional)
+              </span>
             </Label>
 
             <Input
@@ -384,13 +493,13 @@ export function InviteSection({
               value={maxUses}
               onChange={(e) => setMaxUses(e.target.value)}
               disabled={isCreating}
-              className="mt-1"
+              autoComplete="off"
             />
           </div>
         </div>
 
         <Button type="submit" disabled={isCreating}>
-          {isCreating ? 'Generating...' : 'Generate Invite Link'}
+          {isCreating ? 'Generating\u2026' : 'Generate Invite Link'}
         </Button>
       </form>
 

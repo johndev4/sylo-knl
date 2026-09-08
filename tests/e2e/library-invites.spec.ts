@@ -39,7 +39,7 @@ test.describe.serial('Library Invites', () => {
     // Create a new invite
     await page.getByLabel('Invite member role', { exact: true }).click();
     await page
-      .getByRole('option', { name: 'Editor - Can create and edit content' })
+      .getByRole('menuitem', { name: 'Editor - Can create and edit content' })
       .click();
     await page.getByRole('button', { name: 'Generate Invite Link' }).click();
 
