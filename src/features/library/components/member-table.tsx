@@ -7,13 +7,6 @@ import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -51,6 +44,14 @@ import type {
   SortingState,
 } from '@tanstack/react-table';
 import { useTable } from '@tanstack/react-table';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { ChevronDown } from 'lucide-react';
 
 interface MemberTableProps {
   libraryId: string;
@@ -58,7 +59,16 @@ interface MemberTableProps {
   canManageMembers: boolean;
 }
 
-const roleOptions = ['ADMIN', 'EDITOR', 'VIEWER'];
+const roleOptions = [
+  {
+    value: 'EDITOR',
+    label: 'Editor',
+  },
+  {
+    value: 'VIEWER',
+    label: 'Viewer',
+  },
+];
 
 export function MemberTable({
   libraryId,
@@ -214,27 +224,41 @@ export function MemberTable({
           const member = row.original;
           if (canManageMembers && member.role !== 'OWNER') {
             return (
-              <Select
-                value={member.role}
-                disabled={isUpdating}
-                onValueChange={(value) => {
-                  if (value) handleRoleChange(member.user_id, value);
-                }}
-              >
-                <SelectTrigger
-                  className="h-8 w-[110px]"
-                  aria-label={`Role for ${member.user?.email}`}
-                >
-                  <SelectValue placeholder="Select role" />
-                </SelectTrigger>
-                <SelectContent>
-                  {roleOptions.map((role) => (
-                    <SelectItem key={role} value={role}>
-                      {role}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <DropdownMenu disabled={isUpdating}>
+                <DropdownMenuTrigger
+                  id="inviteMemberRole"
+                  aria-label="Invite member role"
+                  render={
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full justify-between"
+                    >
+                      <span className="min-w-0 truncate">
+                        {roleOptions
+                          .find((o) => o.value === member.role)
+                          ?.label?.trim() || 'Select a role'}
+                      </span>
+                      <ChevronDown data-icon="inline-end" />
+                    </Button>
+                  }
+                />
+
+                <DropdownMenuContent align="start">
+                  <DropdownMenuGroup>
+                    {roleOptions.map((option) => (
+                      <DropdownMenuItem
+                        key={option.value}
+                        onClick={() =>
+                          handleRoleChange(member.user_id, option.value)
+                        }
+                      >
+                        {option.label}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
             );
           }
 
