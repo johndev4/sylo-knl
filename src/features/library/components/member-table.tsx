@@ -1,12 +1,11 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
   SelectContent,
@@ -31,7 +30,25 @@ import {
   removeMultipleLibraryMembers,
 } from '@/features/library/actions';
 import { LibraryMember } from '@/features/library/library-schema';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import {
+  DataGrid,
+  DataGridContainer,
+  dataGridFeatures,
+  type DataGridFeatures,
+} from '@/components/reui/data-grid/data-grid';
+import { DataGridPagination } from '@/components/reui/data-grid/data-grid-pagination';
+import { DataGridScrollArea } from '@/components/reui/data-grid/data-grid-scroll-area';
+import {
+  DataGridTable,
+  DataGridTableRowSelect,
+  DataGridTableRowSelectAll,
+} from '@/components/reui/data-grid/data-grid-table';
+import type {
+  ColumnDef,
+  PaginationState,
+  RowSelectionState,
+} from '@tanstack/react-table';
+import { useTable } from '@tanstack/react-table';
 
 interface MemberTableProps {
   libraryId: string;
@@ -46,13 +63,20 @@ export function MemberTable({
   members,
   canManageMembers,
 }: MemberTableProps) {
-  const [selectedMembers, setSelectedMembers] = useState<Set<string>>(
-    new Set()
-  );
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 5,
+  });
   const [isUpdating, setIsUpdating] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const prefersReducedMotion = useReducedMotion();
+  const selectedMemberIds = Object.keys(rowSelection).filter((userId) =>
+    members.some(
+      (member) => member.user_id === userId && member.role !== 'OWNER'
+    )
+  );
 
   // This reset all the component states function
   const resetState = useCallback(() => {
@@ -67,49 +91,56 @@ export function MemberTable({
     };
   }, [resetState]);
 
-  const handleRoleChange = async (userId: string, newRole: string) => {
-    try {
-      setIsUpdating(true);
-      setError('');
-      await updateLibraryMemberRole(
-        libraryId,
-        userId,
-        newRole as 'ADMIN' | 'EDITOR' | 'VIEWER'
-      );
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update role');
-    } finally {
-      setIsUpdating(false);
-    }
-  };
+  const handleRoleChange = useCallback(
+    async (userId: string, newRole: string) => {
+      try {
+        setIsUpdating(true);
+        setError('');
+        await updateLibraryMemberRole(
+          libraryId,
+          userId,
+          newRole as 'ADMIN' | 'EDITOR' | 'VIEWER'
+        );
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to update role');
+      } finally {
+        setIsUpdating(false);
+      }
+    },
+    [libraryId]
+  );
 
-  const handleRemoveMember = async (userId: string) => {
-    try {
-      setIsUpdating(true);
-      setError('');
-      setSuccess('');
-      await removeLibraryMember(libraryId, userId);
-      setSelectedMembers((prev) => {
-        const next = new Set(prev);
-        next.delete(userId);
-        return next;
-      });
-      setSuccess('Member removed successfully');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to remove member');
-    } finally {
-      setIsUpdating(false);
-    }
-  };
+  const handleRemoveMember = useCallback(
+    async (userId: string) => {
+      try {
+        setIsUpdating(true);
+        setError('');
+        setSuccess('');
+        await removeLibraryMember(libraryId, userId);
+        setRowSelection((previous) => {
+          const next = { ...previous };
+          delete next[userId];
+          return next;
+        });
+        setSuccess('Member removed successfully');
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : 'Failed to remove member'
+        );
+      } finally {
+        setIsUpdating(false);
+      }
+    },
+    [libraryId]
+  );
 
   const handleRemoveMultiple = async () => {
-    if (selectedMembers.size === 0) return;
-    const ids = Array.from(selectedMembers);
+    if (selectedMemberIds.length === 0) return;
     try {
       setIsUpdating(true);
       setError('');
-      await removeMultipleLibraryMembers(libraryId, ids);
-      setSelectedMembers(new Set());
+      await removeMultipleLibraryMembers(libraryId, selectedMemberIds);
+      setRowSelection({});
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to remove members');
     } finally {
@@ -117,17 +148,174 @@ export function MemberTable({
     }
   };
 
-  const handleSelectMember = (userId: string) => {
-    setSelectedMembers((prev) => {
-      const next = new Set(prev);
-      if (next.has(userId)) {
-        next.delete(userId);
-      } else {
-        next.add(userId);
-      }
-      return next;
-    });
-  };
+  const columns = useMemo<ColumnDef<DataGridFeatures, LibraryMember>[]>(() => {
+    const allColumns: ColumnDef<DataGridFeatures, LibraryMember>[] = [
+      {
+        id: 'select',
+        header: () => (canManageMembers ? <DataGridTableRowSelectAll /> : null),
+        cell: ({ row }) =>
+          canManageMembers ? <DataGridTableRowSelect row={row} /> : null,
+        enableSorting: false,
+        enableHiding: false,
+        size: canManageMembers ? 48 : 0,
+      },
+      {
+        accessorKey: 'name',
+        header: 'Name',
+        cell: ({ row }) => {
+          const member = row.original;
+          return (
+            <div className="flex items-center gap-2">
+              {member.user?.avatar_url && (
+                <Image
+                  src={member.user.avatar_url}
+                  alt={member.user.name || 'Avatar'}
+                  width={32}
+                  height={32}
+                  unoptimized
+                  className="h-8 w-8 rounded-full"
+                />
+              )}
+              <span className="font-medium">
+                {member.user?.name || 'Unknown User'}
+              </span>
+            </div>
+          );
+        },
+        size: 220,
+      },
+      {
+        accessorKey: 'email',
+        header: 'Email',
+        cell: ({ row }) => (
+          <span className="text-muted-foreground">
+            {row.original.user?.email}
+          </span>
+        ),
+        size: 240,
+      },
+      {
+        accessorKey: 'role',
+        header: 'Role',
+        cell: ({ row }) => {
+          const member = row.original;
+          if (canManageMembers && member.role !== 'OWNER') {
+            return (
+              <Select
+                value={member.role}
+                disabled={isUpdating}
+                onValueChange={(value) => {
+                  if (value) handleRoleChange(member.user_id, value);
+                }}
+              >
+                <SelectTrigger
+                  className="h-8 w-[110px]"
+                  aria-label={`Role for ${member.user?.email}`}
+                >
+                  <SelectValue placeholder="Select role" />
+                </SelectTrigger>
+                <SelectContent>
+                  {roleOptions.map((role) => (
+                    <SelectItem key={role} value={role}>
+                      {role}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            );
+          }
+
+          return (
+            <div>
+              <span className="font-medium">{member.role}</span>
+              {member.role === 'OWNER' && (
+                <p className="text-muted-foreground mt-1 text-xs">
+                  Library creator
+                </p>
+              )}
+            </div>
+          );
+        },
+        size: 150,
+      },
+      {
+        accessorKey: 'created_at',
+        header: 'Joined',
+        cell: ({ row }) => (
+          <span className="text-muted-foreground text-xs">
+            {new Date(row.original.created_at).toLocaleDateString()}
+          </span>
+        ),
+        size: 120,
+      },
+      {
+        id: 'actions',
+        header: 'Actions',
+        cell: ({ row }) => {
+          const member = row.original;
+          if (!canManageMembers || member.role === 'OWNER') return null;
+
+          return (
+            <AlertDialog>
+              <AlertDialogTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={isUpdating}
+                    className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    aria-label={`Remove ${member.user?.email}`}
+                  >
+                    Remove
+                  </Button>
+                }
+              />
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Remove member</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Remove <strong>{member.user?.email}</strong> from this
+                    library? They will lose all access.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => handleRemoveMember(member.user_id)}
+                    variant="destructive"
+                  >
+                    Remove
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          );
+        },
+        enableSorting: false,
+        enableHiding: false,
+        size: 110,
+      },
+    ];
+
+    return canManageMembers ? allColumns : allColumns.slice(1, -1);
+  }, [canManageMembers, handleRemoveMember, handleRoleChange, isUpdating]);
+
+  const table = useTable({
+    features: dataGridFeatures,
+    columns,
+    data: members,
+    getRowId: (member) => member.user_id,
+    pageCount: Math.ceil(members.length / pagination.pageSize),
+    state: { pagination, rowSelection },
+    enableRowSelection: (row) =>
+      canManageMembers && row.original.role !== 'OWNER',
+    onPaginationChange: setPagination,
+    onRowSelectionChange: setRowSelection,
+  });
+
+  // ---------------------------------------------------------------------------
+  // Render
+  // ---------------------------------------------------------------------------
 
   return (
     <Card className="space-y-4 p-6">
@@ -136,17 +324,17 @@ export function MemberTable({
           <div>
             <h2 className="text-xl font-semibold">Members</h2>
             <p className="text-muted-foreground text-sm">
-              {members.length} of 11 members
+              {members.length} members
             </p>
           </div>
-          {canManageMembers && selectedMembers.size > 0 && (
+          {canManageMembers && selectedMemberIds.length > 0 && (
             <Button
               variant="destructive"
               size="sm"
               disabled={isUpdating}
               onClick={handleRemoveMultiple}
             >
-              Remove {selectedMembers.size} member(s)
+              Remove {selectedMemberIds.length} member(s)
             </Button>
           )}
         </div>
@@ -181,174 +369,16 @@ export function MemberTable({
           <p className="text-muted-foreground">No members yet</p>
         </div>
       ) : (
-        <ScrollArea>
-          <div className="max-h-90">
-            <table className="w-full text-sm">
-              <thead className="border-border border-b">
-                <tr>
-                  {canManageMembers && (
-                    <th className="px-4 py-3 text-left font-medium">
-                      <Checkbox
-                        checked={
-                          members.length > 0 &&
-                          selectedMembers.size ===
-                            members.filter((m) => m.role !== 'OWNER').length
-                        }
-                        onCheckedChange={() => {
-                          if (
-                            selectedMembers.size ===
-                            members.filter((m) => m.role !== 'OWNER').length
-                          ) {
-                            setSelectedMembers(new Set());
-                          } else {
-                            const nonOwners = members
-                              .filter((m) => m.role !== 'OWNER')
-                              .map((m) => m.user_id);
-                            setSelectedMembers(new Set(nonOwners));
-                          }
-                        }}
-                        aria-label="Select all members"
-                      />
-                    </th>
-                  )}
-                  <th className="px-4 py-3 text-left font-medium">Name</th>
-                  <th className="px-4 py-3 text-left font-medium">Email</th>
-                  <th className="px-4 py-3 text-left font-medium">Role</th>
-                  <th className="px-4 py-3 text-left font-medium">Joined</th>
-                  {canManageMembers && (
-                    <th className="px-4 py-3 text-left font-medium">Actions</th>
-                  )}
-                </tr>
-              </thead>
-              <tbody>
-                {members.map((member) => (
-                  <tr
-                    key={member.user_id}
-                    className="border-border hover:bg-muted/50 border-b transition-colors"
-                  >
-                    {canManageMembers && (
-                      <td className="px-4 py-3">
-                        <Checkbox
-                          checked={selectedMembers.has(member.user_id)}
-                          onCheckedChange={() =>
-                            handleSelectMember(member.user_id)
-                          }
-                          disabled={member.role === 'OWNER'}
-                          aria-label={`Select ${member.user?.email}`}
-                        />
-                      </td>
-                    )}
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        {member.user?.avatar_url && (
-                          <Image
-                            src={member.user.avatar_url}
-                            alt={member.user?.name || 'Avatar'}
-                            width={32}
-                            height={32}
-                            unoptimized
-                            className="h-8 w-8 rounded-full"
-                          />
-                        )}
-                        <span className="font-medium">
-                          {member.user?.name || 'Unknown User'}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="text-muted-foreground px-4 py-3">
-                      {member.user?.email}
-                    </td>
-                    <td className="px-4 py-3">
-                      {canManageMembers && member.role !== 'OWNER' ? (
-                        <Select
-                          value={member.role}
-                          disabled={isUpdating}
-                          onValueChange={(value) => {
-                            if (value) {
-                              handleRoleChange(member.user_id, value);
-                            }
-                          }}
-                        >
-                          <SelectTrigger
-                            className="h-8 w-[110px]"
-                            aria-label={`Role for ${member.user?.email}`}
-                          >
-                            <SelectValue placeholder="Select role" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {roleOptions.map((role) => (
-                              <SelectItem key={role} value={role}>
-                                {role}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        <div>
-                          <span className="font-medium">{member.role}</span>
-                          {member.role === 'OWNER' && (
-                            <p className="text-muted-foreground mt-1 text-xs">
-                              Library creator
-                            </p>
-                          )}
-                        </div>
-                      )}
-                    </td>
-                    <td className="text-muted-foreground px-4 py-3 text-xs">
-                      {new Date(member.created_at).toLocaleDateString()}
-                    </td>
-                    {canManageMembers && (
-                      <td className="px-4 py-3">
-                        {member.role !== 'OWNER' && (
-                          <AlertDialog>
-                            <AlertDialogTrigger
-                              render={
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  disabled={isUpdating}
-                                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                  aria-label={`Remove ${member.user?.email}`}
-                                >
-                                  Remove
-                                </Button>
-                              }
-                            />
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>
-                                  Remove member
-                                </AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Remove <strong>{member.user?.email}</strong>{' '}
-                                  from this library? They will lose all access.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() =>
-                                    handleRemoveMember(member.user_id)
-                                  }
-                                  variant={'destructive'}
-                                >
-                                  Remove
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        )}
-                      </td>
-                    )}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <DataGrid table={table} recordCount={members.length}>
+          <div className="w-full space-y-2.5">
+            <DataGridContainer>
+              <DataGridScrollArea>
+                <DataGridTable />
+              </DataGridScrollArea>
+            </DataGridContainer>
+            <DataGridPagination />
           </div>
-
-          <ScrollBar orientation="vertical" />
-          <ScrollBar orientation="horizontal" />
-        </ScrollArea>
+        </DataGrid>
       )}
     </Card>
   );

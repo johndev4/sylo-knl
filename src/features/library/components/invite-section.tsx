@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
 
@@ -34,8 +34,17 @@ import {
 
 import { getURL } from '@/lib/auth/utils';
 import { Invite } from '@/features/library/library-schema';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Card } from '@/components/ui/card';
+import {
+  DataGrid,
+  DataGridContainer,
+  dataGridFeatures,
+  type DataGridFeatures,
+} from '@/components/reui/data-grid/data-grid';
+import { DataGridPagination } from '@/components/reui/data-grid/data-grid-pagination';
+import { DataGridScrollArea } from '@/components/reui/data-grid/data-grid-scroll-area';
+import { DataGridTable } from '@/components/reui/data-grid/data-grid-table';
+import { ColumnDef, PaginationState, useTable } from '@tanstack/react-table';
 
 interface InviteSectionProps {
   libraryId: string;
@@ -70,6 +79,11 @@ export function InviteSection({
 
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 5,
+  });
 
   const prefersReducedMotion = useReducedMotion();
 
@@ -172,6 +186,87 @@ export function InviteSection({
     }, 3000);
   }
 
+  const columns = useMemo<ColumnDef<DataGridFeatures, Invite>[]>(
+    () => [
+      {
+        accessorKey: 'invite_code',
+        header: 'Code',
+        cell: ({ row }) => (
+          <span className="font-mono">{row.original.invite_code}</span>
+        ),
+        size: 160,
+      },
+      {
+        accessorKey: 'role',
+        header: 'Role',
+        cell: ({ row }) => row.original.role,
+        size: 120,
+      },
+      {
+        accessorKey: 'use_count',
+        header: 'Uses',
+        cell: ({ row }) => {
+          const invite = row.original;
+          return `${invite.use_count} / ${invite.max_uses || '∞'}`;
+        },
+        size: 100,
+      },
+      {
+        accessorKey: 'expires_at',
+        header: 'Expires',
+        cell: ({ row }) => (
+          <span>
+            {row.original.expires_at
+              ? new Date(row.original.expires_at).toLocaleString()
+              : 'Never'}
+          </span>
+        ),
+        size: 180,
+      },
+      {
+        id: 'actions',
+        header: 'Actions',
+        cell: ({ row }) => {
+          const invite = row.original;
+          return (
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleCopyLink(invite.invite_code)}
+              >
+                Copy
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setInviteToRevoke(invite)}
+              >
+                Revoke
+              </Button>
+            </div>
+          );
+        },
+        size: 150,
+      },
+    ],
+    []
+  );
+
+  const table = useTable({
+    features: dataGridFeatures,
+    columns,
+    data: invites,
+    getRowId: (invite) => invite.id,
+    pageCount: Math.ceil(invites.length / pagination.pageSize),
+    state: { pagination },
+    onPaginationChange: setPagination,
+  });
+
+  // ---------------------------------------------------------------------------
+  // Render
+  // ---------------------------------------------------------------------------
+
   return (
     <Card className="space-y-4 p-6">
       <div className="space-y-2">
@@ -211,6 +306,7 @@ export function InviteSection({
         </motion.div>
       )}
 
+      {/* Generate Invite Link Form */}
       <form
         onSubmit={handleCreateInvite}
         className="bg-muted/20 space-y-4 overflow-x-auto rounded-md border p-4"
@@ -294,68 +390,16 @@ export function InviteSection({
         {invites.length === 0 ? (
           <p className="text-muted-foreground text-sm">No active invites.</p>
         ) : (
-          <ScrollArea>
-            <div className="max-h-60">
-              <table className="w-full text-sm">
-                <thead className="border-border border-b">
-                  <tr>
-                    <th className="px-4 py-3 text-left font-medium">Code</th>
-                    <th className="px-4 py-3 text-left font-medium">Role</th>
-                    <th className="px-4 py-3 text-left font-medium">Uses</th>
-                    <th className="px-4 py-3 text-left font-medium">Expires</th>
-                    <th className="px-4 py-3 text-left font-medium">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {invites.map((invite) => (
-                    <tr
-                      key={invite.id}
-                      className="border-border hover:bg-muted/50 border-b"
-                    >
-                      <td className="px-4 py-3 font-mono">
-                        {invite.invite_code}
-                      </td>
-
-                      <td className="px-4 py-3">{invite.role}</td>
-
-                      <td className="px-4 py-3">
-                        {invite.use_count} / {invite.max_uses || '∞'}
-                      </td>
-
-                      <td className="px-4 py-3">
-                        {invite.expires_at
-                          ? new Date(invite.expires_at).toLocaleString()
-                          : 'Never'}
-                      </td>
-
-                      <td className="px-4 py-3">
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleCopyLink(invite.invite_code)}
-                          >
-                            Copy
-                          </Button>
-
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => setInviteToRevoke(invite)}
-                          >
-                            Revoke
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          <DataGrid table={table} recordCount={invites.length}>
+            <div className="w-full space-y-2.5">
+              <DataGridContainer>
+                <DataGridScrollArea>
+                  <DataGridTable />
+                </DataGridScrollArea>
+              </DataGridContainer>
+              <DataGridPagination />
             </div>
-
-            <ScrollBar orientation="vertical" />
-            <ScrollBar orientation="horizontal" />
-          </ScrollArea>
+          </DataGrid>
         )}
       </div>
 
