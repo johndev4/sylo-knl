@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { User } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
+import { dequal } from 'dequal';
 
 type AuthSessionContextType = {
   user: User | null;
@@ -23,26 +24,19 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
   const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
-    // console.debug('[AuthProvider] mounted');
     // Keep local user state synced with auth changes (login, logout, token refresh)
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session) {
-        setUser(null);
-        return;
-      }
-
-      if (JSON.stringify(session.user) !== JSON.stringify(user)) {
-        setUser(session.user ?? null);
-      }
+      const newUser = session?.user ?? null;
+      setUser((prev) => {
+        if (dequal(prev, newUser)) return prev;
+        return newUser;
+      });
     });
 
-    return () => {
-      // console.debug('[AuthProvider] unsubscribe from onAuthStateChange');
-      subscription.unsubscribe();
-    };
-  }, [supabase.auth, user]);
+    return () => subscription.unsubscribe();
+  }, [supabase]);
 
   return (
     <AuthContext.Provider value={{ user }}>{children}</AuthContext.Provider>
