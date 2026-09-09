@@ -51,7 +51,7 @@ export async function getLibraryMembers(
       user_id,
       role,
       created_at,
-      user:user_id(id, name, email, avatar_url)
+      user:user_id(id, name, email, avatar_url, use_avatar_url)
     `
     )
     .eq('library_id', libraryId)

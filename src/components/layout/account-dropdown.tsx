@@ -22,6 +22,18 @@ import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { logout } from '@/features/auth/actions';
 import { useSession } from '../providers/auth-provider';
 
+// Utility that returns 2-letter initials from a name or email.
+const makeInitials = (displayName: string | null, email: string): string => {
+  const source = displayName || email.split('@')[0];
+  return source
+    .split(/[\s._-]+/)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+};
+
 export function AccountDropdown() {
   const { user } = useSession();
   const pathname = usePathname();
@@ -62,17 +74,6 @@ export function AccountDropdown() {
     } catch (err) {
       console.error('Logout failed:', err);
     }
-  };
-
-  const getInitials = (displayName: string | null, email: string): string => {
-    const source = displayName || email.split('@')[0];
-    return source
-      .split(/[\s._-]+/)
-      .slice(0, 2)
-      .map((part) => part[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
   };
 
   // ---------------------------------------------------------------------------
@@ -119,7 +120,7 @@ export function AccountDropdown() {
     return null;
   }
 
-  const initials = getInitials(userInfo.name!, userInfo.email);
+  const initials = makeInitials(userInfo.name!, userInfo.email);
   const shouldUseAvatarUrl = userInfo.useAvatarUrl && userInfo.avatarUrl;
 
   return (

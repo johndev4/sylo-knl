@@ -36,6 +36,18 @@ interface AccountSettingsFormProps {
   profile: UserProfile;
 }
 
+// Utility that returns 2-letter initials from a name or email.
+const makeInitials = (displayName: string | null, email: string): string => {
+  const source = displayName || email.split('@')[0];
+  return source
+    .split(/[\s._-]+/)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+};
+
 export default function AccountSettingsForm({
   profile: initialProfile,
 }: AccountSettingsFormProps) {
@@ -163,19 +175,7 @@ export default function AccountSettingsForm({
     return errors.find((error) => error.field === field)?.message;
   };
 
-  const getInitials = (displayName: string | null, email: string): string => {
-    const source = displayName || email.split('@')[0];
-
-    return source
-      .split(/[\s._-]+/)
-      .slice(0, 2)
-      .map((part) => part[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  };
-
-  const initials = getInitials(profile.name!, profile.email);
+  const initials = makeInitials(profile.name!, profile.email);
 
   return (
     <div className="bg-background min-h-screen">

@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { Button } from '@/components/ui/button';
@@ -52,6 +51,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { CheckIcon, ChevronDown } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface MemberTableProps {
   libraryId: string;
@@ -73,6 +73,18 @@ const roleOptions = [
     label: 'Viewer',
   },
 ];
+
+// Utility that returns 2-letter initials from a name or email.
+const makeInitials = (displayName: string | null, email: string): string => {
+  const source = displayName || email.split('@')[0];
+  return source
+    .split(/[\s._-]+/)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+};
 
 export function MemberTable({
   libraryId,
@@ -184,40 +196,35 @@ export function MemberTable({
         ),
         cell: ({ row }) => {
           const member = row.original;
+          const initials = makeInitials(
+            member.user?.name || null,
+            member.user?.email || ''
+          );
+          const shouldUseAvatarUrl =
+            member.user?.use_avatar_url && member.user?.avatar_url;
           return (
-            <div className="flex items-center gap-2">
-              {member.user?.avatar_url && (
-                <Image
-                  src={member.user.avatar_url}
-                  alt={member.user.name || 'Avatar'}
-                  width={32}
-                  height={32}
-                  unoptimized
-                  className="h-8 w-8 rounded-full"
-                />
-              )}
-              <span className="font-medium">
-                {member.user?.name || 'Unknown User'}
-              </span>
+            <div className="flex items-center gap-3">
+              <Avatar className="size-8">
+                {shouldUseAvatarUrl && (
+                  <AvatarImage
+                    src={member.user?.avatar_url || ''}
+                    alt={member.user?.name || 'Avatar'}
+                  />
+                )}
+                <AvatarFallback>{initials}</AvatarFallback>
+              </Avatar>
+              <div className="space-y-px">
+                <div className="text-foreground font-medium">
+                  {member.user?.name || 'Unknown User'}
+                </div>
+                <div className="text-muted-foreground">
+                  {member.user?.email || ''}
+                </div>
+              </div>
             </div>
           );
         },
         size: 220,
-        enableSorting: true,
-        sortFn: 'alphanumeric',
-      },
-      {
-        id: 'email',
-        accessorFn: (member) => member.user?.email ?? '',
-        header: ({ column }) => (
-          <DataGridColumnHeader title="Email" column={column} />
-        ),
-        cell: ({ row }) => (
-          <span className="text-muted-foreground">
-            {row.original.user?.email}
-          </span>
-        ),
-        size: 240,
         enableSorting: true,
         sortFn: 'alphanumeric',
       },
