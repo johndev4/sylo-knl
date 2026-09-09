@@ -1,17 +1,15 @@
 'use client';
 
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { AuthChangeEvent, User } from '@supabase/supabase-js';
+import { User } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
 
 type AuthSessionContextType = {
   user: User | null;
-  event: AuthChangeEvent | null;
 };
 
 const AuthContext = createContext<AuthSessionContextType>({
   user: null,
-  event: null,
 });
 
 interface AuthProviderProps {
@@ -22,7 +20,6 @@ interface AuthProviderProps {
 export function AuthProvider({ children, initialUser }: AuthProviderProps) {
   // Initialize state directly from Server Component prop (No loading state needed!)
   const [user, setUser] = useState<User | null>(initialUser);
-  const [event, setEvent] = useState<AuthChangeEvent | null>(null);
   const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
@@ -31,12 +28,6 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      // console.debug('[AuthProvider - onAuthStateChange] Event:', _event);
-      // console.debug(
-      //   '[AuthProvider - onAuthStateChange] User:',
-      //   session?.user ?? null
-      // );
-      setEvent(_event);
       setUser(session?.user ?? null);
     });
 
@@ -47,9 +38,7 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
   }, [supabase]);
 
   return (
-    <AuthContext.Provider value={{ user, event }}>
-      {children}
-    </AuthContext.Provider>
+    <AuthContext.Provider value={{ user }}>{children}</AuthContext.Provider>
   );
 }
 
