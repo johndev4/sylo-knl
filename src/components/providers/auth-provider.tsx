@@ -28,14 +28,21 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+      if (!session) {
+        setUser(null);
+        return;
+      }
+
+      if (JSON.stringify(session.user) !== JSON.stringify(user)) {
+        setUser(session.user ?? null);
+      }
     });
 
     return () => {
       // console.debug('[AuthProvider] unsubscribe from onAuthStateChange');
       subscription.unsubscribe();
     };
-  }, [supabase]);
+  }, [supabase.auth, user]);
 
   return (
     <AuthContext.Provider value={{ user }}>{children}</AuthContext.Provider>
