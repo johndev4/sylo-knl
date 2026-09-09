@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { LogOut, Settings } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { getProfileDropdownUserInfo } from '@/features/user/queries';
@@ -16,18 +16,17 @@ import {
   DropdownMenuGroup,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
-import { User } from '@supabase/supabase-js';
 import { Spinner } from '../ui/spinner';
 import { ProfileDropdownUserInfo } from '@/features/user/user-schema';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { logout } from '@/features/auth/actions';
+import { useSession } from '../providers/auth-provider';
 
-interface AccountDropdownProps {
-  user: User | null;
-}
-
-export function AccountDropdown({ user }: AccountDropdownProps) {
+export function AccountDropdown() {
+  const { user } = useSession();
+  const pathname = usePathname();
   const router = useRouter();
+
   const [isOpen, setIsOpen] = useState(false);
   const [userInfo, setUserInfo] = useState<ProfileDropdownUserInfo | null>(
     null
@@ -36,17 +35,13 @@ export function AccountDropdown({ user }: AccountDropdownProps) {
 
   // Fetch user profile on mount
   useEffect(() => {
-    const supabase = createClient();
+    if (!user || pathname === '/login') {
+      return;
+    }
 
     const fetchUserInfo = async () => {
       try {
-        setUserInfo(null);
-        setIsLoading(true);
-
-        if (!user) {
-          return;
-        }
-
+        const supabase = createClient();
         const data = await getProfileDropdownUserInfo(supabase, user);
         setUserInfo(data);
       } catch (err) {
@@ -57,7 +52,7 @@ export function AccountDropdown({ user }: AccountDropdownProps) {
     };
 
     fetchUserInfo();
-  }, [user]);
+  }, [pathname, user]);
 
   const handleLogout = async () => {
     try {
@@ -80,8 +75,12 @@ export function AccountDropdown({ user }: AccountDropdownProps) {
       .slice(0, 2);
   };
 
-  // Don't render if user is not authenticated
-  if (!user) {
+  // ---------------------------------------------------------------------------
+  // Render
+  // ---------------------------------------------------------------------------
+
+  // Prevent rendering for guests or when viewing the login screen
+  if (!user || pathname === '/login') {
     return null;
   }
 

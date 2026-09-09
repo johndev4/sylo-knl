@@ -2,8 +2,6 @@ import { cn } from '@/lib/utils';
 import { ThemeToggle } from './theme-toggle';
 import { AccountDropdown } from './account-dropdown';
 import { Navbar } from './navbar';
-import { getUserNonRedirect } from '@/lib/auth/get-user';
-import { Suspense } from 'react';
 import { EggIcon } from 'lucide-react';
 import Link from 'next/link';
 
@@ -41,29 +39,15 @@ export function AppHeader() {
           </Link>
 
           {/* Global Navigation */}
-          <Suspense fallback={null}>
-            <NavbarWrapper />
-          </Suspense>
+          <Navbar />
         </div>
 
         {/* Theme Toggle & Account Dropdown */}
         <div className="flex items-center gap-3">
           <ThemeToggle />
-          <Suspense fallback={null}>
-            <AccountDropdownWrapper />
-          </Suspense>
+          <AccountDropdown />
         </div>
       </div>
     </div>
   );
-}
-
-async function NavbarWrapper() {
-  const user = await getUserNonRedirect();
-  return user && <Navbar user={user} />;
-}
-
-async function AccountDropdownWrapper() {
-  const user = await getUserNonRedirect();
-  return user && <AccountDropdown user={user} />;
 }

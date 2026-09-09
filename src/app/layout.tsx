@@ -7,6 +7,7 @@ import { Inter } from 'next/font/google';
 import { AuthProvider } from '@/components/providers/auth-provider';
 import { getUserNonRedirect } from '@/lib/auth/get-user';
 import { Suspense } from 'react';
+import { AppHeader } from '@/components/layout/app-header';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
@@ -31,7 +32,10 @@ export default function RootLayout({
         <AppThemeProvider>
           <TooltipProvider>
             <Suspense fallback={null}>
-              <AuthProviderWrapper>{children}</AuthProviderWrapper>
+              <AuthProviderWrapper>
+                <AppHeader />
+                <main className="flex-1">{children}</main>
+              </AuthProviderWrapper>
             </Suspense>
           </TooltipProvider>
         </AppThemeProvider>
