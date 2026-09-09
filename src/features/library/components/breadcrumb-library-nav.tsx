@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 
 import { Fragment, ReactNode, useEffect, useState } from 'react';
@@ -155,7 +154,8 @@ export function BreadcrumbLibraryNav({
     };
 
     resolveNames();
-  }, [pathname]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname, user]);
 
   const breadcrumbItems: Array<{
     key: string;
@@ -295,7 +295,7 @@ function LibrarySelectorDropdown() {
       const libraries = await getUserLibraries(supabase, user);
       setUserLibraryList(libraries ?? []);
     })().then(() => setIsLoading(false));
-  }, []);
+  }, [user]);
 
   // ---------------------------------------------------------------------------
   // Render
