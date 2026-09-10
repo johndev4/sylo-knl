@@ -1,195 +1,189 @@
+import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function LibraryMembersPageLoading() {
   return null;
-  return (
-    <div className="container mx-auto max-w-4xl space-y-8 p-6">
-      <div className="mb-8 flex flex-col gap-3">
-        <div className="flex items-center justify-between gap-3">
-          <div className="space-y-2">
-            <Skeleton className={`h-9 w-64`} />
-            <Skeleton className={`h-5 w-72`} />
-          </div>
-        </div>
-      </div>
-
-      <MemberTableSkeleton />
-      <InviteSectionSkeleton />
-    </div>
-  );
 }
 
 export function MemberTableSkeleton() {
-  const rows = Array.from({ length: 5 });
-
   return (
-    <div className="space-y-4 rounded-xl border p-6">
+    <Card className="p-6">
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <div>
             <Skeleton className={`h-6 w-24`} />
             <Skeleton className={`mt-2 h-4 w-28`} />
           </div>
-          <Skeleton className={`h-9 w-36`} />
         </div>
       </div>
 
       <div className="overflow-x-auto">
-        <div className="max-h-90 min-w-[700px]">
+        <div className="min-w-[700px]">
           <table className="w-full text-sm">
-            <thead className="border-border border-b">
+            <thead className="border-border">
               <tr>
-                <th className="px-4 py-3 text-left">
+                <th className="px-4 py-5 text-left">
                   <Skeleton className={`h-4 w-4`} />
                 </th>
-                <th className="px-4 py-3 text-left">
-                  <Skeleton className={`h-4 w-12`} />
+                <th className="px-4 py-5 text-left">
+                  <Skeleton className={`h-4 w-16`} />
                 </th>
-                <th className="px-4 py-3 text-left">
-                  <Skeleton className={`h-4 w-14`} />
+                <th className="px-4 py-5 text-left">
+                  <Skeleton className={`h-4 w-16`} />
                 </th>
-                <th className="px-4 py-3 text-left">
-                  <Skeleton className={`h-4 w-12`} />
+                <th className="px-4 py-5 text-left">
+                  <Skeleton className={`h-4 w-16`} />
                 </th>
-                <th className="px-4 py-3 text-left">
-                  <Skeleton className={`h-4 w-14`} />
-                </th>
-                <th className="px-4 py-3 text-left">
+                <th className="px-4 py-5 text-left">
                   <Skeleton className={`h-4 w-16`} />
                 </th>
               </tr>
             </thead>
 
             <tbody>
-              {rows.map((_, index) => (
-                <tr key={index} className="border-border border-b">
-                  <td className="px-4 py-3">
+              {Array.from({ length: 5 }).map((_, index) => (
+                <tr key={index} className="border-border border-t">
+                  <td className="px-4 py-2">
                     <Skeleton className={`h-4 w-4`} />
                   </td>
 
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <Skeleton className={`h-8 w-8 shrink-0 rounded-full`} />
-                      <Skeleton className={`h-4 w-28`} />
+                  <td className="px-4 py-2">
+                    <div className="flex h-[41px] items-center gap-3">
+                      <Skeleton className="size-8 rounded-full" />
+                      <div className="space-y-1">
+                        <Skeleton className="h-5 w-24" />
+                        <Skeleton className="h-4 w-16" />
+                      </div>
                     </div>
                   </td>
 
-                  <td className="px-4 py-3">
-                    <Skeleton className={`h-4 w-40`} />
+                  <td className="px-4 py-2">
+                    <Skeleton className="h-7 w-28" />
                   </td>
 
-                  <td className="px-4 py-3">
-                    <Skeleton className={`h-8 w-[110px]`} />
+                  <td className="px-4 py-2">
+                    <Skeleton className="h-7 w-28" />
                   </td>
 
-                  <td className="px-4 py-3">
-                    <Skeleton className={`h-4 w-20`} />
-                  </td>
-
-                  <td className="px-4 py-3">
-                    <Skeleton className={`h-8 w-16`} />
+                  <td className="px-4 py-2">
+                    <Skeleton className="h-7 w-16" />
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+
+          {/* Pagination Controls */}
+          <div className="mt-3 flex items-center justify-between">
+            <Skeleton className="h-8 w-40" />
+            <Skeleton className="h-8 w-48" />
+          </div>
         </div>
       </div>
-    </div>
+    </Card>
   );
 }
 
 export function InviteSectionSkeleton() {
-  const rows = Array.from({ length: 3 });
-
   return (
-    <div className="space-y-4 rounded-xl border p-6">
+    <Card className="p-6">
+      {/* Header Section */}
       <div className="space-y-2">
-        <Skeleton className={`h-6 w-32`} />
-        <Skeleton className={`h-4 w-80 max-w-full`} />
+        <Skeleton className="h-7 w-32" /> {/* Title */}
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-full" /> {/* Description line 1 */}
+          <Skeleton className="h-4 w-3/4" /> {/* Description line 2 */}
+        </div>
       </div>
 
-      <div className="bg-muted/20 space-y-4 overflow-x-auto rounded-md border p-4">
-        <Skeleton className={`h-5 w-40`} />
-
-        <div className="flex flex-wrap gap-2.5">
-          <div>
-            <Skeleton className={`h-4 w-12`} />
-            <Skeleton className={`mt-1 h-10 w-48`} />
+      {/* Form Section */}
+      <div className="border-border bg-muted/20 space-y-4 rounded-md border p-4">
+        <Skeleton className="h-5 w-32" /> {/* Form Title */}
+        {/* Grid: 1 col on mobile, 2 on sm, 3 on lg */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {/* Role Field */}
+          <div className="flex flex-col gap-1.5">
+            <Skeleton className="h-4 w-12" /> {/* Label */}
+            <Skeleton className="h-9 w-full rounded-md" /> {/* Dropdown */}
           </div>
 
-          <div>
-            <Skeleton className={`h-4 w-32`} />
-            <Skeleton className={`mt-1 h-10 w-52`} />
+          {/* Expires in Field */}
+          <div className="flex flex-col gap-1.5">
+            <Skeleton className="h-4 w-16" /> {/* Label */}
+            <Skeleton className="h-9 w-full rounded-md" /> {/* Dropdown */}
           </div>
 
-          <div>
-            <Skeleton className={`h-4 w-36`} />
-            <Skeleton className={`mt-1 h-10 w-40`} />
+          {/* Max Uses Field */}
+          <div className="flex flex-col gap-1.5">
+            <Skeleton className="h-4 w-20" /> {/* Label */}
+            <Skeleton className="h-9 w-full rounded-md" /> {/* Input */}
           </div>
         </div>
-
-        <Skeleton className={`h-10 w-44`} />
+        {/* Submit Button */}
+        <Skeleton className="h-9 w-44 rounded-md" />
       </div>
 
-      <div className="mt-6">
-        <Skeleton className={`mb-4 h-5 w-28`} />
+      {/* Active Invites Section */}
+      <div className="overflow-x-auto">
+        <div className="min-w-[700px]">
+          <table className="w-full text-sm">
+            <thead className="border-border">
+              <tr>
+                <th className="px-4 py-5 text-left">
+                  <Skeleton className={`h-4 w-16`} />
+                </th>
+                <th className="px-4 py-5 text-left">
+                  <Skeleton className={`h-4 w-16`} />
+                </th>
+                <th className="px-4 py-5 text-left">
+                  <Skeleton className={`h-4 w-16`} />
+                </th>
+                <th className="px-4 py-5 text-left">
+                  <Skeleton className={`h-4 w-16`} />
+                </th>
+                <th className="px-4 py-5 text-left">
+                  <Skeleton className={`h-4 w-16`} />
+                </th>
+              </tr>
+            </thead>
 
-        <div className="overflow-x-auto">
-          <div className="max-h-60 min-w-[650px]">
-            <table className="w-full text-sm">
-              <thead className="border-border border-b">
-                <tr>
-                  <th className="px-4 py-3 text-left">
-                    <Skeleton className={`h-4 w-12`} />
-                  </th>
-                  <th className="px-4 py-3 text-left">
-                    <Skeleton className={`h-4 w-12`} />
-                  </th>
-                  <th className="px-4 py-3 text-left">
-                    <Skeleton className={`h-4 w-12`} />
-                  </th>
-                  <th className="px-4 py-3 text-left">
-                    <Skeleton className={`h-4 w-14`} />
-                  </th>
-                  <th className="px-4 py-3 text-left">
-                    <Skeleton className={`h-4 w-16`} />
-                  </th>
+            <tbody>
+              {Array.from({ length: 5 }).map((_, index) => (
+                <tr key={index} className="border-border border-t">
+                  <td className="px-4 py-2">
+                    <Skeleton className="h-7 w-24" />
+                  </td>
+
+                  <td className="px-4 py-2">
+                    <Skeleton className="h-7 w-24" />
+                  </td>
+
+                  <td className="px-4 py-2">
+                    <Skeleton className="h-7 w-24" />
+                  </td>
+
+                  <td className="px-4 py-2">
+                    <Skeleton className="h-7 w-24" />
+                  </td>
+
+                  <td className="px-4 py-2">
+                    <div className="flex flex-row gap-1">
+                      <Skeleton className="h-7 w-16" />
+                      <Skeleton className="h-7 w-16" />
+                    </div>
+                  </td>
                 </tr>
-              </thead>
+              ))}
+            </tbody>
+          </table>
 
-              <tbody>
-                {rows.map((_, index) => (
-                  <tr key={index} className="border-border border-b">
-                    <td className="px-4 py-3">
-                      <Skeleton className={`h-4 w-28`} />
-                    </td>
-
-                    <td className="px-4 py-3">
-                      <Skeleton className={`h-4 w-16`} />
-                    </td>
-
-                    <td className="px-4 py-3">
-                      <Skeleton className={`h-4 w-16`} />
-                    </td>
-
-                    <td className="px-4 py-3">
-                      <Skeleton className={`h-4 w-32`} />
-                    </td>
-
-                    <td className="px-4 py-3">
-                      <div className="flex gap-2">
-                        <Skeleton className={`h-8 w-14`} />
-                        <Skeleton className={`h-8 w-16`} />
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          {/* Pagination Controls */}
+          <div className="mt-3 flex items-center justify-between">
+            <Skeleton className="h-8 w-40" />
+            <Skeleton className="h-8 w-48" />
           </div>
         </div>
       </div>
-    </div>
+    </Card>
   );
 }

@@ -31,16 +31,12 @@ export async function getLibraryName(
  *
  * @param libraryId - The unique identifier of the library
  * @param supabase - SupabaseClient instance for database operations
- * @param membership - The membership object containing the user's role in the library
  */
 export async function getLibraryMembers(
   libraryId: string,
-  supabase: SupabaseClient,
-  membership: { role: any } | null
+  supabase: SupabaseClient
 ) {
   console.log(`[DEBUG] fetchLibraryMembers called for: ${libraryId}`);
-
-  if (!membership) throw new Error('Access denied to library');
 
   // Fetch all members with user details
   const { data: members, error } = await supabase
@@ -70,17 +66,11 @@ export async function getLibraryMembers(
  *
  * @param libraryId - The unique identifier of the library
  * @param supabase - SupabaseClient instance for database operations
- * @param membership - The membership object containing the user's role in the library
  */
 export async function getLibraryInvites(
   libraryId: string,
-  supabase: SupabaseClient,
-  membership: { role: any } | null
+  supabase: SupabaseClient
 ) {
-  if (!membership || !['OWNER', 'ADMIN'].includes(membership.role)) {
-    throw new Error('Only owners and admins can view invites');
-  }
-
   const { data: invites, error } = await supabase
     .from('library_invites')
     .select(

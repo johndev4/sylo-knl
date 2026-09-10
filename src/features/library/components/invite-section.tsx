@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
 
@@ -53,10 +53,13 @@ import {
   useTable,
 } from '@tanstack/react-table';
 import { CheckIcon, ChevronDown } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Spinner } from '@/components/ui/spinner';
+import { createClient } from '@/lib/supabase/client';
+import { getLibraryInvites } from '../queries';
 
 interface InviteSectionProps {
   libraryId: string;
-  initialInvites: Invite[];
 }
 
 const roleOptions = [
@@ -70,26 +73,22 @@ const roleOptions = [
   },
 ];
 
-export function InviteSection({
-  libraryId,
-  initialInvites,
-}: InviteSectionProps) {
-  const [invites, setInvites] = useState(initialInvites);
-
+export function InviteSection({ libraryId }: InviteSectionProps) {
+  const [invites, setInvites] = useState<Invite[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
+  const [isRevoking, setIsRevoking] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  const [inviteToRevoke, setInviteToRevoke] = useState<Invite | null>(null);
+
   const [role, setRole] = useState<'VIEWER' | 'EDITOR'>('VIEWER');
   const [expiresAt, setExpiresAt] = useState('');
   const [expiryOption, setExpiryOption] = useState<
     'never' | '24h' | '7d' | '30d' | 'custom'
   >('never');
   const [maxUses, setMaxUses] = useState('');
-
-  const [inviteToRevoke, setInviteToRevoke] = useState<Invite | null>(null);
-
-  const [isRevoking, setIsRevoking] = useState(false);
-
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
 
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
@@ -99,8 +98,11 @@ export function InviteSection({
 
   const prefersReducedMotion = useReducedMotion();
 
-  // This reset all the component states function
-  const resetState = useCallback(() => {
+  useEffect(() => {
+    // Always reset states on mount.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setInvites([]);
+    setIsLoading(true);
     setIsCreating(false);
     setRole('VIEWER');
     setExpiresAt('');
@@ -113,10 +115,115 @@ export function InviteSection({
   }, []);
 
   useEffect(() => {
-    return () => {
-      resetState();
+    const supabase = createClient();
+    const fetchLibraryInvites = async () => {
+      try {
+        const _invites = await getLibraryInvites(libraryId, supabase);
+        setInvites(_invites);
+      } catch (err) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setError((err as any)?.message);
+      } finally {
+        setIsLoading(false);
+      }
     };
-  }, [resetState]);
+    fetchLibraryInvites();
+  }, [libraryId]);
+
+  const columns = useMemo<ColumnDef<DataGridFeatures, Invite>[]>(
+    () => [
+      {
+        accessorKey: 'invite_code',
+        header: 'Code',
+        cell: ({ row }) => (
+          <span className="font-mono">{row.original.invite_code}</span>
+        ),
+        size: 160,
+        meta: { skeleton: <Skeleton className="h-7 w-24" /> },
+      },
+      {
+        accessorKey: 'role',
+        header: 'Role',
+        cell: ({ row }) => row.original.role,
+        size: 120,
+        meta: { skeleton: <Skeleton className="h-7 w-24" /> },
+      },
+      {
+        accessorKey: 'use_count',
+        header: 'Uses',
+        cell: ({ row }) => {
+          const invite = row.original;
+          return `${invite.use_count} / ${invite.max_uses || '∞'}`;
+        },
+        size: 100,
+        meta: { skeleton: <Skeleton className="h-7 w-24" /> },
+      },
+      {
+        accessorKey: 'expires_at',
+        header: ({ column }) => (
+          <DataGridColumnHeader title="Expires" column={column} />
+        ),
+        cell: ({ row }) => (
+          <span>
+            {row.original.expires_at
+              ? new Date(row.original.expires_at).toLocaleString()
+              : 'Never'}
+          </span>
+        ),
+        size: 180,
+        enableSorting: true,
+        sortFn: 'datetime',
+        meta: { skeleton: <Skeleton className="h-7 w-24" /> },
+      },
+      {
+        id: 'actions',
+        header: 'Actions',
+        cell: ({ row }) => {
+          const invite = row.original;
+          return (
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleCopyLink(invite.invite_code)}
+              >
+                Copy
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setInviteToRevoke(invite)}
+              >
+                Revoke
+              </Button>
+            </div>
+          );
+        },
+        size: 150,
+        meta: {
+          skeleton: (
+            <div className="flex flex-row gap-1">
+              <Skeleton className="h-7 w-16" />
+              <Skeleton className="h-7 w-16" />
+            </div>
+          ),
+        },
+      },
+    ],
+    []
+  );
+
+  const table = useTable({
+    features: dataGridFeatures,
+    columns,
+    data: invites,
+    getRowId: (invite) => invite.id,
+    pageCount: Math.ceil(invites.length / pagination.pageSize),
+    state: { pagination, sorting },
+    onPaginationChange: setPagination,
+    onSortingChange: setSorting,
+    autoResetPageIndex: false,
+  });
 
   async function handleCreateInvite(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -148,13 +255,14 @@ export function InviteSection({
         parsedMaxUses
       );
 
-      setInvites((current) => [...current, invite]);
+      setInvites((current) => [invite, ...current]);
 
       setSuccess('Invite created successfully');
       setRole('VIEWER');
       setExpiresAt('');
       setExpiryOption('never');
       setMaxUses('');
+      table.resetPageIndex();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create invite');
     } finally {
@@ -200,88 +308,6 @@ export function InviteSection({
     }, 3000);
   }
 
-  const columns = useMemo<ColumnDef<DataGridFeatures, Invite>[]>(
-    () => [
-      {
-        accessorKey: 'invite_code',
-        header: 'Code',
-        cell: ({ row }) => (
-          <span className="font-mono">{row.original.invite_code}</span>
-        ),
-        size: 160,
-      },
-      {
-        accessorKey: 'role',
-        header: 'Role',
-        cell: ({ row }) => row.original.role,
-        size: 120,
-      },
-      {
-        accessorKey: 'use_count',
-        header: 'Uses',
-        cell: ({ row }) => {
-          const invite = row.original;
-          return `${invite.use_count} / ${invite.max_uses || '∞'}`;
-        },
-        size: 100,
-      },
-      {
-        accessorKey: 'expires_at',
-        header: ({ column }) => (
-          <DataGridColumnHeader title="Expires" column={column} />
-        ),
-        cell: ({ row }) => (
-          <span>
-            {row.original.expires_at
-              ? new Date(row.original.expires_at).toLocaleString()
-              : 'Never'}
-          </span>
-        ),
-        size: 180,
-        enableSorting: true,
-        sortFn: 'datetime',
-      },
-      {
-        id: 'actions',
-        header: 'Actions',
-        cell: ({ row }) => {
-          const invite = row.original;
-          return (
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleCopyLink(invite.invite_code)}
-              >
-                Copy
-              </Button>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => setInviteToRevoke(invite)}
-              >
-                Revoke
-              </Button>
-            </div>
-          );
-        },
-        size: 150,
-      },
-    ],
-    []
-  );
-
-  const table = useTable({
-    features: dataGridFeatures,
-    columns,
-    data: invites,
-    getRowId: (invite) => invite.id,
-    pageCount: Math.ceil(invites.length / pagination.pageSize),
-    state: { pagination, sorting },
-    onPaginationChange: setPagination,
-    onSortingChange: setSorting,
-  });
-
   // ---------------------------------------------------------------------------
   // Render
   // ---------------------------------------------------------------------------
@@ -319,7 +345,9 @@ export function InviteSection({
               duration: prefersReducedMotion ? 0 : 0.2,
             }}
           >
-            <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
+            <p className="text-sm text-red-700 dark:text-red-400">
+              {error || 'Something went wrong'}
+            </p>
           </motion.div>
         )}
 
@@ -504,7 +532,8 @@ export function InviteSection({
         </div>
 
         <Button type="submit" disabled={isCreating}>
-          {isCreating ? 'Generating\u2026' : 'Generate Invite Link'}
+          {'Generate Invite Link'}
+          {isCreating && <Spinner className="size-3.5" />}
         </Button>
       </form>
 
@@ -513,20 +542,21 @@ export function InviteSection({
           Active Invites
         </h3>
 
-        {invites.length === 0 ? (
-          <p className="text-muted-foreground text-sm">No active invites.</p>
-        ) : (
-          <DataGrid table={table} recordCount={invites.length || 0}>
-            <div className="w-full space-y-2.5">
-              <DataGridContainer>
-                <DataGridScrollArea>
-                  <DataGridTable />
-                </DataGridScrollArea>
-              </DataGridContainer>
-              <DataGridPagination />
-            </div>
-          </DataGrid>
-        )}
+        <DataGrid
+          table={table}
+          recordCount={invites.length || 0}
+          emptyMessage="No active invites."
+          isLoading={isLoading}
+        >
+          <div className="w-full space-y-2.5">
+            <DataGridContainer>
+              <DataGridScrollArea>
+                <DataGridTable />
+              </DataGridScrollArea>
+            </DataGridContainer>
+            <DataGridPagination />
+          </div>
+        </DataGrid>
       </div>
 
       <AlertDialog
@@ -562,7 +592,8 @@ export function InviteSection({
                 confirmRevoke();
               }}
             >
-              {isRevoking ? 'Revoking...' : 'Revoke Invite'}
+              {'Revoke Invite'}
+              {isRevoking && <Spinner className="size-3.5" />}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

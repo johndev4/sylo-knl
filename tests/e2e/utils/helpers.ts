@@ -244,16 +244,18 @@ export async function performUiLogin(
     await beforeLoginCallback();
   }
 
+  await page.waitForLoadState('networkidle');
+
   // Locate email and password inputs
-  const emailInput = page.locator('#email');
-  const passwordInput = page.locator('#password');
+  const emailInput = page.locator('input[type="email"]');
+  const passwordInput = page.locator('input[type="password"]');
 
   // Email and password inputs should be present
-  await expect(emailInput).toBeVisible();
-  await expect(passwordInput).toBeVisible();
+  await expect(emailInput).toBeVisible({ timeout: 10000 });
+  await expect(passwordInput).toBeVisible({ timeout: 10000 });
 
   // Fill the email and password fields
-  await emailInput.fill(email);
+  await emailInput.fill(email, {});
   await passwordInput.fill(password);
 
   // Submit the login form

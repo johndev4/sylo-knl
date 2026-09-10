@@ -52,13 +52,16 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { CheckIcon, ChevronDown } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Skeleton } from '@/components/ui/skeleton';
+import { createClient } from '@/lib/supabase/client';
+import { getLibraryMembers } from '../queries';
 
 interface MemberTableProps {
   libraryId: string;
-  members: LibraryMember[];
   canManageMembers: boolean;
 }
 
+type MemberRole = 'ADMIN' | 'EDITOR' | 'VIEWER';
 const roleOptions = [
   {
     value: 'ADMIN',
@@ -86,20 +89,20 @@ const makeInitials = (displayName: string | null, email: string): string => {
     .slice(0, 2);
 };
 
-export function MemberTable({
-  libraryId,
-  members,
-  canManageMembers,
-}: MemberTableProps) {
+export function MemberTable({ libraryId, canManageMembers }: MemberTableProps) {
+  const [members, setMembers] = useState<LibraryMember[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 5,
   });
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+
   const prefersReducedMotion = useReducedMotion();
   const selectedMemberIds = Object.keys(rowSelection).filter((userId) =>
     members.some(
@@ -107,28 +110,47 @@ export function MemberTable({
     )
   );
 
-  // This reset all the component states function
-  const resetState = useCallback(() => {
+  useEffect(() => {
+    // Always reset fetch, update, and feedback states on mount.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMembers([]);
+    setIsLoading(true);
     setIsUpdating(false);
     setError('');
     setSuccess('');
   }, []);
 
   useEffect(() => {
-    return () => {
-      resetState();
+    const supabase = createClient();
+    const fetchLibraryMembers = async () => {
+      try {
+        const _members = await getLibraryMembers(libraryId, supabase);
+        setMembers(_members);
+      } catch (err) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setError((err as any)?.message);
+      } finally {
+        setIsLoading(false);
+      }
     };
-  }, [resetState]);
+    fetchLibraryMembers();
+  }, [libraryId]);
 
   const handleRoleChange = useCallback(
-    async (userId: string, newRole: string) => {
+    async (userId: string, newRole: MemberRole) => {
       try {
         setIsUpdating(true);
         setError('');
-        await updateLibraryMemberRole(
-          libraryId,
-          userId,
-          newRole as 'ADMIN' | 'EDITOR' | 'VIEWER'
+
+        // Perform the API call
+        await updateLibraryMemberRole(libraryId, userId, newRole);
+
+        // Use functional update to avoid needing 'members' in the dependency array
+        // Use .map() to ensure immutability (creates a new array/object)
+        setMembers((prevMembers) =>
+          prevMembers.map((m) =>
+            m.user_id === userId ? { ...m, role: newRole } : m
+          )
         );
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to update role');
@@ -141,18 +163,32 @@ export function MemberTable({
 
   const handleRemoveMember = useCallback(
     async (userId: string) => {
+      // Save current state in case we need to roll back
+      const previousMembers = members;
+      const previousSelection = rowSelection;
+
       try {
         setIsUpdating(true);
         setError('');
         setSuccess('');
-        await removeLibraryMember(libraryId, userId);
-        setRowSelection((previous) => {
-          const next = { ...previous };
-          delete next[userId];
-          return next;
+
+        // OPTIMISTIC UPDATE: Update UI immediately
+        setMembers((current) => current.filter((m) => m.user_id !== userId));
+        setRowSelection((prev) => {
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { [userId]: _, ...rest } = prev;
+          return rest;
         });
+
+        // Perform the actual API call
+        await removeLibraryMember(libraryId, userId);
+
         setSuccess('Member removed successfully');
       } catch (err) {
+        // ROLLBACK: If the API fails, restore the old state
+        setMembers(previousMembers);
+        setRowSelection(previousSelection);
+
         setError(
           err instanceof Error ? err.message : 'Failed to remove member'
         );
@@ -160,22 +196,41 @@ export function MemberTable({
         setIsUpdating(false);
       }
     },
-    [libraryId]
+    [libraryId, members, rowSelection] // Note: Now we need these in dependencies for the rollback
   );
 
-  const handleRemoveMultiple = async () => {
-    if (selectedMemberIds.length === 0) return;
-    try {
-      setIsUpdating(true);
-      setError('');
-      await removeMultipleLibraryMembers(libraryId, selectedMemberIds);
-      setRowSelection({});
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to remove members');
-    } finally {
-      setIsUpdating(false);
-    }
-  };
+  const handleRemoveMultiple = useCallback(
+    async (idsToRemove: string[]) => {
+      // Guard clause
+      if (idsToRemove.length === 0) return;
+
+      try {
+        setIsUpdating(true);
+        setError('');
+        setSuccess('');
+
+        // API Call
+        await removeMultipleLibraryMembers(libraryId, idsToRemove);
+
+        // Update Members (Fixes the Stale UI bug)
+        setMembers((current) =>
+          current.filter((member) => !idsToRemove.includes(member.user_id))
+        );
+
+        // Clear Selection
+        setRowSelection({});
+
+        setSuccess('Members removed successfully');
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : 'Failed to remove members'
+        );
+      } finally {
+        setIsUpdating(false);
+      }
+    },
+    [libraryId]
+  );
 
   const columns = useMemo<ColumnDef<DataGridFeatures, LibraryMember>[]>(() => {
     const allColumns: ColumnDef<DataGridFeatures, LibraryMember>[] = [
@@ -187,6 +242,9 @@ export function MemberTable({
         enableSorting: false,
         enableHiding: false,
         size: canManageMembers ? 48 : 0,
+        meta: {
+          skeleton: <Skeleton className={`h-4 w-4`} />,
+        },
       },
       {
         id: 'name',
@@ -227,6 +285,17 @@ export function MemberTable({
         size: 220,
         enableSorting: true,
         sortFn: 'alphanumeric',
+        meta: {
+          skeleton: (
+            <div className="flex h-[41px] items-center gap-3">
+              <Skeleton className="size-8 rounded-full" />
+              <div className="space-y-1">
+                <Skeleton className="h-5 w-24" />
+                <Skeleton className="h-4 w-16" />
+              </div>
+            </div>
+          ),
+        },
       },
       {
         accessorKey: 'role',
@@ -261,7 +330,10 @@ export function MemberTable({
                       <DropdownMenuItem
                         key={option.value}
                         onClick={() =>
-                          handleRoleChange(member.user_id, option.value)
+                          handleRoleChange(
+                            member.user_id,
+                            option.value as MemberRole
+                          )
                         }
                         disabled={option.value === member.role}
                         className="flex justify-between"
@@ -290,6 +362,9 @@ export function MemberTable({
           );
         },
         size: 150,
+        meta: {
+          skeleton: <Skeleton className="h-7 w-28" />,
+        },
       },
       {
         accessorKey: 'created_at',
@@ -304,6 +379,9 @@ export function MemberTable({
         size: 120,
         enableSorting: true,
         sortFn: 'datetime',
+        meta: {
+          skeleton: <Skeleton className="h-7 w-28" />,
+        },
       },
       {
         id: 'actions',
@@ -351,6 +429,9 @@ export function MemberTable({
         enableSorting: false,
         enableHiding: false,
         size: 110,
+        meta: {
+          skeleton: <Skeleton className="h-7 w-16" />,
+        },
       },
     ];
 
@@ -381,16 +462,21 @@ export function MemberTable({
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-xl font-semibold">Members</h2>
-            <p className="text-muted-foreground text-sm">
-              {members.length} members
-            </p>
+
+            {isLoading ? (
+              <Skeleton className="h-4 w-16" />
+            ) : (
+              <p className="text-muted-foreground text-sm">
+                {members.length} members
+              </p>
+            )}
           </div>
           {canManageMembers && selectedMemberIds.length > 0 && (
             <Button
               variant="destructive"
               size="sm"
-              disabled={isUpdating}
-              onClick={handleRemoveMultiple}
+              disabled={selectedMemberIds.length === 0 || isUpdating}
+              onClick={() => handleRemoveMultiple(selectedMemberIds)}
             >
               Remove {selectedMemberIds.length} member(s)
             </Button>
@@ -403,9 +489,14 @@ export function MemberTable({
           className="rounded border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-900/20"
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: prefersReducedMotion ? 0 : 0.2 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{
+            duration: prefersReducedMotion ? 0 : 0.2,
+          }}
         >
-          <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
+          <p className="text-sm text-red-700 dark:text-red-400">
+            {error || 'Something went wrong'}
+          </p>
         </motion.div>
       )}
 
@@ -414,7 +505,10 @@ export function MemberTable({
           className="rounded border border-green-200 bg-green-50 p-3 dark:border-green-800 dark:bg-green-900/20"
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: prefersReducedMotion ? 0 : 0.2 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{
+            duration: prefersReducedMotion ? 0 : 0.2,
+          }}
         >
           <p className="text-sm text-green-700 dark:text-green-400">
             {success}
@@ -422,22 +516,21 @@ export function MemberTable({
         </motion.div>
       )}
 
-      {members.length === 0 ? (
-        <div className="py-8 text-center">
-          <p className="text-muted-foreground">No members yet</p>
+      <DataGrid
+        table={table}
+        recordCount={members.length}
+        emptyMessage="No members yet."
+        isLoading={isLoading}
+      >
+        <div className="w-full space-y-2.5">
+          <DataGridContainer>
+            <DataGridScrollArea>
+              <DataGridTable />
+            </DataGridScrollArea>
+          </DataGridContainer>
+          <DataGridPagination />
         </div>
-      ) : (
-        <DataGrid table={table} recordCount={members.length}>
-          <div className="w-full space-y-2.5">
-            <DataGridContainer>
-              <DataGridScrollArea>
-                <DataGridTable />
-              </DataGridScrollArea>
-            </DataGridContainer>
-            <DataGridPagination />
-          </div>
-        </DataGrid>
-      )}
+      </DataGrid>
     </Card>
   );
 }
