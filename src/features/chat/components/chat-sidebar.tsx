@@ -47,7 +47,8 @@ const ROLE_BADGE_COLORS: Record<string, string> = {
   ADMIN: 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300',
   EDITOR:
     'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300',
-  VIEWER: 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400',
+  VIEWER:
+    'bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400',
 };
 
 export function ChatSidebar({
@@ -70,18 +71,20 @@ export function ChatSidebar({
 
   if (!isOpen) {
     return (
-      <div className="sticky top-0 flex h-[calc(100vh-4.5rem)] w-16 shrink-0 flex-col items-center border-r border-zinc-200/10 bg-zinc-50 py-4 transition-all duration-300 dark:border-zinc-800/20 dark:bg-[#09090b]">
+      <div className="sticky top-0 flex h-[calc(100vh-4.5rem)] w-16 shrink-0 flex-col items-center border-r border-neutral-200/10 bg-neutral-50 py-4 transition-all duration-300 dark:border-neutral-800/20 dark:bg-[#09090b]">
         <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsOpen(true)}
-              aria-label="Open sidebar"
-            >
-              <PanelLeft className="h-5 w-5" />
-            </Button>
-          </TooltipTrigger>
+          <TooltipTrigger
+            render={
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsOpen(true)}
+                aria-label="Open sidebar"
+              >
+                <PanelLeft className="h-5 w-5" />
+              </Button>
+            }
+          />
           <TooltipContent side="right">Open Sidebar</TooltipContent>
         </Tooltip>
 
@@ -95,9 +98,9 @@ export function ChatSidebar({
   }
 
   return (
-    <aside className="sticky top-0 flex h-[calc(100vh-4.5rem)] w-72 shrink-0 flex-col border-r border-zinc-200/10 bg-zinc-50 transition-all duration-300 dark:border-zinc-800/20 dark:bg-[#09090b]">
+    <aside className="sticky top-0 flex h-[calc(100vh-4.5rem)] w-72 shrink-0 flex-col border-r border-neutral-200/10 bg-neutral-50 transition-all duration-300 dark:border-neutral-800/20 dark:bg-[#09090b]">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-zinc-200/10 p-4 dark:border-zinc-800/20">
+      <div className="flex items-center justify-between border-b border-neutral-200/10 p-4 dark:border-neutral-800/20">
         <div className="flex items-center gap-2.5 overflow-hidden">
           <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 shadow-sm">
             <Sparkles className="size-4 text-white" />
@@ -124,12 +127,12 @@ export function ChatSidebar({
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         {/* Search Area */}
-        <div className="flex shrink-0 flex-col gap-3 border-b border-zinc-200/10 p-4 dark:border-zinc-800/20">
+        <div className="flex shrink-0 flex-col gap-3 border-b border-neutral-200/10 p-4 dark:border-neutral-800/20">
           <div className="relative">
             <Search className="text-muted-foreground absolute top-1/2 left-2.5 h-4 w-4 -translate-y-1/2" />
             <Input
               placeholder="Search libraries..."
-              className="focus-visible:ring-primary/30 h-8 border-transparent bg-zinc-100/50 pl-9 text-xs focus-visible:ring-1 dark:bg-zinc-900/50"
+              className="focus-visible:ring-primary/30 h-8 border-transparent bg-neutral-100/50 pl-9 text-xs focus-visible:ring-1 dark:bg-neutral-900/50"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -209,8 +212,8 @@ export function ChatSidebar({
                           className={cn(
                             'group relative flex w-full cursor-pointer items-center gap-3 overflow-hidden rounded-md px-3 py-2.5 text-sm transition-all',
                             isSelected
-                              ? 'text-foreground bg-zinc-200/50 font-semibold shadow-sm dark:bg-zinc-800/80'
-                              : 'text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900/50'
+                              ? 'text-foreground bg-neutral-200/50 font-semibold shadow-sm dark:bg-neutral-800/80'
+                              : 'text-muted-foreground hover:text-foreground hover:bg-neutral-100 dark:hover:bg-neutral-900/50'
                           )}
                           onClick={() => onToggleLibrary(lib.id)}
                         >
@@ -250,7 +253,7 @@ export function ChatSidebar({
       </div>
 
       {/* Footer Info */}
-      <div className="mt-auto flex shrink-0 flex-col gap-1.5 border-t border-zinc-200 bg-inherit p-4 dark:border-zinc-800/50">
+      <div className="mt-auto flex shrink-0 flex-col gap-1.5 border-t border-neutral-200 bg-inherit p-4 dark:border-neutral-800/50">
         <div className="text-muted-foreground/60 flex flex-col gap-1 text-[10px] leading-tight font-medium">
           <p>Querying {selectedIds.length} libraries</p>
           <p>Context-aware RAG active</p>

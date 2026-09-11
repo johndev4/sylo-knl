@@ -32,7 +32,7 @@ export default function AccountSettingsPageLoading() {
                 </div>
 
                 {/* Avatar Display Section */}
-                <div className="rounded-xl border border-zinc-200 bg-zinc-50/50 p-6 dark:border-zinc-800 dark:bg-zinc-900/50">
+                <div className="rounded-xl border border-neutral-200 bg-neutral-50/50 p-6 dark:border-neutral-800 dark:bg-neutral-900/50">
                   <Skeleton className={`mb-4 h-5 w-32`} />
 
                   <div className="flex flex-wrap gap-4">

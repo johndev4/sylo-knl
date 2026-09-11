@@ -20,7 +20,7 @@ This document helps agents understand the **Sylo** knowledge library application
 - **Auth & Database**: Supabase (PostgreSQL + pgvector for embeddings)
 - **AI System**: Vercel AI SDK with provider-agnostic LLM core (Google, Ollama)
 - **Styling**: Tailwind CSS v4 (Standard)
-- **Base Components**: shadcn/ui (Radix UI)
+- **Base Components**: shadcn/ui (Base UI)
 - **Interactive & Advanced UI**: Kokonut UI (Framer Motion)
 - **Block Editor**: BlockNote (Markdown-in/out, `editable` toggle for view/edit)
 - **Key Features**:
@@ -112,7 +112,7 @@ sylo-knl/
 │   │   └── api/                          → API routes (e.g. chat/route.ts)
 │   │
 │   ├── components/                       → Reusable UI components
-│   │   ├── ui/                           → shadcn/ui primitives (Radix UI or Base UI)
+│   │   ├── ui/                           → shadcn/ui primitives (Base UI)
 │   │   ├── kokonutui/                    → Kokonut UI components
 │   │   ├── layout/                       → App-wide layout components
 │   │   ├── providers/                    → React context providers
@@ -176,7 +176,6 @@ All agents MUST follow the GitHub instructions referenced below. These are injec
 - **[security-and-owasp.instructions.md](.github/instructions/security-and-owasp.instructions.md)** — OWASP Top 10 2025 (55+ anti-patterns, SQL injection, XSS, CSRF, auth failures)
 - **[nextjs.instructions.md](.github/instructions/nextjs.instructions.md)** — Next.js 16+ App Router best practices
 - **[nextjs-tailwind.instructions.md](.github/instructions/nextjs-tailwind.instructions.md)** — Tailwind + Shadcn conventions
-- **[sql-sp-generation.instructions.md](.github/instructions/sql-sp-generation.instructions.md)** — SQL & stored procedure patterns
 
 ---
 

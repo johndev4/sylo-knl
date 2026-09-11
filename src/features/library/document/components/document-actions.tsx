@@ -119,22 +119,24 @@ export function DocumentActions({
         )}
         {!isNew && !isEditMode && !isViewer && (
           <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={isDeleting}
-                className="text-destructive hover:bg-destructive/10 border-zinc-200 dark:border-zinc-800"
-                aria-label="Delete document"
-              >
-                {isDeleting ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Trash2 className="h-4 w-4" />
-                )}
-              </Button>
-            </AlertDialogTrigger>
+            <AlertDialogTrigger
+              render={
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={isDeleting}
+                  className="text-destructive hover:bg-destructive/10 border-neutral-200 dark:border-neutral-800"
+                  aria-label="Delete document"
+                >
+                  {isDeleting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4" />
+                  )}
+                </Button>
+              }
+            ></AlertDialogTrigger>
             {deleteDialog}
           </AlertDialog>
         )}
@@ -181,22 +183,24 @@ export function DocumentActions({
         )}
         {!isNew && !isEditMode && !isViewer && (
           <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={isDeleting}
-                className="text-destructive hover:bg-destructive/10 border-zinc-200 dark:border-zinc-800"
-                aria-label="Delete document(mobile)"
-              >
-                {isDeleting ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Trash2 className="h-4 w-4" />
-                )}
-              </Button>
-            </AlertDialogTrigger>
+            <AlertDialogTrigger
+              render={
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={isDeleting}
+                  className="text-destructive hover:bg-destructive/10 border-neutral-200 dark:border-neutral-800"
+                  aria-label="Delete document(mobile)"
+                >
+                  {isDeleting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4" />
+                  )}
+                </Button>
+              }
+            ></AlertDialogTrigger>
             {deleteDialog}
           </AlertDialog>
         )}

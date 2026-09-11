@@ -1,72 +1,53 @@
 import { cn } from '@/lib/utils';
-import Link from 'next/link';
 import { ThemeToggle } from './theme-toggle';
 import { AccountDropdown } from './account-dropdown';
 import { Navbar } from './navbar';
-import { getUserNonRedirect } from '@/lib/auth/get-user';
-import { Suspense } from 'react';
+import { EggIcon } from 'lucide-react';
+import Link from 'next/link';
 
 export function AppHeader() {
   return (
-    <nav
+    <div
       className={cn(
         'sticky top-0 z-40 w-full',
-        'border-b border-zinc-200/50 dark:border-zinc-800/50',
-        'bg-background/80 backdrop-blur-md',
-        'shadow-sm dark:shadow-none'
+        'border-b border-neutral-200/50 dark:border-neutral-800/50',
+        'bg-background/80 backdrop-blur-md'
       )}
     >
       <div className="flex h-16 w-full items-center justify-between px-4">
         <div className="flex items-center gap-2 md:gap-4">
           {/* Logo / Brand */}
           <Link
-            href="/"
             className={cn(
               'flex items-center gap-2 text-lg font-bold',
-              'text-foreground',
-              'focus-visible:ring-ring rounded-lg transition-opacity hover:opacity-80 focus-visible:ring-1 focus-visible:outline-none'
+              'text-foreground'
             )}
+            href="/"
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-zinc-900 text-zinc-50 shadow-sm dark:bg-zinc-100 dark:text-zinc-900">
-              <span className="text-xs font-bold">Sy</span>
+            <div
+              className={cn(
+                'flex h-8 w-8 items-center justify-center shadow-xs',
+                'bg-background dark:bg-background',
+                'rounded-md border border-neutral-200 dark:border-neutral-800'
+              )}
+            >
+              <EggIcon className="size-4.5" />
             </div>
-            <span className="hidden tracking-tight sm:inline">Sylo</span>
+            <span className="hidden tracking-wider uppercase sm:inline">
+              Sylo
+            </span>
           </Link>
 
           {/* Global Navigation */}
-          <Suspense fallback={null}>
-            <NavbarAsync />
-          </Suspense>
+          <Navbar />
         </div>
 
         {/* Theme Toggle & Account Dropdown */}
         <div className="flex items-center gap-3">
           <ThemeToggle />
-          <Suspense fallback={null}>
-            <AccountDropdownAsync />
-          </Suspense>
+          <AccountDropdown />
         </div>
       </div>
-    </nav>
+    </div>
   );
-}
-
-async function NavbarAsync() {
-  const user = await getUserNonRedirect();
-
-  if (!user) {
-    return null;
-  }
-
-  return user && <Navbar user={user} />;
-}
-
-async function AccountDropdownAsync() {
-  const user = await getUserNonRedirect();
-
-  if (!user) {
-    return null;
-  }
-
-  return user && <AccountDropdown user={user} />;
 }

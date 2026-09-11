@@ -81,22 +81,22 @@ export function LibrariesBentoGrid({ hubData }: LibraryGridProps) {
                   isFeatured ? 'md:col-span-2' : ''
                 )}
               >
-                <Card className="relative flex h-full flex-col overflow-hidden border border-zinc-200/50 bg-white/60 shadow-sm backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-zinc-300/50 hover:shadow-lg dark:border-zinc-800/50 dark:bg-zinc-950/60 dark:hover:border-zinc-700/50">
+                <Card className="relative flex h-full flex-col overflow-hidden border border-neutral-200/50 bg-white/60 shadow-sm backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-neutral-300/50 hover:shadow-lg dark:border-neutral-800/50 dark:bg-neutral-950/60 dark:hover:border-neutral-700/50">
                   <CardContent className="space-y-2 pb-4">
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex-1 overflow-hidden">
                         <CardTitle className="text-foreground truncate text-xl font-semibold">
                           {space.name}
                         </CardTitle>
-                        <CardDescription className="text-sm text-zinc-500 dark:text-zinc-400">
-                          <div className="w-fit shrink-0 rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-600 dark:bg-zinc-900 dark:text-zinc-300">
+                        <CardDescription className="text-sm text-neutral-500 dark:text-neutral-400">
+                          <div className="w-fit shrink-0 rounded-full bg-neutral-100 px-3 py-1 text-xs font-medium text-neutral-600 dark:bg-neutral-900 dark:text-neutral-300">
                             {dataItem.role}
                           </div>
                         </CardDescription>
                       </div>
                     </div>
 
-                    <div className="text-sm text-zinc-500 dark:text-zinc-400">
+                    <div className="text-sm text-neutral-500 dark:text-neutral-400">
                       Created {new Date(space.created_at).toLocaleDateString()}{' '}
                       &middot; {dataItem.memberCount} members &middot;{' '}
                       {dataItem.docCount} docs
@@ -108,32 +108,32 @@ export function LibrariesBentoGrid({ hubData }: LibraryGridProps) {
                       )}
                     >
                       <Button
-                        asChild
+                        render={
+                          <Link href={`/chat?libraryIds=${space.id}`}>
+                            <MessageSquare className="mr-2 h-4 w-4" />
+                            Chat
+                          </Link>
+                        }
                         variant="default"
                         className="w-full"
                         size="sm"
                         aria-label={`Open chat for ${space.name}`}
                         onClick={(e) => e.stopPropagation()}
-                      >
-                        <Link href={`/chat?libraryIds=${space.id}`}>
-                          <MessageSquare className="mr-2 h-4 w-4" />
-                          Chat
-                        </Link>
-                      </Button>
+                      />
 
                       <Button
-                        asChild
+                        render={
+                          <Link href={`/hub/libraries/${space.id}/documents`}>
+                            <FileText className="mr-2 h-4 w-4" />
+                            Docs
+                          </Link>
+                        }
                         variant="outline"
                         className="w-full"
                         size="sm"
                         aria-label={`View documents for ${space.name}`}
                         onClick={(e) => e.stopPropagation()}
-                      >
-                        <Link href={`/hub/libraries/${space.id}/documents`}>
-                          <FileText className="mr-2 h-4 w-4" />
-                          Docs
-                        </Link>
-                      </Button>
+                      />
                     </div>
                   </CardContent>
                 </Card>

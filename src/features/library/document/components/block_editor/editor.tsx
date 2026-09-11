@@ -79,7 +79,7 @@ const Editor: React.FC<EditorProps> = ({
 
   if (!initialContentLoaded) {
     return (
-      <div className="h-full animate-pulse rounded-lg bg-zinc-100/50 dark:bg-zinc-900/50"></div>
+      <div className="h-full animate-pulse rounded-lg bg-neutral-100/50 dark:bg-neutral-900/50"></div>
     );
   }
 

@@ -28,7 +28,7 @@ test.describe.serial('Library Invites', () => {
   test('owner can generate an invite link and see it in the active invites table', async ({
     page,
   }) => {
-    await page.goto(`/hub/libraries/${testData.testLibraryId}/members`);
+    await page.goto(`/hub/libraries/${testData.testLibraryId}/info/members`);
     await page.waitForLoadState('networkidle');
 
     // Navigate to settings and look for Invite Links section
@@ -39,7 +39,7 @@ test.describe.serial('Library Invites', () => {
     // Create a new invite
     await page.getByLabel('Invite member role', { exact: true }).click();
     await page
-      .getByRole('option', { name: 'Editor - Can create and edit content' })
+      .getByRole('menuitem', { name: 'Editor - Can create and edit content' })
       .click();
     await page.getByRole('button', { name: 'Generate Invite Link' }).click();
 
@@ -60,7 +60,7 @@ test.describe.serial('Library Invites', () => {
     context,
     browser,
   }) => {
-    await page.goto(`/hub/libraries/${testData.testLibraryId}/members`);
+    await page.goto(`/hub/libraries/${testData.testLibraryId}/info/members`);
     await page.waitForLoadState('networkidle');
 
     // Grant clipboard read permissions
@@ -93,7 +93,9 @@ test.describe.serial('Library Invites', () => {
       testData.testUser2Email,
       testData.testUser2Password,
       async () =>
-        await user2Page.getByRole('link', { name: 'Sign In to Join' }).click(),
+        await user2Page
+          .getByRole('button', { name: 'Sign In to Join', exact: true })
+          .click(),
       async () => await user2Page.waitForURL(`${inviteLinkPathname}`)
     );
 
@@ -104,7 +106,7 @@ test.describe.serial('Library Invites', () => {
     );
 
     // Verify that the second user is now a member of the library with the correct role
-    await page.goto(`/hub/libraries/${testData.testLibraryId}/members`);
+    await page.goto(`/hub/libraries/${testData.testLibraryId}/info/members`);
     const user2Row = page.locator('tr', { hasText: testData.testUser2Email });
     await expect(user2Row).toBeVisible();
     await expect(user2Row.locator('td', { hasText: 'EDITOR' })).toBeVisible();

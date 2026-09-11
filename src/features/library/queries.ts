@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { SupabaseClient } from '@supabase/supabase-js';
+import { SupabaseClient, User } from '@supabase/supabase-js';
 import {
   InviteSchema,
   LibraryIdSchema,
   LibraryMemberListSchema,
   TagSuggestionsQuerySchema,
+  UserLibraryListSchema,
 } from '@/features/library/library-schema';
 
 /**
@@ -30,16 +31,12 @@ export async function getLibraryName(
  *
  * @param libraryId - The unique identifier of the library
  * @param supabase - SupabaseClient instance for database operations
- * @param membership - The membership object containing the user's role in the library
  */
 export async function getLibraryMembers(
   libraryId: string,
-  supabase: SupabaseClient,
-  membership: { role: any } | null
+  supabase: SupabaseClient
 ) {
   console.log(`[DEBUG] fetchLibraryMembers called for: ${libraryId}`);
-
-  if (!membership) throw new Error('Access denied to library');
 
   // Fetch all members with user details
   const { data: members, error } = await supabase
@@ -50,7 +47,7 @@ export async function getLibraryMembers(
       user_id,
       role,
       created_at,
-      user:user_id(id, name, email, avatar_url)
+      user:user_id(id, name, email, avatar_url, use_avatar_url)
     `
     )
     .eq('library_id', libraryId)
@@ -69,17 +66,11 @@ export async function getLibraryMembers(
  *
  * @param libraryId - The unique identifier of the library
  * @param supabase - SupabaseClient instance for database operations
- * @param membership - The membership object containing the user's role in the library
  */
 export async function getLibraryInvites(
   libraryId: string,
-  supabase: SupabaseClient,
-  membership: { role: any } | null
+  supabase: SupabaseClient
 ) {
-  if (!membership || !['OWNER', 'ADMIN'].includes(membership.role)) {
-    throw new Error('Only owners and admins can view invites');
-  }
-
   const { data: invites, error } = await supabase
     .from('library_invites')
     .select(
@@ -197,4 +188,31 @@ export async function getLibraryTagSuggestions(
   );
 
   return suggestions.slice(0, MAX_TAG_SUGGESTIONS);
+}
+
+/**
+ * Retrieves all libraries that the current user is a member of.
+ *
+ * @param supabase - SupabaseClient instance for database operations
+ * @param user - User object containing the current user's information
+ */
+export async function getUserLibraries(supabase: SupabaseClient, user: User) {
+  const { data, error } = await supabase
+    .from('library_members')
+    .select('role, library:libraries(id, name)')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: true });
+
+  if (error) {
+    console.error('Failed to fetch user libraries:', error);
+    throw new Error('Failed to fetch libraries');
+  }
+
+  return UserLibraryListSchema.parse(
+    (data ?? []).map((m: any) => ({
+      id: m.library.id as string,
+      name: m.library.name as string,
+      role: m.role as string,
+    }))
+  );
 }

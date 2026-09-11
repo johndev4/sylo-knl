@@ -90,7 +90,7 @@ export function TagChipsInput({
       itemToStringValue={(item) => item}
       filter={null}
     >
-      <ScrollArea className="border-border rounded-lg border bg-transparent py-1 focus-within:ring-1 focus-within:ring-zinc-400 dark:focus-within:ring-zinc-600">
+      <ScrollArea className="border-border rounded-lg border bg-transparent py-1 focus-within:ring-1 focus-within:ring-neutral-400 dark:focus-within:ring-neutral-600">
         <div
           className="flex max-h-24 flex-wrap items-center gap-1.5 px-2"
           onClick={() => inputRef.current?.focus()}
@@ -98,7 +98,7 @@ export function TagChipsInput({
           {tags.map((tag) => (
             <span
               key={tag}
-              className="text-muted-foreground flex items-center gap-1 rounded-full bg-zinc-100 px-2.5 py-0.5 text-[10px] font-medium dark:bg-zinc-800"
+              className="text-muted-foreground flex items-center gap-1 rounded-full bg-neutral-100 px-2.5 py-0.5 text-[10px] font-medium dark:bg-neutral-800"
             >
               {tag}
               <button

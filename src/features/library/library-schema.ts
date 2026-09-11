@@ -38,6 +38,7 @@ export const LibraryMemberSchema = z.object({
       name: z.string().nullable(),
       email: z.string().email(),
       avatar_url: z.string().nullable(),
+      use_avatar_url: z.boolean(),
     })
     .optional(),
 });
@@ -73,6 +74,14 @@ export const InviteSchema = z.object({
     .optional(),
 });
 
+export const UserLibraryListSchema = z.array(
+  z.object({
+    id: z.string().uuid(),
+    name: z.string(),
+    role: UserLibraryRoleEnum,
+  })
+);
+
 // -----------------------------------------------------------------------------
 // Types
 // -----------------------------------------------------------------------------
@@ -88,3 +97,4 @@ export type LibraryMember = z.infer<typeof LibraryMemberSchema>;
 export type LibraryMemberList = z.infer<typeof LibraryMemberListSchema>;
 export type CreateInviteInput = z.infer<typeof CreateInviteInputSchema>;
 export type Invite = z.infer<typeof InviteSchema>;
+export type UserLibraryList = z.infer<typeof UserLibraryListSchema>;

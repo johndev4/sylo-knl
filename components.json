@@ -1,17 +1,17 @@
 {
   "$schema": "https://ui.shadcn.com/schema.json",
-  "style": "radix-nova",
+  "style": "base-vega",
   "rsc": true,
   "tsx": true,
   "tailwind": {
     "config": "",
     "css": "src/app/globals.css",
-    "baseColor": "zinc",
+    "baseColor": "neutral",
     "cssVariables": true,
     "prefix": ""
   },
   "iconLibrary": "lucide",
-  "rtl": true,
+  "rtl": false,
   "aliases": {
     "components": "@/components",
     "utils": "@/lib/utils",
@@ -23,6 +23,7 @@
   "menuAccent": "subtle",
   "registries": {
     "@kokonutui": "https://kokonutui.com/r/{name}.json",
-    "@ss-components": "https://shadcnstudio.com/r/components/{style}/{name}.json"
+    "@ss-components": "https://shadcnstudio.com/r/components/{style}/{name}.json",
+    "@reui": "https://reui.io/r/{style}/{name}.json"
   }
 }

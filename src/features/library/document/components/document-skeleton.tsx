@@ -19,7 +19,7 @@ export function DocumentSkeleton() {
       </div>
 
       {/* ── Metadata Bar Skeleton ────────────────────────────────────────── */}
-      <div className="border-border shrink-0 border-b bg-zinc-50/50 px-8 py-4 dark:bg-zinc-900/20">
+      <div className="border-border shrink-0 border-b bg-neutral-50/50 px-8 py-4 dark:bg-neutral-900/20">
         <div className="flex flex-col gap-3">
           {/* Metadata Row */}
           <div className="flex flex-wrap items-center gap-6">

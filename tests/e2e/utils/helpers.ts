@@ -1,4 +1,4 @@
-import { Page } from '@playwright/test';
+import { expect, Page } from '@playwright/test';
 import { SupabaseClient, createClient } from '@supabase/supabase-js';
 import fs from 'fs';
 
@@ -244,9 +244,19 @@ export async function performUiLogin(
     await beforeLoginCallback();
   }
 
+  await page.waitForLoadState('networkidle');
+
+  // Locate email and password inputs
+  const emailInput = page.locator('input[type="email"]');
+  const passwordInput = page.locator('input[type="password"]');
+
+  // Email and password inputs should be present
+  await expect(emailInput).toBeVisible({ timeout: 10000 });
+  await expect(passwordInput).toBeVisible({ timeout: 10000 });
+
   // Fill the email and password fields
-  await page.locator('input[type="email"]').fill(email);
-  await page.locator('input[type="password"]').fill(password);
+  await emailInput.fill(email, {});
+  await passwordInput.fill(password);
 
   // Submit the login form
   await page.locator('button[type="submit"]').click();

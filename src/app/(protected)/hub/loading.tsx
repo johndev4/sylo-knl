@@ -41,7 +41,7 @@ export default function HubPageLoading() {
 
         {/* Feature info card */}
         <div className="space-y-4">
-          <div className="rounded-xl border border-zinc-200 p-6 shadow-sm dark:border-zinc-800">
+          <div className="rounded-xl border border-neutral-200 p-6 shadow-sm dark:border-neutral-800">
             {/* CardHeader */}
             <div className="mb-4 space-y-2">
               <Skeleton className="h-5 w-32" />
@@ -49,11 +49,11 @@ export default function HubPageLoading() {
             </div>
             {/* CardContent – two feature rows */}
             <div className="grid gap-3">
-              <div className="rounded-3xl bg-zinc-100 p-4 dark:bg-zinc-950">
+              <div className="rounded-3xl bg-neutral-100 p-4 dark:bg-neutral-950">
                 <Skeleton className="h-4 w-36" />
                 <Skeleton className="mt-2 h-3 w-full" />
               </div>
-              <div className="rounded-3xl bg-zinc-100 p-4 dark:bg-zinc-950">
+              <div className="rounded-3xl bg-neutral-100 p-4 dark:bg-neutral-950">
                 <Skeleton className="h-4 w-40" />
                 <Skeleton className="mt-2 h-3 w-full" />
                 <Skeleton className="mt-1 h-3 w-4/5" />
@@ -78,7 +78,7 @@ export default function HubPageLoading() {
 
           {/* Right: View toggle pill + Create button */}
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1 rounded-lg border border-zinc-200 bg-zinc-100/50 p-1 dark:border-zinc-800 dark:bg-zinc-900/50">
+            <div className="flex items-center gap-1 rounded-lg border border-neutral-200 bg-neutral-100/50 p-1 dark:border-neutral-800 dark:bg-neutral-900/50">
               <Skeleton className="h-8 w-8 rounded-md" />
               <Skeleton className="h-8 w-8 rounded-md" />
             </div>
@@ -110,7 +110,7 @@ export default function HubPageLoading() {
 function LibraryCardSkeleton({ featured = false }: { featured?: boolean }) {
   return (
     <div className={featured ? 'h-full md:col-span-2' : 'h-full'}>
-      <div className="relative flex h-full flex-col overflow-hidden rounded-xl border border-zinc-200/50 bg-white/60 p-6 shadow-sm backdrop-blur-sm dark:border-zinc-800/50 dark:bg-zinc-950/60">
+      <div className="relative flex h-full flex-col overflow-hidden rounded-xl border border-neutral-200/50 bg-white/60 p-6 shadow-sm backdrop-blur-sm dark:border-neutral-800/50 dark:bg-neutral-950/60">
         <div className="space-y-4">
           {/* Library name + role badge */}
           <div className="flex items-start justify-between gap-3">

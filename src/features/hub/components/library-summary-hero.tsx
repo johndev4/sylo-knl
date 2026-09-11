@@ -20,7 +20,7 @@ export function LibrarySummaryHero({ hubData }: LibrarySummaryHeroProps) {
 
   return (
     <section className="mb-8 grid gap-4 xl:grid-cols-[1.8fr_1fr]">
-      <Card className="overflow-hidden border-0 bg-gradient-to-br from-slate-950 via-slate-900 to-zinc-950 text-white shadow-2xl">
+      <Card className="overflow-hidden border-0 bg-gradient-to-br from-slate-950 via-slate-900 to-neutral-950 text-white shadow-2xl">
         <CardContent className="space-y-6 p-8 sm:p-10">
           <div className="space-y-2">
             <p className="text-sm tracking-[0.24em] text-slate-300 uppercase">
@@ -53,7 +53,7 @@ export function LibrarySummaryHero({ hubData }: LibrarySummaryHeroProps) {
       </Card>
 
       <div className="space-y-4">
-        <Card className="border-zinc-200 shadow-sm dark:border-zinc-800">
+        <Card className="border-neutral-200 shadow-sm dark:border-neutral-800">
           <CardHeader>
             <CardTitle>AI-first search</CardTitle>
             <CardDescription>
@@ -61,13 +61,13 @@ export function LibrarySummaryHero({ hubData }: LibrarySummaryHeroProps) {
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3">
-            <div className="rounded-3xl bg-zinc-100 p-4 dark:bg-zinc-950">
+            <div className="rounded-3xl bg-neutral-100 p-4 dark:bg-neutral-950">
               <p className="text-sm font-medium">Fast context retrieval</p>
               <p className="text-muted-foreground mt-2 text-sm">
                 Every document is embedded and indexed for precise results.
               </p>
             </div>
-            <div className="rounded-3xl bg-zinc-100 p-4 dark:bg-zinc-950">
+            <div className="rounded-3xl bg-neutral-100 p-4 dark:bg-neutral-950">
               <p className="text-sm font-medium">Collaborative knowledge</p>
               <p className="text-muted-foreground mt-2 text-sm">
                 Invite teammates, share libraries, and reduce duplicated

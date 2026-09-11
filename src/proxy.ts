@@ -3,26 +3,19 @@ import type { NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 
 const LOGIN_PATH = '/login';
+const PROTECTED_ROUTES = ['/hub', '/chat', '/account'];
+
+// Validate env vars at build time
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? '';
+
+if (supabaseUrl === '' || supabaseKey === '') {
+  throw new Error('[AUTH GUARD] Missing Supabase env vars');
+}
 
 export async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
-  let response = NextResponse.next({ request });
-
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-
-  if (!supabaseUrl || !supabaseKey) {
-    console.error('[AUTH GUARD] Missing Supabase env vars');
-
-    if (pathname.startsWith('/hub')) {
-      const loginUrl = request.nextUrl.clone();
-      loginUrl.pathname = LOGIN_PATH;
-      loginUrl.searchParams.set('redirect', `${pathname}${search}`);
-      return NextResponse.redirect(loginUrl);
-    }
-
-    return response;
-  }
+  const response = NextResponse.next({ request });
 
   const supabase = createServerClient(supabaseUrl, supabaseKey, {
     cookies: {
@@ -30,11 +23,6 @@ export async function proxy(request: NextRequest) {
         return request.cookies.getAll();
       },
       setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value, options }) => {
-          request.cookies.set({ name, value, ...options });
-        });
-
-        response = NextResponse.next({ request });
         cookiesToSet.forEach(({ name, value, options }) => {
           response.cookies.set({ name, value, ...options });
         });
@@ -48,10 +36,9 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser();
   const isAuthenticated = Boolean(user) && !error;
 
+  // Redirect unauthenticated users away from protected routes
   if (
-    (pathname.startsWith('/hub') ||
-      pathname.startsWith('/chat') ||
-      pathname.startsWith('/account')) &&
+    PROTECTED_ROUTES.some((route) => pathname.startsWith(route)) &&
     !isAuthenticated
   ) {
     const loginUrl = request.nextUrl.clone();
@@ -60,9 +47,11 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
+  // Redirect authenticated users away from the login page
   if (pathname === LOGIN_PATH && isAuthenticated) {
     const hubUrl = request.nextUrl.clone();
     hubUrl.pathname = '/hub';
+    hubUrl.searchParams.delete('redirect'); // Remove the redirect param to avoid redirect loops
     return NextResponse.redirect(hubUrl);
   }
 

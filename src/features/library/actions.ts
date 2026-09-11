@@ -121,7 +121,7 @@ export async function updateLibraryName(libraryId: string, newName: string) {
     throw new Error(error.message || 'Failed to update library name');
   }
 
-  revalidatePath(`/hub/libraries/${libraryId}/settings`);
+  revalidatePath(`/hub/libraries/${libraryId}`);
   revalidatePath('/hub');
   return { success: true };
 }
@@ -391,7 +391,7 @@ export async function createLibraryInvite(
     throw new Error('Failed to create invite');
   }
 
-  revalidatePath(`/hub/libraries/${libraryId}/settings`);
+  revalidatePath(`/hub/libraries/${libraryId}`);
   return invite;
 }
 
@@ -435,6 +435,6 @@ export async function revokeLibraryInvite(libraryId: string, inviteId: string) {
     throw new Error('Invite not found');
   }
 
-  revalidatePath(`/hub/libraries/${libraryId}/settings`);
+  revalidatePath(`/hub/libraries/${libraryId}`);
   return { success: true };
 }

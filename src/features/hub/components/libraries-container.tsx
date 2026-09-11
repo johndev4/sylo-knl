@@ -136,20 +136,26 @@ export function LibrariesContainer({ hubData }: LibrariesContainerProps) {
 
           {/* Role Filter */}
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="w-full sm:w-auto">
-                {roleFilter ? `Role: ${roleFilter}` : 'All Roles'}
-                <ChevronDown className="ml-1 h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full sm:w-auto"
+                >
+                  {roleFilter ? `Role: ${roleFilter}` : 'All Roles'}
+                  <ChevronDown className="ml-1 h-4 w-4" />
+                </Button>
+              }
+            />
             <DropdownMenuContent align="start">
-              <DropdownMenuItem onSelect={() => setRoleFilter(null)}>
+              <DropdownMenuItem onClick={() => setRoleFilter(null)}>
                 All Roles
               </DropdownMenuItem>
               {availableRoles.map((role) => (
                 <DropdownMenuItem
                   key={role}
-                  onSelect={() => setRoleFilter(role)}
+                  onClick={() => setRoleFilter(role)}
                 >
                   {role}
                 </DropdownMenuItem>
@@ -159,19 +165,25 @@ export function LibrariesContainer({ hubData }: LibrariesContainerProps) {
 
           {/* Sort By */}
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="w-full sm:w-auto">
-                Sort:{' '}
-                {sortBy === 'created'
-                  ? 'Date'
-                  : sortBy === 'members'
-                    ? 'Members'
-                    : sortBy === 'documents'
-                      ? 'Documents'
-                      : 'Name'}
-                <ChevronDown className="ml-1 h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full sm:w-auto"
+                >
+                  Sort:{' '}
+                  {sortBy === 'created'
+                    ? 'Date'
+                    : sortBy === 'members'
+                      ? 'Members'
+                      : sortBy === 'documents'
+                        ? 'Documents'
+                        : 'Name'}
+                  <ChevronDown className="ml-1 h-4 w-4" />
+                </Button>
+              }
+            />
             <DropdownMenuContent align="end">
               {[
                 { value: 'name', label: 'Name' },
@@ -196,7 +208,7 @@ export function LibrariesContainer({ hubData }: LibrariesContainerProps) {
 
         {/* Right: View Toggle + Create */}
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1 rounded-lg border border-zinc-200 bg-zinc-100/50 p-1 dark:border-zinc-800 dark:bg-zinc-900/50">
+          <div className="flex items-center gap-1 rounded-lg border border-neutral-200 bg-neutral-100/50 p-1 dark:border-neutral-800 dark:bg-neutral-900/50">
             {(['grid', 'table'] as const).map((mode) => (
               <button
                 key={mode}
@@ -205,7 +217,7 @@ export function LibrariesContainer({ hubData }: LibrariesContainerProps) {
                   'focus-visible:ring-ring relative flex h-8 w-8 items-center justify-center rounded-md transition-colors outline-none focus-visible:ring-1 focus-visible:ring-offset-1',
                   viewMode === mode
                     ? 'text-foreground'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-zinc-200/50 dark:hover:bg-zinc-800/50'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-neutral-200/50 dark:hover:bg-neutral-800/50'
                 )}
                 title={`${mode.charAt(0).toUpperCase() + mode.slice(1)} view`}
                 aria-label={`${mode.charAt(0).toUpperCase() + mode.slice(1)} view`}
@@ -213,7 +225,7 @@ export function LibrariesContainer({ hubData }: LibrariesContainerProps) {
                 {viewMode === mode && (
                   <motion.div
                     layoutId="view-mode-pill"
-                    className="absolute inset-0 rounded-md bg-white shadow-sm dark:bg-zinc-800"
+                    className="absolute inset-0 rounded-md bg-white shadow-sm dark:bg-neutral-800"
                     transition={{ type: 'spring', bounce: 0.15, duration: 0.4 }}
                   />
                 )}
@@ -231,7 +243,7 @@ export function LibrariesContainer({ hubData }: LibrariesContainerProps) {
 
       {/* Results count */}
       <motion.div
-        className="text-sm text-zinc-600 dark:text-zinc-400"
+        className="text-sm text-neutral-600 dark:text-neutral-400"
         variants={panelVariants}
         layout
       >
@@ -251,7 +263,7 @@ export function LibrariesContainer({ hubData }: LibrariesContainerProps) {
             className="flex flex-col items-center justify-center py-12 text-center"
           >
             <p className="text-lg font-semibold">No libraries found</p>
-            <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+            <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
               {search || roleFilter
                 ? 'Try adjusting your filters or search'
                 : 'Create your first library to get started'}

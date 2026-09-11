@@ -31,12 +31,15 @@ async function LibraryLayoutAsync({ children, params }: LibraryLayoutProps) {
   return (
     <SidebarRefreshProvider>
       <SidebarProvider className="h-[calc(100vh-4.1rem)] min-h-0 flex-1">
-        <LibrarySidebar params={params} />
+        <LibrarySidebar userRole={membership.role} />
 
         <SidebarInset className="flex min-w-0 flex-1 flex-col overflow-hidden">
           <LibraryBreadcrumb params={params} />
-
-          <div className="bg-background relative flex min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto">
+          <div
+            className={
+              'bg-background relative flex min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto'
+            }
+          >
             {children}
           </div>
         </SidebarInset>

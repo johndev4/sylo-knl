@@ -17,10 +17,10 @@
 - [x] Color not sole means of conveying info (buttons have text, errors have icons)
 
 ### Operable ⚠️
-- [x] All functionality keyboard accessible (shadcn/ui + Radix built-in)
-- [x] No keyboard traps (Escape closes dialogs via Radix)
+- [x] All functionality keyboard accessible (shadcn/ui + Base UI built-in)
+- [x] No keyboard traps (Escape closes dialogs via Base UI)
 - [x] Skip link present on pages
-- [x] Focus indicator visible (Radix default styles)
+- [x] Focus indicator visible (Base UI default styles)
 - [x] Focus order matches visual order (DOM order correct)
 - [x] Animations respect `prefers-reduced-motion` ✅ NEW
 - [ ] Touch targets 24x24 CSS px (buttons/interactive elements)
@@ -47,7 +47,7 @@
 | Component | Status | Notes |
 |-----------|--------|-------|
 | navbar.tsx | ✅ PASS | Has semantic `<nav>`, skip link to main, keyboard nav works |
-| Sidebar/Navigation | ✅ PASS | Uses Radix primitives, keyboard accessible |
+| Sidebar/Navigation | ✅ PASS | Uses Base UI primitives, keyboard accessible |
 | Breadcrumbs | ⚠️ TBD | Need to verify if present and properly marked |
 
 ### Dialogs & Modals
@@ -204,7 +204,7 @@ npm run lint   # Check for any a11y warnings
 
 ## Notes for Production Deployment
 
-1. ✅ All shadcn/ui components use Radix Primitives (accessibility built-in)
+1. ✅ All shadcn/ui components use Base UI Primitives (accessibility built-in)
 2. ✅ Framer Motion respects `prefers-reduced-motion` (WCAG V5 compliant)
 3. ✅ Forms use proper semantic HTML with labels
 4. ✅ Navigation landmarks properly used

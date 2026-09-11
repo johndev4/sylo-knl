@@ -73,10 +73,10 @@ export function LibrariesTable({ hubData }: LibrariesTableProps) {
   /* ── Leave confirmation alert dialog ── */
   return (
     <>
-      <div className="w-full overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-800">
+      <div className="w-full overflow-x-auto rounded-lg border border-neutral-200 dark:border-neutral-800">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900/50">
+            <tr className="border-b border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900/50">
               <th className="px-4 py-3 text-left font-semibold">Library</th>
               <th className="px-4 py-3 text-left font-semibold">Your Role</th>
               <th className="px-4 py-3 text-center font-semibold">Members</th>
@@ -99,7 +99,7 @@ export function LibrariesTable({ hubData }: LibrariesTableProps) {
                     animate="visible"
                     exit="exit"
                     layout
-                    className="border-b border-zinc-200 transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900/50"
+                    className="border-b border-neutral-200 transition-colors hover:bg-neutral-50 dark:border-neutral-800 dark:hover:bg-neutral-900/50"
                   >
                     <td className="px-4 py-3 font-medium">{library.name}</td>
                     <td className="px-4 py-3">
@@ -109,42 +109,42 @@ export function LibrariesTable({ hubData }: LibrariesTableProps) {
                         {dataItem.role}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-center text-zinc-600 dark:text-zinc-400">
+                    <td className="px-4 py-3 text-center text-neutral-600 dark:text-neutral-400">
                       {dataItem.memberCount}
                     </td>
-                    <td className="px-4 py-3 text-center text-zinc-600 dark:text-zinc-400">
+                    <td className="px-4 py-3 text-center text-neutral-600 dark:text-neutral-400">
                       {dataItem.docCount}
                     </td>
-                    <td className="px-4 py-3 text-xs text-zinc-600 dark:text-zinc-400">
+                    <td className="px-4 py-3 text-xs text-neutral-600 dark:text-neutral-400">
                       {formatRelativeDate(library.created_at)}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <Button
-                          asChild
+                          render={
+                            <Link href={`/chat?libraryIds=${space.id}`}>
+                              <MessageSquare className="mr-2 h-4 w-4" />
+                              Chat
+                            </Link>
+                          }
                           variant="default"
                           size="sm"
                           aria-label={`Open chat for ${space.name}`}
                           onClick={(e) => e.stopPropagation()}
-                        >
-                          <Link href={`/chat?libraryIds=${space.id}`}>
-                            <MessageSquare className="mr-2 h-4 w-4" />
-                            Chat
-                          </Link>
-                        </Button>
+                        />
 
                         <Button
-                          asChild
+                          render={
+                            <Link href={`/hub/libraries/${space.id}/documents`}>
+                              <FileText className="mr-2 h-4 w-4" />
+                              Docs
+                            </Link>
+                          }
                           variant="outline"
                           size="sm"
                           aria-label={`View documents for ${space.name}`}
                           onClick={(e) => e.stopPropagation()}
-                        >
-                          <Link href={`/hub/libraries/${space.id}/documents`}>
-                            <FileText className="mr-2 h-4 w-4" />
-                            Docs
-                          </Link>
-                        </Button>
+                        />
                       </div>
                     </td>
                   </motion.tr>

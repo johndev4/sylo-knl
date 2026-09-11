@@ -1,8 +1,7 @@
 'use client';
 
-import Image from 'next/image';
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { LogOut, Settings } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { getProfileDropdownUserInfo } from '@/features/user/queries';
@@ -14,18 +13,32 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuGroup,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
-import { User } from '@supabase/supabase-js';
 import { Spinner } from '../ui/spinner';
 import { ProfileDropdownUserInfo } from '@/features/user/user-schema';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { logout } from '@/features/auth/actions';
+import { useSession } from '../providers/auth-provider';
 
-interface AccountDropdownProps {
-  user: User | null;
-}
+// Utility that returns 2-letter initials from a name or email.
+const makeInitials = (displayName: string | null, email: string): string => {
+  const source = displayName || email.split('@')[0];
+  return source
+    .split(/[\s._-]+/)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+};
 
-export function AccountDropdown({ user }: AccountDropdownProps) {
+export function AccountDropdown() {
+  const { user } = useSession();
+  const pathname = usePathname();
   const router = useRouter();
+
   const [isOpen, setIsOpen] = useState(false);
   const [userInfo, setUserInfo] = useState<ProfileDropdownUserInfo | null>(
     null
@@ -34,16 +47,13 @@ export function AccountDropdown({ user }: AccountDropdownProps) {
 
   // Fetch user profile on mount
   useEffect(() => {
-    const supabase = createClient();
+    if (!user || pathname === '/login') {
+      return;
+    }
 
     const fetchUserInfo = async () => {
       try {
-        if (!user) {
-          setUserInfo(null);
-          setIsLoading(false);
-          return;
-        }
-
+        const supabase = createClient();
         const data = await getProfileDropdownUserInfo(supabase, user);
         setUserInfo(data);
       } catch (err) {
@@ -54,166 +64,139 @@ export function AccountDropdown({ user }: AccountDropdownProps) {
     };
 
     fetchUserInfo();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session?.user) {
-        fetchUserInfo();
-      } else {
-        setUserInfo(null);
-        setIsLoading(false);
-      }
-    });
-
-    // Listen for profile updates from other components (like Settings page)
-    window.addEventListener('profile-updated', fetchUserInfo);
-
-    return () => {
-      subscription.unsubscribe();
-      window.removeEventListener('profile-updated', fetchUserInfo);
-    };
-  }, [user]);
+  }, [pathname, user]);
 
   const handleLogout = async () => {
     try {
-      const supabase = createClient();
-      await supabase.auth.signOut();
       setIsOpen(false);
+      await logout();
       window.location.replace('/login');
-      window.history.replaceState(null, '', '/login');
     } catch (err) {
       console.error('Logout failed:', err);
     }
   };
 
-  const getInitials = (displayName: string | null, email: string): string => {
-    const source = displayName || email.split('@')[0];
-    return source
-      .split(/[\s._-]+/)
-      .slice(0, 2)
-      .map((part) => part[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  };
+  // ---------------------------------------------------------------------------
+  // Render
+  // ---------------------------------------------------------------------------
 
+  // Prevent rendering for guests or when viewing the login screen
+  if (!user || pathname === '/login') {
+    return null;
+  }
+
+  // Show loading state while fetching user info
   if (isLoading) {
     return (
       <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-        <DropdownMenuTrigger asChild>
-          <button
-            className={cn(
-              'flex items-center gap-2 rounded-full py-1.5 pr-3 pl-1.5',
-              'bg-zinc-100/80 hover:bg-zinc-200/80 dark:bg-zinc-800/50 dark:hover:bg-zinc-800',
-              'border border-zinc-200/50 transition-colors outline-none dark:border-zinc-700/50'
-            )}
-            aria-label="Account menu"
-          >
-            {/* Avatar */}
-            <div
+        <DropdownMenuTrigger
+          render={
+            <button
               className={cn(
-                'flex size-7 items-center justify-center rounded-full text-xs font-semibold',
-                'border border-zinc-200/50 bg-white text-zinc-700 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300'
+                'flex items-center gap-2 rounded-full py-1.5 pr-3 pl-1.5',
+                'bg-neutral-100/80 hover:bg-neutral-200/80 dark:bg-neutral-800/50 dark:hover:bg-neutral-800',
+                'border border-neutral-200/50 transition-colors outline-none dark:border-neutral-700/50'
               )}
+              aria-label="Account menu"
             >
-              <Spinner className="h-7 w-7" />
-            </div>
-          </button>
-        </DropdownMenuTrigger>
+              {/* Avatar */}
+              <div
+                className={cn(
+                  'flex size-7 items-center justify-center rounded-full text-xs font-semibold',
+                  'border border-neutral-200/50 bg-white text-neutral-700 shadow-sm dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300'
+                )}
+              >
+                <Spinner className="h-7 w-7" />
+              </div>
+            </button>
+          }
+        />
       </DropdownMenu>
     );
   }
 
-  // Don't render if user is not authenticated
+  // Don't render if userInfo is not found
   if (!userInfo) {
     return null;
   }
 
-  const initials = getInitials(userInfo.name!, userInfo.email);
-  const shouldUseAvatarUrl = userInfo?.useAvatarUrl && userInfo?.avatarUrl;
+  const initials = makeInitials(userInfo.name!, userInfo.email);
+  const shouldUseAvatarUrl = userInfo.useAvatarUrl && userInfo.avatarUrl;
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-      <DropdownMenuTrigger asChild>
-        <button
-          className={cn(
-            'flex items-center gap-2 rounded-full py-1.5 pr-3 pl-1.5',
-            'bg-zinc-100/80 hover:bg-zinc-200/80 dark:bg-zinc-800/50 dark:hover:bg-zinc-800',
-            'border border-zinc-200/50 transition-colors outline-none dark:border-zinc-700/50'
-          )}
-          aria-label="Account menu"
-        >
-          {/* Avatar */}
-          {shouldUseAvatarUrl ? (
-            <Image
-              src={userInfo.avatarUrl!}
-              alt={userInfo.name || 'User avatar'}
-              width={28}
-              height={28}
-              unoptimized
-              className="size-7 rounded-full object-cover"
-            />
-          ) : (
-            <div
-              className={cn(
-                'flex size-7 items-center justify-center rounded-full text-xs font-semibold',
-                'border border-zinc-200/50 bg-white text-zinc-700 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300'
+      <DropdownMenuTrigger
+        render={
+          <button
+            className={cn(
+              'flex items-center gap-2 rounded-full py-1.5 pr-3 pl-1.5',
+              'bg-neutral-100/80 hover:bg-neutral-200/80 dark:bg-neutral-800/50 dark:hover:bg-neutral-800',
+              'border border-neutral-200/50 transition-colors outline-none dark:border-neutral-700/50'
+            )}
+            aria-label="Account menu"
+          >
+            <Avatar>
+              {shouldUseAvatarUrl && (
+                <AvatarImage
+                  src={userInfo.avatarUrl!}
+                  alt={userInfo.name || 'User avatar'}
+                />
               )}
-            >
-              {initials}
-            </div>
-          )}
+              <AvatarFallback>{initials}</AvatarFallback>
+            </Avatar>
 
-          {/* Display Name (hidden on mobile) */}
-          {userInfo && (
-            <span className="text-foreground hidden max-w-[150px] truncate text-sm font-medium sm:inline">
-              {userInfo.name || userInfo.email}
-            </span>
-          )}
-        </button>
-      </DropdownMenuTrigger>
+            {/* Display Name (hidden on mobile) */}
+            {userInfo && (
+              <span className="text-foreground hidden max-w-[150px] truncate text-sm font-medium sm:inline">
+                {userInfo.name || userInfo.email}
+              </span>
+            )}
+          </button>
+        }
+      />
 
-      <DropdownMenuContent align="end" className="w-56">
-        {/* User Profile Header */}
-        <DropdownMenuLabel>Account</DropdownMenuLabel>
-        <div className="px-3 py-2">
-          {userInfo && (
-            <>
-              <p className="text-foreground truncate text-sm font-semibold">
-                {userInfo.name || 'User'}
-              </p>
-              <p className="text-foreground/60 truncate text-xs">
-                {userInfo.email}
-              </p>
-            </>
-          )}
-        </div>
+      <DropdownMenuGroup>
+        <DropdownMenuContent align="end" className="w-56">
+          {/* User Profile Header */}
+          <DropdownMenuLabel>Account</DropdownMenuLabel>
+          <div className="px-3 py-2">
+            {userInfo && (
+              <>
+                <p className="text-foreground truncate text-sm font-semibold">
+                  {userInfo.name || 'User'}
+                </p>
+                <p className="text-foreground/60 truncate text-xs">
+                  {userInfo.email}
+                </p>
+              </>
+            )}
+          </div>
 
-        <DropdownMenuSeparator />
+          <DropdownMenuSeparator />
 
-        {/* Account Settings */}
-        <DropdownMenuItem onClick={() => router.push('/account/settings')}>
-          <Settings className="h-4 w-4" />
-          <span>Account Settings</span>
-        </DropdownMenuItem>
+          {/* Account Settings */}
+          <DropdownMenuItem onClick={() => router.push('/account/settings')}>
+            <Settings className="h-4 w-4" />
+            <span>Account Settings</span>
+          </DropdownMenuItem>
 
-        <DropdownMenuSeparator />
+          <DropdownMenuSeparator />
 
-        {/* Theme Selection */}
-        <ThemeSubmenu />
+          {/* Theme Selection */}
+          <ThemeSubmenu />
 
-        <DropdownMenuSeparator />
+          <DropdownMenuSeparator />
 
-        {/* Logout Button */}
-        <DropdownMenuItem
-          className="text-destructive focus:bg-destructive/10"
-          onClick={handleLogout}
-        >
-          <LogOut className="h-4 w-4" />
-          <span>Logout</span>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
+          {/* Logout Button */}
+          <DropdownMenuItem
+            className="text-destructive focus:bg-destructive/10"
+            onClick={handleLogout}
+          >
+            <LogOut className="h-4 w-4" />
+            <span>Logout</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenuGroup>
     </DropdownMenu>
   );
 }
