@@ -1,6 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useTransition } from 'react';
+import { useSWRConfig } from 'swr';
 import Image from 'next/image';
 
 import {
@@ -25,7 +26,9 @@ import { cn } from '@/lib/utils';
 import { Check } from 'lucide-react';
 import { updateUserProfile } from '@/features/user/actions';
 import { VALID_TIMEZONES } from '@/lib/constants';
+import { SWR_PROFILE_KEY } from '@/features/user/queries';
 import { UserProfile } from '../user-schema';
+import { Spinner } from '@/components/ui/spinner';
 
 interface FormError {
   field: string;
@@ -60,7 +63,8 @@ export default function AccountSettingsForm({
     useAvatarUrl: initialProfile.useAvatarUrl ?? true,
   });
 
-  const [submitting, setSubmitting] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const { mutate } = useSWRConfig();
   const [errors, setErrors] = useState<FormError[]>([]);
   const [successMessage, setSuccessMessage] = useState('');
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -80,10 +84,10 @@ export default function AccountSettingsForm({
     };
   }, [formData, profile]);
 
-  const canSave = isDirty && isValid && !submitting;
+  const canSave = isDirty && isValid && !isPending;
 
   const getSaveButtonDescription = () => {
-    if (submitting) return 'Saving your changes...';
+    if (isPending) return 'Saving your changes…';
     if (saveSuccess) return 'Changes saved successfully!';
     if (!profile) return '';
     if (!isDirty) return 'No changes have been made to your profile yet.';
@@ -110,65 +114,62 @@ export default function AccountSettingsForm({
     setErrors((prev) => prev.filter((error) => error.field !== name));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     setErrors([]);
     setSuccessMessage('');
 
-    try {
-      setSubmitting(true);
+    startTransition(async () => {
+      try {
+        const updatedProfile = await updateUserProfile(formData);
 
-      const updatedProfile = await updateUserProfile(formData);
+        setProfile(updatedProfile);
+        setSuccessMessage('Profile updated successfully!');
+        setSaveSuccess(true);
 
-      setProfile(updatedProfile);
-      setSuccessMessage('Profile updated successfully!');
-      setSaveSuccess(true);
+        // Revalidate the AccountDropdown via SWR — no custom events needed.
+        await mutate(SWR_PROFILE_KEY);
 
-      // Notify other components (like the Navbar)
-      // that the profile has changed.
-      window.dispatchEvent(new Event('profile-updated'));
+        setTimeout(() => {
+          setSuccessMessage('');
+          setSaveSuccess(false);
+        }, 3000);
+      } catch (error) {
+        console.error('Error updating profile:', error);
 
-      setTimeout(() => {
-        setSuccessMessage('');
-        setSaveSuccess(false);
-      }, 3000);
-    } catch (error) {
-      console.error('Error updating profile:', error);
+        // Handle Zod validation errors
+        if (
+          error &&
+          typeof error === 'object' &&
+          'issues' in error &&
+          Array.isArray((error as { issues: unknown }).issues)
+        ) {
+          const zodError = error as {
+            issues: Array<{
+              path: (string | number)[];
+              message: string;
+            }>;
+          };
 
-      // Handle Zod validation errors
-      if (
-        error &&
-        typeof error === 'object' &&
-        'issues' in error &&
-        Array.isArray((error as { issues: unknown }).issues)
-      ) {
-        const zodError = error as {
-          issues: Array<{
-            path: (string | number)[];
-            message: string;
-          }>;
-        };
-
-        setErrors(
-          zodError.issues.map((issue) => ({
-            field: issue.path.join('.'),
-            message: issue.message,
-          }))
-        );
-      } else {
-        setErrors([
-          {
-            field: 'general',
-            message:
-              (error instanceof Error && error.message) ||
-              'An error occurred. Please try again.',
-          },
-        ]);
+          setErrors(
+            zodError.issues.map((issue) => ({
+              field: issue.path.join('.'),
+              message: issue.message,
+            }))
+          );
+        } else {
+          setErrors([
+            {
+              field: 'general',
+              message:
+                (error instanceof Error && error.message) ||
+                'An error occurred. Please try again.',
+            },
+          ]);
+        }
       }
-    } finally {
-      setSubmitting(false);
-    }
+    });
   };
 
   const getFieldError = (field: string) => {
@@ -356,7 +357,7 @@ export default function AccountSettingsForm({
                       placeholder="Your name"
                       value={formData.name}
                       onChange={handleChange}
-                      disabled={submitting}
+                      disabled={isPending}
                       className={`mt-1 ${
                         getFieldError('name') ? 'border-destructive' : ''
                       }`}
@@ -380,7 +381,7 @@ export default function AccountSettingsForm({
                       placeholder="Tell us about yourself (optional)"
                       value={formData.bio}
                       onChange={handleChange}
-                      disabled={submitting}
+                      disabled={isPending}
                       className={`mt-1 ${
                         getFieldError('bio') ? 'border-destructive' : ''
                       }`}
@@ -421,7 +422,7 @@ export default function AccountSettingsForm({
                           prev.filter((error) => error.field !== 'timezone')
                         );
                       }}
-                      disabled={submitting}
+                      disabled={isPending}
                     >
                       <SelectTrigger
                         id="timezone"
@@ -459,7 +460,7 @@ export default function AccountSettingsForm({
                       isDirty && !isValid
                         ? 'text-destructive opacity-100'
                         : 'text-muted-foreground opacity-70',
-                      !isDirty && !submitting && !saveSuccess
+                      !isDirty && !isPending && !saveSuccess
                         ? 'hidden sm:block'
                         : ''
                     )}
@@ -473,28 +474,16 @@ export default function AccountSettingsForm({
                       type="submit"
                       aria-disabled={!canSave}
                       aria-describedby="save-hint"
-                      disabled={submitting}
+                      disabled={isPending || !canSave}
                       className={cn(
-                        'flex-1 transition-all duration-200 sm:min-w-[140px]',
+                        'flex-1 transition-[opacity,transform,colors] duration-200 sm:min-w-[140px]',
                         !canSave &&
-                          !submitting &&
+                          !isPending &&
                           'cursor-not-allowed opacity-50 contrast-more:opacity-70'
                       )}
-                      onClick={(e) => {
-                        if (!canSave && !submitting) {
-                          e.preventDefault();
-                          return;
-                        }
-                      }}
                     >
-                      {submitting ? (
-                        <div className="flex items-center gap-2">
-                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-solid border-current border-r-transparent" />
-                          <span>Saving...</span>
-                        </div>
-                      ) : (
-                        'Save Changes'
-                      )}
+                      {isPending && <Spinner className="h-4 w-4" />}
+                      <span>Save Changes</span>
                     </Button>
                   </div>
                 </div>

@@ -532,8 +532,8 @@ export function InviteSection({ libraryId }: InviteSectionProps) {
         </div>
 
         <Button type="submit" disabled={isCreating}>
+          {isCreating && <Spinner className="h-4 w-4" />}
           {'Generate Invite Link'}
-          {isCreating && <Spinner className="size-3.5" />}
         </Button>
       </form>
 
@@ -592,8 +592,8 @@ export function InviteSection({ libraryId }: InviteSectionProps) {
                 confirmRevoke();
               }}
             >
+              {isRevoking && <Spinner className="h-4 w-4" />}
               {'Revoke Invite'}
-              {isRevoking && <Spinner className="size-3.5" />}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

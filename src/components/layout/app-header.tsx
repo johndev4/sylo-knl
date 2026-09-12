@@ -4,6 +4,12 @@ import { AccountDropdown } from './account-dropdown';
 import { Navbar } from './navbar';
 import { EggIcon } from 'lucide-react';
 import Link from 'next/link';
+import { createClient } from '@/lib/supabase/server';
+import { getProfileDropdownUserInfo } from '@/features/user/queries';
+import { getUserNonRedirect } from '@/lib/auth/get-user';
+import { Suspense } from 'react';
+import { DropdownMenu, DropdownMenuTrigger } from '../ui/dropdown-menu';
+import { Spinner } from '../ui/spinner';
 
 export function AppHeader() {
   return (
@@ -45,9 +51,51 @@ export function AppHeader() {
         {/* Theme Toggle & Account Dropdown */}
         <div className="flex items-center gap-3">
           <ThemeToggle />
-          <AccountDropdown />
+          <Suspense fallback={<AccountDropdownLoading />}>
+            <AccountDropdownWrapper />
+          </Suspense>
         </div>
       </div>
     </div>
+  );
+}
+
+async function AccountDropdownWrapper() {
+  const user = await getUserNonRedirect();
+  const userProfile = await createClient().then((supabase) =>
+    user ? getProfileDropdownUserInfo(supabase, user) : null
+  );
+
+  return <AccountDropdown initialUserInfo={userProfile} />;
+}
+
+function AccountDropdownLoading() {
+  return (
+    <DropdownMenu open={false}>
+      <DropdownMenuTrigger
+        disabled
+        aria-disabled
+        render={
+          <button
+            className={cn(
+              'flex items-center gap-2 rounded-full py-1.5 pr-3 pl-1.5',
+              'bg-neutral-100/80 hover:bg-neutral-200/80 dark:bg-neutral-800/50 dark:hover:bg-neutral-800',
+              'border border-neutral-200/50 transition-colors outline-none dark:border-neutral-700/50'
+            )}
+            aria-label="Account menu"
+          >
+            {/* Avatar */}
+            <div
+              className={cn(
+                'flex size-7 items-center justify-center rounded-full text-xs font-semibold',
+                'border border-neutral-200/50 bg-white text-neutral-700 shadow-sm dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300'
+              )}
+            >
+              <Spinner className="h-7 w-7" />
+            </div>
+          </button>
+        }
+      />
+    </DropdownMenu>
   );
 }

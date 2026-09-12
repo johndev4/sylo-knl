@@ -4,6 +4,9 @@ import {
   UserProfileSchema,
 } from './user-schema';
 
+/** Shared SWR cache key for the account-dropdown profile data. */
+export const SWR_PROFILE_KEY = '/user/profile-dropdown';
+
 /**
  * Retrieves the user profile for the currently authenticated user.
  *
