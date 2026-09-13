@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { redirect, useParams, usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -39,6 +39,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Spinner } from '@/components/ui/spinner';
 import { getDocuments } from '@/features/library/document/queries';
+import { getLibraryAllTags } from '@/features/library/queries';
 import { DocumentListItem } from '@/features/library/document/document-schema';
 import { createClient } from '@/lib/supabase/client';
 import {
@@ -67,9 +68,15 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
   const [documents, setDocuments] = useState<DocumentListItem[]>([]);
   const [totalDocs, setTotalDocs] = useState(0);
   const [page, setPage] = useState(1);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const [selectedTag, setSelectedTag] = useState<string>('ALL');
+  const [availableTags, setAvailableTags] = useState<string[]>([]);
+
+  // Ref to track the latest request to avoid out-of-order responses
+  const activeRequestIdRef = useRef(0);
 
   const [isClient, setIsClient] = useState(false);
   useEffect(() => {
@@ -77,21 +84,72 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
     setIsClient(true);
   }, []);
 
-  const fetchDocuments = useCallback(
-    async (pageToLoad = 1) => {
-      if (!libraryId) return;
-      setIsLoading(true);
+  // Debounce search query input by 300ms
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Load distinct tags for library filter dropdown
+  useEffect(() => {
+    if (!libraryId) return;
+    let isCancelled = false;
+
+    (async () => {
       try {
         const supabase = await createClient();
+        const tags = await getLibraryAllTags(libraryId, supabase);
+        if (!isCancelled) {
+          setAvailableTags(tags);
+        }
+      } catch (error) {
+        console.error('Failed to fetch library tags:', error);
+      }
+    })();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [libraryId, refreshKey]);
+
+  // Fetch documents directly from the backend with current filters
+  const fetchDocuments = useCallback(
+    async (
+      pageToLoad = 1,
+      searchTerm = debouncedSearchQuery,
+      tagFilter = selectedTag
+    ) => {
+      if (!libraryId) return;
+
+      const requestId = ++activeRequestIdRef.current;
+      setIsLoading(true);
+
+      try {
+        const supabase = await createClient();
+        const trimmedSearch = searchTerm.trim();
+        const filterTags =
+          tagFilter && tagFilter !== 'ALL' ? [tagFilter] : undefined;
+
         const data = await getDocuments(
           {
             libraryId,
             limit: 100,
             page: pageToLoad,
+            search: trimmedSearch || undefined,
+            tags: filterTags,
           },
           supabase,
           user
         );
+
+        // Discard stale response if a newer request was dispatched
+        if (requestId !== activeRequestIdRef.current) {
+          return;
+        }
+
         if (pageToLoad === 1) {
           setDocuments(data.data || []);
         } else {
@@ -99,45 +157,40 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
         }
         setTotalDocs(data.metadata?.total || 0);
       } catch (error) {
-        console.error('Failed to fetch documents:', error);
+        if (requestId === activeRequestIdRef.current) {
+          console.error('Failed to fetch documents:', error);
+        }
       } finally {
-        setIsLoading(false);
+        if (requestId === activeRequestIdRef.current) {
+          setIsLoading(false);
+          setIsInitialLoading(false);
+        }
       }
     },
-    [libraryId, user]
+    [libraryId, user, debouncedSearchQuery, selectedTag]
   );
 
+  // Trigger backend fetch when search filter, tag filter, or refreshKey changes
   useEffect(() => {
-    (async () => {
-      setPage(1); // Reset to page 1 on refresh
-      fetchDocuments(1);
-    })();
-  }, [fetchDocuments, refreshKey]);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setPage(1);
+    fetchDocuments(1, debouncedSearchQuery, selectedTag);
+  }, [debouncedSearchQuery, selectedTag, refreshKey, fetchDocuments]);
 
-  // Extract all unique tags
+  // Combine ALL with fetched library tags and any tags on current documents
   const allTags = useMemo(() => {
-    const tags = new Set<string>();
+    const tags = new Set<string>(availableTags);
     documents.forEach((doc) => {
       doc.tags?.forEach((tag) => tags.add(tag.toUpperCase()));
     });
     return ['ALL', ...Array.from(tags).sort()];
-  }, [documents]);
-
-  // Filter documents based on search and selected tag
-  const filteredDocuments = useMemo(() => {
-    return documents.filter((doc) => {
-      const matchesSearch = doc.title
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase());
-      const matchesTag =
-        selectedTag === 'ALL' ||
-        (doc.tags && doc.tags.some((t) => t.toUpperCase() === selectedTag));
-      return matchesSearch && matchesTag;
-    });
-  }, [documents, searchQuery, selectedTag]);
+  }, [availableTags, documents]);
 
   const isAtLimit = totalDocs >= 500;
   const newDocumentPath = `/hub/libraries/${libraryId}/documents/new`;
+
+  const isSearching =
+    searchQuery !== debouncedSearchQuery || (isLoading && page === 1);
 
   return (
     isClient && (
@@ -145,7 +198,7 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
         <SidebarContent aria-label="Sidebar Document List Content">
           {/* Fixed Filters Area (Hidden when collapsed into icon mode) */}
           <div className="border-sidebar-border flex shrink-0 flex-col gap-2.5 border-b p-3 group-data-[collapsible=icon]:hidden">
-            {isLoading ? (
+            {isInitialLoading ? (
               <div className="space-y-3 p-2">
                 <Skeleton className="h-5 w-full rounded-md" />
                 <Skeleton className="h-5 w-20 rounded-md" />
@@ -156,10 +209,13 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
                   <Search className="text-muted-foreground absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2" />
                   <Input
                     placeholder="Search docs..."
-                    className="focus-visible:ring-primary/30 border-sidebar-border bg-sidebar-accent/50 h-8 pl-8 text-xs focus-visible:ring-1"
+                    className="focus-visible:ring-primary/30 border-sidebar-border bg-sidebar-accent/50 h-8 pr-8 pl-8 text-xs focus-visible:ring-1"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
+                  {isSearching && (
+                    <Spinner className="text-muted-foreground absolute top-1/2 right-2.5 size-3.5 -translate-y-1/2" />
+                  )}
                 </div>
 
                 <div className="flex items-end justify-between">
@@ -296,12 +352,12 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
                           exit={{ height: 0, opacity: 0 }}
                         >
                           <SidebarMenu className="gap-1">
-                            {filteredDocuments.length === 0 ? (
+                            {documents.length === 0 ? (
                               <div className="text-muted-foreground px-4 py-3 text-center text-xs group-data-[collapsible=icon]:hidden">
                                 No documents found.
                               </div>
                             ) : (
-                              filteredDocuments.map((doc) => {
+                              documents.map((doc) => {
                                 const isActive =
                                   pathname ===
                                   `/hub/libraries/${libraryId}/documents/${doc.id}`;
@@ -351,7 +407,11 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
                                   onClick={() => {
                                     const next = page + 1;
                                     setPage(next);
-                                    fetchDocuments(next);
+                                    fetchDocuments(
+                                      next,
+                                      debouncedSearchQuery,
+                                      selectedTag
+                                    );
                                   }}
                                   disabled={isLoading}
                                   className="h-8 w-full text-[10px] font-bold tracking-widest uppercase"

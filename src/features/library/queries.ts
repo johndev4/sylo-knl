@@ -191,6 +191,46 @@ export async function getLibraryTagSuggestions(
 }
 
 /**
+ * Returns all distinct tags associated with non-deleted documents in a library.
+ *
+ * @param libraryId - UUID of the library
+ * @param supabase - SupabaseClient instance for database operations
+ */
+export async function getLibraryAllTags(
+  libraryId: string,
+  supabase: SupabaseClient
+): Promise<string[]> {
+  const parsedId = LibraryIdSchema.safeParse(libraryId);
+  if (!parsedId.success) {
+    throw new Error('Invalid library id');
+  }
+
+  const { data: documents, error } = await supabase
+    .from('documents')
+    .select('tags')
+    .eq('library_id', libraryId)
+    .is('deleted_at', null);
+
+  if (error) {
+    console.error('[LIBRARY ALL TAGS ERROR]', error);
+    throw new Error('Failed to fetch library tags');
+  }
+
+  const seen = new Set<string>();
+  for (const doc of documents ?? []) {
+    const tags = Array.isArray(doc.tags) ? doc.tags : [];
+    for (const raw of tags) {
+      const trimmed = typeof raw === 'string' ? raw.trim().toUpperCase() : '';
+      if (trimmed) {
+        seen.add(trimmed);
+      }
+    }
+  }
+
+  return Array.from(seen).sort();
+}
+
+/**
  * Retrieves all libraries that the current user is a member of.
  *
  * @param supabase - SupabaseClient instance for database operations
