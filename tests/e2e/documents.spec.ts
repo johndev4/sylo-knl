@@ -143,12 +143,9 @@ test.describe.serial('Document Management', () => {
     await expect(searchInput).toBeVisible();
     await searchInput.fill('Integration Test Doc');
 
-    // Tag dropdown filter
+    // Tag filter popover trigger button
     await expect(
-      page
-        .locator('[data-slot="select-trigger"]')
-        .or(page.getByRole('combobox'))
-        .first()
+      page.getByRole('button', { name: /filter tags/i })
     ).toBeVisible();
   });
 

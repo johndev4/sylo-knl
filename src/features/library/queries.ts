@@ -231,6 +231,99 @@ export async function getLibraryAllTags(
 }
 
 /**
+ * Searches for tags in a library by query string.
+ * Performs case-insensitive partial matching.
+ *
+ * @param libraryId - The unique identifier of the library
+ * @param query - The search query string
+ * @param supabase - SupabaseClient instance for database operations
+ * @returns Array of matching tags (sorted, uppercase, unique)
+ */
+export async function searchLibraryTags(
+  libraryId: string,
+  query: string,
+  supabase: SupabaseClient
+): Promise<string[]> {
+  const parsedId = LibraryIdSchema.safeParse(libraryId);
+  if (!parsedId.success) {
+    throw new Error('Invalid library id');
+  }
+
+  const { data: documents, error } = await supabase
+    .from('documents')
+    .select('tags')
+    .eq('library_id', libraryId)
+    .is('deleted_at', null);
+
+  if (error) {
+    console.error('[SEARCH LIBRARY TAGS ERROR]', error);
+    throw new Error('Failed to search library tags');
+  }
+
+  const seen = new Set<string>();
+  const queryUpperCase = query.trim().toUpperCase();
+
+  for (const doc of documents ?? []) {
+    const tags = Array.isArray(doc.tags) ? doc.tags : [];
+    for (const raw of tags) {
+      const trimmed = typeof raw === 'string' ? raw.trim().toUpperCase() : '';
+      if (trimmed && trimmed.includes(queryUpperCase)) {
+        seen.add(trimmed);
+      }
+    }
+  }
+
+  return Array.from(seen).sort();
+}
+
+/**
+ * Retrieves recently added tags in a library (recommended tags).
+ * Returns up to 8 most recently added unique tags.
+ *
+ * @param libraryId - The unique identifier of the library
+ * @param supabase - SupabaseClient instance for database operations
+ * @returns Array of recently added tags (up to 8)
+ */
+export async function getRecentlyAddedTags(
+  libraryId: string,
+  supabase: SupabaseClient
+): Promise<string[]> {
+  const parsedId = LibraryIdSchema.safeParse(libraryId);
+  if (!parsedId.success) {
+    throw new Error('Invalid library id');
+  }
+
+  const { data: documents, error } = await supabase
+    .from('documents')
+    .select('tags, created_at')
+    .eq('library_id', libraryId)
+    .is('deleted_at', null)
+    .order('created_at', { ascending: false })
+    .limit(50); // Fetch recent docs to extract tags from
+
+  if (error) {
+    console.error('[RECENTLY ADDED TAGS ERROR]', error);
+    throw new Error('Failed to fetch recently added tags');
+  }
+
+  const seen = new Set<string>();
+
+  for (const doc of documents ?? []) {
+    if (seen.size >= 8) break; // Limit to 8 recommended tags
+    const tags = Array.isArray(doc.tags) ? doc.tags : [];
+    for (const raw of tags) {
+      const trimmed = typeof raw === 'string' ? raw.trim().toUpperCase() : '';
+      if (trimmed && !seen.has(trimmed)) {
+        seen.add(trimmed);
+        if (seen.size >= 8) break;
+      }
+    }
+  }
+
+  return Array.from(seen);
+}
+
+/**
  * Retrieves all libraries that the current user is a member of.
  *
  * @param supabase - SupabaseClient instance for database operations
