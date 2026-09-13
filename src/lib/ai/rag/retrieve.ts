@@ -28,13 +28,10 @@ export async function retrieveRelevantChunks(
 ): Promise<RetrievedChunk[]> {
   const supabase = await createClient();
 
-  // Format embedding as string representation for pgvector
-  const embeddingString = `[${queryEmbedding.join(',')}]`;
-
   const { data: chunks, error } = await supabase.rpc(
     'match_document_chunks_multi',
     {
-      query_embedding: embeddingString,
+      query_embedding: queryEmbedding,
       match_count: limit,
       filter_library_ids: libraryIds.length > 0 ? libraryIds : null,
     }
