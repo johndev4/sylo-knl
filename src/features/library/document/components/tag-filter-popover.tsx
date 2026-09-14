@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ListFilterIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -17,29 +17,38 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { createClient } from '@/lib/supabase/client';
+import {
+  getRecentlyAddedTags,
+  searchLibraryTags,
+} from '@/features/library/queries';
 
 interface TagFilterPopoverProps {
+  libraryId: string;
+  refreshKey?: number;
   selectedTags: string[];
-  displayTags: string[];
-  tagSearchInput: string;
-  debouncedTagSearch: string;
-  isTagSearchLoading: boolean;
   onApplyTags: (tags: string[]) => void;
-  onSearchChange: (value: string) => void;
 }
 
 export function TagFilterPopover({
+  libraryId,
+  refreshKey,
   selectedTags,
-  displayTags,
-  tagSearchInput,
-  debouncedTagSearch,
-  isTagSearchLoading,
   onApplyTags,
-  onSearchChange,
 }: TagFilterPopoverProps) {
   const [open, setOpen] = useState(false);
   const [draftSelectedTags, setDraftSelectedTags] =
     useState<string[]>(selectedTags);
+
+  // Tag search internal state
+  const [recommendedTags, setRecommendedTags] = useState<string[]>([]);
+  const [tagSearchInput, setTagSearchInput] = useState('');
+  const [debouncedTagSearch, setDebouncedTagSearch] = useState('');
+  const [searchResults, setSearchResults] = useState<string[]>([]);
+  const [isTagSearchLoading, setIsTagSearchLoading] = useState(false);
+
+  // Ref to track the latest tag search request to avoid race conditions
+  const activeTagSearchIdRef = useRef(0);
 
   // Sync draft state with external selectedTags when popover opens or prop changes
   useEffect(() => {
@@ -49,6 +58,78 @@ export function TagFilterPopover({
     }
   }, [open, selectedTags]);
 
+  // Debounce tag search input by 300ms
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedTagSearch(tagSearchInput);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [tagSearchInput]);
+
+  // Load recommended tags (recently added) on initial load or library change
+  useEffect(() => {
+    if (!libraryId) return;
+    let isCancelled = false;
+
+    (async () => {
+      try {
+        const supabase = await createClient();
+        const tags = await getRecentlyAddedTags(libraryId, supabase);
+        if (!isCancelled) {
+          setRecommendedTags(tags);
+        }
+      } catch (error) {
+        console.error('Failed to fetch recommended tags:', error);
+      }
+    })();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [libraryId, refreshKey]);
+
+  // Search tags backend as user types
+  useEffect(() => {
+    if (!libraryId || !debouncedTagSearch.trim()) return;
+
+    let isCancelled = false;
+    const requestId = ++activeTagSearchIdRef.current;
+
+    (async () => {
+      setIsTagSearchLoading(true);
+      try {
+        const supabase = await createClient();
+        const results = await searchLibraryTags(
+          libraryId,
+          debouncedTagSearch,
+          supabase
+        );
+        // Only update if this is still the latest request
+        if (requestId === activeTagSearchIdRef.current && !isCancelled) {
+          setSearchResults(results);
+        }
+      } catch (error) {
+        if (requestId === activeTagSearchIdRef.current && !isCancelled) {
+          console.error('Failed to search tags:', error);
+        }
+      } finally {
+        if (requestId === activeTagSearchIdRef.current && !isCancelled) {
+          setIsTagSearchLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [libraryId, debouncedTagSearch]);
+
+  // Derive display tags based on whether searching or showing recommended
+  const displayTags = debouncedTagSearch.trim()
+    ? searchResults
+    : recommendedTags;
+
   const toggleTag = (tag: string) => {
     setDraftSelectedTags((prev) =>
       prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
@@ -57,6 +138,7 @@ export function TagFilterPopover({
 
   const handleApply = () => {
     onApplyTags(draftSelectedTags);
+    setTagSearchInput('');
     setOpen(false);
   };
 
@@ -82,7 +164,7 @@ export function TagFilterPopover({
           <CommandInput
             placeholder="Search tags..."
             value={tagSearchInput}
-            onValueChange={onSearchChange}
+            onValueChange={setTagSearchInput}
           />
           <CommandList>
             {displayTags.length === 0 ? (
@@ -140,3 +222,4 @@ export function TagFilterPopover({
     </Popover>
   );
 }
+

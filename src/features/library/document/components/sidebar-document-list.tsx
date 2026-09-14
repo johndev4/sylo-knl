@@ -33,11 +33,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Spinner } from '@/components/ui/spinner';
 import { getDocuments } from '@/features/library/document/queries';
-import {
-  getLibraryAllTags,
-  getRecentlyAddedTags,
-  searchLibraryTags,
-} from '@/features/library/queries';
+import { getLibraryAllTags } from '@/features/library/queries';
 import { DocumentListItem } from '@/features/library/document/document-schema';
 import { createClient } from '@/lib/supabase/client';
 import {
@@ -71,14 +67,6 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [recommendedTags, setRecommendedTags] = useState<string[]>([]);
-  const [tagSearchInput, setTagSearchInput] = useState('');
-  const [debouncedTagSearch, setDebouncedTagSearch] = useState('');
-  const [searchResults, setSearchResults] = useState<string[]>([]);
-  const [isTagSearchLoading, setIsTagSearchLoading] = useState(false);
-
-  // Ref to track the latest tag search request to avoid race conditions
-  const activeTagSearchIdRef = useRef(0);
 
   // Ref to track the latest request to avoid out-of-order responses
   const activeRequestIdRef = useRef(0);
@@ -97,73 +85,6 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
 
     return () => clearTimeout(timer);
   }, [searchQuery]);
-
-  // Debounce tag search input by 300ms
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedTagSearch(tagSearchInput);
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [tagSearchInput]);
-
-  // Load recommended tags (recently added) on initial load
-  useEffect(() => {
-    if (!libraryId) return;
-    let isCancelled = false;
-
-    (async () => {
-      try {
-        const supabase = await createClient();
-        const tags = await getRecentlyAddedTags(libraryId, supabase);
-        if (!isCancelled) {
-          setRecommendedTags(tags);
-        }
-      } catch (error) {
-        console.error('Failed to fetch recommended tags:', error);
-      }
-    })();
-
-    return () => {
-      isCancelled = true;
-    };
-  }, [libraryId, refreshKey]);
-
-  // Search tags backend as user types
-  useEffect(() => {
-    if (!libraryId || !debouncedTagSearch.trim()) return;
-
-    let isCancelled = false;
-    const requestId = ++activeTagSearchIdRef.current;
-
-    (async () => {
-      setIsTagSearchLoading(true);
-      try {
-        const supabase = await createClient();
-        const results = await searchLibraryTags(
-          libraryId,
-          debouncedTagSearch,
-          supabase
-        );
-        // Only update if this is still the latest request
-        if (requestId === activeTagSearchIdRef.current && !isCancelled) {
-          setSearchResults(results);
-        }
-      } catch (error) {
-        if (requestId === activeTagSearchIdRef.current && !isCancelled) {
-          console.error('Failed to search tags:', error);
-        }
-      } finally {
-        if (requestId === activeTagSearchIdRef.current && !isCancelled) {
-          setIsTagSearchLoading(false);
-        }
-      }
-    })();
-
-    return () => {
-      isCancelled = true;
-    };
-  }, [libraryId, debouncedTagSearch]);
 
   // Load distinct tags for library filter dropdown (kept for reference, can be removed if not used elsewhere)
   useEffect(() => {
@@ -185,12 +106,6 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
       isCancelled = true;
     };
   }, [libraryId, refreshKey]);
-
-  // Derive display tags based on whether we're searching or showing recommended
-  const displayTags =
-    debouncedTagSearch.trim() && searchResults.length > 0
-      ? searchResults
-      : recommendedTags;
 
   // Fetch documents directly from the backend with current filters
   const fetchDocuments = useCallback(
@@ -288,16 +203,12 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
 
                 <div className="flex items-end justify-between">
                   <TagFilterPopover
+                    libraryId={libraryId}
+                    refreshKey={refreshKey}
                     selectedTags={selectedTags}
-                    displayTags={displayTags}
-                    tagSearchInput={tagSearchInput}
-                    debouncedTagSearch={debouncedTagSearch}
-                    isTagSearchLoading={isTagSearchLoading}
                     onApplyTags={(tags) => {
                       setSelectedTags(tags);
-                      setTagSearchInput('');
                     }}
-                    onSearchChange={setTagSearchInput}
                   />
 
                   {/* Create New Document Button */}
