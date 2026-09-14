@@ -249,11 +249,18 @@ export async function searchLibraryTags(
     throw new Error('Invalid library id');
   }
 
+  const queryUpperCase = query.trim().toUpperCase();
+  if (!queryUpperCase) {
+    return [];
+  }
+
+  // Fetch only non-null tags JSONB column for non-deleted documents in the library
   const { data: documents, error } = await supabase
     .from('documents')
     .select('tags')
     .eq('library_id', libraryId)
-    .is('deleted_at', null);
+    .is('deleted_at', null)
+    .not('tags', 'is', null);
 
   if (error) {
     console.error('[SEARCH LIBRARY TAGS ERROR]', error);
@@ -261,14 +268,15 @@ export async function searchLibraryTags(
   }
 
   const seen = new Set<string>();
-  const queryUpperCase = query.trim().toUpperCase();
 
   for (const doc of documents ?? []) {
     const tags = Array.isArray(doc.tags) ? doc.tags : [];
     for (const raw of tags) {
-      const trimmed = typeof raw === 'string' ? raw.trim().toUpperCase() : '';
-      if (trimmed && trimmed.includes(queryUpperCase)) {
-        seen.add(trimmed);
+      if (typeof raw === 'string') {
+        const trimmed = raw.trim().toUpperCase();
+        if (trimmed && trimmed.includes(queryUpperCase)) {
+          seen.add(trimmed);
+        }
       }
     }
   }
