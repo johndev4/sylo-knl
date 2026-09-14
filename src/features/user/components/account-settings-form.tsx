@@ -117,11 +117,6 @@ export default function AccountSettingsForm({
 
         // Revalidate the AccountDropdown via SWR — no custom events needed.
         await mutate(SWR_PROFILE_KEY);
-
-        setTimeout(() => {
-          setSuccessMessage('');
-          setSaveSuccess(false);
-        }, 3000);
       } catch (error) {
         console.error('Error updating profile:', error);
 
