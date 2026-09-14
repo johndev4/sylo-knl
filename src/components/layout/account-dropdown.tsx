@@ -18,27 +18,16 @@ import {
   DropdownMenuTrigger,
   DropdownMenuGroup,
 } from '@/components/ui/dropdown-menu';
-import { cn } from '@/lib/utils';
+import { cn, makeInitials } from '@/lib/utils';
 import { ProfileDropdownUserInfo } from '@/features/user/user-schema';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { logout } from '@/features/auth/actions';
 import { useSession } from '../providers/auth-provider';
 import { useState } from 'react';
 
-// Utility that returns 2-letter initials from a name or email.
-const makeInitials = (displayName: string | null, email: string): string => {
-  const source = displayName || email.split('@')[0];
-  return source
-    .split(/[\s._-]+/)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
-};
-
 /**
  * Standalone SWR fetcher for the account dropdown.
+
  * Creates its own Supabase client so it can be called without props.
  */
 async function fetchProfileDropdownInfo(): Promise<ProfileDropdownUserInfo> {

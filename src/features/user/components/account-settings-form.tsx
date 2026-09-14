@@ -22,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { cn } from '@/lib/utils';
+import { cn, makeInitials } from '@/lib/utils';
 import { Check } from 'lucide-react';
 import { updateUserProfile } from '@/features/user/actions';
 import { VALID_TIMEZONES } from '@/lib/constants';
@@ -38,18 +38,6 @@ interface FormError {
 interface AccountSettingsFormProps {
   profile: UserProfile;
 }
-
-// Utility that returns 2-letter initials from a name or email.
-const makeInitials = (displayName: string | null, email: string): string => {
-  const source = displayName || email.split('@')[0];
-  return source
-    .split(/[\s._-]+/)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
-};
 
 export default function AccountSettingsForm({
   profile: initialProfile,

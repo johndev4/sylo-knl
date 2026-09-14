@@ -55,6 +55,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { createClient } from '@/lib/supabase/client';
 import { getLibraryMembers } from '../queries';
+import { makeInitials } from '@/lib/utils';
 
 interface MemberTableProps {
   libraryId: string;
@@ -76,18 +77,6 @@ const roleOptions = [
     label: 'Viewer',
   },
 ];
-
-// Utility that returns 2-letter initials from a name or email.
-const makeInitials = (displayName: string | null, email: string): string => {
-  const source = displayName || email.split('@')[0];
-  return source
-    .split(/[\s._-]+/)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
-};
 
 export function MemberTable({ libraryId, canManageMembers }: MemberTableProps) {
   const [members, setMembers] = useState<LibraryMember[]>([]);
