@@ -192,7 +192,8 @@ export async function getLibraryTagSuggestions(
 
 /**
  * Returns all distinct tags associated with non-deleted documents in a library.
- *
+ * 
+ * @deprecated use {@link searchLibraryTags} instead
  * @param libraryId - UUID of the library
  * @param supabase - SupabaseClient instance for database operations
  */

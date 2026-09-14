@@ -33,7 +33,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Spinner } from '@/components/ui/spinner';
 import { getDocuments } from '@/features/library/document/queries';
-import { getLibraryAllTags } from '@/features/library/queries';
 import { DocumentListItem } from '@/features/library/document/document-schema';
 import { createClient } from '@/lib/supabase/client';
 import {
@@ -85,27 +84,6 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
 
     return () => clearTimeout(timer);
   }, [searchQuery]);
-
-  // Load distinct tags for library filter dropdown (kept for reference, can be removed if not used elsewhere)
-  useEffect(() => {
-    if (!libraryId) return;
-    let isCancelled = false;
-
-    (async () => {
-      try {
-        const supabase = await createClient();
-        await getLibraryAllTags(libraryId, supabase);
-        // Note: Not storing result as we're using backend search now
-        if (isCancelled) return;
-      } catch (error) {
-        console.error('Failed to fetch library tags:', error);
-      }
-    })();
-
-    return () => {
-      isCancelled = true;
-    };
-  }, [libraryId, refreshKey]);
 
   // Fetch documents directly from the backend with current filters
   const fetchDocuments = useCallback(
