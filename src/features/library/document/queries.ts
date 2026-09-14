@@ -54,7 +54,7 @@ export async function getDocuments(
   }
 
   if (tags && tags.length > 0) {
-    query = query.contains('tags', tags);
+    query = query.overlaps('tags', tags);
   }
 
   const from = (page - 1) * limit;
