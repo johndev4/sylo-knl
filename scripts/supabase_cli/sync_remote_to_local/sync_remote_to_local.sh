@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Exit immediately if a command exits with a non-zero status
 set -e
@@ -8,6 +8,9 @@ if [ -f .env ]; then
   set -o allexport
   source .env
   set +o allexport
+else
+  echo "Error: .env not found"
+  exit 1
 fi
 
 # Validate required environment variables
@@ -21,13 +24,17 @@ if [ -z "$SUPABASE_PROJECT_REF_ID" ]; then
   exit 1
 fi
 
-# Define the full path to the seed file
-SEED_SQL_FILE="../../supabase/seed.sql"
+# Resolve directories
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+
+# Define the absolute path to the seed file inside the project root
+SEED_SQL_FILE="$PROJECT_ROOT/supabase/seed.sql"
 
 # Run core commands
 npx supabase@latest login --token "$SUPABASE_API_TOKEN"
 npx supabase@latest link --project-ref "$SUPABASE_PROJECT_REF_ID"
-npx supabase@latest db dump --linked --data-only -f ./supabase/seed.sql
+npx supabase@latest db dump --linked --data-only -f "$SEED_SQL_FILE"
 npx supabase@latest db reset --local
 
 # Handle optional cleanup
