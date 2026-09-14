@@ -18,9 +18,9 @@ import {
   DropdownMenuTrigger,
   DropdownMenuGroup,
 } from '@/components/ui/dropdown-menu';
-import { cn, makeInitials } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { ProfileDropdownUserInfo } from '@/features/user/user-schema';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { UserAvatar } from '../shared/user-avatar';
 import { logout } from '@/features/auth/actions';
 import { useSession } from '../providers/auth-provider';
 import { useState } from 'react';
@@ -78,9 +78,6 @@ export function AccountDropdown({
     return null;
   }
 
-  const initials = userInfo ? makeInitials(userInfo.name!, userInfo.email) : '';
-  const shouldUseAvatarUrl = userInfo?.useAvatarUrl && userInfo?.avatarUrl;
-
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger
@@ -93,15 +90,12 @@ export function AccountDropdown({
             )}
             aria-label="Account menu"
           >
-            <Avatar>
-              {shouldUseAvatarUrl && (
-                <AvatarImage
-                  src={userInfo.avatarUrl!}
-                  alt={userInfo.name || 'User avatar'}
-                />
-              )}
-              <AvatarFallback>{initials}</AvatarFallback>
-            </Avatar>
+            <UserAvatar
+              name={userInfo?.name}
+              email={userInfo?.email}
+              avatarUrl={userInfo?.avatarUrl}
+              useAvatarUrl={userInfo?.useAvatarUrl}
+            />
 
             {/* Display Name (hidden on mobile) */}
             {userInfo && (

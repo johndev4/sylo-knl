@@ -2,8 +2,7 @@
 
 import { useMemo, useState, useTransition } from 'react';
 import { useSWRConfig } from 'swr';
-import Image from 'next/image';
-
+import { UserAvatar } from '@/components/shared/user-avatar';
 import {
   Card,
   CardContent,
@@ -22,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { cn, makeInitials } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { Check } from 'lucide-react';
 import { updateUserProfile } from '@/features/user/actions';
 import { VALID_TIMEZONES } from '@/lib/constants';
@@ -164,8 +163,6 @@ export default function AccountSettingsForm({
     return errors.find((error) => error.field === field)?.message;
   };
 
-  const initials = makeInitials(profile.name!, profile.email);
-
   return (
     <div className="bg-background min-h-screen">
       <div className="container mx-auto px-4 py-8">
@@ -251,13 +248,12 @@ export default function AccountSettingsForm({
                         )}
                       >
                         <div className="relative">
-                          <Image
-                            src={profile.avatarUrl}
-                            alt="Google avatar"
-                            width={80}
-                            height={80}
-                            unoptimized
-                            className="h-20 w-20 rounded-full bg-neutral-100 object-cover shadow-sm dark:bg-neutral-800"
+                          <UserAvatar
+                            name={profile.name}
+                            email={profile.email}
+                            avatarUrl={profile.avatarUrl}
+                            useAvatarUrl={true}
+                            className="h-20 w-20 text-2xl shadow-sm"
                           />
 
                           {formData.useAvatarUrl && (
@@ -296,16 +292,18 @@ export default function AccountSettingsForm({
                         )}
                       >
                         <div className="relative">
-                          <div
+                          <UserAvatar
+                            name={profile.name}
+                            email={profile.email}
+                            useAvatarUrl={false}
                             className={cn(
-                              'flex h-20 w-20 items-center justify-center rounded-full text-2xl font-bold shadow-sm',
+                              'h-20 w-20 text-2xl font-bold shadow-sm',
                               !formData.useAvatarUrl
                                 ? 'bg-primary/10 text-primary'
-                                : 'text-foreground bg-neutral-200 dark:bg-neutral-800'
+                                : 'bg-neutral-200 dark:bg-neutral-800'
                             )}
-                          >
-                            {initials}
-                          </div>
+                            fallbackClassName="text-2xl font-bold"
+                          />
 
                           {!formData.useAvatarUrl && (
                             <div className="bg-primary text-primary-foreground ring-background absolute -top-1 -right-1 rounded-full p-1 shadow-md ring-2">

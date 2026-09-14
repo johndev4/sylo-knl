@@ -51,11 +51,10 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { CheckIcon, ChevronDown } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { UserAvatar } from '@/components/shared/user-avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { createClient } from '@/lib/supabase/client';
 import { getLibraryMembers } from '../queries';
-import { makeInitials } from '@/lib/utils';
 
 interface MemberTableProps {
   libraryId: string;
@@ -243,23 +242,15 @@ export function MemberTable({ libraryId, canManageMembers }: MemberTableProps) {
         ),
         cell: ({ row }) => {
           const member = row.original;
-          const initials = makeInitials(
-            member.user?.name || null,
-            member.user?.email || ''
-          );
-          const shouldUseAvatarUrl =
-            member.user?.use_avatar_url && member.user?.avatar_url;
           return (
             <div className="flex items-center gap-3">
-              <Avatar className="size-8">
-                {shouldUseAvatarUrl && (
-                  <AvatarImage
-                    src={member.user?.avatar_url || ''}
-                    alt={member.user?.name || 'Avatar'}
-                  />
-                )}
-                <AvatarFallback>{initials}</AvatarFallback>
-              </Avatar>
+              <UserAvatar
+                name={member.user?.name ?? undefined}
+                email={member.user?.email ?? undefined}
+                avatarUrl={member.user?.avatar_url ?? undefined}
+                useAvatarUrl={member.user?.use_avatar_url}
+              />
+
               <div className="space-y-px">
                 <div className="text-foreground font-medium">
                   {member.user?.name || 'Unknown User'}
