@@ -90,5 +90,6 @@ jobs:
           if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
             npx vercel@latest deploy --prebuilt --prod --token="$VERCEL_TOKEN"
           else
-            npx vercel@latest deploy --prebuilt --token="$VERCEL_TOKEN"
+            DEPLOYMENT_URL=$(npx vercel@latest deploy --prebuilt --token="$VERCEL_TOKEN")
+            echo "Preview deployment URL: $DEPLOYMENT_URL"
           fi
