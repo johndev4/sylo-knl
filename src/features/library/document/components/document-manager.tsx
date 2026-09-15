@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSWRConfig } from 'swr';
 import {
   createDocument,
   updateDocument,
@@ -31,6 +32,11 @@ import { DocumentActions } from './document-actions';
 import { useSidebarRefresh } from '@/components/providers/sidebar-refresh-provider';
 import { TagChipsInput } from './tag-chips-input';
 import { useNavigationGuard } from '../hooks/use-navigation-guard';
+import {
+  DOCUMENTS_SWR_KEY,
+  mutateDocumentListCache,
+} from '@/features/library/document/hooks/use-documents-swr';
+import type { DocumentListResult } from '@/features/library/document/document-schema';
 import { BlockEditor } from './block_editor';
 import {
   Collapsible,
@@ -73,6 +79,7 @@ export function DocumentManager({
 }: DocumentManagerProps) {
   const router = useRouter();
   const { triggerRefresh } = useSidebarRefresh();
+  const { mutate } = useSWRConfig();
 
   const [isEditMode, setIsEditMode] = useState(isNew);
   const [title, setTitle] = useState(initialData?.title || '');
@@ -313,6 +320,37 @@ export function DocumentManager({
     setTags(tags.filter((tag) => tag !== tagToRemove));
   };
 
+  const optimisticDocumentMutation = useCallback(
+    async (
+      updater: (
+        current: DocumentListResult[] | DocumentListResult | undefined
+      ) => DocumentListResult[] | DocumentListResult | undefined,
+      revalidate = true
+    ) => {
+      await mutate(
+        (key) => Array.isArray(key) && key[0] === DOCUMENTS_SWR_KEY,
+        (current: DocumentListResult[] | DocumentListResult | undefined) =>
+          updater(current),
+        { revalidate }
+      );
+    },
+    [mutate]
+  );
+
+  /**
+   * Detects if an error is an OCC (Optimistic Concurrency Control) conflict.
+   * Checks for "Conflict:" in the message or explicit conflict flag.
+   */
+  const isConflictError = (err: unknown): boolean => {
+    if (err instanceof Error) {
+      return (
+        err.message.includes('Conflict') ||
+        ('conflict' in err && err.conflict === true)
+      );
+    }
+    return false;
+  };
+
   // ---------------------------------------------------------------------------
   // Save
   // ---------------------------------------------------------------------------
@@ -329,6 +367,39 @@ export function DocumentManager({
 
     try {
       if (isNew) {
+        const optimisticDoc = {
+          id: `pending-${Date.now()}`,
+          title,
+          tags,
+          created_at: new Date().toISOString(),
+        };
+
+        await optimisticDocumentMutation((current) => {
+          const pages = Array.isArray(current)
+            ? current
+            : current && typeof current === 'object' && 'data' in current
+              ? [current]
+              : [];
+
+          const next = [...pages];
+          const firstPage = next[0] ?? {
+            data: [],
+            metadata: { total: 0, page: 1, limit: 100, totalPages: 1 },
+          };
+
+          next[0] = {
+            ...firstPage,
+            data: [optimisticDoc, ...(firstPage.data ?? [])].slice(0, 100),
+            metadata: {
+              ...firstPage.metadata,
+              total: (firstPage.metadata?.total ?? 0) + 1,
+            },
+          };
+
+          return next;
+        }, false);
+
+        // 1. Server call
         const data = await createDocument({
           title,
           content: content || '',
@@ -336,25 +407,55 @@ export function DocumentManager({
           libraryId,
         });
 
+        // 2. Background revalidation of SWR cache
+        await mutateDocumentListCache((current) => current, {
+          revalidate: true,
+        });
+
         triggerRefresh();
         setIgnoreNavigationGuard(true);
         router.push(`/hub/libraries/${libraryId}/documents/${data.documentId}`);
         router.refresh();
       } else {
+        const updatedDoc = {
+          id: initialData!.id,
+          title,
+          tags,
+          created_at: initialData?.created_at || new Date().toISOString(),
+        };
+
+        await optimisticDocumentMutation((current) => {
+          const pages = Array.isArray(current)
+            ? current
+            : current && typeof current === 'object' && 'data' in current
+              ? [current]
+              : [];
+
+          return pages.map((page) => ({
+            ...page,
+            data: (page.data ?? []).map((doc) =>
+              doc.id === updatedDoc.id ? { ...doc, ...updatedDoc } : doc
+            ),
+          }));
+        }, false);
+
+        // 1. Server call
         const data = await updateDocument(initialData!.id, {
           title,
           content: content || '',
           tags,
-          // Use the ref so repeated saves always send the latest timestamp,
-          // not the stale initialData prop from the initial server render.
           lastUpdatedAt: latestUpdatedAt.current,
         });
 
-        // Capture the new updated_at returned by the server so that the
-        // next save sends the correct timestamp for the OCC check.
+        // 2. Update latest timestamp for next OCC check
         if (data?.document?.updated_at) {
           latestUpdatedAt.current = data.document.updated_at;
         }
+
+        // 3. Background revalidation of SWR cache
+        await mutateDocumentListCache((current) => current, {
+          revalidate: true,
+        });
 
         triggerRefresh();
         setIsEditMode(false);
@@ -363,7 +464,19 @@ export function DocumentManager({
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : 'An unknown error occurred';
-      setError(message);
+
+      // Check for OCC conflict
+      if (isConflictError(err)) {
+        setError(
+          'Document was edited by another user. Please refresh to get the latest version.'
+        );
+        // Revalidate to get server version
+        await mutateDocumentListCache((current) => current, {
+          revalidate: true,
+        });
+      } else {
+        setError(message);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -380,7 +493,34 @@ export function DocumentManager({
     setError(null);
 
     try {
+      await optimisticDocumentMutation((current) => {
+        const pages = Array.isArray(current)
+          ? current
+          : current && typeof current === 'object' && 'data' in current
+            ? [current]
+            : [];
+
+        const next = pages
+          .map((page) => ({
+            ...page,
+            data: (page.data ?? []).filter((doc) => doc.id !== initialData.id),
+            metadata: {
+              ...page.metadata,
+              total: Math.max((page.metadata?.total ?? 0) - 1, 0),
+            },
+          }))
+          .filter((page) => (page.data ?? []).length > 0 || page === pages[0]);
+
+        return next.length > 0 ? next : [];
+      }, false);
+
+      // 1. Server call
       await deleteDocument(initialData.id);
+
+      // 2. Background revalidation of SWR cache
+      await mutateDocumentListCache((current) => current, {
+        revalidate: true,
+      });
 
       setIgnoreNavigationGuard(true);
       triggerRefresh();
@@ -388,7 +528,20 @@ export function DocumentManager({
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : 'An unknown error occurred';
-      setError(message);
+
+      // Check for OCC conflict
+      if (isConflictError(err)) {
+        setError(
+          'Document was edited by another user. Please refresh to get the latest version.'
+        );
+        // Revalidate to get server version
+        await mutateDocumentListCache((current) => current, {
+          revalidate: true,
+        });
+      } else {
+        setError(message);
+      }
+
       setIsDeleting(false);
     }
   };

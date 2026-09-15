@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { redirect, useParams, usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -32,15 +32,13 @@ import { useSidebarRefresh } from '@/components/providers/sidebar-refresh-provid
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Spinner } from '@/components/ui/spinner';
-import { getDocuments } from '@/features/library/document/queries';
-import { DocumentListItem } from '@/features/library/document/document-schema';
-import { createClient } from '@/lib/supabase/client';
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { useSession } from '@/components/providers/auth-provider';
+import { useDocumentsSWR } from '@/features/library/document/hooks/use-documents-swr';
 
 interface SidebarDocumentListProps {
   userRole: string;
@@ -58,25 +56,16 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
   const libraryId = params?.id as string;
   const pathname = usePathname();
 
-  const [documents, setDocuments] = useState<DocumentListItem[]>([]);
-  const [totalDocs, setTotalDocs] = useState(0);
-  const [page, setPage] = useState(1);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isClient, setIsClient] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
-  // Ref to track the latest request to avoid out-of-order responses
-  const activeRequestIdRef = useRef(0);
-
-  const [isClient, setIsClient] = useState(false);
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsClient(true);
   }, []);
 
-  // Debounce search query input by 300ms
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery);
@@ -85,73 +74,29 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Fetch documents directly from the backend with current filters
-  const fetchDocuments = useCallback(
-    async (
-      pageToLoad = 1,
-      searchTerm = debouncedSearchQuery,
-      tagFilter = selectedTags
-    ) => {
-      if (!libraryId) return;
+  const {
+    documents,
+    totalDocs,
+    size,
+    setSize,
+    isLoading,
+    isLoadingMore,
+    hasMore,
+  } = useDocumentsSWR(libraryId, debouncedSearchQuery, selectedTags);
 
-      const requestId = ++activeRequestIdRef.current;
-      setIsLoading(true);
-
-      try {
-        const supabase = await createClient();
-        const trimmedSearch = searchTerm.trim();
-        const filterTags =
-          tagFilter && tagFilter.length > 0 ? tagFilter : undefined;
-
-        const data = await getDocuments(
-          {
-            libraryId,
-            limit: 100,
-            page: pageToLoad,
-            search: trimmedSearch || undefined,
-            tags: filterTags,
-          },
-          supabase,
-          user
-        );
-
-        // Discard stale response if a newer request was dispatched
-        if (requestId !== activeRequestIdRef.current) {
-          return;
-        }
-
-        if (pageToLoad === 1) {
-          setDocuments(data.data || []);
-        } else {
-          setDocuments((prev) => [...prev, ...(data.data || [])]);
-        }
-        setTotalDocs(data.metadata?.total || 0);
-      } catch (error) {
-        if (requestId === activeRequestIdRef.current) {
-          console.error('Failed to fetch documents:', error);
-        }
-      } finally {
-        if (requestId === activeRequestIdRef.current) {
-          setIsLoading(false);
-          setIsInitialLoading(false);
-        }
-      }
-    },
-    [libraryId, user, debouncedSearchQuery, selectedTags]
-  );
-
-  // Trigger backend fetch when search filter, tag filter, or refreshKey changes
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setPage(1);
-    fetchDocuments(1, debouncedSearchQuery, selectedTags);
-  }, [debouncedSearchQuery, selectedTags, refreshKey, fetchDocuments]);
+    setSize(1);
+  }, [setSize]);
+
+  // ---------------------------------------------------------------------------
+  // Render
+  // ---------------------------------------------------------------------------
 
   const isAtLimit = totalDocs >= 500;
   const newDocumentPath = `/hub/libraries/${libraryId}/documents/new`;
 
   const isSearching =
-    searchQuery !== debouncedSearchQuery || (isLoading && page === 1);
+    searchQuery !== debouncedSearchQuery || (isLoading && size <= 1);
 
   return (
     isClient && (
@@ -159,7 +104,7 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
         <SidebarContent aria-label="Sidebar Document List Content">
           {/* Fixed Filters Area (Hidden when collapsed into icon mode) */}
           <div className="border-sidebar-border flex shrink-0 flex-col gap-2.5 border-b p-3 group-data-[collapsible=icon]:hidden">
-            {isInitialLoading ? (
+            {isLoading && size <= 1 ? (
               <div className="space-y-3 p-2">
                 <Skeleton className="h-5 w-full rounded-md" />
                 <Skeleton className="h-5 w-20 rounded-md" />
@@ -274,7 +219,7 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
             className="group/collapsible group-data-[collapsible=icon]:hidden"
           >
             {/* Documents Group */}
-            {isLoading && page === 1 ? (
+            {isLoading && size <= 1 ? (
               <SidebarMenu>
                 {Array.from({ length: 5 }).map((_, index) => (
                   <SidebarMenuItem key={index}>
@@ -352,23 +297,15 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
                               })
                             )}
 
-                            {totalDocs > documents.length && (
+                            {hasMore && (
                               <div className="p-2 group-data-[collapsible=icon]:hidden">
                                 <Button
                                   variant="outline"
-                                  onClick={() => {
-                                    const next = page + 1;
-                                    setPage(next);
-                                    fetchDocuments(
-                                      next,
-                                      debouncedSearchQuery,
-                                      selectedTags
-                                    );
-                                  }}
-                                  disabled={isLoading}
+                                  onClick={() => setSize(size + 1)}
+                                  disabled={isLoadingMore}
                                   className="h-8 w-full text-[10px] font-bold tracking-widest uppercase"
                                 >
-                                  {isLoading ? (
+                                  {isLoadingMore ? (
                                     <Spinner className="h-4 w-4" />
                                   ) : (
                                     `Load More (${totalDocs - documents.length} Left)`

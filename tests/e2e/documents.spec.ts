@@ -139,7 +139,7 @@ test.describe.serial('Document Management', () => {
     ).toBeVisible();
 
     // Search input in sidebar
-    const searchInput = page.getByPlaceholder('Search docs...');
+    const searchInput = page.getByPlaceholder('Search docs…');
     await expect(searchInput).toBeVisible();
     await searchInput.fill('Integration Test Doc');
 
