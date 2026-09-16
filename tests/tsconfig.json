@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "types": ["node", "@playwright/test"]
+  },
+  "include": ["**/*.ts"]
+}
