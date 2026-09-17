@@ -475,7 +475,7 @@ export function MemberTable({ libraryId, canManageMembers }: MemberTableProps) {
           }}
         >
           <p className="text-sm text-red-700 dark:text-red-400">
-            {error || 'Something went wrong'}
+            {error || 'An error occurred. Please try again.'}
           </p>
         </motion.div>
       )}

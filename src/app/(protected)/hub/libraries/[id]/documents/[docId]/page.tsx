@@ -24,7 +24,7 @@ export default async function DocumentPage({
 
   return (
     <Suspense fallback={<DocumentSkeleton />}>
-      <DocumentPageContent
+      <DocumentPageWrapper
         libraryId={libraryId}
         docId={docId}
         userRole={membership.role}
@@ -33,7 +33,7 @@ export default async function DocumentPage({
   );
 }
 
-async function DocumentPageContent({
+async function DocumentPageWrapper({
   libraryId,
   docId,
   userRole,
@@ -58,7 +58,7 @@ async function DocumentPageContent({
     return (
       <div className="flex h-full flex-1 flex-col items-center justify-center p-8 text-center">
         <h2 className="mb-2 text-2xl font-bold">
-          {error || 'Something went wrong'}
+          {error || 'An error occurred. Please try again.'}
         </h2>
         <Link href={`/hub/libraries/${libraryId}`} role="button">
           <Button>Go Back</Button>
