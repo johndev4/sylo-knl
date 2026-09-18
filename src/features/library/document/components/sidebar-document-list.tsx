@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { redirect, useParams, usePathname } from 'next/navigation';
+import { useParams, usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plus,
@@ -37,7 +37,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { useDocumentsSWR } from '@/features/library/document/hooks/use-documents-swr';
+import { useDocumentsSWR } from '@/features/library/document/hooks/document-swr';
 
 interface SidebarDocumentListProps {
   userRole: string;

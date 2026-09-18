@@ -2,32 +2,23 @@
 
 import { useCallback, useMemo } from 'react';
 import useSWRInfinite from 'swr/infinite';
+import useSWRMutation from 'swr/mutation';
 import { createClient } from '@/lib/supabase/client';
 import { useSession } from '@/components/providers/auth-provider';
 import { getDocuments } from '@/features/library/document/queries';
 import type {
-  DocumentListItem,
+  CreateDocumentInput,
   DocumentListResult,
+  UpdateDocumentInput,
 } from '@/features/library/document/document-schema';
+import { createDocument, deleteDocument, updateDocument } from '../actions';
 
 export const DOCUMENTS_SWR_KEY = '/documents';
-export const PAGE_SIZE = 100;
+export const PAGE_SIZE = 3;
 
-export const isDocumentsSWRKey = (key: unknown): key is readonly unknown[] =>
-  Array.isArray(key) && key[0] === DOCUMENTS_SWR_KEY;
-
-export function mutateDocumentListCache(
-  updater: (
-    current: DocumentListResult[] | undefined
-  ) => DocumentListResult[] | undefined,
-  options?: { revalidate?: boolean }
-) {
-  return import('swr').then(({ mutate }) =>
-    mutate((key) => isDocumentsSWRKey(key), updater, {
-      revalidate: options?.revalidate ?? true,
-    })
-  );
-}
+// ---------------------------------------------------------------------------
+// Hooks
+// ---------------------------------------------------------------------------
 
 export function useDocumentsSWR(
   libraryId: string,
@@ -131,99 +122,6 @@ export function useDocumentsSWR(
     await mutate((current) => current, { revalidate: true });
   }, [mutate]);
 
-  const handleCreate = useCallback(
-    async (newDoc: DocumentListItem) => {
-      await mutate(
-        (current) => {
-          const pages = Array.isArray(current)
-            ? current
-            : current && typeof current === 'object' && 'data' in current
-              ? [current]
-              : [];
-
-          const next = [...pages];
-          const firstPage = next[0] ?? {
-            data: [],
-            metadata: { total: 0, page: 1, limit: PAGE_SIZE, totalPages: 1 },
-          };
-
-          next[0] = {
-            ...firstPage,
-            data: [newDoc, ...(firstPage.data ?? [])].slice(0, PAGE_SIZE),
-            metadata: {
-              ...firstPage.metadata,
-              total: (firstPage.metadata?.total ?? 0) + 1,
-            },
-          };
-
-          return next;
-        },
-        { revalidate: false }
-      );
-
-      await revalidateAll();
-    },
-    [mutate, revalidateAll]
-  );
-
-  const handleUpdate = useCallback(
-    async (docId: string, changes: Partial<DocumentListItem>) => {
-      await mutate(
-        (current) => {
-          const pages = Array.isArray(current)
-            ? current
-            : current && typeof current === 'object' && 'data' in current
-              ? [current]
-              : [];
-
-          return pages.map((page) => ({
-            ...page,
-            data: (page.data ?? []).map((doc) =>
-              doc.id === docId ? { ...doc, ...changes } : doc
-            ),
-          }));
-        },
-        { revalidate: false }
-      );
-
-      await revalidateAll();
-    },
-    [mutate, revalidateAll]
-  );
-
-  const handleDelete = useCallback(
-    async (docId: string) => {
-      await mutate(
-        (current) => {
-          const pages = Array.isArray(current)
-            ? current
-            : current && typeof current === 'object' && 'data' in current
-              ? [current]
-              : [];
-
-          const next = pages
-            .map((page) => ({
-              ...page,
-              data: (page.data ?? []).filter((doc) => doc.id !== docId),
-              metadata: {
-                ...page.metadata,
-                total: Math.max((page.metadata?.total ?? 0) - 1, 0),
-              },
-            }))
-            .filter(
-              (page) => (page.data ?? []).length > 0 || page === pages[0]
-            );
-
-          return next.length > 0 ? next : [];
-        },
-        { revalidate: false }
-      );
-
-      await revalidateAll();
-    },
-    [mutate, revalidateAll]
-  );
-
   return {
     documents,
     totalDocs,
@@ -235,8 +133,31 @@ export function useDocumentsSWR(
     hasMore,
     error,
     revalidateAll,
-    handleCreate,
-    handleUpdate,
-    handleDelete,
   };
+}
+
+export function useCreateDocumentSWR() {
+  return useSWRMutation(
+    DOCUMENTS_SWR_KEY,
+    async (_, { arg }: { arg: { input: CreateDocumentInput } }) =>
+      await createDocument(arg.input)
+  );
+}
+
+export function useUpdateDocumentSWR() {
+  return useSWRMutation(
+    DOCUMENTS_SWR_KEY,
+    async (
+      _,
+      { arg }: { arg: { docId: string; input: UpdateDocumentInput } }
+    ) => await updateDocument(arg.docId, arg.input)
+  );
+}
+
+export function useDeleteDocumentSWR() {
+  return useSWRMutation(
+    DOCUMENTS_SWR_KEY,
+    async (_, { arg }: { arg: { docId: string } }) =>
+      await deleteDocument(arg.docId)
+  );
 }
