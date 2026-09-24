@@ -233,9 +233,9 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
                   className="group/label text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-sm"
                 />
 
-                <CollapsibleContent>
+                <CollapsibleContent className="flex min-h-0 flex-1 flex-col">
                   <SidebarGroupContent className="flex min-h-0 flex-1 flex-col">
-                    <ScrollArea className="min-h-0 flex-1">
+                    <ScrollArea className="h-[calc(100vh-20rem)]">
                       <AnimatePresence initial={false}>
                         <motion.div
                           initial={{ height: 0, opacity: 0 }}
@@ -320,7 +320,7 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
         </SidebarContent>
 
         {/* Footer Navigation */}
-        <SidebarFooter>
+        <SidebarFooter className="border-t">
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton
