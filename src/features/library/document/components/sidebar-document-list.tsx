@@ -29,7 +29,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Spinner } from '@/components/ui/spinner';
 import {
   Collapsible,
@@ -306,7 +306,6 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
                           </SidebarMenu>
                         </motion.div>
                       </AnimatePresence>
-                      <ScrollBar orientation="vertical" />
                     </ScrollArea>
                   </SidebarGroupContent>
                 </CollapsibleContent>
