@@ -1,4 +1,3 @@
-import { requireLibraryRole } from '@/lib/auth/library-role';
 import { Suspense } from 'react';
 import { getCachedLibraryName } from '../queries.server';
 import { BreadcrumbLibraryNav } from './breadcrumb-library-nav';
@@ -12,16 +11,13 @@ interface LibraryBreadcrumbProps {
 export function LibraryBreadcrumb({ params }: LibraryBreadcrumbProps) {
   return (
     <Suspense fallback={null}>
-      <LibraryBreadcrumbAsync params={params} />
+      <LibraryBreadcrumbWrapper params={params} />
     </Suspense>
   );
 }
 
-async function LibraryBreadcrumbAsync({ params }: LibraryBreadcrumbProps) {
+async function LibraryBreadcrumbWrapper({ params }: LibraryBreadcrumbProps) {
   const { id: libraryId } = await params;
-  const membership = await requireLibraryRole(libraryId);
-  if (!membership) return null;
-
   const libraryName = await getCachedLibraryName(libraryId);
   if (!libraryName) throw new Error('Library not found');
 
