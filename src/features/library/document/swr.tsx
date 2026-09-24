@@ -21,7 +21,7 @@ import type {
   UpdateDocumentInput,
 } from '@/features/library/document/document-schema';
 import { createDocument, deleteDocument, updateDocument } from './actions';
-import { getRecentlyAddedTags } from '../queries';
+import { getRecentlyAddedTags, searchLibraryTags } from '../queries';
 import useSWR from 'swr';
 
 // ---------------------------------------------------------------------------
@@ -281,16 +281,44 @@ export function useDeleteDocumentSWR(libraryId: string) {
 }
 
 export function useGetRecentlyAddedTags(libraryId: string) {
-  const fetchRecentlyAddedTags = useCallback(async () => {
-    try {
+  const fetchRecentlyAddedTags = useCallback(
+    async (key: readonly [string, string]) => {
+      const [, currentLibraryId] = key;
+      if (!currentLibraryId) return [];
       const supabase = createClient();
-      return await getRecentlyAddedTags(libraryId, supabase);
-    } catch (error) {
-      console.error('Failed to fetch recommended tags:', error);
-    }
-  }, [libraryId]);
+      return await getRecentlyAddedTags(currentLibraryId, supabase);
+    },
+    []
+  );
 
-  return useSWR('/tags/recommendations', fetchRecentlyAddedTags, {
-    fallbackData: new Array<string>(),
+  const key = libraryId
+    ? (['/tags/recommendations', libraryId] as const)
+    : null;
+
+  return useSWR(key, fetchRecentlyAddedTags, {
+    fallbackData: [],
+  });
+}
+
+export function useSearchLibraryTagsSWR(libraryId: string, query: string) {
+  const fetchSearchTags = useCallback(
+    async (key: readonly [string, string, string]) => {
+      const [, currentLibraryId, searchParam] = key;
+      if (!currentLibraryId || !searchParam.trim()) return [];
+      const supabase = createClient();
+      return await searchLibraryTags(currentLibraryId, searchParam, supabase);
+    },
+    []
+  );
+
+  const trimmedQuery = query.trim();
+  const key =
+    libraryId && trimmedQuery
+      ? (['/tags/search', libraryId, trimmedQuery] as const)
+      : null;
+
+  return useSWR(key, fetchSearchTags, {
+    fallbackData: [],
+    keepPreviousData: true,
   });
 }

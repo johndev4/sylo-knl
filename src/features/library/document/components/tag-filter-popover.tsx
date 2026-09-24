@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { ListFilterIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -17,9 +17,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { createClient } from '@/lib/supabase/client';
-import { searchLibraryTags } from '@/features/library/queries';
-import { useGetRecentlyAddedTags } from '../swr';
+import { useGetRecentlyAddedTags, useSearchLibraryTagsSWR } from '../swr';
 
 interface TagFilterPopoverProps {
   libraryId: string;
@@ -40,21 +38,17 @@ export function TagFilterPopover({
   // Tag search internal state
   const [tagSearchInput, setTagSearchInput] = useState('');
   const [debouncedTagSearch, setDebouncedTagSearch] = useState('');
-  const [searchResults, setSearchResults] = useState<string[]>([]);
-  const [isTagSearchLoading, setIsTagSearchLoading] = useState(false);
 
-  // Ref to track the latest tag search request to avoid race conditions
-  const activeTagSearchIdRef = useRef(0);
-
-  // Sync draft state with external selectedTags when popover opens or prop changes
-  useEffect(() => {
-    if (open) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+  // Sync draft state with external selectedTags when popover opens
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (nextOpen) {
       setDraftSelectedTags(selectedTags);
+      setTagSearchInput('');
     }
-  }, [open, selectedTags]);
+    setOpen(nextOpen);
+  };
 
-  // Debounce tag search input by 300ms
+  // Debounce tag search input by 300ms for network request
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedTagSearch(tagSearchInput);
@@ -63,49 +57,36 @@ export function TagFilterPopover({
     return () => clearTimeout(timer);
   }, [tagSearchInput]);
 
-  // Load recommended tags (recently added) on initial load or on focus
-  const { data: recommendedTags } = useGetRecentlyAddedTags(libraryId);
+  // Recommended tags via SWR
+  const { data: recommendedTags = [], isLoading: isRecommendedLoading } =
+    useGetRecentlyAddedTags(libraryId);
 
-  // Search tags backend as user types
-  useEffect(() => {
-    if (!libraryId || !debouncedTagSearch.trim()) return;
+  // Search results via SWR
+  const { data: searchResults = [], isLoading: isSearchLoading } =
+    useSearchLibraryTagsSWR(libraryId, debouncedTagSearch);
 
-    let isCancelled = false;
-    const requestId = ++activeTagSearchIdRef.current;
+  const isSearching = tagSearchInput.trim().length > 0;
+  const filterQuery = tagSearchInput.trim().toUpperCase();
 
-    (async () => {
-      setIsTagSearchLoading(true);
-      try {
-        const supabase = await createClient();
-        const results = await searchLibraryTags(
-          libraryId,
-          debouncedTagSearch,
-          supabase
-        );
-        // Only update if this is still the latest request
-        if (requestId === activeTagSearchIdRef.current && !isCancelled) {
-          setSearchResults(results);
-        }
-      } catch (error) {
-        if (requestId === activeTagSearchIdRef.current && !isCancelled) {
-          console.error('Failed to search tags:', error);
-        }
-      } finally {
-        if (requestId === activeTagSearchIdRef.current && !isCancelled) {
-          setIsTagSearchLoading(false);
-        }
-      }
-    })();
+  // Set of selected tags for O(1) duplicate prevention
+  const selectedSet = useMemo(
+    () => new Set(draftSelectedTags),
+    [draftSelectedTags]
+  );
 
-    return () => {
-      isCancelled = true;
-    };
-  }, [libraryId, debouncedTagSearch]);
+  // Filter selected tags based on search query for instant 0ms feedback
+  const displaySelectedTags = useMemo(() => {
+    if (!isSearching) return draftSelectedTags;
+    return draftSelectedTags.filter((tag) =>
+      tag.toUpperCase().includes(filterQuery)
+    );
+  }, [draftSelectedTags, isSearching, filterQuery]);
 
-  // Derive display tags based on whether searching or showing recommended
-  const displayTags = debouncedTagSearch.trim()
-    ? searchResults
-    : (recommendedTags as string[]);
+  // Filter remaining tags (recommended or search results), preventing duplicate display
+  const displayOtherTags = useMemo(() => {
+    const rawList = isSearching ? searchResults : (recommendedTags as string[]);
+    return rawList.filter((tag) => !selectedSet.has(tag));
+  }, [isSearching, searchResults, recommendedTags, selectedSet]);
 
   const toggleTag = (tag: string) => {
     setDraftSelectedTags((prev) =>
@@ -126,8 +107,11 @@ export function TagFilterPopover({
         ? selectedTags[0]
         : `${selectedTags.length} Tags Selected`;
 
+  const isListEmpty =
+    displaySelectedTags.length === 0 && displayOtherTags.length === 0;
+
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger
         render={
           <Button variant="ghost" size={'sm'}>
@@ -135,45 +119,69 @@ export function TagFilterPopover({
             <span className="truncate">{triggerLabel}</span>
           </Button>
         }
-      ></PopoverTrigger>
+      />
       <PopoverContent className="w-[220px] p-0" align="start">
-        <Command>
+        <Command shouldFilter={false}>
           <CommandInput
             placeholder="Search tags..."
             value={tagSearchInput}
             onValueChange={setTagSearchInput}
           />
           <CommandList>
-            {displayTags.length === 0 ? (
+            {isListEmpty ? (
               <CommandEmpty>
-                {isTagSearchLoading ? 'Searching...' : 'No tags found.'}
+                {isSearchLoading || isRecommendedLoading
+                  ? 'Loading tags...'
+                  : 'No tags found.'}
               </CommandEmpty>
             ) : (
-              <CommandGroup
-                heading={
-                  debouncedTagSearch ? 'Search Results' : 'Recommended Tags'
-                }
-              >
-                {displayTags.map((tag) => {
-                  const isChecked = draftSelectedTags.includes(tag);
-                  return (
-                    <CommandItem
-                      key={tag}
-                      value={tag}
-                      onSelect={() => toggleTag(tag)}
-                      className="flex items-center justify-between text-[10px] font-bold tracking-wider uppercase"
-                    >
-                      <Checkbox
-                        checked={isChecked}
-                        onCheckedChange={() => toggleTag(tag)}
-                        tabIndex={-1}
-                        className="pointer-events-none"
-                      />
-                      <span className="truncate">{tag}</span>
-                    </CommandItem>
-                  );
-                })}
-              </CommandGroup>
+              <>
+                {displaySelectedTags.length > 0 && (
+                  <CommandGroup heading="Selected Tags">
+                    {displaySelectedTags.map((tag) => (
+                      <CommandItem
+                        key={tag}
+                        value={tag}
+                        onSelect={() => toggleTag(tag)}
+                        className="flex items-center justify-between text-[10px] font-bold tracking-wider uppercase"
+                      >
+                        <Checkbox
+                          checked={true}
+                          onCheckedChange={() => toggleTag(tag)}
+                          tabIndex={-1}
+                          className="pointer-events-none"
+                        />
+                        <span className="truncate">{tag}</span>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                )}
+
+                {displayOtherTags.length > 0 && (
+                  <CommandGroup
+                    heading={
+                      isSearching ? 'Search Results' : 'Recommended Tags'
+                    }
+                  >
+                    {displayOtherTags.map((tag) => (
+                      <CommandItem
+                        key={tag}
+                        value={tag}
+                        onSelect={() => toggleTag(tag)}
+                        className="flex items-center justify-between text-[10px] font-bold tracking-wider uppercase"
+                      >
+                        <Checkbox
+                          checked={false}
+                          onCheckedChange={() => toggleTag(tag)}
+                          tabIndex={-1}
+                          className="pointer-events-none"
+                        />
+                        <span className="truncate">{tag}</span>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                )}
+              </>
             )}
           </CommandList>
           <div className="flex items-center justify-between border-t p-2">
