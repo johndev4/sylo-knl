@@ -28,7 +28,6 @@ import {
   SidebarMenuSkeleton,
 } from '@/components/ui/sidebar';
 import { Input } from '@/components/ui/input';
-import { useSidebarRefresh } from '@/components/providers/sidebar-refresh-provider';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Spinner } from '@/components/ui/spinner';
@@ -37,15 +36,13 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { useDocumentsSWR } from '@/features/library/document/swr';
+import { useGetDocumentsSWRInfinite } from '@/features/library/document/swr';
 
 interface SidebarDocumentListProps {
   userRole: string;
 }
 
 export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
-  const { refreshKey } = useSidebarRefresh();
-
   const params = useParams();
   const libraryId = params?.id as string;
   const pathname = usePathname();
@@ -76,7 +73,7 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
     isLoading,
     isLoadingMore,
     hasMore,
-  } = useDocumentsSWR(libraryId, debouncedSearchQuery, selectedTags);
+  } = useGetDocumentsSWRInfinite(libraryId, debouncedSearchQuery, selectedTags);
 
   useEffect(() => {
     setSize(1);
@@ -121,7 +118,6 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
                 <div className="flex items-end justify-between">
                   <TagFilterPopover
                     libraryId={libraryId}
-                    refreshKey={refreshKey}
                     selectedTags={selectedTags}
                     onApplyTags={(tags) => {
                       setSelectedTags(tags);

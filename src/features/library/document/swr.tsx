@@ -21,7 +21,8 @@ import type {
   UpdateDocumentInput,
 } from '@/features/library/document/document-schema';
 import { createDocument, deleteDocument, updateDocument } from './actions';
-import { useParams } from 'next/navigation';
+import { getRecentlyAddedTags } from '../queries';
+import useSWR from 'swr';
 
 // ---------------------------------------------------------------------------
 // Constant Variables
@@ -35,6 +36,8 @@ export const PAGE_SIZE = 100;
 // ---------------------------------------------------------------------------
 
 type DocumentSWRContextType = {
+  sharedLibraryId: string;
+  setSharedLibraryId: Dispatch<SetStateAction<string>>;
   sharedSearchQuery: string;
   setSharedSearchQuery: Dispatch<SetStateAction<string>>;
   sharedSelectedTags: string[];
@@ -42,6 +45,8 @@ type DocumentSWRContextType = {
 };
 
 const DocumentSWRContext = createContext<DocumentSWRContextType>({
+  sharedLibraryId: '',
+  setSharedLibraryId: () => {},
   sharedSearchQuery: '',
   setSharedSearchQuery: () => {},
   sharedSelectedTags: [],
@@ -57,12 +62,15 @@ export function DocumentSWRProvider({
 }: {
   children: React.ReactNode;
 }) {
+  const [sharedLibraryId, setSharedLibraryId] = useState<string>('');
   const [sharedSearchQuery, setSharedSearchQuery] = useState<string>('');
   const [sharedSelectedTags, setSharedSelectedTags] = useState<string[]>([]);
 
   return (
     <DocumentSWRContext.Provider
       value={{
+        sharedLibraryId,
+        setSharedLibraryId,
         sharedSearchQuery,
         setSharedSearchQuery,
         sharedSelectedTags,
@@ -82,15 +90,17 @@ function useSharedState() {
   return useContext(DocumentSWRContext);
 }
 
-export function useDocumentsSWR(
+export function useGetDocumentsSWRInfinite(
   libraryId: string,
   searchQuery: string,
   selectedTags: string[] = []
 ) {
   const { user } = useSession();
-  const { setSharedSearchQuery, setSharedSelectedTags } = useSharedState();
+  const { setSharedLibraryId, setSharedSearchQuery, setSharedSelectedTags } =
+    useSharedState();
 
   useEffect(() => {
+    setSharedLibraryId(libraryId);
     setSharedSearchQuery(searchQuery);
     setSharedSelectedTags(selectedTags);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -125,7 +135,7 @@ export function useDocumentsSWR(
       }
 
       const [, currentLibraryId, page, searchTerm, tags] = key;
-      const supabase = await createClient();
+      const supabase = createClient();
 
       return getDocuments(
         {
@@ -205,12 +215,10 @@ export function useDocumentsSWR(
   };
 }
 
-export function useCreateDocumentSWR() {
-  const params = useParams();
-  const libraryId = params?.id as string;
+export function useCreateDocumentSWR(libraryId: string) {
   const { sharedSearchQuery, sharedSelectedTags } = useSharedState();
 
-  const { mutate } = useDocumentsSWR(
+  const { mutate } = useGetDocumentsSWRInfinite(
     libraryId,
     sharedSearchQuery,
     sharedSelectedTags
@@ -228,12 +236,10 @@ export function useCreateDocumentSWR() {
   );
 }
 
-export function useUpdateDocumentSWR() {
-  const params = useParams();
-  const libraryId = params?.id as string;
+export function useUpdateDocumentSWR(libraryId: string) {
   const { sharedSearchQuery, sharedSelectedTags } = useSharedState();
 
-  const { mutate } = useDocumentsSWR(
+  const { mutate } = useGetDocumentsSWRInfinite(
     libraryId,
     sharedSearchQuery,
     sharedSelectedTags
@@ -253,12 +259,10 @@ export function useUpdateDocumentSWR() {
   );
 }
 
-export function useDeleteDocumentSWR() {
-  const params = useParams();
-  const libraryId = params?.id as string;
+export function useDeleteDocumentSWR(libraryId: string) {
   const { sharedSearchQuery, sharedSelectedTags } = useSharedState();
 
-  const { mutate } = useDocumentsSWR(
+  const { mutate } = useGetDocumentsSWRInfinite(
     libraryId,
     sharedSearchQuery,
     sharedSelectedTags
@@ -274,4 +278,19 @@ export function useDeleteDocumentSWR() {
       },
     }
   );
+}
+
+export function useGetRecentlyAddedTags(libraryId: string) {
+  const fetchRecentlyAddedTags = useCallback(async () => {
+    try {
+      const supabase = createClient();
+      return await getRecentlyAddedTags(libraryId, supabase);
+    } catch (error) {
+      console.error('Failed to fetch recommended tags:', error);
+    }
+  }, [libraryId]);
+
+  return useSWR('/tags/recommendations', fetchRecentlyAddedTags, {
+    fallbackData: new Array<string>(),
+  });
 }

@@ -18,10 +18,8 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { createClient } from '@/lib/supabase/client';
-import {
-  getRecentlyAddedTags,
-  searchLibraryTags,
-} from '@/features/library/queries';
+import { searchLibraryTags } from '@/features/library/queries';
+import { useGetRecentlyAddedTags } from '../swr';
 
 interface TagFilterPopoverProps {
   libraryId: string;
@@ -32,7 +30,6 @@ interface TagFilterPopoverProps {
 
 export function TagFilterPopover({
   libraryId,
-  refreshKey,
   selectedTags,
   onApplyTags,
 }: TagFilterPopoverProps) {
@@ -41,7 +38,6 @@ export function TagFilterPopover({
     useState<string[]>(selectedTags);
 
   // Tag search internal state
-  const [recommendedTags, setRecommendedTags] = useState<string[]>([]);
   const [tagSearchInput, setTagSearchInput] = useState('');
   const [debouncedTagSearch, setDebouncedTagSearch] = useState('');
   const [searchResults, setSearchResults] = useState<string[]>([]);
@@ -67,27 +63,8 @@ export function TagFilterPopover({
     return () => clearTimeout(timer);
   }, [tagSearchInput]);
 
-  // Load recommended tags (recently added) on initial load or library change
-  useEffect(() => {
-    if (!libraryId) return;
-    let isCancelled = false;
-
-    (async () => {
-      try {
-        const supabase = await createClient();
-        const tags = await getRecentlyAddedTags(libraryId, supabase);
-        if (!isCancelled) {
-          setRecommendedTags(tags);
-        }
-      } catch (error) {
-        console.error('Failed to fetch recommended tags:', error);
-      }
-    })();
-
-    return () => {
-      isCancelled = true;
-    };
-  }, [libraryId, refreshKey]);
+  // Load recommended tags (recently added) on initial load or on focus
+  const { data: recommendedTags } = useGetRecentlyAddedTags(libraryId);
 
   // Search tags backend as user types
   useEffect(() => {
@@ -128,7 +105,7 @@ export function TagFilterPopover({
   // Derive display tags based on whether searching or showing recommended
   const displayTags = debouncedTagSearch.trim()
     ? searchResults
-    : recommendedTags;
+    : (recommendedTags as string[]);
 
   const toggleTag = (tag: string) => {
     setDraftSelectedTags((prev) =>

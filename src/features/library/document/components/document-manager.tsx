@@ -23,7 +23,6 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { DocumentActions } from './document-actions';
-import { useSidebarRefresh } from '@/components/providers/sidebar-refresh-provider';
 import { TagChipsInput } from './tag-chips-input';
 import { useNavigationGuard } from '../hooks/use-navigation-guard';
 import {
@@ -72,7 +71,6 @@ export function DocumentManager({
   userRole = 'VIEWER',
 }: DocumentManagerProps) {
   const router = useRouter();
-  const { triggerRefresh } = useSidebarRefresh();
 
   const [isEditMode, setIsEditMode] = useState(isNew);
   const [title, setTitle] = useState(initialData?.title || '');
@@ -331,8 +329,8 @@ export function DocumentManager({
   // Save
   // ---------------------------------------------------------------------------
 
-  const { trigger: triggerCreateDocument } = useCreateDocumentSWR();
-  const { trigger: triggerUpdateDocument } = useUpdateDocumentSWR();
+  const { trigger: triggerCreateDocument } = useCreateDocumentSWR(libraryId);
+  const { trigger: triggerUpdateDocument } = useUpdateDocumentSWR(libraryId);
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!title.trim()) {
@@ -355,7 +353,6 @@ export function DocumentManager({
           },
         });
 
-        triggerRefresh();
         setIgnoreNavigationGuard(true);
         router.push(`/hub/libraries/${libraryId}/documents/${data.documentId}`);
         router.refresh();
@@ -376,7 +373,6 @@ export function DocumentManager({
           latestUpdatedAt.current = data.document.updated_at;
         }
 
-        triggerRefresh();
         setIsEditMode(false);
         router.refresh();
       }
@@ -401,7 +397,7 @@ export function DocumentManager({
   // Delete
   // ---------------------------------------------------------------------------
 
-  const { trigger: triggerDeleteDocument } = useDeleteDocumentSWR();
+  const { trigger: triggerDeleteDocument } = useDeleteDocumentSWR(libraryId);
   const handleDelete = async () => {
     if (!initialData?.id) return;
 
@@ -413,7 +409,7 @@ export function DocumentManager({
       await triggerDeleteDocument({ docId: initialData.id });
 
       setIgnoreNavigationGuard(true);
-      triggerRefresh();
+
       router.push(`/hub/libraries/${libraryId}/documents`);
     } catch (err: unknown) {
       const message =
