@@ -37,7 +37,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { useDocumentsSWR } from '@/features/library/document/hooks/use-swr';
+import { useDocumentsSWR } from '@/features/library/document/swr';
 
 interface SidebarDocumentListProps {
   userRole: string;

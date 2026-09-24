@@ -30,7 +30,7 @@ import {
   useCreateDocumentSWR,
   useDeleteDocumentSWR,
   useUpdateDocumentSWR,
-} from '@/features/library/document/hooks/use-swr';
+} from '@/features/library/document/swr';
 import { BlockEditor } from './block_editor';
 import {
   Collapsible,

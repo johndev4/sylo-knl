@@ -6,6 +6,7 @@ import {
   LibrarySidebar,
 } from '@/features/library/components';
 import { SidebarLayout } from '@/components/layout/sidebar-layout';
+import { DocumentSWRProvider } from '@/features/library/document/swr';
 
 interface LibraryLayoutProps {
   children: React.ReactNode;
@@ -30,16 +31,18 @@ async function LibraryLayoutWrapper({ children, params }: LibraryLayoutProps) {
 
   return (
     <SidebarRefreshProvider>
-      <SidebarLayout sidebar={<LibrarySidebar userRole={membership.role} />}>
-        <LibraryBreadcrumb params={params} />
-        <div
-          className={
-            'bg-background relative flex min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto'
-          }
-        >
-          {children}
-        </div>
-      </SidebarLayout>
+      <DocumentSWRProvider>
+        <SidebarLayout sidebar={<LibrarySidebar userRole={membership.role} />}>
+          <LibraryBreadcrumb params={params} />
+          <div
+            className={
+              'bg-background relative flex min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto'
+            }
+          >
+            {children}
+          </div>
+        </SidebarLayout>
+      </DocumentSWRProvider>
     </SidebarRefreshProvider>
   );
 }

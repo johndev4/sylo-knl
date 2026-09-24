@@ -1,6 +1,15 @@
 'use client';
 
-import { useCallback, useMemo } from 'react';
+import {
+  createContext,
+  Dispatch,
+  SetStateAction,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import useSWRInfinite from 'swr/infinite';
 import useSWRMutation from 'swr/mutation';
 import { createClient } from '@/lib/supabase/client';
@@ -11,14 +20,67 @@ import type {
   DocumentListResult,
   UpdateDocumentInput,
 } from '@/features/library/document/document-schema';
-import { createDocument, deleteDocument, updateDocument } from '../actions';
+import { createDocument, deleteDocument, updateDocument } from './actions';
+import { useParams } from 'next/navigation';
+
+// ---------------------------------------------------------------------------
+// Constant Variables
+// ---------------------------------------------------------------------------
 
 export const DOCUMENTS_SWR_KEY = '/documents';
-export const PAGE_SIZE = 3;
+export const PAGE_SIZE = 100;
+
+// ---------------------------------------------------------------------------
+// Context
+// ---------------------------------------------------------------------------
+
+type DocumentSWRContextType = {
+  sharedSearchQuery: string;
+  setSharedSearchQuery: Dispatch<SetStateAction<string>>;
+  sharedSelectedTags: string[];
+  setSharedSelectedTags: Dispatch<SetStateAction<string[]>>;
+};
+
+const DocumentSWRContext = createContext<DocumentSWRContextType>({
+  sharedSearchQuery: '',
+  setSharedSearchQuery: () => {},
+  sharedSelectedTags: [],
+  setSharedSelectedTags: () => {},
+});
+
+// ---------------------------------------------------------------------------
+// Provider
+// ---------------------------------------------------------------------------
+
+export function DocumentSWRProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const [sharedSearchQuery, setSharedSearchQuery] = useState<string>('');
+  const [sharedSelectedTags, setSharedSelectedTags] = useState<string[]>([]);
+
+  return (
+    <DocumentSWRContext.Provider
+      value={{
+        sharedSearchQuery,
+        setSharedSearchQuery,
+        sharedSelectedTags,
+        setSharedSelectedTags,
+      }}
+    >
+      {children}
+    </DocumentSWRContext.Provider>
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Hooks
 // ---------------------------------------------------------------------------
+
+function useSharedState() {
+  return useContext(DocumentSWRContext);
+}
 
 export function useDocumentsSWR(
   libraryId: string,
@@ -26,6 +88,13 @@ export function useDocumentsSWR(
   selectedTags: string[] = []
 ) {
   const { user } = useSession();
+  const { setSharedSearchQuery, setSharedSelectedTags } = useSharedState();
+
+  useEffect(() => {
+    setSharedSearchQuery(searchQuery);
+    setSharedSelectedTags(selectedTags);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery, selectedTags]);
 
   const getKey = useCallback(
     (index: number, previousPageData: DocumentListResult | null) => {
@@ -137,27 +206,72 @@ export function useDocumentsSWR(
 }
 
 export function useCreateDocumentSWR() {
+  const params = useParams();
+  const libraryId = params?.id as string;
+  const { sharedSearchQuery, sharedSelectedTags } = useSharedState();
+
+  const { mutate } = useDocumentsSWR(
+    libraryId,
+    sharedSearchQuery,
+    sharedSelectedTags
+  );
+
   return useSWRMutation(
     DOCUMENTS_SWR_KEY,
     async (_, { arg }: { arg: { input: CreateDocumentInput } }) =>
-      await createDocument(arg.input)
+      await createDocument(arg.input),
+    {
+      onSuccess: () => {
+        mutate();
+      },
+    }
   );
 }
 
 export function useUpdateDocumentSWR() {
+  const params = useParams();
+  const libraryId = params?.id as string;
+  const { sharedSearchQuery, sharedSelectedTags } = useSharedState();
+
+  const { mutate } = useDocumentsSWR(
+    libraryId,
+    sharedSearchQuery,
+    sharedSelectedTags
+  );
+
   return useSWRMutation(
     DOCUMENTS_SWR_KEY,
     async (
       _,
       { arg }: { arg: { docId: string; input: UpdateDocumentInput } }
-    ) => await updateDocument(arg.docId, arg.input)
+    ) => await updateDocument(arg.docId, arg.input),
+    {
+      onSuccess: () => {
+        mutate();
+      },
+    }
   );
 }
 
 export function useDeleteDocumentSWR() {
+  const params = useParams();
+  const libraryId = params?.id as string;
+  const { sharedSearchQuery, sharedSelectedTags } = useSharedState();
+
+  const { mutate } = useDocumentsSWR(
+    libraryId,
+    sharedSearchQuery,
+    sharedSelectedTags
+  );
+
   return useSWRMutation(
     DOCUMENTS_SWR_KEY,
     async (_, { arg }: { arg: { docId: string } }) =>
-      await deleteDocument(arg.docId)
+      await deleteDocument(arg.docId),
+    {
+      onSuccess: () => {
+        mutate();
+      },
+    }
   );
 }
