@@ -329,8 +329,8 @@ export function DocumentManager({
   // Save
   // ---------------------------------------------------------------------------
 
-  const { trigger: triggerCreateDocument } = useCreateDocumentSWR(libraryId);
-  const { trigger: triggerUpdateDocument } = useUpdateDocumentSWR(libraryId);
+  const { createDocument } = useCreateDocumentSWR(libraryId);
+  const { updateDocument } = useUpdateDocumentSWR(libraryId);
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!title.trim()) {
@@ -344,7 +344,7 @@ export function DocumentManager({
     try {
       if (isNew) {
         // Server call
-        const data = await triggerCreateDocument({
+        const data = await createDocument({
           input: {
             title,
             content: content || '',
@@ -358,7 +358,7 @@ export function DocumentManager({
         router.refresh();
       } else {
         // Server call
-        const data = await triggerUpdateDocument({
+        const data = await updateDocument({
           docId: initialData!.id,
           input: {
             title,
@@ -397,7 +397,7 @@ export function DocumentManager({
   // Delete
   // ---------------------------------------------------------------------------
 
-  const { trigger: triggerDeleteDocument } = useDeleteDocumentSWR(libraryId);
+  const { deleteDocument } = useDeleteDocumentSWR(libraryId);
   const handleDelete = async () => {
     if (!initialData?.id) return;
 
@@ -406,7 +406,7 @@ export function DocumentManager({
 
     try {
       // Server call
-      await triggerDeleteDocument({ docId: initialData.id });
+      await deleteDocument({ docId: initialData.id });
 
       setIgnoreNavigationGuard(true);
 

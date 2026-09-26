@@ -16,12 +16,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { Spinner } from '@/components/ui/spinner';
 import {
-  updateLibraryMemberRole,
-  removeLibraryMember,
-  removeMultipleLibraryMembers,
-} from '@/features/library/actions';
-import { LibraryMember } from '@/features/library/library-schema';
+  useLibraryMembersSWR,
+  useUpdateLibraryMemberRoleSWR,
+  useRemoveLibraryMemberSWR,
+  useRemoveMultipleLibraryMembersSWR,
+} from './swr';
+import type { LibraryMember } from '@/features/library/library-schema';
 import {
   DataGrid,
   DataGridContainer,
@@ -53,8 +55,6 @@ import {
 import { CheckIcon, ChevronDown } from 'lucide-react';
 import { UserAvatar } from '@/components/shared/user-avatar';
 import { Skeleton } from '@/components/ui/skeleton';
-import { createClient } from '@/lib/supabase/client';
-import { getLibraryMembers } from '../queries';
 
 interface MemberTableProps {
   libraryId: string;
@@ -78,9 +78,19 @@ const roleOptions = [
 ];
 
 export function MemberTable({ libraryId, canManageMembers }: MemberTableProps) {
-  const [members, setMembers] = useState<LibraryMember[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isUpdating, setIsUpdating] = useState(false);
+  const {
+    members,
+    isLoading,
+    error: fetchError,
+    mutate: refreshMembers,
+  } = useLibraryMembersSWR(libraryId);
+  const { updateRole, isUpdating: isUpdatingRole } =
+    useUpdateLibraryMemberRoleSWR(libraryId);
+  const { removeMember, isRemoving: isRemovingSingle } =
+    useRemoveLibraryMemberSWR(libraryId);
+  const { removeMembers, isRemoving: isRemovingMultiple } =
+    useRemoveMultipleLibraryMembersSWR(libraryId);
+
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -99,125 +109,60 @@ export function MemberTable({ libraryId, canManageMembers }: MemberTableProps) {
   );
 
   useEffect(() => {
-    // Always reset fetch, update, and feedback states on mount.
+    // Always reset feedback states on mount.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setMembers([]);
-    setIsLoading(true);
-    setIsUpdating(false);
     setError('');
     setSuccess('');
   }, []);
 
-  useEffect(() => {
-    const supabase = createClient();
-    const fetchLibraryMembers = async () => {
-      try {
-        const _members = await getLibraryMembers(libraryId, supabase);
-        setMembers(_members);
-      } catch (err) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        setError((err as any)?.message);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchLibraryMembers();
-  }, [libraryId]);
-
   const handleRoleChange = useCallback(
     async (userId: string, newRole: MemberRole) => {
       try {
-        setIsUpdating(true);
         setError('');
-
-        // Perform the API call
-        await updateLibraryMemberRole(libraryId, userId, newRole);
-
-        // Use functional update to avoid needing 'members' in the dependency array
-        // Use .map() to ensure immutability (creates a new array/object)
-        setMembers((prevMembers) =>
-          prevMembers.map((m) =>
-            m.user_id === userId ? { ...m, role: newRole } : m
-          )
-        );
+        await updateRole({ userId, newRole });
+        await refreshMembers();
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to update role');
-      } finally {
-        setIsUpdating(false);
       }
     },
-    [libraryId]
+    [refreshMembers, updateRole]
   );
 
   const handleRemoveMember = useCallback(
     async (userId: string) => {
-      // Save current state in case we need to roll back
-      const previousMembers = members;
-      const previousSelection = rowSelection;
-
       try {
-        setIsUpdating(true);
         setError('');
         setSuccess('');
-
-        // OPTIMISTIC UPDATE: Update UI immediately
-        setMembers((current) => current.filter((m) => m.user_id !== userId));
-        setRowSelection((prev) => {
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const { [userId]: _, ...rest } = prev;
-          return rest;
-        });
-
-        // Perform the actual API call
-        await removeLibraryMember(libraryId, userId);
-
+        await removeMember(userId);
+        await refreshMembers();
         setSuccess('Member removed successfully');
       } catch (err) {
-        // ROLLBACK: If the API fails, restore the old state
-        setMembers(previousMembers);
-        setRowSelection(previousSelection);
-
         setError(
           err instanceof Error ? err.message : 'Failed to remove member'
         );
-      } finally {
-        setIsUpdating(false);
       }
     },
-    [libraryId, members, rowSelection] // Note: Now we need these in dependencies for the rollback
+    [refreshMembers, removeMember]
   );
 
   const handleRemoveMultiple = useCallback(
     async (idsToRemove: string[]) => {
-      // Guard clause
       if (idsToRemove.length === 0) return;
 
       try {
-        setIsUpdating(true);
         setError('');
         setSuccess('');
-
-        // API Call
-        await removeMultipleLibraryMembers(libraryId, idsToRemove);
-
-        // Update Members (Fixes the Stale UI bug)
-        setMembers((current) =>
-          current.filter((member) => !idsToRemove.includes(member.user_id))
-        );
-
-        // Clear Selection
+        await removeMembers(idsToRemove);
+        await refreshMembers();
         setRowSelection({});
-
         setSuccess('Members removed successfully');
       } catch (err) {
         setError(
           err instanceof Error ? err.message : 'Failed to remove members'
         );
-      } finally {
-        setIsUpdating(false);
       }
     },
-    [libraryId]
+    [refreshMembers, removeMembers]
   );
 
   const columns = useMemo<ColumnDef<DataGridFeatures, LibraryMember>[]>(() => {
@@ -284,7 +229,7 @@ export function MemberTable({ libraryId, canManageMembers }: MemberTableProps) {
           const member = row.original;
           if (canManageMembers && member.role !== 'OWNER') {
             return (
-              <DropdownMenu disabled={isUpdating}>
+              <DropdownMenu disabled={isUpdatingRole}>
                 <DropdownMenuTrigger
                   id="inviteMemberRole"
                   aria-label="Invite member role"
@@ -377,7 +322,9 @@ export function MemberTable({ libraryId, canManageMembers }: MemberTableProps) {
                   <Button
                     variant="ghost"
                     size="sm"
-                    disabled={isUpdating}
+                    disabled={
+                      isRemovingSingle || isRemovingMultiple || isUpdatingRole
+                    }
                     className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                     aria-label={`Remove ${member.user?.email}`}
                   >
@@ -394,12 +341,17 @@ export function MemberTable({ libraryId, canManageMembers }: MemberTableProps) {
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogCancel disabled={isRemovingSingle}>
+                    Cancel
+                  </AlertDialogCancel>
+
                   <AlertDialogAction
                     onClick={() => handleRemoveMember(member.user_id)}
                     variant="destructive"
+                    disabled={isRemovingSingle}
                   >
-                    Remove
+                    {isRemovingSingle && <Spinner className="h-4 w-4" />}
+                    {'Remove'}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -416,7 +368,14 @@ export function MemberTable({ libraryId, canManageMembers }: MemberTableProps) {
     ];
 
     return canManageMembers ? allColumns : allColumns.slice(1, -1);
-  }, [canManageMembers, handleRemoveMember, handleRoleChange, isUpdating]);
+  }, [
+    canManageMembers,
+    handleRemoveMember,
+    handleRoleChange,
+    isRemovingMultiple,
+    isRemovingSingle,
+    isUpdatingRole,
+  ]);
 
   const table = useTable({
     features: dataGridFeatures,
@@ -455,7 +414,7 @@ export function MemberTable({ libraryId, canManageMembers }: MemberTableProps) {
             <Button
               variant="destructive"
               size="sm"
-              disabled={selectedMemberIds.length === 0 || isUpdating}
+              disabled={selectedMemberIds.length === 0 || isRemovingMultiple}
               onClick={() => handleRemoveMultiple(selectedMemberIds)}
             >
               Remove {selectedMemberIds.length} member(s)
@@ -464,7 +423,7 @@ export function MemberTable({ libraryId, canManageMembers }: MemberTableProps) {
         </div>
       </div>
 
-      {error && (
+      {(error || fetchError) && (
         <motion.div
           className="rounded border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-900/20"
           initial={{ opacity: 0, y: -10 }}
@@ -475,7 +434,10 @@ export function MemberTable({ libraryId, canManageMembers }: MemberTableProps) {
           }}
         >
           <p className="text-sm text-red-700 dark:text-red-400">
-            {error || 'An error occurred. Please try again.'}
+            {error ||
+              (fetchError instanceof Error
+                ? fetchError.message
+                : 'An error occurred. Please try again.')}
           </p>
         </motion.div>
       )}

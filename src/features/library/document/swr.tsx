@@ -224,7 +224,7 @@ export function useCreateDocumentSWR(libraryId: string) {
     sharedSelectedTags
   );
 
-  return useSWRMutation(
+  const { trigger, isMutating } = useSWRMutation(
     DOCUMENTS_SWR_KEY,
     async (_, { arg }: { arg: { input: CreateDocumentInput } }) =>
       await createDocument(arg.input),
@@ -234,6 +234,8 @@ export function useCreateDocumentSWR(libraryId: string) {
       },
     }
   );
+
+  return { createDocument: trigger, isCreatingDocument: isMutating };
 }
 
 export function useUpdateDocumentSWR(libraryId: string) {
@@ -245,7 +247,7 @@ export function useUpdateDocumentSWR(libraryId: string) {
     sharedSelectedTags
   );
 
-  return useSWRMutation(
+  const { trigger, isMutating } = useSWRMutation(
     DOCUMENTS_SWR_KEY,
     async (
       _,
@@ -257,6 +259,8 @@ export function useUpdateDocumentSWR(libraryId: string) {
       },
     }
   );
+
+  return { updateDocument: trigger, isUpdatingDocument: isMutating };
 }
 
 export function useDeleteDocumentSWR(libraryId: string) {
@@ -268,7 +272,7 @@ export function useDeleteDocumentSWR(libraryId: string) {
     sharedSelectedTags
   );
 
-  return useSWRMutation(
+  const { trigger, isMutating } = useSWRMutation(
     DOCUMENTS_SWR_KEY,
     async (_, { arg }: { arg: { docId: string } }) =>
       await deleteDocument(arg.docId),
@@ -278,6 +282,8 @@ export function useDeleteDocumentSWR(libraryId: string) {
       },
     }
   );
+
+  return { deleteDocument: trigger, isDeletingDocument: isMutating };
 }
 
 export function useGetRecentlyAddedTags(libraryId: string) {
