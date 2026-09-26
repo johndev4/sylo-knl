@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { redirect, useParams, usePathname } from 'next/navigation';
+import { useParams, usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import {
   Plus,
   Search,
@@ -28,55 +29,44 @@ import {
   SidebarMenuSkeleton,
 } from '@/components/ui/sidebar';
 import { Input } from '@/components/ui/input';
-import { useSidebarRefresh } from '@/components/providers/sidebar-refresh-provider';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Spinner } from '@/components/ui/spinner';
-import { getDocuments } from '@/features/library/document/queries';
-import { DocumentListItem } from '@/features/library/document/document-schema';
-import { createClient } from '@/lib/supabase/client';
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { useSession } from '@/components/providers/auth-provider';
+import { useGetDocumentsSWRInfinite } from '@/features/library/document/swr';
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+type VirtualRow = { type: 'doc'; id: string } | { type: 'load-more' };
 
 interface SidebarDocumentListProps {
   userRole: string;
 }
 
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
+
 export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
-  const { refreshKey } = useSidebarRefresh();
-  const { user } = useSession();
-
-  if (!user) {
-    redirect('/login');
-  }
-
   const params = useParams();
   const libraryId = params?.id as string;
   const pathname = usePathname();
 
-  const [documents, setDocuments] = useState<DocumentListItem[]>([]);
-  const [totalDocs, setTotalDocs] = useState(0);
-  const [page, setPage] = useState(1);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isClient, setIsClient] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
-  // Ref to track the latest request to avoid out-of-order responses
-  const activeRequestIdRef = useRef(0);
-
-  const [isClient, setIsClient] = useState(false);
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsClient(true);
   }, []);
 
-  // Debounce search query input by 300ms
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery);
@@ -85,73 +75,78 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Fetch documents directly from the backend with current filters
-  const fetchDocuments = useCallback(
-    async (
-      pageToLoad = 1,
-      searchTerm = debouncedSearchQuery,
-      tagFilter = selectedTags
-    ) => {
-      if (!libraryId) return;
+  const {
+    documents,
+    totalDocs,
+    size,
+    setSize,
+    isLoading,
+    isLoadingMore,
+    hasMore,
+  } = useGetDocumentsSWRInfinite(libraryId, debouncedSearchQuery, selectedTags);
 
-      const requestId = ++activeRequestIdRef.current;
-      setIsLoading(true);
+  useEffect(() => {
+    setSize(1);
+  }, [setSize]);
 
-      try {
-        const supabase = await createClient();
-        const trimmedSearch = searchTerm.trim();
-        const filterTags =
-          tagFilter && tagFilter.length > 0 ? tagFilter : undefined;
+  // ---------------------------------------------------------------------------
+  // Virtual scroll setup
+  // ---------------------------------------------------------------------------
 
-        const data = await getDocuments(
-          {
-            libraryId,
-            limit: 100,
-            page: pageToLoad,
-            search: trimmedSearch || undefined,
-            tags: filterTags,
-          },
-          supabase,
-          user
-        );
-
-        // Discard stale response if a newer request was dispatched
-        if (requestId !== activeRequestIdRef.current) {
-          return;
-        }
-
-        if (pageToLoad === 1) {
-          setDocuments(data.data || []);
-        } else {
-          setDocuments((prev) => [...prev, ...(data.data || [])]);
-        }
-        setTotalDocs(data.metadata?.total || 0);
-      } catch (error) {
-        if (requestId === activeRequestIdRef.current) {
-          console.error('Failed to fetch documents:', error);
-        }
-      } finally {
-        if (requestId === activeRequestIdRef.current) {
-          setIsLoading(false);
-          setIsInitialLoading(false);
-        }
-      }
-    },
-    [libraryId, user, debouncedSearchQuery, selectedTags]
+  // Ref to the ScrollArea's inner viewport element (data-slot="scroll-area-viewport").
+  // We use a callback ref so the virtualizer re-initialises if the node changes.
+  const scrollViewportRef = useRef<Element | null>(null);
+  const [scrollViewportNode, setScrollViewportNode] = useState<Element | null>(
+    null
   );
 
-  // Trigger backend fetch when search filter, tag filter, or refreshKey changes
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setPage(1);
-    fetchDocuments(1, debouncedSearchQuery, selectedTags);
-  }, [debouncedSearchQuery, selectedTags, refreshKey, fetchDocuments]);
+  const scrollAreaCallbackRef = useCallback((rootNode: HTMLElement | null) => {
+    const viewport = rootNode?.querySelector(
+      '[data-slot="scroll-area-viewport"]'
+    );
+    scrollViewportRef.current = viewport ?? null;
+    setScrollViewportNode(viewport ?? null);
+  }, []);
+
+  // Build the flat list of virtual rows: one per document + optional "load-more" sentinel.
+  const rows = useMemo<VirtualRow[]>(() => {
+    const docRows: VirtualRow[] = documents.map((doc) => ({
+      type: 'doc',
+      id: doc.id,
+    }));
+    if (hasMore) {
+      return [...docRows, { type: 'load-more' }];
+    }
+    return docRows;
+  }, [documents, hasMore]);
+
+  // Each document item is ~60px tall (h-auto py-2 with two text lines at ~20px each).
+  // The "load-more" button row is ~48px (p-2 + h-8).
+  const rowSizes = useMemo(
+    () => rows.map((r) => (r.type === 'load-more' ? 48 : 60)),
+    [rows]
+  );
+
+  // eslint-disable-next-line react-hooks/incompatible-library
+  const virtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => scrollViewportRef.current as HTMLElement | null,
+    estimateSize: (index) => rowSizes[index] ?? 60,
+    overscan: 5,
+  });
+
+  const virtualItems = virtualizer.getVirtualItems();
+  const totalVirtualHeight = virtualizer.getTotalSize();
+
+  // ---------------------------------------------------------------------------
+  // Render helpers
+  // ---------------------------------------------------------------------------
 
   const isAtLimit = totalDocs >= 500;
   const newDocumentPath = `/hub/libraries/${libraryId}/documents/new`;
 
   const isSearching =
-    searchQuery !== debouncedSearchQuery || (isLoading && page === 1);
+    searchQuery !== debouncedSearchQuery || (isLoading && size <= 1);
 
   return (
     isClient && (
@@ -159,7 +154,7 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
         <SidebarContent aria-label="Sidebar Document List Content">
           {/* Fixed Filters Area (Hidden when collapsed into icon mode) */}
           <div className="border-sidebar-border flex shrink-0 flex-col gap-2.5 border-b p-3 group-data-[collapsible=icon]:hidden">
-            {isInitialLoading ? (
+            {isLoading && size <= 1 ? (
               <div className="space-y-3 p-2">
                 <Skeleton className="h-5 w-full rounded-md" />
                 <Skeleton className="h-5 w-20 rounded-md" />
@@ -182,7 +177,6 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
                 <div className="flex items-end justify-between">
                   <TagFilterPopover
                     libraryId={libraryId}
-                    refreshKey={refreshKey}
                     selectedTags={selectedTags}
                     onApplyTags={(tags) => {
                       setSelectedTags(tags);
@@ -274,7 +268,7 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
             className="group/collapsible group-data-[collapsible=icon]:hidden"
           >
             {/* Documents Group */}
-            {isLoading && page === 1 ? (
+            {isLoading && size <= 1 ? (
               <SidebarMenu>
                 {Array.from({ length: 5 }).map((_, index) => (
                   <SidebarMenuItem key={index}>
@@ -294,92 +288,127 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
                   className="group/label text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-sm"
                 />
 
-                <CollapsibleContent>
+                <CollapsibleContent className="flex min-h-0 flex-1 flex-col">
                   <SidebarGroupContent className="flex min-h-0 flex-1 flex-col">
-                    <ScrollArea className="min-h-0 flex-1">
+                    {/* ref callback: walks the Shadow/DOM to find the scrollable viewport
+                        inside ScrollArea so the virtualizer can attach to it */}
+                    <ScrollArea
+                      className="h-[calc(100vh-20rem)]"
+                      ref={scrollAreaCallbackRef}
+                    >
                       <AnimatePresence initial={false}>
                         <motion.div
                           initial={{ height: 0, opacity: 0 }}
                           animate={{ height: 'auto', opacity: 1 }}
                           exit={{ height: 0, opacity: 0 }}
                         >
-                          <SidebarMenu className="gap-1">
-                            {documents.length === 0 ? (
+                          {documents.length === 0 ? (
+                            <SidebarMenu className="gap-1">
                               <div className="text-muted-foreground px-4 py-3 text-center text-xs group-data-[collapsible=icon]:hidden">
                                 No documents found.
                               </div>
-                            ) : (
-                              documents.map((doc) => {
-                                const isActive =
-                                  pathname ===
-                                  `/hub/libraries/${libraryId}/documents/${doc.id}`;
-                                return (
-                                  <SidebarMenuItem key={doc.id}>
-                                    <SidebarMenuButton
-                                      render={
-                                        <Link
-                                          href={`/hub/libraries/${libraryId}/documents/${doc.id}`}
-                                          className="flex flex-col items-start gap-0.5"
-                                        >
-                                          <div className="flex w-full items-center gap-2">
-                                            <FileText className="text-muted-foreground h-4 w-4 shrink-0" />
-                                            <span
-                                              className="truncate text-xs font-medium group-data-[collapsible=icon]:hidden"
-                                              title={doc.title}
-                                            >
-                                              {doc.title}
-                                            </span>
-                                          </div>
-                                          <div className="text-muted-foreground/60 flex items-center pl-6 text-[10px] group-data-[collapsible=icon]:hidden">
-                                            <Calendar className="mr-1 h-3 w-3" />
-                                            {new Date(doc.created_at)
-                                              .toLocaleDateString(undefined, {
-                                                month: 'short',
-                                                day: 'numeric',
-                                                year: 'numeric',
-                                              })
-                                              .toUpperCase()}
-                                          </div>
-                                        </Link>
-                                      }
-                                      isActive={isActive}
-                                      tooltip={doc.title}
-                                      size="lg"
-                                      className="h-auto py-2"
-                                    />
-                                  </SidebarMenuItem>
-                                );
-                              })
-                            )}
-
-                            {totalDocs > documents.length && (
-                              <div className="p-2 group-data-[collapsible=icon]:hidden">
-                                <Button
-                                  variant="outline"
-                                  onClick={() => {
-                                    const next = page + 1;
-                                    setPage(next);
-                                    fetchDocuments(
-                                      next,
-                                      debouncedSearchQuery,
-                                      selectedTags
-                                    );
+                            </SidebarMenu>
+                          ) : (
+                            /* Virtual list: outer div sets total scrollable height;
+                               inner div is translated to the current virtual offset */
+                            <SidebarMenu
+                              className="relative gap-0"
+                              style={{ height: `${totalVirtualHeight}px` }}
+                              // Suppress the React hydration warning that can arise from
+                              // style being computed post-mount.
+                              suppressHydrationWarning
+                            >
+                              {scrollViewportNode !== null && (
+                                <div
+                                  className="absolute top-0 left-0 w-full"
+                                  style={{
+                                    transform: `translateY(${virtualItems[0]?.start ?? 0}px)`,
                                   }}
-                                  disabled={isLoading}
-                                  className="h-8 w-full text-[10px] font-bold tracking-widest uppercase"
                                 >
-                                  {isLoading ? (
-                                    <Spinner className="h-4 w-4" />
-                                  ) : (
-                                    `Load More (${totalDocs - documents.length} Left)`
-                                  )}
-                                </Button>
-                              </div>
-                            )}
-                          </SidebarMenu>
+                                  {virtualItems.map((virtualRow) => {
+                                    const row = rows[virtualRow.index];
+                                    if (!row) return null;
+
+                                    if (row.type === 'load-more') {
+                                      return (
+                                        <div
+                                          key="load-more"
+                                          data-index={virtualRow.index}
+                                          ref={virtualizer.measureElement}
+                                          className="p-2 group-data-[collapsible=icon]:hidden"
+                                        >
+                                          <Button
+                                            variant="outline"
+                                            onClick={() => setSize(size + 1)}
+                                            disabled={isLoadingMore}
+                                            className="h-8 w-full text-[10px] font-bold tracking-widest uppercase"
+                                          >
+                                            {isLoadingMore ? (
+                                              <Spinner className="h-4 w-4" />
+                                            ) : (
+                                              `Load More (${totalDocs - documents.length} Left)`
+                                            )}
+                                          </Button>
+                                        </div>
+                                      );
+                                    }
+
+                                    const doc = documents[virtualRow.index];
+                                    if (!doc) return null;
+                                    const isActive =
+                                      pathname ===
+                                      `/hub/libraries/${libraryId}/documents/${doc.id}`;
+
+                                    return (
+                                      <SidebarMenuItem
+                                        key={doc.id}
+                                        data-index={virtualRow.index}
+                                        ref={virtualizer.measureElement}
+                                      >
+                                        <SidebarMenuButton
+                                          render={
+                                            <Link
+                                              href={`/hub/libraries/${libraryId}/documents/${doc.id}`}
+                                              className="flex flex-col items-start gap-0.5"
+                                            >
+                                              <div className="flex w-full items-center gap-2">
+                                                <FileText className="text-muted-foreground h-4 w-4 shrink-0" />
+                                                <span
+                                                  className="truncate text-xs font-medium group-data-[collapsible=icon]:hidden"
+                                                  title={doc.title}
+                                                >
+                                                  {doc.title}
+                                                </span>
+                                              </div>
+                                              <div className="text-muted-foreground/60 flex items-center pl-6 text-[10px] group-data-[collapsible=icon]:hidden">
+                                                <Calendar className="mr-1 h-3 w-3" />
+                                                {new Date(doc.created_at)
+                                                  .toLocaleDateString(
+                                                    undefined,
+                                                    {
+                                                      month: 'short',
+                                                      day: 'numeric',
+                                                      year: 'numeric',
+                                                    }
+                                                  )
+                                                  .toUpperCase()}
+                                              </div>
+                                            </Link>
+                                          }
+                                          isActive={isActive}
+                                          tooltip={doc.title}
+                                          size="lg"
+                                          className="h-auto py-2"
+                                        />
+                                      </SidebarMenuItem>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </SidebarMenu>
+                          )}
                         </motion.div>
                       </AnimatePresence>
-                      <ScrollBar orientation="vertical" />
                     </ScrollArea>
                   </SidebarGroupContent>
                 </CollapsibleContent>
@@ -389,7 +418,7 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
         </SidebarContent>
 
         {/* Footer Navigation */}
-        <SidebarFooter>
+        <SidebarFooter className="border-t">
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton

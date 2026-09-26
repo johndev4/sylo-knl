@@ -10,7 +10,7 @@ import {
   AutocompleteList,
   AutocompleteStatus,
 } from '@/components/ui/autocomplete';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface TagChipsInputProps {
   tags: string[];
@@ -127,9 +127,6 @@ export function TagChipsInput({
             className="text-muted-foreground/60 placeholder:text-muted-foreground/30 !focus-visible:ring-0 !focus-visible:border-none !h-auto min-w-[100px] flex-1 !rounded-none !border-none !bg-transparent !px-0 !py-0 text-xs !shadow-none !ring-0 focus:outline-none"
           />
         </div>
-
-        <ScrollBar orientation="vertical" />
-        <ScrollBar orientation="horizontal" />
       </ScrollArea>
 
       {shouldRenderPopup && (

@@ -135,7 +135,7 @@ export async function cleanupPreviousLibraries(
     .eq('user_id', testUserId);
 
   const previousLibraryIds =
-    previousMemberships?.map((member) => member.library_id) ?? [];
+    previousMemberships?.map((member: any) => member.library_id) ?? [];
 
   if (previousLibraryIds.length > 0) {
     await supabase.from('libraries').delete().in('id', previousLibraryIds);
@@ -155,7 +155,7 @@ export async function createTestLibrary(
   if (isServiceRole) {
     const { data: libData, error: libError } = await supabase
       .from('libraries')
-      .insert({ name })
+      .insert({ name } as any)
       .select()
       .single();
 
@@ -169,10 +169,10 @@ export async function createTestLibrary(
     const { error: memberError } = await supabase
       .from('library_members')
       .insert({
-        library_id: libData.id,
+        library_id: (libData as any).id,
         user_id: testUserId,
         role: 'OWNER',
-      });
+      } as any);
 
     if (memberError) {
       throw new Error(
@@ -185,7 +185,7 @@ export async function createTestLibrary(
 
   // Create via user RPC function when using standard user permissions
   const { data: libData, error: rpcError } = await supabase
-    .rpc('create_library_with_owner', { w_name: name })
+    .rpc('create_library_with_owner', { w_name: name } as any)
     .single();
 
   if (rpcError || !libData) {

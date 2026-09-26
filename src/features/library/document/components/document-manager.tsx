@@ -2,11 +2,6 @@
 
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-  createDocument,
-  updateDocument,
-  deleteDocument,
-} from '@/features/library/document/actions';
 import { Badge } from '@/components/ui/badge';
 import { useTagSuggestions } from '@/features/library/document/hooks/use-tag-suggestions';
 import {
@@ -28,9 +23,13 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { DocumentActions } from './document-actions';
-import { useSidebarRefresh } from '@/components/providers/sidebar-refresh-provider';
 import { TagChipsInput } from './tag-chips-input';
 import { useNavigationGuard } from '../hooks/use-navigation-guard';
+import {
+  useCreateDocumentSWR,
+  useDeleteDocumentSWR,
+  useUpdateDocumentSWR,
+} from '@/features/library/document/swr';
 import { BlockEditor } from './block_editor';
 import {
   Collapsible,
@@ -72,7 +71,6 @@ export function DocumentManager({
   userRole = 'VIEWER',
 }: DocumentManagerProps) {
   const router = useRouter();
-  const { triggerRefresh } = useSidebarRefresh();
 
   const [isEditMode, setIsEditMode] = useState(isNew);
   const [title, setTitle] = useState(initialData?.title || '');
@@ -313,10 +311,26 @@ export function DocumentManager({
     setTags(tags.filter((tag) => tag !== tagToRemove));
   };
 
+  /**
+   * Detects if an error is an OCC (Optimistic Concurrency Control) conflict.
+   * Checks for "Conflict:" in the message or explicit conflict flag.
+   */
+  const isConflictError = (err: unknown): boolean => {
+    if (err instanceof Error) {
+      return (
+        err.message.includes('Conflict') ||
+        ('conflict' in err && err.conflict === true)
+      );
+    }
+    return false;
+  };
+
   // ---------------------------------------------------------------------------
   // Save
   // ---------------------------------------------------------------------------
 
+  const { trigger: triggerCreateDocument } = useCreateDocumentSWR(libraryId);
+  const { trigger: triggerUpdateDocument } = useUpdateDocumentSWR(libraryId);
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!title.trim()) {
@@ -329,41 +343,51 @@ export function DocumentManager({
 
     try {
       if (isNew) {
-        const data = await createDocument({
-          title,
-          content: content || '',
-          tags,
-          libraryId,
+        // Server call
+        const data = await triggerCreateDocument({
+          input: {
+            title,
+            content: content || '',
+            tags,
+            libraryId,
+          },
         });
 
-        triggerRefresh();
         setIgnoreNavigationGuard(true);
         router.push(`/hub/libraries/${libraryId}/documents/${data.documentId}`);
         router.refresh();
       } else {
-        const data = await updateDocument(initialData!.id, {
-          title,
-          content: content || '',
-          tags,
-          // Use the ref so repeated saves always send the latest timestamp,
-          // not the stale initialData prop from the initial server render.
-          lastUpdatedAt: latestUpdatedAt.current,
+        // Server call
+        const data = await triggerUpdateDocument({
+          docId: initialData!.id,
+          input: {
+            title,
+            content: content || '',
+            tags,
+            lastUpdatedAt: latestUpdatedAt.current,
+          },
         });
 
-        // Capture the new updated_at returned by the server so that the
-        // next save sends the correct timestamp for the OCC check.
+        // Update latest timestamp for next OCC check
         if (data?.document?.updated_at) {
           latestUpdatedAt.current = data.document.updated_at;
         }
 
-        triggerRefresh();
         setIsEditMode(false);
         router.refresh();
       }
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : 'An unknown error occurred';
-      setError(message);
+
+      // Check for OCC conflict
+      if (isConflictError(err)) {
+        setError(
+          'Document was edited by another user. Please refresh to get the latest version.'
+        );
+      } else {
+        setError(message);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -373,6 +397,7 @@ export function DocumentManager({
   // Delete
   // ---------------------------------------------------------------------------
 
+  const { trigger: triggerDeleteDocument } = useDeleteDocumentSWR(libraryId);
   const handleDelete = async () => {
     if (!initialData?.id) return;
 
@@ -380,15 +405,25 @@ export function DocumentManager({
     setError(null);
 
     try {
-      await deleteDocument(initialData.id);
+      // Server call
+      await triggerDeleteDocument({ docId: initialData.id });
 
       setIgnoreNavigationGuard(true);
-      triggerRefresh();
+
       router.push(`/hub/libraries/${libraryId}/documents`);
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : 'An unknown error occurred';
-      setError(message);
+
+      // Check for OCC conflict
+      if (isConflictError(err)) {
+        setError(
+          'Document was edited by another user. Please refresh to get the latest version.'
+        );
+      } else {
+        setError(message);
+      }
+
       setIsDeleting(false);
     }
   };

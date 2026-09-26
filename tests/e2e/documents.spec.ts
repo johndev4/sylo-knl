@@ -139,7 +139,7 @@ test.describe.serial('Document Management', () => {
     ).toBeVisible();
 
     // Search input in sidebar
-    const searchInput = page.getByPlaceholder('Search docs...');
+    const searchInput = page.getByPlaceholder('Search docs…');
     await expect(searchInput).toBeVisible();
     await searchInput.fill('Integration Test Doc');
 
@@ -179,6 +179,18 @@ test.describe.serial('Document Management', () => {
         .getByText('Mock Document 1', { exact: true })
     ).toBeVisible();
 
+    // Helper to scroll the virtualized ScrollArea viewport to the bottom
+    const scrollViewport = page.locator('[data-slot="scroll-area-viewport"]');
+    const scrollToBottom = async () => {
+      await scrollViewport.evaluate((el) => {
+        el.scrollTop = el.scrollHeight;
+      });
+      await page.waitForTimeout(100);
+    };
+
+    // Scroll to bottom so TanStack Virtual renders the "Load More" button row
+    await scrollToBottom();
+
     // "Load More" button must be present showing 900 remaining
     const loadMoreBtn = page.locator(
       'div[aria-label="Sidebar Document List Content"] button',
@@ -190,26 +202,31 @@ test.describe.serial('Document Management', () => {
     await expect(loadMoreBtn).toContainText('900 Left');
 
     // --- Load page 2: 100 more docs, 800 remaining ---
+    // Right after clicking, current scroll position (y~6000) shows Mock Document 101 (index 100)
     await loadMoreBtn.click();
-    await expect(loadMoreBtn).toContainText('800 Left');
     await expect(
       page
         .locator('div[aria-label="Sidebar Document List Content"]')
         .getByText('Mock Document 101', { exact: true })
     ).toBeVisible();
+    await scrollToBottom();
+    await expect(loadMoreBtn).toContainText('800 Left');
 
     // --- Load page 3: 100 more docs, 700 remaining ---
+    // Right after clicking, current scroll position (y~12000) shows Mock Document 201 (index 200)
     await loadMoreBtn.click();
-    await expect(loadMoreBtn).toContainText('700 Left');
     await expect(
       page
         .locator('div[aria-label="Sidebar Document List Content"]')
         .getByText('Mock Document 201', { exact: true })
     ).toBeVisible();
+    await scrollToBottom();
+    await expect(loadMoreBtn).toContainText('700 Left');
 
     // --- Exhaust all remaining pages (pages 4–10) ---
     for (let p = 4; p <= 10; p++) {
       await loadMoreBtn.click();
+      await scrollToBottom();
       const remaining = TOTAL_DOCS - p * LIMIT;
       if (remaining > 0) {
         await expect(loadMoreBtn).toContainText(`${remaining} Left`, {
@@ -221,7 +238,7 @@ test.describe.serial('Document Management', () => {
     // After all 10 pages loaded the "Load More" button should vanish
     await expect(loadMoreBtn).not.toBeVisible();
 
-    // All 1000 docs are now rendered in the sidebar list
+    // All 1000 docs are now loaded and since we scrolled to bottom, Mock Document 1000 is rendered
     await expect(
       page
         .locator('div[aria-label="Sidebar Document List Content"]')
