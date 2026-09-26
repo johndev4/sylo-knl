@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useParams, usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import {
   Plus,
   Search,
@@ -38,9 +39,19 @@ import {
 } from '@/components/ui/collapsible';
 import { useGetDocumentsSWRInfinite } from '@/features/library/document/swr';
 
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+type VirtualRow = { type: 'doc'; id: string } | { type: 'load-more' };
+
 interface SidebarDocumentListProps {
   userRole: string;
 }
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
 
 export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
   const params = useParams();
@@ -53,7 +64,6 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsClient(true);
   }, []);
 
@@ -80,7 +90,56 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
   }, [setSize]);
 
   // ---------------------------------------------------------------------------
-  // Render
+  // Virtual scroll setup
+  // ---------------------------------------------------------------------------
+
+  // Ref to the ScrollArea's inner viewport element (data-slot="scroll-area-viewport").
+  // We use a callback ref so the virtualizer re-initialises if the node changes.
+  const scrollViewportRef = useRef<Element | null>(null);
+  const [scrollViewportNode, setScrollViewportNode] = useState<Element | null>(
+    null
+  );
+
+  const scrollAreaCallbackRef = useCallback((rootNode: HTMLElement | null) => {
+    const viewport = rootNode?.querySelector(
+      '[data-slot="scroll-area-viewport"]'
+    );
+    scrollViewportRef.current = viewport ?? null;
+    setScrollViewportNode(viewport ?? null);
+  }, []);
+
+  // Build the flat list of virtual rows: one per document + optional "load-more" sentinel.
+  const rows = useMemo<VirtualRow[]>(() => {
+    const docRows: VirtualRow[] = documents.map((doc) => ({
+      type: 'doc',
+      id: doc.id,
+    }));
+    if (hasMore) {
+      return [...docRows, { type: 'load-more' }];
+    }
+    return docRows;
+  }, [documents, hasMore]);
+
+  // Each document item is ~60px tall (h-auto py-2 with two text lines at ~20px each).
+  // The "load-more" button row is ~48px (p-2 + h-8).
+  const rowSizes = useMemo(
+    () => rows.map((r) => (r.type === 'load-more' ? 48 : 60)),
+    [rows]
+  );
+
+  // eslint-disable-next-line react-hooks/incompatible-library
+  const virtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => scrollViewportRef.current as HTMLElement | null,
+    estimateSize: (index) => rowSizes[index] ?? 60,
+    overscan: 5,
+  });
+
+  const virtualItems = virtualizer.getVirtualItems();
+  const totalVirtualHeight = virtualizer.getTotalSize();
+
+  // ---------------------------------------------------------------------------
+  // Render helpers
   // ---------------------------------------------------------------------------
 
   const isAtLimit = totalDocs >= 500;
@@ -231,79 +290,123 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
 
                 <CollapsibleContent className="flex min-h-0 flex-1 flex-col">
                   <SidebarGroupContent className="flex min-h-0 flex-1 flex-col">
-                    <ScrollArea className="h-[calc(100vh-20rem)]">
+                    {/* ref callback: walks the Shadow/DOM to find the scrollable viewport
+                        inside ScrollArea so the virtualizer can attach to it */}
+                    <ScrollArea
+                      className="h-[calc(100vh-20rem)]"
+                      ref={scrollAreaCallbackRef}
+                    >
                       <AnimatePresence initial={false}>
                         <motion.div
                           initial={{ height: 0, opacity: 0 }}
                           animate={{ height: 'auto', opacity: 1 }}
                           exit={{ height: 0, opacity: 0 }}
                         >
-                          <SidebarMenu className="gap-1">
-                            {documents.length === 0 ? (
+                          {documents.length === 0 ? (
+                            <SidebarMenu className="gap-1">
                               <div className="text-muted-foreground px-4 py-3 text-center text-xs group-data-[collapsible=icon]:hidden">
                                 No documents found.
                               </div>
-                            ) : (
-                              documents.map((doc) => {
-                                const isActive =
-                                  pathname ===
-                                  `/hub/libraries/${libraryId}/documents/${doc.id}`;
-                                return (
-                                  <SidebarMenuItem key={doc.id}>
-                                    <SidebarMenuButton
-                                      render={
-                                        <Link
-                                          href={`/hub/libraries/${libraryId}/documents/${doc.id}`}
-                                          className="flex flex-col items-start gap-0.5"
-                                        >
-                                          <div className="flex w-full items-center gap-2">
-                                            <FileText className="text-muted-foreground h-4 w-4 shrink-0" />
-                                            <span
-                                              className="truncate text-xs font-medium group-data-[collapsible=icon]:hidden"
-                                              title={doc.title}
-                                            >
-                                              {doc.title}
-                                            </span>
-                                          </div>
-                                          <div className="text-muted-foreground/60 flex items-center pl-6 text-[10px] group-data-[collapsible=icon]:hidden">
-                                            <Calendar className="mr-1 h-3 w-3" />
-                                            {new Date(doc.created_at)
-                                              .toLocaleDateString(undefined, {
-                                                month: 'short',
-                                                day: 'numeric',
-                                                year: 'numeric',
-                                              })
-                                              .toUpperCase()}
-                                          </div>
-                                        </Link>
-                                      }
-                                      isActive={isActive}
-                                      tooltip={doc.title}
-                                      size="lg"
-                                      className="h-auto py-2"
-                                    />
-                                  </SidebarMenuItem>
-                                );
-                              })
-                            )}
-
-                            {hasMore && (
-                              <div className="p-2 group-data-[collapsible=icon]:hidden">
-                                <Button
-                                  variant="outline"
-                                  onClick={() => setSize(size + 1)}
-                                  disabled={isLoadingMore}
-                                  className="h-8 w-full text-[10px] font-bold tracking-widest uppercase"
+                            </SidebarMenu>
+                          ) : (
+                            /* Virtual list: outer div sets total scrollable height;
+                               inner div is translated to the current virtual offset */
+                            <SidebarMenu
+                              className="relative gap-0"
+                              style={{ height: `${totalVirtualHeight}px` }}
+                              // Suppress the React hydration warning that can arise from
+                              // style being computed post-mount.
+                              suppressHydrationWarning
+                            >
+                              {scrollViewportNode !== null && (
+                                <div
+                                  className="absolute top-0 left-0 w-full"
+                                  style={{
+                                    transform: `translateY(${virtualItems[0]?.start ?? 0}px)`,
+                                  }}
                                 >
-                                  {isLoadingMore ? (
-                                    <Spinner className="h-4 w-4" />
-                                  ) : (
-                                    `Load More (${totalDocs - documents.length} Left)`
-                                  )}
-                                </Button>
-                              </div>
-                            )}
-                          </SidebarMenu>
+                                  {virtualItems.map((virtualRow) => {
+                                    const row = rows[virtualRow.index];
+                                    if (!row) return null;
+
+                                    if (row.type === 'load-more') {
+                                      return (
+                                        <div
+                                          key="load-more"
+                                          data-index={virtualRow.index}
+                                          ref={virtualizer.measureElement}
+                                          className="p-2 group-data-[collapsible=icon]:hidden"
+                                        >
+                                          <Button
+                                            variant="outline"
+                                            onClick={() => setSize(size + 1)}
+                                            disabled={isLoadingMore}
+                                            className="h-8 w-full text-[10px] font-bold tracking-widest uppercase"
+                                          >
+                                            {isLoadingMore ? (
+                                              <Spinner className="h-4 w-4" />
+                                            ) : (
+                                              `Load More (${totalDocs - documents.length} Left)`
+                                            )}
+                                          </Button>
+                                        </div>
+                                      );
+                                    }
+
+                                    const doc = documents[virtualRow.index];
+                                    if (!doc) return null;
+                                    const isActive =
+                                      pathname ===
+                                      `/hub/libraries/${libraryId}/documents/${doc.id}`;
+
+                                    return (
+                                      <SidebarMenuItem
+                                        key={doc.id}
+                                        data-index={virtualRow.index}
+                                        ref={virtualizer.measureElement}
+                                      >
+                                        <SidebarMenuButton
+                                          render={
+                                            <Link
+                                              href={`/hub/libraries/${libraryId}/documents/${doc.id}`}
+                                              className="flex flex-col items-start gap-0.5"
+                                            >
+                                              <div className="flex w-full items-center gap-2">
+                                                <FileText className="text-muted-foreground h-4 w-4 shrink-0" />
+                                                <span
+                                                  className="truncate text-xs font-medium group-data-[collapsible=icon]:hidden"
+                                                  title={doc.title}
+                                                >
+                                                  {doc.title}
+                                                </span>
+                                              </div>
+                                              <div className="text-muted-foreground/60 flex items-center pl-6 text-[10px] group-data-[collapsible=icon]:hidden">
+                                                <Calendar className="mr-1 h-3 w-3" />
+                                                {new Date(doc.created_at)
+                                                  .toLocaleDateString(
+                                                    undefined,
+                                                    {
+                                                      month: 'short',
+                                                      day: 'numeric',
+                                                      year: 'numeric',
+                                                    }
+                                                  )
+                                                  .toUpperCase()}
+                                              </div>
+                                            </Link>
+                                          }
+                                          isActive={isActive}
+                                          tooltip={doc.title}
+                                          size="lg"
+                                          className="h-auto py-2"
+                                        />
+                                      </SidebarMenuItem>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </SidebarMenu>
+                          )}
                         </motion.div>
                       </AnimatePresence>
                     </ScrollArea>
