@@ -411,14 +411,41 @@ export function MemberTable({ libraryId, canManageMembers }: MemberTableProps) {
             )}
           </div>
           {canManageMembers && selectedMemberIds.length > 0 && (
-            <Button
-              variant="destructive"
-              size="sm"
-              disabled={selectedMemberIds.length === 0 || isRemovingMultiple}
-              onClick={() => handleRemoveMultiple(selectedMemberIds)}
-            >
-              Remove {selectedMemberIds.length} member(s)
-            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger
+                render={
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    disabled={isRemovingMultiple}
+                  >
+                    Remove {selectedMemberIds.length} member(s)
+                  </Button>
+                }
+              />
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Remove members</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to remove {selectedMemberIds.length}{' '}
+                    member(s) from this library? This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={isRemovingMultiple}>
+                    Cancel
+                  </AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => handleRemoveMultiple(selectedMemberIds)}
+                    variant="destructive"
+                    disabled={isRemovingMultiple}
+                  >
+                    {isRemovingMultiple && <Spinner className="h-4 w-4" />}
+                    {'Remove'}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           )}
         </div>
       </div>
