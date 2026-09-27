@@ -20,6 +20,7 @@ interface DocumentActionsProps {
   isLoading: boolean;
   isDeleting: boolean;
   hasBlockLimitError: boolean;
+  canDelete?: boolean;
   onEnterEditMode: () => void;
   onCancel: () => void;
   onSave: () => void;
@@ -34,6 +35,7 @@ export function DocumentActions({
   isLoading,
   isDeleting,
   hasBlockLimitError,
+  canDelete = true,
   onEnterEditMode,
   onCancel,
   onSave,
@@ -117,7 +119,7 @@ export function DocumentActions({
             Save
           </Button>
         )}
-        {!isNew && !isEditMode && !isViewer && (
+        {!isNew && !isEditMode && !isViewer && canDelete && (
           <AlertDialog>
             <AlertDialogTrigger
               render={
@@ -181,7 +183,7 @@ export function DocumentActions({
             )}
           </Button>
         )}
-        {!isNew && !isEditMode && !isViewer && (
+        {!isNew && !isEditMode && !isViewer && canDelete && (
           <AlertDialog>
             <AlertDialogTrigger
               render={

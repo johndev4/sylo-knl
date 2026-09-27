@@ -42,11 +42,11 @@ async function DocumentPageWrapper({
   docId: string;
   userRole: string;
 }) {
+  const user = await getUser();
   let document: any = null;
   let error: string | null = null;
 
   try {
-    const user = await getUser();
     const supabase = await createClient();
     const data = await getDocument(docId, supabase, user);
     document = data?.document ?? null;
@@ -82,6 +82,7 @@ async function DocumentPageWrapper({
         authors: document.authors,
       }}
       userRole={userRole}
+      currentUserId={user.id}
     />
   );
 }

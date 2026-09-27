@@ -51,6 +51,7 @@ interface DocumentManagerProps {
     authors?: { id: string; name: string }[];
   };
   userRole?: string;
+  currentUserId?: string;
 }
 
 /**
@@ -69,6 +70,7 @@ export function DocumentManager({
   isNew = false,
   initialData,
   userRole = 'VIEWER',
+  currentUserId,
 }: DocumentManagerProps) {
   const router = useRouter();
 
@@ -448,6 +450,18 @@ export function DocumentManager({
   // Render
   // ---------------------------------------------------------------------------
 
+  const isAuthor = useMemo(() => {
+    if (isNew) return true;
+    if (!currentUserId || !initialData?.authors) return true;
+    return initialData.authors.some((author) => author.id === currentUserId);
+  }, [isNew, currentUserId, initialData?.authors]);
+
+  const canDelete = useMemo(() => {
+    if (userRole === 'OWNER' || userRole === 'ADMIN') return true;
+    if (userRole === 'EDITOR' && isAuthor) return true;
+    return false;
+  }, [userRole, isAuthor]);
+
   return (
     <div className="animate-fadeIn bg-background flex h-full flex-col overflow-hidden">
       {/* ── Unified "Unsaved Changes" AlertDialog ───────────────────────────── */}
@@ -510,6 +524,7 @@ export function DocumentManager({
           isLoading={isLoading}
           isDeleting={isDeleting}
           hasBlockLimitError={!!error?.includes('exceeds 1000 blocks')}
+          canDelete={canDelete}
           onEnterEditMode={() => setIsEditMode(true)}
           onCancel={handleCancel}
           onSave={handleSubmit}
