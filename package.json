@@ -73,8 +73,5 @@
   },
   "volta": {
     "node": "24.21.0"
-  },
-  "allowScripts": {
-    "unrs-resolver@1.12.2": true
   }
 }
