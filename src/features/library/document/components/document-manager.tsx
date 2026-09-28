@@ -8,7 +8,6 @@ import {
   Calendar,
   Clock,
   Users,
-  X,
   AlertTriangle,
   ChevronsUpDownIcon,
 } from 'lucide-react';
@@ -37,6 +36,7 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { Button } from '@/components/ui/button';
+import { appToast } from '@/lib/toast';
 
 interface DocumentManagerProps {
   libraryId: string;
@@ -90,7 +90,7 @@ export function DocumentManager({
 
   const [isLoading, setIsLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [hasBlockLimitError, setHasBlockLimitError] = useState(false);
   const [ignoreNavigationGuard, setIgnoreNavigationGuard] = useState(false);
   const [isMetaOpen, setIsMetaOpen] = useState(true);
 
@@ -143,7 +143,6 @@ export function DocumentManager({
     setContent('');
     setTags([]);
     setTagInput('');
-    setError(null);
     setEditorResetKey((prev) => prev + 1);
   }, []);
 
@@ -152,7 +151,6 @@ export function DocumentManager({
     setContent(initialData?.content ?? '');
     setTags((initialData?.tags ?? []).map((t) => t.toUpperCase()));
     setTagInput('');
-    setError(null);
     setEditorResetKey((prev) => prev + 1);
     setIsEditMode(false);
   }, [initialData]);
@@ -336,12 +334,11 @@ export function DocumentManager({
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!title.trim()) {
-      setError('Title is required.');
+      appToast.error('Title is required.');
       return;
     }
 
     setIsLoading(true);
-    setError(null);
 
     try {
       if (isNew) {
@@ -384,11 +381,11 @@ export function DocumentManager({
 
       // Check for OCC conflict
       if (isConflictError(err)) {
-        setError(
+        appToast.error(
           'Document was edited by another user. Please refresh to get the latest version.'
         );
       } else {
-        setError(message);
+        appToast.error(message);
       }
     } finally {
       setIsLoading(false);
@@ -404,7 +401,6 @@ export function DocumentManager({
     if (!initialData?.id) return;
 
     setIsDeleting(true);
-    setError(null);
 
     try {
       // Server call
@@ -419,11 +415,11 @@ export function DocumentManager({
 
       // Check for OCC conflict
       if (isConflictError(err)) {
-        setError(
+        appToast.error(
           'Document was edited by another user. Please refresh to get the latest version.'
         );
       } else {
-        setError(message);
+        appToast.error(message);
       }
 
       setIsDeleting(false);
@@ -438,9 +434,10 @@ export function DocumentManager({
     (markdown: string, blockCount: number) => {
       setContent(markdown);
       if (blockCount > 1000) {
-        setError('Warning: Document exceeds 1000 blocks limit.');
+        setHasBlockLimitError(true);
+        appToast.warning('Warning: Document exceeds 1000 blocks limit.');
       } else {
-        setError(null);
+        setHasBlockLimitError(false);
       }
     },
     []
@@ -523,7 +520,7 @@ export function DocumentManager({
           title={title}
           isLoading={isLoading}
           isDeleting={isDeleting}
-          hasBlockLimitError={!!error?.includes('exceeds 1000 blocks')}
+          hasBlockLimitError={hasBlockLimitError}
           canDelete={canDelete}
           onEnterEditMode={() => setIsEditMode(true)}
           onCancel={handleCancel}
@@ -622,23 +619,6 @@ export function DocumentManager({
 
       {/* ── Dedicated Scrollable Editor Area ────────────────────────────────── */}
       <div className="relative flex-1 overflow-hidden">
-        {error && (
-          <div
-            role="alert"
-            className="bg-destructive text-destructive-foreground absolute top-3 left-1/2 z-0 flex w-[92%] max-w-xl -translate-x-1/2 items-start gap-3 rounded-lg px-4 py-3 text-sm font-medium shadow-lg"
-          >
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-            <span className="flex-1">{error}</span>
-            <button
-              type="button"
-              aria-label="Dismiss error"
-              onClick={() => setError(null)}
-              className="transition-opacity hover:opacity-70"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-        )}
         <div className="h-full">
           <div className="mx-auto h-full max-w-5xl">
             <BlockEditor
