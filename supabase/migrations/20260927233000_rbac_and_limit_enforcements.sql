@@ -58,13 +58,22 @@ CREATE TRIGGER enforce_user_library_limit
   FOR EACH ROW
   EXECUTE FUNCTION public.check_user_library_limit_trg();
 
--- Prevent deletion of OWNER membership (OWNER cannot leave, must delete library)
+-- Prevent deletion of OWNER membership (OWNER cannot leave, must delete library).
+-- Exception: allow the delete when the library itself is being deleted (ON DELETE CASCADE),
+-- which is how the library owner legitimately removes the library.
 CREATE OR REPLACE FUNCTION public.prevent_owner_member_deletion_trg()
 RETURNS trigger
 LANGUAGE plpgsql
 AS $$
 BEGIN
   IF OLD.role = 'OWNER' THEN
+    -- If the parent library no longer exists, this is a cascade triggered by
+    -- deleting the library itself — allow it through.
+    IF NOT EXISTS (SELECT 1 FROM public.libraries WHERE id = OLD.library_id) THEN
+      RETURN OLD;
+    END IF;
+
+    -- Direct removal of the OWNER membership row is still forbidden.
     RAISE EXCEPTION 'Library OWNER cannot leave or be removed from the library. Delete the library instead.';
   END IF;
   RETURN OLD;
@@ -118,6 +127,13 @@ BEGIN
       jsonb_build_object('old_role', OLD.role, 'new_role', NEW.role)
     );
   ELSIF TG_OP = 'DELETE' THEN
+    -- Skip audit insert when the library itself is being deleted (ON DELETE CASCADE).
+    -- The library row is already gone at this point, so inserting with its id would
+    -- violate the audit_logs_library_id_fkey FK constraint.
+    IF NOT EXISTS (SELECT 1 FROM public.libraries WHERE id = OLD.library_id) THEN
+      RETURN NULL;
+    END IF;
+
     INSERT INTO public.audit_logs (library_id, actor_id, action, target_type, target_id, metadata)
     VALUES (
       OLD.library_id,
@@ -157,6 +173,13 @@ BEGIN
       jsonb_build_object('title', NEW.title)
     );
   ELSIF TG_OP = 'DELETE' THEN
+    -- Skip audit insert when the library itself is being deleted (ON DELETE CASCADE).
+    -- The library row is already gone, so inserting with its id would
+    -- violate the audit_logs_library_id_fkey FK constraint.
+    IF NOT EXISTS (SELECT 1 FROM public.libraries WHERE id = OLD.library_id) THEN
+      RETURN NULL;
+    END IF;
+
     INSERT INTO public.audit_logs (library_id, actor_id, action, target_type, target_id, metadata)
     VALUES (
       OLD.library_id,
