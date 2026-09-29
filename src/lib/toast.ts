@@ -9,6 +9,7 @@ export const appToast = {
     toast.success(message, {
       description,
       duration: 5000,
+      position: 'bottom-right',
     });
   },
 
@@ -16,6 +17,7 @@ export const appToast = {
     toast.error(message, {
       description,
       duration: Infinity,
+      position: 'bottom-right',
     });
   },
 
@@ -23,6 +25,7 @@ export const appToast = {
     toast.warning(message, {
       description,
       duration: 8000,
+      position: 'bottom-right',
     });
   },
 
@@ -30,8 +33,21 @@ export const appToast = {
     toast.info(message, {
       description,
       duration: 5000,
+      position: 'bottom-right',
     });
   },
+
+  // /**
+  //  * Critical alerts for system-wide issues that interrupt workflow.
+  //  * Positioned at top-center to ensure immediate visibility.
+  //  */
+  // critical: (message: string, description?: string) => {
+  //   toast.error(message, {
+  //     description,
+  //     duration: Infinity, // Stay until dismissed
+  //     position: 'top-center', // Break from the bottom-right pattern
+  //   });
+  // },
 
   loading: (message: string) => {
     return toast.loading(message);

@@ -22,12 +22,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-import { Check } from 'lucide-react';
+import { appToast } from '@/lib/toast';
 import { updateUserProfile } from '@/features/user/actions';
 import { VALID_TIMEZONES } from '@/lib/constants';
 import { SWR_PROFILE_KEY } from '@/features/user/queries';
 import { UserProfile } from '../user-schema';
 import { Spinner } from '@/components/ui/spinner';
+import { CheckIcon } from 'lucide-react';
 
 interface FormError {
   field: string;
@@ -53,7 +54,6 @@ export default function AccountSettingsForm({
   const [isPending, startTransition] = useTransition();
   const { mutate } = useSWRConfig();
   const [errors, setErrors] = useState<FormError[]>([]);
-  const [successMessage, setSuccessMessage] = useState('');
   const [saveSuccess, setSaveSuccess] = useState(false);
 
   const { isDirty, isValid } = useMemo(() => {
@@ -105,18 +105,17 @@ export default function AccountSettingsForm({
     e.preventDefault();
 
     setErrors([]);
-    setSuccessMessage('');
 
     startTransition(async () => {
       try {
         const updatedProfile = await updateUserProfile(formData);
 
         setProfile(updatedProfile);
-        setSuccessMessage('Profile updated successfully!');
         setSaveSuccess(true);
 
         // Revalidate the AccountDropdown via SWR — no custom events needed.
         await mutate(SWR_PROFILE_KEY);
+        appToast.success('Profile updated successfully!');
       } catch (error) {
         console.error('Error updating profile:', error);
 
@@ -134,21 +133,31 @@ export default function AccountSettingsForm({
             }>;
           };
 
+          const fieldNames = new Set([
+            'name',
+            'bio',
+            'timezone',
+            'useAvatarUrl',
+          ]);
+          const fieldErrors = zodError.issues.filter((issue) =>
+            fieldNames.has(issue.path.join('.'))
+          );
+          const generalErrors = zodError.issues.filter(
+            (issue) => !fieldNames.has(issue.path.join('.'))
+          );
+
           setErrors(
-            zodError.issues.map((issue) => ({
+            fieldErrors.map((issue) => ({
               field: issue.path.join('.'),
               message: issue.message,
             }))
           );
+          generalErrors.forEach((issue) => appToast.error(issue.message));
         } else {
-          setErrors([
-            {
-              field: 'general',
-              message:
-                (error instanceof Error && error.message) ||
-                'An error occurred. Please try again.',
-            },
-          ]);
+          appToast.error(
+            (error instanceof Error && error.message) ||
+              'An error occurred. Please try again.'
+          );
         }
       }
     });
@@ -169,23 +178,6 @@ export default function AccountSettingsForm({
               Manage your profile information
             </p>
           </div>
-
-          {/* Alerts */}
-          {errors.some((error) => error.field === 'general') && (
-            <div className="bg-destructive/10 text-destructive border-destructive/20 mb-6 rounded-lg border p-4">
-              {errors.find((error) => error.field === 'general')?.message}
-            </div>
-          )}
-
-          {successMessage && (
-            <div className="animate-in fade-in slide-in-from-top-2 mb-6 flex items-center gap-3 rounded-lg border border-green-500/20 bg-green-500/10 p-4 text-green-700 duration-300 dark:text-green-400">
-              <div className="rounded-full bg-green-500/20 p-1">
-                <Check className="h-4 w-4" />
-              </div>
-
-              <p className="text-sm font-medium">{successMessage}</p>
-            </div>
-          )}
 
           {/* Profile Card */}
           <Card>
@@ -253,7 +245,7 @@ export default function AccountSettingsForm({
 
                           {formData.useAvatarUrl && (
                             <div className="bg-primary text-primary-foreground ring-background absolute -top-1 -right-1 rounded-full p-1 shadow-md ring-2">
-                              <Check className="h-3.5 w-3.5" />
+                              <CheckIcon className="h-3.5 w-3.5" />
                             </div>
                           )}
                         </div>
@@ -302,7 +294,7 @@ export default function AccountSettingsForm({
 
                           {!formData.useAvatarUrl && (
                             <div className="bg-primary text-primary-foreground ring-background absolute -top-1 -right-1 rounded-full p-1 shadow-md ring-2">
-                              <Check className="h-3.5 w-3.5" />
+                              <CheckIcon className="h-3.5 w-3.5" />
                             </div>
                           )}
                         </div>

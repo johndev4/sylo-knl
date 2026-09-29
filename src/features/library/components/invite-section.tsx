@@ -1,8 +1,6 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
-import { useReducedMotion } from '@/hooks/use-reduced-motion';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,6 +33,7 @@ import {
 } from './swr';
 
 import { getURL } from '@/lib/auth/utils';
+import { appToast } from '@/lib/toast';
 import { Invite } from '@/features/library/library-schema';
 import { Card } from '@/components/ui/card';
 import {
@@ -82,9 +81,6 @@ export function InviteSection({ libraryId }: InviteSectionProps) {
   const { createInvite, isCreating } = useCreateLibraryInviteSWR(libraryId);
   const { revokeInvite, isRevoking } = useRevokeLibraryInviteSWR(libraryId);
 
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-
   const [inviteToRevoke, setInviteToRevoke] = useState<Invite | null>(null);
 
   const [role, setRole] = useState<'VIEWER' | 'EDITOR'>('VIEWER');
@@ -100,14 +96,15 @@ export function InviteSection({ libraryId }: InviteSectionProps) {
   });
   const [sorting, setSorting] = useState<SortingState>([]);
 
-  const prefersReducedMotion = useReducedMotion();
-
   useEffect(() => {
-    // Always reset feedback states on mount.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setError('');
-    setSuccess('');
-  }, []);
+    if (fetchError) {
+      appToast.error(
+        fetchError instanceof Error
+          ? fetchError.message
+          : 'An error occurred. Please try again.'
+      );
+    }
+  }, [fetchError]);
 
   const columns = useMemo<ColumnDef<DataGridFeatures, Invite>[]>(
     () => [
@@ -207,9 +204,6 @@ export function InviteSection({ libraryId }: InviteSectionProps) {
   async function handleCreateInvite(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
-    setError('');
-    setSuccess('');
-
     try {
       const parsedExpiresAt = expiresAt
         ? new Date(expiresAt).toISOString()
@@ -232,14 +226,16 @@ export function InviteSection({ libraryId }: InviteSectionProps) {
       });
       await refreshInvites();
 
-      setSuccess('Invite created successfully');
+      appToast.success('Invite created successfully');
       setRole('VIEWER');
       setExpiresAt('');
       setExpiryOption('never');
       setMaxUses('');
       table.resetPageIndex();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create invite');
+      appToast.error(
+        err instanceof Error ? err.message : 'Failed to create invite'
+      );
     }
   }
 
@@ -249,16 +245,15 @@ export function InviteSection({ libraryId }: InviteSectionProps) {
     }
 
     try {
-      setError('');
-      setSuccess('');
-
       await revokeInvite(inviteToRevoke.id);
       await refreshInvites();
 
       setInviteToRevoke(null);
-      setSuccess('Invite revoked successfully');
+      appToast.success('Invite revoked successfully');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to revoke invite');
+      appToast.error(
+        err instanceof Error ? err.message : 'Failed to revoke invite'
+      );
     }
   }
 
@@ -266,13 +261,12 @@ export function InviteSection({ libraryId }: InviteSectionProps) {
     const origin = getURL();
     const url = `${origin}/join/${code}`;
 
-    await navigator.clipboard.writeText(url);
-
-    setSuccess('Invite link copied to clipboard');
-
-    setTimeout(() => {
-      setSuccess('');
-    }, 3000);
+    try {
+      await navigator.clipboard.writeText(url);
+      appToast.success('Invite link copied to clipboard');
+    } catch {
+      appToast.error('Failed to copy invite link');
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -286,56 +280,6 @@ export function InviteSection({ libraryId }: InviteSectionProps) {
         <p className="text-muted-foreground text-sm">
           Create shareable links to invite multiple users to your library.
         </p>
-      </div>
-
-      <div aria-live="polite" aria-atomic="true">
-        {
-          // Accessible feedback region for invite form
-          // Wrapper <div aria-live="polite" aria-atomic="true">
-          // - aria-live="polite": screen readers announce changes politely
-          // - aria-atomic="true": read entire region on update
-          //
-          // Children:
-          // - error banner (red, slides in on failure)
-          // - success banner (green, slides in on success)
-          //
-          // Purpose: ensures async updates (API responses) are announced.
-          // Motion respects prefersReducedMotion (duration=0 if enabled).
-        }
-        {(error || fetchError) && (
-          <motion.div
-            className="rounded border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-900/20"
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{
-              duration: prefersReducedMotion ? 0 : 0.2,
-            }}
-          >
-            <p className="text-sm text-red-700 dark:text-red-400">
-              {error ||
-                (fetchError instanceof Error
-                  ? fetchError.message
-                  : 'An error occurred. Please try again.')}
-            </p>
-          </motion.div>
-        )}
-
-        {success && (
-          <motion.div
-            className="rounded border border-green-200 bg-green-50 p-3 dark:border-green-800 dark:bg-green-900/20"
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{
-              duration: prefersReducedMotion ? 0 : 0.2,
-            }}
-          >
-            <p className="text-sm text-green-700 dark:text-green-400">
-              {success}
-            </p>
-          </motion.div>
-        )}
       </div>
 
       {/* Generate Invite Link Form */}
