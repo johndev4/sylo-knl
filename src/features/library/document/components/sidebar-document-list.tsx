@@ -145,8 +145,12 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
   const isAtLimit = totalDocs >= 500;
   const newDocumentPath = `/hub/libraries/${libraryId}/documents/new`;
 
-  const isSearching =
-    searchQuery !== debouncedSearchQuery || (isLoading && size <= 1);
+  const isInitialLoad =
+    isLoading &&
+    documents.length === 0 &&
+    !searchQuery &&
+    selectedTags.length === 0;
+  const isSearching = searchQuery !== debouncedSearchQuery || isLoading;
 
   return (
     isClient && (
@@ -154,7 +158,7 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
         <SidebarContent aria-label="Sidebar Document List Content">
           {/* Fixed Filters Area (Hidden when collapsed into icon mode) */}
           <div className="border-sidebar-border flex shrink-0 flex-col gap-2.5 border-b p-3 group-data-[collapsible=icon]:hidden">
-            {isLoading && size <= 1 ? (
+            {isInitialLoad ? (
               <div className="space-y-3 p-2">
                 <Skeleton className="h-5 w-full rounded-md" />
                 <Skeleton className="h-5 w-20 rounded-md" />
@@ -165,6 +169,7 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
                   <Search className="text-muted-foreground absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2" />
                   <Input
                     placeholder="Search docs…"
+                    autoComplete="off"
                     className="focus-visible:ring-primary/30 border-sidebar-border bg-sidebar-accent/50 h-8 pr-8 pl-8 text-xs focus-visible:ring-1"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -268,7 +273,7 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
             className="group/collapsible group-data-[collapsible=icon]:hidden"
           >
             {/* Documents Group */}
-            {isLoading && size <= 1 ? (
+            {isInitialLoad ? (
               <SidebarMenu>
                 {Array.from({ length: 5 }).map((_, index) => (
                   <SidebarMenuItem key={index}>
