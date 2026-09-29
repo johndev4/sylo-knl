@@ -36,7 +36,7 @@ export async function getLibraryMembers(
   libraryId: string,
   supabase: SupabaseClient
 ) {
-  console.log(`[DEBUG] fetchLibraryMembers called for: ${libraryId}`);
+  console.debug(`[DEBUG] fetchLibraryMembers called for: ${libraryId}`);
 
   // Fetch all members with user details
   const { data: members, error } = await supabase
