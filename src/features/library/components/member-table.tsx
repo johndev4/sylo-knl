@@ -191,11 +191,11 @@ export function MemberTable({ libraryId, canManageMembers }: MemberTableProps) {
                 useAvatarUrl={member.user?.use_avatar_url}
               />
 
-              <div className="space-y-px">
-                <div className="text-foreground font-medium">
+              <div className="min-w-0 flex-1 space-y-px">
+                <div className="text-foreground font-medium break-words">
                   {member.user?.name || 'Unknown User'}
                 </div>
-                <div className="text-muted-foreground">
+                <div className="text-muted-foreground break-words">
                   {member.user?.email || ''}
                 </div>
               </div>
@@ -226,8 +226,7 @@ export function MemberTable({ libraryId, canManageMembers }: MemberTableProps) {
             return (
               <DropdownMenu disabled={isUpdatingRole}>
                 <DropdownMenuTrigger
-                  id="inviteMemberRole"
-                  aria-label="Invite member role"
+                  aria-label={`Change ${member.role} role for ${member.user?.name || member.user?.email || 'member'}`}
                   render={
                     <Button
                       variant="outline"

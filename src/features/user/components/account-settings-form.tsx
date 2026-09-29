@@ -221,6 +221,7 @@ export default function AccountSettingsForm({
                       {/* Google Picture Option */}
                       <button
                         type="button"
+                        aria-pressed={formData.useAvatarUrl}
                         onClick={() =>
                           setFormData((prev) => ({
                             ...prev,
@@ -228,7 +229,7 @@ export default function AccountSettingsForm({
                           }))
                         }
                         className={cn(
-                          'relative flex flex-col items-center gap-3 rounded-2xl border-2 p-4 transition-all duration-200',
+                          'relative flex flex-col items-center gap-3 rounded-2xl border-2 p-4 transition-[border-color,background-color,box-shadow] duration-200 motion-reduce:transition-none',
                           formData.useAvatarUrl
                             ? 'border-primary bg-primary/5 shadow-sm'
                             : 'border-transparent bg-white hover:border-neutral-300 dark:bg-neutral-950 dark:hover:border-neutral-700'
@@ -265,6 +266,7 @@ export default function AccountSettingsForm({
                       {/* Initials Option */}
                       <button
                         type="button"
+                        aria-pressed={!formData.useAvatarUrl}
                         onClick={() =>
                           setFormData((prev) => ({
                             ...prev,
@@ -272,7 +274,7 @@ export default function AccountSettingsForm({
                           }))
                         }
                         className={cn(
-                          'relative flex flex-col items-center gap-3 rounded-2xl border-2 p-4 transition-all duration-200',
+                          'relative flex flex-col items-center gap-3 rounded-2xl border-2 p-4 transition-[border-color,background-color,box-shadow] duration-200 motion-reduce:transition-none',
                           !formData.useAvatarUrl
                             ? 'border-primary bg-primary/5 shadow-sm'
                             : 'border-transparent bg-white hover:border-neutral-300 dark:bg-neutral-950 dark:hover:border-neutral-700'
@@ -327,10 +329,15 @@ export default function AccountSettingsForm({
                       id="name"
                       name="name"
                       type="text"
+                      autoComplete="off"
                       placeholder="Your name"
                       value={formData.name}
                       onChange={handleChange}
                       disabled={isPending}
+                      aria-invalid={Boolean(getFieldError('name'))}
+                      aria-describedby={
+                        getFieldError('name') ? 'name-error' : undefined
+                      }
                       className={`mt-1 ${
                         getFieldError('name') ? 'border-destructive' : ''
                       }`}
@@ -338,7 +345,11 @@ export default function AccountSettingsForm({
                     />
 
                     {getFieldError('name') && (
-                      <p className="text-destructive mt-1 text-xs">
+                      <p
+                        id="name-error"
+                        className="text-destructive mt-1 text-xs"
+                        aria-live="polite"
+                      >
                         {getFieldError('name')}
                       </p>
                     )}
@@ -355,6 +366,10 @@ export default function AccountSettingsForm({
                       value={formData.bio}
                       onChange={handleChange}
                       disabled={isPending}
+                      aria-invalid={Boolean(getFieldError('bio'))}
+                      aria-describedby={
+                        getFieldError('bio') ? 'bio-error' : undefined
+                      }
                       className={`mt-1 ${
                         getFieldError('bio') ? 'border-destructive' : ''
                       }`}
@@ -373,7 +388,11 @@ export default function AccountSettingsForm({
                     </div>
 
                     {getFieldError('bio') && (
-                      <p className="text-destructive mt-1 text-xs">
+                      <p
+                        id="bio-error"
+                        className="text-destructive mt-1 text-xs"
+                        aria-live="polite"
+                      >
                         {getFieldError('bio')}
                       </p>
                     )}
@@ -399,6 +418,12 @@ export default function AccountSettingsForm({
                     >
                       <SelectTrigger
                         id="timezone"
+                        aria-invalid={Boolean(getFieldError('timezone'))}
+                        aria-describedby={
+                          getFieldError('timezone')
+                            ? 'timezone-error'
+                            : undefined
+                        }
                         className={`mt-1 ${
                           getFieldError('timezone') ? 'border-destructive' : ''
                         }`}
@@ -416,7 +441,11 @@ export default function AccountSettingsForm({
                     </Select>
 
                     {getFieldError('timezone') && (
-                      <p className="text-destructive mt-1 text-xs">
+                      <p
+                        id="timezone-error"
+                        className="text-destructive mt-1 text-xs"
+                        aria-live="polite"
+                      >
                         {getFieldError('timezone')}
                       </p>
                     )}

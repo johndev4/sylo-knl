@@ -59,19 +59,33 @@ export function RenameLibraryForm({
           <div className="flex gap-2">
             <Input
               id="library-name"
+              name="libraryName"
+              autoComplete="off"
+              aria-invalid={!isDirty && name.trim().length === 0}
+              aria-describedby={
+                !isDirty && name.trim().length === 0
+                  ? 'library-name-error'
+                  : undefined
+              }
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. My Awesome Library"
+              placeholder="e.g., My Awesome Library…"
               disabled={isUpdating}
               maxLength={50}
               className="max-w-md"
             />
             <Button type="submit" disabled={!isDirty || isUpdating}>
-              {isUpdating ? 'Saving...' : 'Save Changes'}
+              {isUpdating ? 'Saving…' : 'Save Changes'}
             </Button>
           </div>
           {!isDirty && name.trim().length === 0 && (
-            <p className="text-xs text-red-500">Name cannot be empty</p>
+            <p
+              id="library-name-error"
+              className="text-xs text-red-500"
+              aria-live="polite"
+            >
+              Name cannot be empty
+            </p>
           )}
         </div>
       </form>

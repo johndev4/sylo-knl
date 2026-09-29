@@ -434,6 +434,7 @@ export function InviteSection({ libraryId }: InviteSectionProps) {
 
             <Input
               id="maxUses"
+              name="maxUses"
               type="number"
               min="1"
               placeholder="Unlimited"
