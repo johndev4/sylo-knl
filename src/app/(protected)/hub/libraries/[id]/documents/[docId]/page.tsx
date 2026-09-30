@@ -12,6 +12,10 @@ import { randomUUID } from 'crypto';
 import { getUser } from '@/lib/auth/get-user';
 import { requireLibraryRole } from '@/lib/auth/library-role';
 import Link from 'next/link';
+import {
+  markdownToBlockNoteJson,
+  parseBlockNoteJson,
+} from '@/lib/document-converters';
 
 export default async function DocumentPage({
   params,
@@ -67,6 +71,10 @@ async function DocumentPageWrapper({
     );
   }
 
+  const contentJson = document.content_json
+    ? parseBlockNoteJson(document.content_json)
+    : await markdownToBlockNoteJson(document.content ?? '');
+
   return (
     <DocumentManager
       key={`${docId}_${randomUUID()}`}
@@ -75,7 +83,7 @@ async function DocumentPageWrapper({
       initialData={{
         id: document.id,
         title: document.title,
-        content: document.content,
+        contentJson,
         tags: document.tags,
         created_at: document.created_at,
         updated_at: document.updated_at,

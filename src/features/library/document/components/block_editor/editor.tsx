@@ -5,25 +5,23 @@ import { BlockNoteEditor } from '@blocknote/core';
 import { SuggestionMenuController, useCreateBlockNote } from '@blocknote/react';
 import { BlockNoteView } from '@blocknote/shadcn';
 import '@blocknote/shadcn/style.css';
-import React, { useEffect, useState, useRef } from 'react';
+import React from 'react';
 import { getCustomSlashMenuItems } from './custom-slash-menu-items';
 import { useTheme } from 'next-themes';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import type { BlockNoteBlockJson } from '@/lib/document-converters';
 
 interface EditorProps {
-  onChange: (markdown: string, blockCount: number) => void;
-  initialContent?: string;
+  onChange: (blocks: BlockNoteBlockJson[], blockCount: number) => void;
+  initialContent?: BlockNoteBlockJson[];
   editable?: boolean;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function countBlocks(blocks: any[]): number {
+function countBlocks(blocks: BlockNoteBlockJson[]): number {
   let count = 0;
   for (const block of blocks) {
     count++;
-    if (block.children && block.children.length > 0) {
-      count += countBlocks(block.children);
-    }
+    count += countBlocks(block.children ?? []);
   }
   return count;
 }
@@ -34,10 +32,11 @@ const Editor: React.FC<EditorProps> = ({
   editable = true,
 }) => {
   const { resolvedTheme } = useTheme();
-  const [initialContentLoaded, setInitialContentLoaded] = useState(false);
-  const loadedRef = useRef(false);
 
   const editor: BlockNoteEditor = useCreateBlockNote({
+    initialContent: initialContent?.length
+      ? (initialContent as never)
+      : undefined,
     pasteHandler: ({ event, editor, defaultPasteHandler }) => {
       const pastedText = event.clipboardData?.getData('text/plain');
 
@@ -50,38 +49,11 @@ const Editor: React.FC<EditorProps> = ({
     },
   });
 
-  // Initialize editor with initial content if provided.
-  // Uses a ref to prevent re-initializing on every render.
-  useEffect(() => {
-    async function loadContent() {
-      if (loadedRef.current) return;
-      loadedRef.current = true;
-
-      if (initialContent) {
-        try {
-          const blocks = await editor.tryParseMarkdownToBlocks(initialContent);
-          editor.replaceBlocks(editor.document, blocks);
-        } catch (e) {
-          console.error('Failed to parse markdown', e);
-        }
-      }
-      setInitialContentLoaded(true);
-    }
-    loadContent();
-  }, [editor, initialContent]);
-
-  const handleEditorChange = async () => {
+  const handleEditorChange = () => {
     const blocks = editor.document;
     const blockCount = countBlocks(blocks);
-    const markdown = await editor.blocksToMarkdownLossy(blocks);
-    onChange(markdown, blockCount);
+    onChange(blocks, blockCount);
   };
-
-  if (!initialContentLoaded) {
-    return (
-      <div className="h-full animate-pulse rounded-lg bg-neutral-100/50 dark:bg-neutral-900/50"></div>
-    );
-  }
 
   // ---------------------------------------------------------------------------
   // Render
