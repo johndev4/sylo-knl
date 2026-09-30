@@ -8,6 +8,7 @@ import { AuthProvider } from '@/components/providers/auth-provider';
 import { getUserNonRedirect } from '@/lib/auth/get-user';
 import { Suspense } from 'react';
 import { AppHeader } from '@/components/layout/app-header';
+import { Toaster } from '@/components/ui/sonner';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
@@ -33,6 +34,7 @@ export default function RootLayout({
           <TooltipProvider>
             <Suspense fallback={null}>
               <AuthProviderWrapper>
+                <Toaster />
                 <AppHeader />
                 <main className="flex-1">{children}</main>
               </AuthProviderWrapper>

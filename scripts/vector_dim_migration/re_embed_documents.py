@@ -31,19 +31,13 @@ logger = logging.getLogger(__name__)
 
 class Config:
     def __init__(self):
-        self.supabase_url = (
-            os.getenv("SUPABASE_URL")
-            or os.getenv("NEXT_PUBLIC_SUPABASE_URL")
+        self.supabase_url = os.getenv("SUPABASE_URL") or os.getenv(
+            "NEXT_PUBLIC_SUPABASE_URL"
         )
-        self.supabase_key = (
-            os.getenv("SUPABASE_SECRET_KEY")
-            or os.getenv("SUPABASE_KEY")
-            or os.getenv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY")
-        )
+        self.supabase_key = os.getenv("SUPABASE_SECRET_KEY")
         self.llm_provider = os.getenv("LLM_PROVIDER", "google").lower()
-        self.google_api_key = (
-            os.getenv("GOOGLE_API_KEY")
-            or os.getenv("GOOGLE_GENERATIVE_AI_API_KEY")
+        self.google_api_key = os.getenv("GOOGLE_API_KEY") or os.getenv(
+            "GOOGLE_GENERATIVE_AI_API_KEY"
         )
         self.ollama_base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 
@@ -86,7 +80,9 @@ def _normalize_ollama_base_url(base_url: Optional[str]) -> str:
     return normalized
 
 
-def _call_ollama_embeddings(endpoint: str, base_url: Optional[str], model: str, payload: object):
+def _call_ollama_embeddings(
+    endpoint: str, base_url: Optional[str], model: str, payload: object
+):
     normalized_base_url = _normalize_ollama_base_url(base_url)
     full_url = f"{normalized_base_url}/{endpoint.lstrip('/')}"
     logger.info(f"Ollama request: url={full_url}, model={model}")
@@ -117,30 +113,40 @@ def test_embedding_provider(
             return vector_dim
         elif provider == "ollama":
             model_name = os.getenv("OLLAMA_EMBEDDING_MODEL") or "nomic-embed-text:v1.5"
-            base_url = base_url or os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+            base_url = base_url or os.getenv(
+                "OLLAMA_BASE_URL", "http://localhost:11434"
+            )
             base_url = _normalize_ollama_base_url(base_url)
             payload = {"input": "test"}
 
             try:
-                payload_response = _call_ollama_embeddings("/api/embed", base_url, model_name, payload)
+                payload_response = _call_ollama_embeddings(
+                    "/api/embed", base_url, model_name, payload
+                )
                 embeddings = payload_response.get("embeddings", [])
                 if not embeddings:
                     raise ValueError("Ollama did not return any embeddings")
                 embedding = embeddings[0]
                 vector_dim = len(embedding)
-                logger.info(f"Ollama provider test successful via /api/embed: vector_dim={vector_dim}")
+                logger.info(
+                    f"Ollama provider test successful via /api/embed: vector_dim={vector_dim}"
+                )
                 return vector_dim
             except requests.HTTPError as exc:
                 if getattr(exc.response, "status_code", None) != 404:
                     raise
                 logger.info("Ollama /api/embed returned 404; trying /api/embeddings")
-                payload_response = _call_ollama_embeddings("/api/embeddings", base_url, model_name, payload)
+                payload_response = _call_ollama_embeddings(
+                    "/api/embeddings", base_url, model_name, payload
+                )
                 embeddings = payload_response.get("embeddings", [])
                 if not embeddings:
                     raise ValueError("Ollama did not return any embeddings")
                 embedding = embeddings[0]
                 vector_dim = len(embedding)
-                logger.info(f"Ollama provider test successful via /api/embeddings: vector_dim={vector_dim}")
+                logger.info(
+                    f"Ollama provider test successful via /api/embeddings: vector_dim={vector_dim}"
+                )
                 return vector_dim
         else:
             raise ValueError(f"Unknown provider: {provider}")
@@ -278,7 +284,9 @@ def generate_embeddings_batch(
                 return [embedding]
         elif provider == "ollama":
             model_name = os.getenv("OLLAMA_EMBEDDING_MODEL") or "nomic-embed-text:v1.5"
-            base_url = base_url or os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+            base_url = base_url or os.getenv(
+                "OLLAMA_BASE_URL", "http://localhost:11434"
+            )
             base_url = _normalize_ollama_base_url(base_url)
 
             try:

@@ -1,4 +1,3 @@
-import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { getUser } from './get-user';
 import { cache } from 'react';
@@ -19,9 +18,6 @@ export const LIBRARY_ROLES = {
 export const requireLibraryRole = cache(
   async (libraryId: string, minRole = LIBRARY_ROLES.VIEWER) => {
     const user = await getUser();
-    if (!user) {
-      redirect('/login');
-    }
 
     // Special bypass for E2E tests using the zero-UUID.
     // This allows tests to run without a seeded database by mocking the UI state.

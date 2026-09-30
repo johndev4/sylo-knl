@@ -2,18 +2,12 @@
 
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-  createDocument,
-  updateDocument,
-  deleteDocument,
-} from '@/features/library/document/actions';
 import { Badge } from '@/components/ui/badge';
 import { useTagSuggestions } from '@/features/library/document/hooks/use-tag-suggestions';
 import {
   Calendar,
   Clock,
   Users,
-  X,
   AlertTriangle,
   ChevronsUpDownIcon,
 } from 'lucide-react';
@@ -28,9 +22,13 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { DocumentActions } from './document-actions';
-import { useSidebarRefresh } from '@/components/providers/sidebar-refresh-provider';
 import { TagChipsInput } from './tag-chips-input';
 import { useNavigationGuard } from '../hooks/use-navigation-guard';
+import {
+  useCreateDocumentSWR,
+  useDeleteDocumentSWR,
+  useUpdateDocumentSWR,
+} from '@/features/library/document/swr';
 import { BlockEditor } from './block_editor';
 import {
   Collapsible,
@@ -38,6 +36,7 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { Button } from '@/components/ui/button';
+import { appToast } from '@/lib/toast';
 
 interface DocumentManagerProps {
   libraryId: string;
@@ -52,6 +51,7 @@ interface DocumentManagerProps {
     authors?: { id: string; name: string }[];
   };
   userRole?: string;
+  currentUserId?: string;
 }
 
 /**
@@ -70,9 +70,9 @@ export function DocumentManager({
   isNew = false,
   initialData,
   userRole = 'VIEWER',
+  currentUserId,
 }: DocumentManagerProps) {
   const router = useRouter();
-  const { triggerRefresh } = useSidebarRefresh();
 
   const [isEditMode, setIsEditMode] = useState(isNew);
   const [title, setTitle] = useState(initialData?.title || '');
@@ -90,7 +90,7 @@ export function DocumentManager({
 
   const [isLoading, setIsLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [hasBlockLimitError, setHasBlockLimitError] = useState(false);
   const [ignoreNavigationGuard, setIgnoreNavigationGuard] = useState(false);
   const [isMetaOpen, setIsMetaOpen] = useState(true);
 
@@ -143,7 +143,6 @@ export function DocumentManager({
     setContent('');
     setTags([]);
     setTagInput('');
-    setError(null);
     setEditorResetKey((prev) => prev + 1);
   }, []);
 
@@ -152,7 +151,6 @@ export function DocumentManager({
     setContent(initialData?.content ?? '');
     setTags((initialData?.tags ?? []).map((t) => t.toUpperCase()));
     setTagInput('');
-    setError(null);
     setEditorResetKey((prev) => prev + 1);
     setIsEditMode(false);
   }, [initialData]);
@@ -313,57 +311,82 @@ export function DocumentManager({
     setTags(tags.filter((tag) => tag !== tagToRemove));
   };
 
+  /**
+   * Detects if an error is an OCC (Optimistic Concurrency Control) conflict.
+   * Checks for "Conflict:" in the message or explicit conflict flag.
+   */
+  const isConflictError = (err: unknown): boolean => {
+    if (err instanceof Error) {
+      return (
+        err.message.includes('Conflict') ||
+        ('conflict' in err && err.conflict === true)
+      );
+    }
+    return false;
+  };
+
   // ---------------------------------------------------------------------------
   // Save
   // ---------------------------------------------------------------------------
 
+  const { createDocument } = useCreateDocumentSWR(libraryId);
+  const { updateDocument } = useUpdateDocumentSWR(libraryId);
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!title.trim()) {
-      setError('Title is required.');
+      appToast.error('Title is required.');
       return;
     }
 
     setIsLoading(true);
-    setError(null);
 
     try {
       if (isNew) {
+        // Server call
         const data = await createDocument({
-          title,
-          content: content || '',
-          tags,
-          libraryId,
+          input: {
+            title,
+            content: content || '',
+            tags,
+            libraryId,
+          },
         });
 
-        triggerRefresh();
         setIgnoreNavigationGuard(true);
         router.push(`/hub/libraries/${libraryId}/documents/${data.documentId}`);
         router.refresh();
       } else {
-        const data = await updateDocument(initialData!.id, {
-          title,
-          content: content || '',
-          tags,
-          // Use the ref so repeated saves always send the latest timestamp,
-          // not the stale initialData prop from the initial server render.
-          lastUpdatedAt: latestUpdatedAt.current,
+        // Server call
+        const data = await updateDocument({
+          docId: initialData!.id,
+          input: {
+            title,
+            content: content || '',
+            tags,
+            lastUpdatedAt: latestUpdatedAt.current,
+          },
         });
 
-        // Capture the new updated_at returned by the server so that the
-        // next save sends the correct timestamp for the OCC check.
+        // Update latest timestamp for next OCC check
         if (data?.document?.updated_at) {
           latestUpdatedAt.current = data.document.updated_at;
         }
 
-        triggerRefresh();
         setIsEditMode(false);
         router.refresh();
       }
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : 'An unknown error occurred';
-      setError(message);
+
+      // Check for OCC conflict
+      if (isConflictError(err)) {
+        appToast.error(
+          'Document was edited by another user. Please refresh to get the latest version.'
+        );
+      } else {
+        appToast.error(message);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -373,22 +396,32 @@ export function DocumentManager({
   // Delete
   // ---------------------------------------------------------------------------
 
+  const { deleteDocument } = useDeleteDocumentSWR(libraryId);
   const handleDelete = async () => {
     if (!initialData?.id) return;
 
     setIsDeleting(true);
-    setError(null);
 
     try {
-      await deleteDocument(initialData.id);
+      // Server call
+      await deleteDocument({ docId: initialData.id });
 
       setIgnoreNavigationGuard(true);
-      triggerRefresh();
+
       router.push(`/hub/libraries/${libraryId}/documents`);
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : 'An unknown error occurred';
-      setError(message);
+
+      // Check for OCC conflict
+      if (isConflictError(err)) {
+        appToast.error(
+          'Document was edited by another user. Please refresh to get the latest version.'
+        );
+      } else {
+        appToast.error(message);
+      }
+
       setIsDeleting(false);
     }
   };
@@ -401,9 +434,10 @@ export function DocumentManager({
     (markdown: string, blockCount: number) => {
       setContent(markdown);
       if (blockCount > 1000) {
-        setError('Warning: Document exceeds 1000 blocks limit.');
+        setHasBlockLimitError(true);
+        appToast.warning('Warning: Document exceeds 1000 blocks limit.');
       } else {
-        setError(null);
+        setHasBlockLimitError(false);
       }
     },
     []
@@ -412,6 +446,18 @@ export function DocumentManager({
   // ---------------------------------------------------------------------------
   // Render
   // ---------------------------------------------------------------------------
+
+  const isAuthor = useMemo(() => {
+    if (isNew) return true;
+    if (!currentUserId || !initialData?.authors) return true;
+    return initialData.authors.some((author) => author.id === currentUserId);
+  }, [isNew, currentUserId, initialData?.authors]);
+
+  const canDelete = useMemo(() => {
+    if (userRole === 'OWNER' || userRole === 'ADMIN') return true;
+    if (userRole === 'EDITOR' && isAuthor) return true;
+    return false;
+  }, [userRole, isAuthor]);
 
   return (
     <div className="animate-fadeIn bg-background flex h-full flex-col overflow-hidden">
@@ -474,7 +520,8 @@ export function DocumentManager({
           title={title}
           isLoading={isLoading}
           isDeleting={isDeleting}
-          hasBlockLimitError={!!error?.includes('exceeds 1000 blocks')}
+          hasBlockLimitError={hasBlockLimitError}
+          canDelete={canDelete}
           onEnterEditMode={() => setIsEditMode(true)}
           onCancel={handleCancel}
           onSave={handleSubmit}
@@ -572,23 +619,6 @@ export function DocumentManager({
 
       {/* ── Dedicated Scrollable Editor Area ────────────────────────────────── */}
       <div className="relative flex-1 overflow-hidden">
-        {error && (
-          <div
-            role="alert"
-            className="bg-destructive text-destructive-foreground absolute top-3 left-1/2 z-0 flex w-[92%] max-w-xl -translate-x-1/2 items-start gap-3 rounded-lg px-4 py-3 text-sm font-medium shadow-lg"
-          >
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-            <span className="flex-1">{error}</span>
-            <button
-              type="button"
-              aria-label="Dismiss error"
-              onClick={() => setError(null)}
-              className="transition-opacity hover:opacity-70"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-        )}
         <div className="h-full">
           <div className="mx-auto h-full max-w-5xl">
             <BlockEditor

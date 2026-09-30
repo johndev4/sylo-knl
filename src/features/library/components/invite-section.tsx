@@ -29,9 +29,10 @@ import {
 } from '@/components/ui/alert-dialog';
 
 import {
-  createLibraryInvite,
-  revokeLibraryInvite,
-} from '@/features/library/actions';
+  useLibraryInvitesSWR,
+  useCreateLibraryInviteSWR,
+  useRevokeLibraryInviteSWR,
+} from './swr';
 
 import { getURL } from '@/lib/auth/utils';
 import { Invite } from '@/features/library/library-schema';
@@ -55,8 +56,6 @@ import {
 import { CheckIcon, ChevronDown } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
-import { createClient } from '@/lib/supabase/client';
-import { getLibraryInvites } from '../queries';
 
 interface InviteSectionProps {
   libraryId: string;
@@ -74,10 +73,15 @@ const roleOptions = [
 ];
 
 export function InviteSection({ libraryId }: InviteSectionProps) {
-  const [invites, setInvites] = useState<Invite[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isCreating, setIsCreating] = useState(false);
-  const [isRevoking, setIsRevoking] = useState(false);
+  const {
+    invites,
+    isLoading,
+    error: fetchError,
+    mutate: refreshInvites,
+  } = useLibraryInvitesSWR(libraryId);
+  const { createInvite, isCreating } = useCreateLibraryInviteSWR(libraryId);
+  const { revokeInvite, isRevoking } = useRevokeLibraryInviteSWR(libraryId);
+
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -99,36 +103,11 @@ export function InviteSection({ libraryId }: InviteSectionProps) {
   const prefersReducedMotion = useReducedMotion();
 
   useEffect(() => {
-    // Always reset states on mount.
+    // Always reset feedback states on mount.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setInvites([]);
-    setIsLoading(true);
-    setIsCreating(false);
-    setRole('VIEWER');
-    setExpiresAt('');
-    setExpiryOption('never');
-    setMaxUses('');
-    setInviteToRevoke(null);
-    setIsRevoking(false);
     setError('');
     setSuccess('');
   }, []);
-
-  useEffect(() => {
-    const supabase = createClient();
-    const fetchLibraryInvites = async () => {
-      try {
-        const _invites = await getLibraryInvites(libraryId, supabase);
-        setInvites(_invites);
-      } catch (err) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        setError((err as any)?.message);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchLibraryInvites();
-  }, [libraryId]);
 
   const columns = useMemo<ColumnDef<DataGridFeatures, Invite>[]>(
     () => [
@@ -232,8 +211,6 @@ export function InviteSection({ libraryId }: InviteSectionProps) {
     setSuccess('');
 
     try {
-      setIsCreating(true);
-
       const parsedExpiresAt = expiresAt
         ? new Date(expiresAt).toISOString()
         : null;
@@ -248,14 +225,12 @@ export function InviteSection({ libraryId }: InviteSectionProps) {
         }
       }
 
-      const invite = await createLibraryInvite(
-        libraryId,
+      await createInvite({
         role,
-        parsedExpiresAt,
-        parsedMaxUses
-      );
-
-      setInvites((current) => [invite, ...current]);
+        expiresAt: parsedExpiresAt,
+        maxUses: parsedMaxUses,
+      });
+      await refreshInvites();
 
       setSuccess('Invite created successfully');
       setRole('VIEWER');
@@ -265,8 +240,6 @@ export function InviteSection({ libraryId }: InviteSectionProps) {
       table.resetPageIndex();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create invite');
-    } finally {
-      setIsCreating(false);
     }
   }
 
@@ -276,22 +249,16 @@ export function InviteSection({ libraryId }: InviteSectionProps) {
     }
 
     try {
-      setIsRevoking(true);
       setError('');
       setSuccess('');
 
-      await revokeLibraryInvite(libraryId, inviteToRevoke.id);
-
-      setInvites((current) =>
-        current.filter((invite) => invite.id !== inviteToRevoke.id)
-      );
+      await revokeInvite(inviteToRevoke.id);
+      await refreshInvites();
 
       setInviteToRevoke(null);
       setSuccess('Invite revoked successfully');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to revoke invite');
-    } finally {
-      setIsRevoking(false);
     }
   }
 
@@ -335,7 +302,7 @@ export function InviteSection({ libraryId }: InviteSectionProps) {
           // Purpose: ensures async updates (API responses) are announced.
           // Motion respects prefersReducedMotion (duration=0 if enabled).
         }
-        {error && (
+        {(error || fetchError) && (
           <motion.div
             className="rounded border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-900/20"
             initial={{ opacity: 0, y: -10 }}
@@ -346,7 +313,10 @@ export function InviteSection({ libraryId }: InviteSectionProps) {
             }}
           >
             <p className="text-sm text-red-700 dark:text-red-400">
-              {error || 'Something went wrong'}
+              {error ||
+                (fetchError instanceof Error
+                  ? fetchError.message
+                  : 'An error occurred. Please try again.')}
             </p>
           </motion.div>
         )}
@@ -532,8 +502,8 @@ export function InviteSection({ libraryId }: InviteSectionProps) {
         </div>
 
         <Button type="submit" disabled={isCreating}>
+          {isCreating && <Spinner className="h-4 w-4" />}
           {'Generate Invite Link'}
-          {isCreating && <Spinner className="size-3.5" />}
         </Button>
       </form>
 
@@ -592,8 +562,8 @@ export function InviteSection({ libraryId }: InviteSectionProps) {
                 confirmRevoke();
               }}
             >
+              {isRevoking && <Spinner className="h-4 w-4" />}
               {'Revoke Invite'}
-              {isRevoking && <Spinner className="size-3.5" />}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

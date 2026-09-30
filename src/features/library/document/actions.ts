@@ -269,7 +269,7 @@ export async function deleteDocument(
 
   const { data: currentDoc, error: docError } = await supabase
     .from('documents')
-    .select('library_id')
+    .select('library_id, author_ids')
     .eq('id', docId)
     .is('deleted_at', null)
     .single();
@@ -286,6 +286,14 @@ export async function deleteDocument(
 
   if (!membership || membership.role === 'VIEWER') {
     throw new Error('Forbidden');
+  }
+
+  // EDITORS cannot delete documents they did not author
+  if (membership.role === 'EDITOR') {
+    const isAuthor = (currentDoc.author_ids || []).includes(user.id);
+    if (!isAuthor) {
+      throw new Error('Editors can only delete documents they created');
+    }
   }
 
   const { error: deleteError } = await supabase

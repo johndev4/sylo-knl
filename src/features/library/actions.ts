@@ -168,18 +168,13 @@ export async function updateLibraryMemberRole(
 
   if (!targetMembership) throw new Error('Member not found in library');
 
-  // Prevent demoting the only OWNER
+  // Prevent modifying the library OWNER or assigning OWNER role by non-owners
   if (targetMembership.role === 'OWNER') {
-    const { data: otherOwners } = await supabase
-      .from('library_members')
-      .select('user_id')
-      .eq('library_id', libraryId)
-      .eq('role', 'OWNER')
-      .neq('user_id', userId);
+    throw new Error('Cannot modify the role of the library OWNER');
+  }
 
-    if (!otherOwners || otherOwners.length === 0) {
-      throw new Error('Cannot demote the only owner of the library');
-    }
+  if ((role as string) === 'OWNER' && requesterMembership.role !== 'OWNER') {
+    throw new Error('Only the library OWNER can transfer ownership');
   }
 
   // Update
@@ -211,7 +206,7 @@ export async function updateLibraryMemberRole(
 /**
  * Removes a member from a library.
  * Only library owners and admins can remove members.
- * Prevents removing the only owner of a library.
+ * Prevents removing the library owner.
  *
  * @param libraryId - The unique identifier of the library
  * @param userId - The unique identifier of the user to remove
@@ -245,18 +240,11 @@ export async function removeLibraryMember(libraryId: string, userId: string) {
 
   if (!targetMembership) throw new Error('Member not found');
 
-  // Prevent removing only owner
+  // Prevent removing the library OWNER
   if (targetMembership.role === 'OWNER') {
-    const { data: otherOwners } = await supabase
-      .from('library_members')
-      .select('user_id')
-      .eq('library_id', libraryId)
-      .eq('role', 'OWNER')
-      .neq('user_id', userId);
-
-    if (!otherOwners || otherOwners.length === 0) {
-      throw new Error('Cannot remove the only owner');
-    }
+    throw new Error(
+      'Cannot remove the library OWNER. The library owner cannot leave or be removed.'
+    );
   }
 
   const { error } = await supabase

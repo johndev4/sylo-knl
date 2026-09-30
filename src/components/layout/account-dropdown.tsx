@@ -1,10 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { LogOut, Settings } from 'lucide-react';
+import useSWR from 'swr';
 import { createClient } from '@/lib/supabase/client';
-import { getProfileDropdownUserInfo } from '@/features/user/queries';
+import {
+  getProfileDropdownUserInfo,
+  SWR_PROFILE_KEY,
+} from '@/features/user/queries';
 import { ThemeSubmenu } from '@/components/layout/theme-submenu';
 import {
   DropdownMenu,
@@ -16,55 +19,45 @@ import {
   DropdownMenuGroup,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
-import { Spinner } from '../ui/spinner';
 import { ProfileDropdownUserInfo } from '@/features/user/user-schema';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { UserAvatar } from '../shared/user-avatar';
 import { logout } from '@/features/auth/actions';
 import { useSession } from '../providers/auth-provider';
+import { useState } from 'react';
 
-// Utility that returns 2-letter initials from a name or email.
-const makeInitials = (displayName: string | null, email: string): string => {
-  const source = displayName || email.split('@')[0];
-  return source
-    .split(/[\s._-]+/)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
-};
+/**
+ * Standalone SWR fetcher for the account dropdown.
 
-export function AccountDropdown() {
+ * Creates its own Supabase client so it can be called without props.
+ */
+async function fetchProfileDropdownInfo(): Promise<ProfileDropdownUserInfo> {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
+  return getProfileDropdownUserInfo(supabase, user);
+}
+
+export function AccountDropdown({
+  initialUserInfo,
+}: {
+  initialUserInfo: ProfileDropdownUserInfo | null;
+}) {
   const { user } = useSession();
   const pathname = usePathname();
   const router = useRouter();
 
   const [isOpen, setIsOpen] = useState(false);
-  const [userInfo, setUserInfo] = useState<ProfileDropdownUserInfo | null>(
-    null
+
+  // SWR handles fetching, caching, and revalidation automatically.
+  // `fallbackData` pre-populates from the SSR-provided prop — no loading flash.
+  // When AccountSettingsForm calls `mutate(SWR_PROFILE_KEY)`, this updates too.
+  const { data: userInfo } = useSWR(
+    user && pathname !== '/login' ? SWR_PROFILE_KEY : null,
+    fetchProfileDropdownInfo,
+    { fallbackData: initialUserInfo ?? undefined }
   );
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Fetch user profile on mount
-  useEffect(() => {
-    if (!user || pathname === '/login') {
-      return;
-    }
-
-    const fetchUserInfo = async () => {
-      try {
-        const supabase = createClient();
-        const data = await getProfileDropdownUserInfo(supabase, user);
-        setUserInfo(data);
-      } catch (err) {
-        console.error('Failed to fetch user profile:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchUserInfo();
-  }, [pathname, user]);
 
   const handleLogout = async () => {
     try {
@@ -85,44 +78,6 @@ export function AccountDropdown() {
     return null;
   }
 
-  // Show loading state while fetching user info
-  if (isLoading) {
-    return (
-      <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-        <DropdownMenuTrigger
-          render={
-            <button
-              className={cn(
-                'flex items-center gap-2 rounded-full py-1.5 pr-3 pl-1.5',
-                'bg-neutral-100/80 hover:bg-neutral-200/80 dark:bg-neutral-800/50 dark:hover:bg-neutral-800',
-                'border border-neutral-200/50 transition-colors outline-none dark:border-neutral-700/50'
-              )}
-              aria-label="Account menu"
-            >
-              {/* Avatar */}
-              <div
-                className={cn(
-                  'flex size-7 items-center justify-center rounded-full text-xs font-semibold',
-                  'border border-neutral-200/50 bg-white text-neutral-700 shadow-sm dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300'
-                )}
-              >
-                <Spinner className="h-7 w-7" />
-              </div>
-            </button>
-          }
-        />
-      </DropdownMenu>
-    );
-  }
-
-  // Don't render if userInfo is not found
-  if (!userInfo) {
-    return null;
-  }
-
-  const initials = makeInitials(userInfo.name!, userInfo.email);
-  const shouldUseAvatarUrl = userInfo.useAvatarUrl && userInfo.avatarUrl;
-
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger
@@ -135,15 +90,12 @@ export function AccountDropdown() {
             )}
             aria-label="Account menu"
           >
-            <Avatar>
-              {shouldUseAvatarUrl && (
-                <AvatarImage
-                  src={userInfo.avatarUrl!}
-                  alt={userInfo.name || 'User avatar'}
-                />
-              )}
-              <AvatarFallback>{initials}</AvatarFallback>
-            </Avatar>
+            <UserAvatar
+              name={userInfo?.name}
+              email={userInfo?.email}
+              avatarUrl={userInfo?.avatarUrl}
+              useAvatarUrl={userInfo?.useAvatarUrl}
+            />
 
             {/* Display Name (hidden on mobile) */}
             {userInfo && (
