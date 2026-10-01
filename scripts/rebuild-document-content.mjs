@@ -35,9 +35,6 @@ function parseArguments(args) {
     }
   }
 
-  if (!options.help && !options.libraryId) {
-    throw new Error('--library-id is required');
-  }
   if (!Number.isInteger(options.batchSize) || options.batchSize < 1) {
     throw new Error('--batch-size must be a positive integer');
   }
@@ -54,9 +51,10 @@ function showHelp() {
       'Rebuild legacy document JSON and plain-text chunks.',
       '',
       'Usage:',
-      '  node --experimental-strip-types scripts/rebuild-document-content.mjs --library-id <uuid> [--batch-size 25]',
-      '  node --experimental-strip-types scripts/rebuild-document-content.mjs --library-id <uuid> --apply [--force]',
+      '  node --experimental-strip-types scripts/rebuild-document-content.mjs [--library-id <uuid>] [--batch-size 25]',
+      '  node --experimental-strip-types scripts/rebuild-document-content.mjs [--library-id <uuid>] --apply [--force]',
       '',
+      'Without --library-id, the script processes documents across all libraries.',
       'Without --apply, the script performs a read-only dry run. --force rebuilds documents that already have content_json.',
     ].join('\n')
   );
@@ -102,17 +100,6 @@ async function generateBatchEmbeddings(texts) {
   throw new Error(`Unsupported embedding provider: ${providerName}`);
 }
 
-async function deleteInsertedChunks(client, chunkIds) {
-  if (chunkIds.length === 0) return;
-  const { error } = await client
-    .from('document_chunks')
-    .delete()
-    .in('id', chunkIds);
-  if (error) {
-    throw new Error('Failed to roll back newly inserted document chunks');
-  }
-}
-
 async function processDocument(client, document, options) {
   const blocks = document.content_json
     ? parseBlockNoteJson(document.content_json)
@@ -133,57 +120,20 @@ async function processDocument(client, document, options) {
     throw new Error('Embedding count does not match chunk count');
   }
 
-  const { data: oldChunks, error: oldChunksError } = await client
-    .from('document_chunks')
-    .select('id')
-    .eq('document_id', document.id);
-  if (oldChunksError) throw oldChunksError;
+  const { error: rpcError } = await client.rpc('update_document_with_chunks', {
+    p_doc_id: document.id,
+    p_title: document.title,
+    p_content_json: blocks,
+    p_tags: document.tags || [],
+    p_author_ids: document.author_ids || [],
+    p_chunks: chunks.map((content, index) => ({
+      content,
+      embedding: JSON.stringify(embeddings[index]),
+    })),
+  });
 
-  const { data: newChunks, error: insertError } = await client
-    .from('document_chunks')
-    .insert(
-      chunks.map((content, index) => ({
-        document_id: document.id,
-        content,
-        embedding: `[${embeddings[index].join(',')}]`,
-      }))
-    )
-    .select('id');
-
-  if (insertError || !newChunks) {
-    throw insertError ?? new Error('Failed to insert replacement chunks');
-  }
-
-  if (!document.content_json) {
-    const { data: updatedDocument, error: updateError } = await client
-      .from('documents')
-      .update({ content_json: blocks })
-      .eq('id', document.id)
-      .is('content_json', null)
-      .select('id')
-      .maybeSingle();
-
-    if (updateError || !updatedDocument) {
-      await deleteInsertedChunks(
-        client,
-        newChunks.map((chunk) => chunk.id)
-      );
-      throw updateError ?? new Error('Document changed during migration');
-    }
-  }
-
-  const oldChunkIds = (oldChunks ?? []).map((chunk) => chunk.id);
-  if (oldChunkIds.length > 0) {
-    const { error: deleteError } = await client
-      .from('document_chunks')
-      .delete()
-      .in('id', oldChunkIds);
-
-    if (deleteError) {
-      throw new Error(
-        'Replacement chunks and JSON were saved, but old chunks remain; rerun with --force after fixing the database error'
-      );
-    }
+  if (rpcError) {
+    throw new Error(`Atomic save failed: ${rpcError.message}`);
   }
 
   return { chunkCount: chunks.length, blockCount: countBlocks(blocks) };
@@ -207,7 +157,8 @@ async function main() {
     auth: { autoRefreshToken: false, persistSession: false },
   });
   const mode = options.apply ? 'APPLY' : 'DRY RUN';
-  console.log(`${mode}: library=${options.libraryId}, batchSize=${options.batchSize}`);
+  const targetLibrary = options.libraryId ? `library=${options.libraryId}` : 'all libraries';
+  console.log(`${mode}: target=${targetLibrary}, batchSize=${options.batchSize}`);
 
   let cursor = '';
   let processed = 0;
@@ -216,12 +167,14 @@ async function main() {
   while (true) {
     let query = client
       .from('documents')
-      .select('id, content, content_json')
-      .eq('library_id', options.libraryId)
+      .select('id, title, tags, author_ids, content, content_json, library_id')
       .is('deleted_at', null)
       .order('id')
       .limit(options.batchSize);
 
+    if (options.libraryId) {
+      query = query.eq('library_id', options.libraryId);
+    }
     if (cursor) query = query.gt('id', cursor);
     if (!options.force) query = query.is('content_json', null);
 
@@ -235,12 +188,12 @@ async function main() {
         const result = await processDocument(client, document, options);
         processed += 1;
         console.log(
-          `${mode}: document=${document.id}, blocks=${result.blockCount}, chunks=${result.chunkCount}`
+          `${mode}: document=${document.id}, library=${document.library_id}, blocks=${result.blockCount}, chunks=${result.chunkCount}`
         );
       } catch (error) {
         failed += 1;
         console.error(
-          `FAILED: document=${document.id}: ${error instanceof Error ? error.name : 'Unknown error'}`
+          `FAILED: document=${document.id} (library=${document.library_id}): ${error instanceof Error ? error.message : 'Unknown error'}`
         );
       }
     }
