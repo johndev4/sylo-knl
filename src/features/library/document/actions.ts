@@ -124,13 +124,6 @@ export async function createDocument(
     throw new Error('Failed to save document and chunks');
   }
 
-  // Audit log
-  await supabase.from('document_edits').insert({
-    document_id: document.id,
-    user_id: user.id,
-    action: 'CREATED',
-  });
-
   revalidatePath(`/hub/libraries/${libraryId}/documents`);
 
   return { success: true, documentId: document.id };
@@ -317,12 +310,6 @@ export async function deleteDocument(
     .eq('id', docId);
 
   if (deleteError) throw deleteError;
-
-  await supabase.from('document_edits').insert({
-    document_id: docId,
-    user_id: user.id,
-    action: 'DELETED',
-  });
 
   revalidatePath(`/hub/libraries/${currentDoc.library_id}/documents`);
 
