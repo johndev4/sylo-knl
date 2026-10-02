@@ -37,6 +37,7 @@ import {
 } from '@/components/ui/collapsible';
 import { Button } from '@/components/ui/button';
 import { appToast } from '@/lib/toast';
+import type { BlockNoteBlockJson } from '@/lib/document-converters';
 
 interface DocumentManagerProps {
   libraryId: string;
@@ -44,7 +45,7 @@ interface DocumentManagerProps {
   initialData?: {
     id: string;
     title: string;
-    content: string;
+    contentJson: BlockNoteBlockJson[];
     tags: string[];
     updated_at: string;
     created_at?: string;
@@ -76,7 +77,9 @@ export function DocumentManager({
 
   const [isEditMode, setIsEditMode] = useState(isNew);
   const [title, setTitle] = useState(initialData?.title || '');
-  const [content, setContent] = useState(initialData?.content || '');
+  const [content, setContent] = useState<BlockNoteBlockJson[]>(
+    initialData?.contentJson ?? []
+  );
   const [tags, setTags] = useState<string[]>(
     (initialData?.tags || []).map((t) => t.toUpperCase())
   );
@@ -109,13 +112,13 @@ export function DocumentManager({
   const isDirty = useMemo(() => {
     // For new documents: any character (including whitespace / newlines) is a change
     if (isNew) {
-      return title !== '' || content !== '' || tags.length > 0;
+      return title !== '' || content.length > 0 || tags.length > 0;
     }
 
-    // For existing documents: raw comparison so whitespace/newline changes count
     return (
       title !== (initialData?.title ?? '') ||
-      content !== (initialData?.content ?? '') ||
+      JSON.stringify(content) !==
+        JSON.stringify(initialData?.contentJson ?? []) ||
       JSON.stringify(tags) !==
         JSON.stringify((initialData?.tags ?? []).map((t) => t.toUpperCase()))
     );
@@ -140,7 +143,7 @@ export function DocumentManager({
 
   const resetNewDocumentDraft = useCallback(() => {
     setTitle('');
-    setContent('');
+    setContent([]);
     setTags([]);
     setTagInput('');
     setEditorResetKey((prev) => prev + 1);
@@ -148,7 +151,7 @@ export function DocumentManager({
 
   const resetToInitialData = useCallback(() => {
     setTitle(initialData?.title ?? '');
-    setContent(initialData?.content ?? '');
+    setContent(initialData?.contentJson ?? []);
     setTags((initialData?.tags ?? []).map((t) => t.toUpperCase()));
     setTagInput('');
     setEditorResetKey((prev) => prev + 1);
@@ -346,7 +349,7 @@ export function DocumentManager({
         const data = await createDocument({
           input: {
             title,
-            content: content || '',
+            contentJson: content,
             tags,
             libraryId,
           },
@@ -361,7 +364,7 @@ export function DocumentManager({
           docId: initialData!.id,
           input: {
             title,
-            content: content || '',
+            contentJson: content,
             tags,
             lastUpdatedAt: latestUpdatedAt.current,
           },
@@ -431,8 +434,8 @@ export function DocumentManager({
   // ---------------------------------------------------------------------------
 
   const handleEditorChange = useCallback(
-    (markdown: string, blockCount: number) => {
-      setContent(markdown);
+    (blocks: BlockNoteBlockJson[], blockCount: number) => {
+      setContent(blocks);
       if (blockCount > 1000) {
         setHasBlockLimitError(true);
         appToast.warning('Warning: Document exceeds 1000 blocks limit.');

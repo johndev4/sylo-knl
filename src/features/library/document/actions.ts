@@ -11,6 +11,7 @@ import {
   UpdateDocumentInputSchema,
 } from '@/features/library/document/document-schema';
 import { getUser } from '@/lib/auth/get-user';
+import { blockNoteJsonToMarkdownAndPlainText } from '@/lib/document-converters';
 
 // ---------------------------------------------------------------------------
 // createDocument — mirrors POST /api/documents
@@ -30,7 +31,7 @@ export async function createDocument(
   const supabase = await createClient();
   const user = await getUser();
 
-  const { title, content, libraryId, tags } =
+  const { title, contentJson, libraryId, tags } =
     CreateDocumentInputSchema.parse(input);
 
   // Ensure personal space exists when targeting it
@@ -61,8 +62,13 @@ export async function createDocument(
     throw new Error('Forbidden');
   }
 
-  // 1. Chunk the document content
-  const chunks = chunkText(content);
+  const { plainText } = await blockNoteJsonToMarkdownAndPlainText(contentJson);
+  if (plainText.trim().length < 10) {
+    throw new Error('Content is too short');
+  }
+
+  // Markdown is transient; only plain text is chunked and embedded.
+  const chunks = chunkText(plainText);
 
   // 2. Generate embeddings for each chunk
   let embeddings: number[][];
@@ -85,7 +91,7 @@ export async function createDocument(
     .from('documents')
     .insert({
       title,
-      content,
+      content_json: contentJson,
       library_id: libraryId,
       tags: tags || [],
       author_ids: [user.id],
@@ -97,27 +103,25 @@ export async function createDocument(
     throw new Error(docError?.message || 'Failed to create document');
   }
 
-  // Audit log
-  await supabase.from('document_edits').insert({
-    document_id: document.id,
-    user_id: user.id,
-    action: 'CREATED',
-  });
+  // 3. Store Document and Chunks Atomically
+  const { error: saveError } = await supabase.rpc(
+    'update_document_with_chunks',
+    {
+      p_doc_id: document.id,
+      p_title: title,
+      p_content_json: contentJson,
+      p_tags: tags || [],
+      p_author_ids: [user.id],
+      p_chunks: chunks.map((chunkContent, i) => ({
+        content: chunkContent,
+        embedding: JSON.stringify(embeddings[i]),
+      })),
+    }
+  );
 
-  // 4. Store chunks
-  const chunkInserts = chunks.map((chunkContent, i) => ({
-    document_id: document.id,
-    content: chunkContent,
-    embedding: `[${embeddings[i].join(',')}]`,
-  }));
-
-  const { error: chunksError } = await supabase
-    .from('document_chunks')
-    .insert(chunkInserts);
-
-  if (chunksError) {
-    console.error('[INGESTION ERROR] Chunks:', chunksError);
-    throw new Error('Failed to create document chunks');
+  if (saveError) {
+    console.error('[INGESTION ERROR] Atomic save failed:', saveError);
+    throw new Error('Failed to save document and chunks');
   }
 
   revalidatePath(`/hub/libraries/${libraryId}/documents`);
@@ -145,12 +149,12 @@ export async function updateDocument(
   const supabase = await createClient();
   const user = await getUser();
 
-  const { title, content, tags, lastUpdatedAt } =
+  const { title, contentJson, tags, lastUpdatedAt } =
     UpdateDocumentInputSchema.parse(input);
 
   const { data: currentDoc, error: docError } = await supabase
     .from('documents')
-    .select('library_id, updated_at, author_ids, content')
+    .select('library_id, updated_at, author_ids, content_json')
     .eq('id', docId)
     .is('deleted_at', null)
     .single();
@@ -187,70 +191,74 @@ export async function updateDocument(
     updatedAuthorIds = [...updatedAuthorIds, user.id];
   }
 
-  const { data: document, error: updateError } = await supabase
-    .from('documents')
-    .update({
-      title,
-      content,
-      tags: tags || [],
-      author_ids: updatedAuthorIds,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', docId)
-    .select('id, updated_at')
-    .single();
+  const contentChanged =
+    JSON.stringify(currentDoc.content_json) !== JSON.stringify(contentJson);
+  const { plainText } = contentChanged
+    ? await blockNoteJsonToMarkdownAndPlainText(contentJson)
+    : { plainText: '' };
 
-  if (updateError || !document) {
-    throw new Error(updateError?.message || 'Failed to update document');
+  if (contentChanged && plainText.trim().length < 10) {
+    throw new Error('Content is too short');
   }
 
-  // Audit log
-  await supabase.from('document_edits').insert({
-    document_id: document.id,
-    user_id: user.id,
-    action: 'UPDATED',
-  });
-
-  // Re-embed if content changed
-  if (currentDoc.content !== content) {
-    await supabase.from('document_chunks').delete().eq('document_id', docId);
-
-    const chunks = chunkText(content);
-    let embeddings: number[][];
+  let chunks: string[] = [];
+  let embeddings: number[][] = [];
+  if (contentChanged) {
+    chunks = chunkText(plainText);
     try {
-      console.log(
-        '[INGESTION UPDATE] Generating embeddings for',
-        chunks.length,
-        'chunks'
-      );
       embeddings = await generateEmbeddings(chunks);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (embedError: any) {
+    } catch (embedError) {
       console.error(
         '[INGESTION UPDATE] Embedding generation failed:',
         embedError
       );
       throw embedError;
     }
+  }
 
-    const chunkInserts = chunks.map((chunkContent, i) => ({
-      document_id: document.id,
-      content: chunkContent,
-      embedding: `[${embeddings[i].join(',')}]`,
-    }));
+  // Re-embed if content changed
+  if (contentChanged) {
+    const { error: saveError } = await supabase.rpc(
+      'update_document_with_chunks',
+      {
+        p_doc_id: docId,
+        p_title: title,
+        p_content_json: contentJson,
+        p_tags: tags || [],
+        p_author_ids: updatedAuthorIds,
+        p_chunks: chunks.map((chunkContent, i) => ({
+          content: chunkContent,
+          embedding: JSON.stringify(embeddings[i]),
+        })),
+      }
+    );
 
-    const { error: chunksError } = await supabase
-      .from('document_chunks')
-      .insert(chunkInserts);
+    if (saveError) {
+      console.error('[INGESTION ERROR] Atomic update failed:', saveError);
+      throw new Error('Failed to update document and chunks');
+    }
+  } else {
+    const { error: updateError } = await supabase
+      .from('documents')
+      .update({
+        title,
+        content_json: contentJson,
+        tags: tags || [],
+        author_ids: updatedAuthorIds,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', docId);
 
-    if (chunksError) {
-      console.error('[INGESTION ERROR] Chunks:', chunksError);
+    if (updateError) {
+      throw new Error(
+        updateError.message || 'Failed to update document metadata'
+      );
     }
   }
 
   revalidatePath(`/hub/libraries/${currentDoc.library_id}/documents/${docId}`);
 
-  return { success: true, document: { updated_at: document.updated_at } };
+  return { success: true, document: { updated_at: new Date().toISOString() } };
 }
 
 // ---------------------------------------------------------------------------
@@ -302,12 +310,6 @@ export async function deleteDocument(
     .eq('id', docId);
 
   if (deleteError) throw deleteError;
-
-  await supabase.from('document_edits').insert({
-    document_id: docId,
-    user_id: user.id,
-    action: 'DELETED',
-  });
 
   revalidatePath(`/hub/libraries/${currentDoc.library_id}/documents`);
 

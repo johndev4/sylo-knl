@@ -3,11 +3,13 @@ export function chunkText(
   maxChunkSize: number = 1000,
   overlap: number = 200
 ): string[] {
+  if (!text.trim()) return [];
+
   const chunks: string[] = [];
 
-  // Basic recursive chunking based on characters (MVP approach)
-  // Splits by sentences or paragraphs where possible
-  const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+  const sentences = (text.match(/[^.!?]+(?:[.!?]+|$)/g) || [text])
+    .map((sentence) => sentence.trim())
+    .filter(Boolean);
 
   let currentChunk = '';
 
