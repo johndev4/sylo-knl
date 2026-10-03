@@ -44,7 +44,7 @@ concurrency:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
@@ -52,12 +52,12 @@ jobs:
     steps:
       # Check out the repository code
       - name: Checkout repository
-        uses: actions/checkout@v4
-      # Set up Node.js 22 with npm caching
+        uses: actions/checkout@v7
+      # Set up Node.js 24 with npm caching
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
       # Install exact dependencies from package-lock.json
       - name: Install dependencies
