@@ -62,7 +62,7 @@ async function fetchDocumentTitle(
     return data?.document?.title ?? null;
   } catch (err: any) {
     if (err.message === 'Document not found.') {
-      console.warn(`[DEBUG] ${err.message}`);
+      console.debug(`[DEBUG] ${err.message}`);
     } else {
       console.error(`${err.message}`);
     }
@@ -302,7 +302,7 @@ function LibrarySelectorDropdown() {
   // ---------------------------------------------------------------------------
 
   if (!isLoading && userLibraryList.length === 0) {
-    console.error('[DEBUG] Not enough libraries to show dropdown menu.');
+    console.debug('[DEBUG] Not enough libraries to show dropdown menu.');
     return null;
   }
 

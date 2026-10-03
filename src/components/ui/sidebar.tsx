@@ -94,11 +94,15 @@ function SidebarProvider({
   }, [isMobile, setOpen, setOpenMobile]);
 
   // Adds a keyboard shortcut to toggle the sidebar.
+  // 🟢 CUSTOM MODIFICATION: Added isContentEditable guard to prevent Ctrl+B from
+  // conflicting with bold text shortcut inside contenteditable elements (e.g. BlockNote editor).
+  // Warning: Do not overwrite this block via shadcn CLI without restoring this guard!
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (
         event.key === SIDEBAR_KEYBOARD_SHORTCUT &&
-        (event.metaKey || event.ctrlKey)
+        (event.metaKey || event.ctrlKey) &&
+        !(event.target instanceof HTMLElement && event.target.isContentEditable)
       ) {
         event.preventDefault();
         toggleSidebar();

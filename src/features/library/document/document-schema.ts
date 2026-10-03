@@ -6,14 +6,14 @@ import { z } from 'zod';
 
 export const CreateDocumentInputSchema = z.object({
   title: z.string().min(1, 'Title is required'),
-  content: z.string().min(10, 'Content is too short'),
+  contentJson: z.array(z.unknown()).min(1, 'Content is required'),
   libraryId: z.string().uuid('Invalid Library ID'),
   tags: z.array(z.string()).optional(),
 });
 
 export const UpdateDocumentInputSchema = z.object({
   title: z.string().min(1, 'Title is required'),
-  content: z.string().min(10, 'Content is too short'),
+  contentJson: z.array(z.unknown()).min(1, 'Content is required'),
   tags: z.array(z.string()).optional(),
   lastUpdatedAt: z.string().optional(),
 });
@@ -44,7 +44,8 @@ export const DocumentAuthorSchema = z.object({
 export const DocumentDetailSchema = z.object({
   id: z.string(),
   title: z.string(),
-  content: z.string(),
+  content: z.string().nullable(),
+  content_json: z.array(z.unknown()).nullable(),
   tags: z.array(z.string()),
   author_ids: z.array(z.string()),
   library_id: z.string(),

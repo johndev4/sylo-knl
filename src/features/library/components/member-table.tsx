@@ -1,8 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
-import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
@@ -55,6 +53,7 @@ import {
 import { CheckIcon, ChevronDown } from 'lucide-react';
 import { UserAvatar } from '@/components/shared/user-avatar';
 import { Skeleton } from '@/components/ui/skeleton';
+import { appToast } from '@/lib/toast';
 
 interface MemberTableProps {
   libraryId: string;
@@ -91,9 +90,6 @@ export function MemberTable({ libraryId, canManageMembers }: MemberTableProps) {
   const { removeMembers, isRemoving: isRemovingMultiple } =
     useRemoveMultipleLibraryMembersSWR(libraryId);
 
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
@@ -101,7 +97,6 @@ export function MemberTable({ libraryId, canManageMembers }: MemberTableProps) {
   });
   const [sorting, setSorting] = useState<SortingState>([]);
 
-  const prefersReducedMotion = useReducedMotion();
   const selectedMemberIds = Object.keys(rowSelection).filter((userId) =>
     members.some(
       (member) => member.user_id === userId && member.role !== 'OWNER'
@@ -109,20 +104,24 @@ export function MemberTable({ libraryId, canManageMembers }: MemberTableProps) {
   );
 
   useEffect(() => {
-    // Always reset feedback states on mount.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setError('');
-    setSuccess('');
-  }, []);
+    if (fetchError) {
+      appToast.error(
+        fetchError instanceof Error
+          ? fetchError.message
+          : 'An error occurred. Please try again.'
+      );
+    }
+  }, [fetchError]);
 
   const handleRoleChange = useCallback(
     async (userId: string, newRole: MemberRole) => {
       try {
-        setError('');
         await updateRole({ userId, newRole });
         await refreshMembers();
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to update role');
+        appToast.error(
+          err instanceof Error ? err.message : 'Failed to update role'
+        );
       }
     },
     [refreshMembers, updateRole]
@@ -131,13 +130,11 @@ export function MemberTable({ libraryId, canManageMembers }: MemberTableProps) {
   const handleRemoveMember = useCallback(
     async (userId: string) => {
       try {
-        setError('');
-        setSuccess('');
         await removeMember(userId);
         await refreshMembers();
-        setSuccess('Member removed successfully');
+        appToast.success('Member removed successfully');
       } catch (err) {
-        setError(
+        appToast.error(
           err instanceof Error ? err.message : 'Failed to remove member'
         );
       }
@@ -150,14 +147,12 @@ export function MemberTable({ libraryId, canManageMembers }: MemberTableProps) {
       if (idsToRemove.length === 0) return;
 
       try {
-        setError('');
-        setSuccess('');
         await removeMembers(idsToRemove);
         await refreshMembers();
         setRowSelection({});
-        setSuccess('Members removed successfully');
+        appToast.success('Members removed successfully');
       } catch (err) {
-        setError(
+        appToast.error(
           err instanceof Error ? err.message : 'Failed to remove members'
         );
       }
@@ -196,11 +191,11 @@ export function MemberTable({ libraryId, canManageMembers }: MemberTableProps) {
                 useAvatarUrl={member.user?.use_avatar_url}
               />
 
-              <div className="space-y-px">
-                <div className="text-foreground font-medium">
+              <div className="min-w-0 flex-1 space-y-px">
+                <div className="text-foreground font-medium break-words">
                   {member.user?.name || 'Unknown User'}
                 </div>
-                <div className="text-muted-foreground">
+                <div className="text-muted-foreground break-words">
                   {member.user?.email || ''}
                 </div>
               </div>
@@ -231,8 +226,7 @@ export function MemberTable({ libraryId, canManageMembers }: MemberTableProps) {
             return (
               <DropdownMenu disabled={isUpdatingRole}>
                 <DropdownMenuTrigger
-                  id="inviteMemberRole"
-                  aria-label="Invite member role"
+                  aria-label={`Change ${member.role} role for ${member.user?.name || member.user?.email || 'member'}`}
                   render={
                     <Button
                       variant="outline"
@@ -449,41 +443,6 @@ export function MemberTable({ libraryId, canManageMembers }: MemberTableProps) {
           )}
         </div>
       </div>
-
-      {(error || fetchError) && (
-        <motion.div
-          className="rounded border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-900/20"
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          transition={{
-            duration: prefersReducedMotion ? 0 : 0.2,
-          }}
-        >
-          <p className="text-sm text-red-700 dark:text-red-400">
-            {error ||
-              (fetchError instanceof Error
-                ? fetchError.message
-                : 'An error occurred. Please try again.')}
-          </p>
-        </motion.div>
-      )}
-
-      {success && (
-        <motion.div
-          className="rounded border border-green-200 bg-green-50 p-3 dark:border-green-800 dark:bg-green-900/20"
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          transition={{
-            duration: prefersReducedMotion ? 0 : 0.2,
-          }}
-        >
-          <p className="text-sm text-green-700 dark:text-green-400">
-            {success}
-          </p>
-        </motion.div>
-      )}
 
       <DataGrid
         table={table}

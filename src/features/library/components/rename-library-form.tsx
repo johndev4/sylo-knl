@@ -1,13 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { updateLibraryName } from '@/features/library/actions';
+import { appToast } from '@/lib/toast';
 
 interface RenameLibraryFormProps {
   libraryId: string;
@@ -21,14 +20,8 @@ export function RenameLibraryForm({
   const [name, setName] = useState(initialName);
   const [isUpdating, setIsUpdating] = useState(false);
   const [originalName, setOriginalName] = useState(initialName);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const prefersReducedMotion = useReducedMotion();
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
 
     const trimmedName = name.trim();
     if (!trimmedName || trimmedName === originalName) return;
@@ -37,10 +30,11 @@ export function RenameLibraryForm({
       setIsUpdating(true);
       await updateLibraryName(libraryId, trimmedName);
       setOriginalName(trimmedName);
-      setSuccess('Library renamed successfully');
-      setTimeout(() => setSuccess(''), 3000);
+      appToast.success('Library renamed successfully');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to rename library');
+      appToast.error(
+        err instanceof Error ? err.message : 'Failed to rename library'
+      );
       setName(originalName); // Reset to original on error
     } finally {
       setIsUpdating(false);
@@ -60,50 +54,38 @@ export function RenameLibraryForm({
           </p>
         </div>
 
-        {error && (
-          <motion.div
-            className="rounded border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-900/20"
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: prefersReducedMotion ? 0 : 0.2 }}
-          >
-            <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
-          </motion.div>
-        )}
-
-        {success && (
-          <motion.div
-            className="rounded border border-green-200 bg-green-50 p-3 dark:border-green-800 dark:bg-green-900/20"
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: prefersReducedMotion ? 0 : 0.2 }}
-          >
-            <p className="text-sm text-green-700 dark:text-green-400">
-              {success}
-            </p>
-          </motion.div>
-        )}
-
         <div className="space-y-2">
           <Label htmlFor="library-name">Name</Label>
           <div className="flex gap-2">
             <Input
               id="library-name"
+              name="libraryName"
+              autoComplete="off"
+              aria-invalid={!isDirty && name.trim().length === 0}
+              aria-describedby={
+                !isDirty && name.trim().length === 0
+                  ? 'library-name-error'
+                  : undefined
+              }
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. My Awesome Library"
+              placeholder="e.g., My Awesome Library…"
               disabled={isUpdating}
               maxLength={50}
               className="max-w-md"
             />
             <Button type="submit" disabled={!isDirty || isUpdating}>
-              {isUpdating ? 'Saving...' : 'Save Changes'}
+              {isUpdating ? 'Saving…' : 'Save Changes'}
             </Button>
           </div>
           {!isDirty && name.trim().length === 0 && (
-            <p className="text-xs text-red-500">Name cannot be empty</p>
+            <p
+              id="library-name-error"
+              className="text-xs text-red-500"
+              aria-live="polite"
+            >
+              Name cannot be empty
+            </p>
           )}
         </div>
       </form>
