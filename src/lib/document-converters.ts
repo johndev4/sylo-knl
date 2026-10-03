@@ -1,3 +1,5 @@
+'use server';
+
 import { ServerBlockNoteEditor } from '@blocknote/server-util';
 
 export interface BlockNoteBlockJson {
