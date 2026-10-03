@@ -1,5 +1,4 @@
 import { ServerBlockNoteEditor } from '@blocknote/server-util';
-import { JSDOM } from 'jsdom';
 
 export interface BlockNoteBlockJson {
   id?: string;
@@ -87,7 +86,11 @@ function extractPlainText(blocks: BlockNoteBlockJson[]): string {
   return blocks.map(extractBlockText).filter(Boolean).join('\n').trim();
 }
 
-function preserveImageText(markdown: string, plainText: string): string {
+async function preserveImageText(
+  markdown: string,
+  plainText: string
+): Promise<string> {
+  const { JSDOM } = await import('jsdom');
   const document = new JSDOM(markdown).window.document;
   const imageText = Array.from(document.querySelectorAll('img'))
     .map((image) => {
@@ -109,7 +112,7 @@ async function markdownToPlainTextWithEditor(
   if (!markdown.trim()) return '';
   const blocks = await editor.tryParseMarkdownToBlocks(markdown);
   validateBlocks(blocks);
-  return preserveImageText(markdown, extractPlainText(blocks));
+  return await preserveImageText(markdown, extractPlainText(blocks));
 }
 
 /** Converts validated BlockNote JSON to Markdown with BlockNote's server editor. */
