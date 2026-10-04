@@ -11,7 +11,7 @@ import {
   UpdateDocumentInputSchema,
 } from '@/features/library/document/document-schema';
 import { getUser } from '@/lib/auth/get-user';
-import { blockNoteJsonToMarkdownAndPlainText } from '@/lib/document-converters';
+import { blockNoteJsonToPlainText } from '@/lib/document-converters';
 
 // ---------------------------------------------------------------------------
 // createDocument — mirrors POST /api/documents
@@ -62,7 +62,7 @@ export async function createDocument(
     throw new Error('Forbidden');
   }
 
-  const { plainText } = await blockNoteJsonToMarkdownAndPlainText(contentJson);
+  const plainText = blockNoteJsonToPlainText(contentJson);
   if (plainText.trim().length < 10) {
     throw new Error('Content is too short');
   }
@@ -193,9 +193,7 @@ export async function updateDocument(
 
   const contentChanged =
     JSON.stringify(currentDoc.content_json) !== JSON.stringify(contentJson);
-  const { plainText } = contentChanged
-    ? await blockNoteJsonToMarkdownAndPlainText(contentJson)
-    : { plainText: '' };
+  const plainText = contentChanged ? blockNoteJsonToPlainText(contentJson) : '';
 
   if (contentChanged && plainText.trim().length < 10) {
     throw new Error('Content is too short');

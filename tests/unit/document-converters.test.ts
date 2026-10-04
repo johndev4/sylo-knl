@@ -1,32 +1,48 @@
 import { chunkText } from '../../src/lib/ai/chunking';
 import {
   blockNoteJsonToMarkdownAndPlainText,
+  blockNoteJsonToPlainText,
   markdownToBlockNoteJson,
+  parseBlockNoteJson,
 } from '../../src/lib/document-converters';
 
 describe('document converters', () => {
-  it('runs the complete transient conversion and reads legacy Markdown', async () => {
-    const conversion = await blockNoteJsonToMarkdownAndPlainText([
+  it('extracts plain text from validated BlockNote blocks without Markdown conversion', async () => {
+    const blocks = [
       {
         type: 'paragraph',
         content: [
           { type: 'text', text: 'Canonical document text', styles: {} },
         ],
       },
+    ];
+    const conversion = await blockNoteJsonToMarkdownAndPlainText([
+      ...blocks,
     ]);
-    const legacyBlocks = await markdownToBlockNoteJson(
-      '## Legacy heading\n\nLegacy paragraph'
-    );
 
-    expect(conversion.markdown).toContain('Canonical document text');
-    expect(conversion.plainText).toContain('Canonical document text');
-    expect(legacyBlocks[0].type).toBe('heading');
-    expect(legacyBlocks[1].type).toBe('paragraph');
+    expect(parseBlockNoteJson(blocks)).toEqual(blocks);
+    expect(blockNoteJsonToPlainText(blocks)).toBe('Canonical document text');
+    expect(conversion).toEqual({
+      markdown: '',
+      plainText: 'Canonical document text',
+    });
   });
 
-  it('preserves empty documents and rejects invalid or oversized block input', async () => {
-    // We keep this test to validate shared logic via a remaining converter if needed, 
-    // but since we removed blockNoteJsonToMarkdown, we remove these specific tests.
+  it('rejects Markdown conversion through the deprecated runtime helper', async () => {
+    await expect(markdownToBlockNoteJson('Legacy Markdown')).rejects.toThrow(
+      'markdownToBlockNoteJson is deprecated at runtime. Use the /api/documents/convert-markdown endpoint instead.'
+    );
+  });
+
+  it('rejects invalid or oversized block input', () => {
+    expect(() => blockNoteJsonToPlainText({})).toThrow(
+      'Document content must be an array of BlockNote blocks'
+    );
+    expect(() =>
+      parseBlockNoteJson(
+        Array.from({ length: 1001 }, () => ({ type: 'paragraph' }))
+      )
+    ).toThrow('Documents cannot exceed 1000 blocks');
   });
 });
 

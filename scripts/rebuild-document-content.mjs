@@ -4,10 +4,10 @@ import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { createOllama } from 'ollama-ai-provider-v2';
 import { config as loadEnv } from 'dotenv';
 import {
-  blockNoteJsonToMarkdownAndPlainText,
-  markdownToBlockNoteJson,
+  blockNoteJsonToPlainText,
   parseBlockNoteJson,
 } from '../src/lib/document-converters.ts';
+import { serverConvertMarkdownToBlocks } from '../src/lib/server/document-processing.ts';
 import { chunkText } from '../src/lib/ai/chunking.ts';
 
 function log(level, msg) {
@@ -131,8 +131,8 @@ async function processDocument(client, document, options) {
   log('DEBUG', `Parsing document=${document.id} title="${document.title}" source=${source}`);
   const blocks = document.content_json
     ? parseBlockNoteJson(document.content_json)
-    : await markdownToBlockNoteJson(document.content ?? '');
-  const { plainText } = await blockNoteJsonToMarkdownAndPlainText(blocks);
+    : await serverConvertMarkdownToBlocks(document.content ?? '');
+  const plainText = blockNoteJsonToPlainText(blocks);
   const chunks = chunkText(plainText);
 
   if (chunks.length === 0) {

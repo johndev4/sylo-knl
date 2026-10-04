@@ -13,9 +13,10 @@ import { getUser } from '@/lib/auth/get-user';
 import { requireLibraryRole } from '@/lib/auth/library-role';
 import Link from 'next/link';
 import {
-  markdownToBlockNoteJson,
+  type BlockNoteBlockJson,
   parseBlockNoteJson,
 } from '@/lib/document-converters';
+import { serverConvertMarkdownToBlocks } from '@/lib/server/document-processing';
 
 export default async function DocumentPage({
   params,
@@ -71,9 +72,18 @@ async function DocumentPageWrapper({
     );
   }
 
-  const contentJson = document.content_json
-    ? parseBlockNoteJson(document.content_json)
-    : await markdownToBlockNoteJson(document.content ?? '');
+  let contentJson: BlockNoteBlockJson[] = [];
+  if (document.content_json) {
+    contentJson = parseBlockNoteJson(document.content_json);
+  } else if (document.content) {
+    try {
+      contentJson = await serverConvertMarkdownToBlocks(document.content);
+    } catch {
+      contentJson = [];
+    }
+  } else {
+    contentJson = [];
+  }
 
   return (
     <DocumentManager

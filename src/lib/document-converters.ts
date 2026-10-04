@@ -1,5 +1,3 @@
-import { ServerBlockNoteEditor } from '@blocknote/server-util';
-
 export interface BlockNoteBlockJson {
   id?: string;
   type: string;
@@ -87,61 +85,28 @@ function extractPlainText(blocks: BlockNoteBlockJson[]): string {
   return blocks.map(extractBlockText).filter(Boolean).join('\n').trim();
 }
 
-/** This function ensures that image-related text (alt text and captions) from markdown is preserved in the plain text output.
- * It parses the markdown as HTML, extracts alt text and figcaption content from all <img> elements,
- * and appends any image text that's missing from the existing plainText to avoid losing information during conversion.*/
-async function preserveImageText(
-  markdown: string,
-  plainText: string
-): Promise<string> {
-  const { parseHTML } = await import('linkedom');
-  const { document } = parseHTML(markdown);
-
-  const imageText = Array.from(document.querySelectorAll('img'))
-    .map((image) => {
-      const alt = image.getAttribute('alt') ?? '';
-      const caption =
-        image.closest('figure')?.querySelector('figcaption')?.textContent ?? '';
-      return [alt, caption.trim()].filter(Boolean).join('\n');
-    })
-    .filter(Boolean);
-
-  const missingText = imageText.filter((text) => !plainText.includes(text));
-  return [plainText, ...missingText].filter(Boolean).join('\n').trim();
+/** Extracts plain text from validated BlockNote JSON blocks. */
+export function blockNoteJsonToPlainText(value: unknown): string {
+  validateBlocks(value);
+  return extractPlainText(value);
 }
 
-/** Converts Markdown to plain text using a BlockNote editor instance, preserving image alt text and captions. */
-async function markdownToPlainTextWithEditor(
-  markdown: string,
-  editor: ServerBlockNoteEditor
-): Promise<string> {
-  if (!markdown.trim()) return '';
-  const blocks = await editor.tryParseMarkdownToBlocks(markdown);
-  validateBlocks(blocks);
-  return preserveImageText(markdown, extractPlainText(blocks));
-}
-
-/** Parses a legacy Markdown document into BlockNote blocks. */
+/** @deprecated Convert Markdown through /api/documents/convert-markdown instead. */
 export async function markdownToBlockNoteJson(
   markdown: string
 ): Promise<BlockNoteBlockJson[]> {
-  if (!markdown.trim()) return [];
-  const editor = ServerBlockNoteEditor.create();
-  const blocks = await editor.tryParseMarkdownToBlocks(markdown);
-  validateBlocks(blocks);
-  return blocks;
+  void markdown;
+  throw new Error(
+    'markdownToBlockNoteJson is deprecated at runtime. Use the /api/documents/convert-markdown endpoint instead.'
+  );
 }
 
-/** Converts canonical BlockNote JSON through transient Markdown to plain text. */
+/** @deprecated Markdown is no longer generated during document saves. */
 export async function blockNoteJsonToMarkdownAndPlainText(
   value: unknown
 ): Promise<{ markdown: string; plainText: string }> {
-  validateBlocks(value);
-  if (value.length === 0) return { markdown: '', plainText: '' };
-  const editor = ServerBlockNoteEditor.create();
-  const markdown = await editor.blocksToMarkdownLossy(value as never);
   return {
-    markdown,
-    plainText: await markdownToPlainTextWithEditor(markdown, editor),
+    markdown: '',
+    plainText: blockNoteJsonToPlainText(value),
   };
 }
