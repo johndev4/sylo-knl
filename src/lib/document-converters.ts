@@ -1,5 +1,3 @@
-'use server';
-
 import { ServerBlockNoteEditor } from '@blocknote/server-util';
 
 export interface BlockNoteBlockJson {
@@ -92,8 +90,9 @@ async function preserveImageText(
   markdown: string,
   plainText: string
 ): Promise<string> {
-  const { JSDOM } = await import('jsdom');
-  const document = new JSDOM(markdown).window.document;
+  const { parseHTML } = await import('linkedom');
+  const { document } = parseHTML(markdown);
+
   const imageText = Array.from(document.querySelectorAll('img'))
     .map((image) => {
       const alt = image.getAttribute('alt') ?? '';
