@@ -7,7 +7,6 @@ const nextConfig: NextConfig = {
     '@blocknote/core',
     '@blocknote/react',
     '@blocknote/server-util',
-    'jsdom',
   ],
   experimental: {
     authInterrupts: true,

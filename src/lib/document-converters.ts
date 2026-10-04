@@ -1,6 +1,3 @@
-import { ServerBlockNoteEditor } from '@blocknote/server-util';
-import { JSDOM } from 'jsdom';
-
 export interface BlockNoteBlockJson {
   id?: string;
   type: string;
@@ -57,6 +54,7 @@ function validateBlocks(value: unknown): asserts value is BlockNoteBlockJson[] {
   }
 }
 
+/** Parses and validates unknown input as BlockNote JSON blocks, ensuring structural integrity and constraints. */
 export function parseBlockNoteJson(value: unknown): BlockNoteBlockJson[] {
   validateBlocks(value);
   return value;
@@ -87,66 +85,28 @@ function extractPlainText(blocks: BlockNoteBlockJson[]): string {
   return blocks.map(extractBlockText).filter(Boolean).join('\n').trim();
 }
 
-function preserveImageText(markdown: string, plainText: string): string {
-  const document = new JSDOM(markdown).window.document;
-  const imageText = Array.from(document.querySelectorAll('img'))
-    .map((image) => {
-      const alt = image.getAttribute('alt') ?? '';
-      const caption =
-        image.closest('figure')?.querySelector('figcaption')?.textContent ?? '';
-      return [alt, caption.trim()].filter(Boolean).join('\n');
-    })
-    .filter(Boolean);
-
-  const missingText = imageText.filter((text) => !plainText.includes(text));
-  return [plainText, ...missingText].filter(Boolean).join('\n').trim();
-}
-
-async function markdownToPlainTextWithEditor(
-  markdown: string,
-  editor: ServerBlockNoteEditor
-): Promise<string> {
-  if (!markdown.trim()) return '';
-  const blocks = await editor.tryParseMarkdownToBlocks(markdown);
-  validateBlocks(blocks);
-  return preserveImageText(markdown, extractPlainText(blocks));
-}
-
-/** Converts validated BlockNote JSON to Markdown with BlockNote's server editor. */
-export async function blockNoteJsonToMarkdown(value: unknown): Promise<string> {
+/** Extracts plain text from validated BlockNote JSON blocks. */
+export function blockNoteJsonToPlainText(value: unknown): string {
   validateBlocks(value);
-  if (value.length === 0) return '';
-  const editor = ServerBlockNoteEditor.create();
-  return editor.blocksToMarkdownLossy(value as never);
+  return extractPlainText(value);
 }
 
-/** Parses Markdown with BlockNote and returns searchable plain text. */
-export async function markdownToPlainText(markdown: string): Promise<string> {
-  const editor = ServerBlockNoteEditor.create();
-  return markdownToPlainTextWithEditor(markdown, editor);
-}
-
-/** Parses a legacy Markdown document into BlockNote blocks. */
+/** @deprecated Convert Markdown through /api/documents/convert-markdown instead. */
 export async function markdownToBlockNoteJson(
   markdown: string
 ): Promise<BlockNoteBlockJson[]> {
-  if (!markdown.trim()) return [];
-  const editor = ServerBlockNoteEditor.create();
-  const blocks = await editor.tryParseMarkdownToBlocks(markdown);
-  validateBlocks(blocks);
-  return blocks;
+  void markdown;
+  throw new Error(
+    'markdownToBlockNoteJson is deprecated at runtime. Use the /api/documents/convert-markdown endpoint instead.'
+  );
 }
 
-/** Converts canonical BlockNote JSON through transient Markdown to plain text. */
+/** @deprecated Markdown is no longer generated during document saves. */
 export async function blockNoteJsonToMarkdownAndPlainText(
   value: unknown
 ): Promise<{ markdown: string; plainText: string }> {
-  validateBlocks(value);
-  if (value.length === 0) return { markdown: '', plainText: '' };
-  const editor = ServerBlockNoteEditor.create();
-  const markdown = await editor.blocksToMarkdownLossy(value as never);
   return {
-    markdown,
-    plainText: await markdownToPlainTextWithEditor(markdown, editor),
+    markdown: '',
+    plainText: blockNoteJsonToPlainText(value),
   };
 }

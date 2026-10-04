@@ -4,17 +4,31 @@ import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { createOllama } from 'ollama-ai-provider-v2';
 import { config as loadEnv } from 'dotenv';
 import {
-  blockNoteJsonToMarkdownAndPlainText,
-  markdownToBlockNoteJson,
+  blockNoteJsonToPlainText,
   parseBlockNoteJson,
 } from '../src/lib/document-converters.ts';
+import { serverConvertMarkdownToBlocks } from '../src/lib/server/document-processing.ts';
 import { chunkText } from '../src/lib/ai/chunking.ts';
 
-loadEnv({ path: '.env.local' });
+function log(level, msg) {
+  const ts = new Date().toISOString();
+  const out = level === 'ERROR' ? console.error : console.log;
+  out(`${ts} [${level}] ${msg}`);
+}
+
+// Stage is resolved from --env flag (e.g. --env production → .env.production).
+// Falls back to .env.local when --env is not provided.
+const envStage = (() => {
+  const idx = process.argv.indexOf('--env');
+  return idx !== -1 ? process.argv[idx + 1] : null;
+})();
+const envFile = envStage ? `.env.${envStage}` : '.env.local';
+loadEnv({ path: envFile });
 loadEnv({ path: '.env' });
 
 function parseArguments(args) {
   const options = {
+    env: envStage ?? 'local',
     apply: false,
     force: false,
     libraryId: '',
@@ -27,6 +41,7 @@ function parseArguments(args) {
     if (argument === '--apply') options.apply = true;
     else if (argument === '--force') options.force = true;
     else if (argument === '--help' || argument === '-h') options.help = true;
+    else if (argument === '--env') index += 1; // already consumed at module load time; skip value
     else if (argument === '--library-id') options.libraryId = args[++index] ?? '';
     else if (argument === '--batch-size') {
       options.batchSize = Number(args[++index]);
@@ -51,11 +66,21 @@ function showHelp() {
       'Rebuild legacy document JSON and plain-text chunks.',
       '',
       'Usage:',
-      '  node --experimental-strip-types scripts/rebuild-document-content.mjs [--library-id <uuid>] [--batch-size 25]',
-      '  node --experimental-strip-types scripts/rebuild-document-content.mjs [--library-id <uuid>] --apply [--force]',
+      '  node --experimental-strip-types scripts/rebuild-document-content.mjs [--env <stage>] [--library-id <uuid>] [--batch-size 25]',
+      '  node --experimental-strip-types scripts/rebuild-document-content.mjs [--env <stage>] [--library-id <uuid>] --apply [--force]',
       '',
-      'Without --library-id, the script processes documents across all libraries.',
-      'Without --apply, the script performs a read-only dry run. --force rebuilds documents that already have content_json.',
+      'Options:',
+      '  --env <stage>        Environment stage to load: .env.<stage> (default: .env.local)',
+      '                       (Note: If the .env.<stage> file does not exist, it defaults to .env)',
+      '  --library-id <uuid>  UUID of the library to process (optional, defaults to all libraries)',
+      '  --batch-size <num>   Documents per batch (default: 25)',
+      '  --apply              Execute database changes (default is dry run)',
+      '  --force              Rebuild documents that already have content_json (requires --apply)',
+      '  -h, --help           Show this help message',
+      '',
+      'Examples:',
+      '  node --experimental-strip-types scripts/rebuild-document-content.mjs --env local --library-id <uuid>',
+      '  node --experimental-strip-types scripts/rebuild-document-content.mjs --env production --apply --force',
     ].join('\n')
   );
 }
@@ -70,6 +95,7 @@ function countBlocks(blocks) {
 async function generateBatchEmbeddings(texts) {
   const providerName =
     process.env.EMBEDDING_PROVIDER ?? process.env.LLM_PROVIDER ?? 'google';
+  log('DEBUG', `Generating embeddings: provider=${providerName}, count=${texts.length}`);
 
   if (providerName === 'google') {
     const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
@@ -101,10 +127,12 @@ async function generateBatchEmbeddings(texts) {
 }
 
 async function processDocument(client, document, options) {
+  const source = document.content_json ? 'json' : 'markdown';
+  log('DEBUG', `Parsing document=${document.id} title="${document.title}" source=${source}`);
   const blocks = document.content_json
     ? parseBlockNoteJson(document.content_json)
-    : await markdownToBlockNoteJson(document.content ?? '');
-  const { plainText } = await blockNoteJsonToMarkdownAndPlainText(blocks);
+    : await serverConvertMarkdownToBlocks(document.content ?? '');
+  const plainText = blockNoteJsonToPlainText(blocks);
   const chunks = chunkText(plainText);
 
   if (chunks.length === 0) {
@@ -158,11 +186,15 @@ async function main() {
   });
   const mode = options.apply ? 'APPLY' : 'DRY RUN';
   const targetLibrary = options.libraryId ? `library=${options.libraryId}` : 'all libraries';
-  console.log(`${mode}: target=${targetLibrary}, batchSize=${options.batchSize}`);
+  const provider = process.env.EMBEDDING_PROVIDER ?? process.env.LLM_PROVIDER ?? 'google';
+  log('INFO', `Starting ${mode}: env=${envFile}, target=${targetLibrary}, batchSize=${options.batchSize}, provider=${provider}, force=${options.force}`);
+  log('DEBUG', `Supabase URL: ${supabaseUrl}`);
+  const startTime = Date.now();
 
   let cursor = '';
   let processed = 0;
   let failed = 0;
+  let batch = 0;
 
   while (true) {
     let query = client
@@ -182,28 +214,30 @@ async function main() {
     if (error) throw error;
     if (!documents || documents.length === 0) break;
 
+    batch += 1;
+    log('INFO', `Batch ${batch}: fetched ${documents.length} document(s) (cursor=${cursor || 'start'})`);
+
     for (const document of documents) {
       cursor = document.id;
       try {
         const result = await processDocument(client, document, options);
         processed += 1;
-        console.log(
-          `${mode}: document=${document.id}, library=${document.library_id}, blocks=${result.blockCount}, chunks=${result.chunkCount}`
-        );
+        log('INFO', `OK document=${document.id} title="${document.title}" library=${document.library_id} blocks=${result.blockCount} chunks=${result.chunkCount}`);
       } catch (error) {
         failed += 1;
-        console.error(
-          `FAILED: document=${document.id} (library=${document.library_id}): ${error instanceof Error ? error.message : 'Unknown error'}`
-        );
+        log('ERROR', `FAILED document=${document.id} title="${document.title}" library=${document.library_id}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        if (error instanceof Error && error.stack) log('DEBUG', error.stack);
       }
     }
   }
 
-  console.log(`${mode} complete: processed=${processed}, failed=${failed}`);
+  const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+  log('INFO', `${mode} complete: processed=${processed}, failed=${failed}, batches=${batch}, elapsed=${elapsed}s`);
   if (failed > 0) process.exitCode = 1;
 }
 
 main().catch((error) => {
-  console.error(error instanceof Error ? error.message : 'Migration failed');
+  log('ERROR', error instanceof Error ? error.message : 'Migration failed');
+  if (error instanceof Error && error.stack) log('DEBUG', error.stack);
   process.exitCode = 1;
 });

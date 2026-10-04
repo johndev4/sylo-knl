@@ -7,6 +7,7 @@ Documents are persisted using a dual-column strategy to support migration and re
 
 - **Canonical Store (`content_json`)**: Stores the document as a BlockNote JSON array. This is the source of truth for the editor.
 - **Search Index (`document_chunks` table)**: Stores the document split into overlapping chunks with corresponding vector embeddings for RAG (Retrieval-Augmented Generation).
+- **Legacy Store (`content`)**: Maintained for read-only fallback during migration. No longer updated during save.
 
 ## 2. Save Flow (Atomic Transaction)
 
@@ -36,7 +37,7 @@ sequenceDiagram
 ```
 
 ### Logic Details
-1. **Transient Conversion**: JSON $\rightarrow$ Markdown $\rightarrow$ Plain Text.
+1. **Direct Conversion**: JSON $\rightarrow$ Plain Text (extracted from BlockNote blocks).
 2. **Embedding Generation**: Plain text is chunked and embedded using `gemini-embedding-001` (or configured provider).
 3. **Atomic Write**: The `update_document_with_chunks` RPC ensures that the document update and chunk replacement happen as a single unit of work. If the chunk insertion fails, the document metadata is not updated.
 
@@ -46,10 +47,10 @@ sequenceDiagram
 
 The migration from legacy Markdown to canonical JSON must be performed carefully to avoid downtime or data loss.
 
-### Phase 1: Compatibility Deployment (Dual-Read/Write)
+### Phase 1: Compatibility Deployment (Read-only Fallback)
 1. **Database Schema Update**: Apply migration to add `content_json` (nullable) and relax legacy `content` constraints.
 2. **Application Update**:
-    - **Write**: Update the editor to save to both `content_json` and `content` (legacy).
+    - **Write**: Update the editor to save exclusively to `content_json`.
     - **Read**: Implement a fallback: if `content_json` is null, import legacy `content` (Markdown) into BlockNote.
 3. **Deploy**: Deploy these changes to production.
 
