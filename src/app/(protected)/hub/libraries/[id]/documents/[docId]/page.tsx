@@ -72,7 +72,7 @@ async function DocumentPageWrapper({
   }
 
   const contentJson = document.content_json
-    ? parseBlockNoteJson(document.content_json)
+    ? await parseBlockNoteJson(document.content_json)
     : await markdownToBlockNoteJson(document.content ?? '');
 
   return (
