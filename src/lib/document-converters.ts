@@ -1,5 +1,3 @@
-'use server';
-
 import { ServerBlockNoteEditor } from '@blocknote/server-util';
 
 export interface BlockNoteBlockJson {
@@ -58,9 +56,8 @@ function validateBlocks(value: unknown): asserts value is BlockNoteBlockJson[] {
   }
 }
 
-export async function parseBlockNoteJson(
-  value: unknown
-): Promise<BlockNoteBlockJson[]> {
+/** Parses and validates unknown input as BlockNote JSON blocks, ensuring structural integrity and constraints. */
+export function parseBlockNoteJson(value: unknown): BlockNoteBlockJson[] {
   validateBlocks(value);
   return value;
 }
