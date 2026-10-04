@@ -1,5 +1,4 @@
 import { ServerBlockNoteEditor } from '@blocknote/server-util';
-import { JSDOM } from 'jsdom';
 
 export interface BlockNoteBlockJson {
   id?: string;
@@ -57,6 +56,7 @@ function validateBlocks(value: unknown): asserts value is BlockNoteBlockJson[] {
   }
 }
 
+/** Parses and validates unknown input as BlockNote JSON blocks, ensuring structural integrity and constraints. */
 export function parseBlockNoteJson(value: unknown): BlockNoteBlockJson[] {
   validateBlocks(value);
   return value;
@@ -87,8 +87,16 @@ function extractPlainText(blocks: BlockNoteBlockJson[]): string {
   return blocks.map(extractBlockText).filter(Boolean).join('\n').trim();
 }
 
-function preserveImageText(markdown: string, plainText: string): string {
-  const document = new JSDOM(markdown).window.document;
+/** This function ensures that image-related text (alt text and captions) from markdown is preserved in the plain text output.
+ * It parses the markdown as HTML, extracts alt text and figcaption content from all <img> elements,
+ * and appends any image text that's missing from the existing plainText to avoid losing information during conversion.*/
+async function preserveImageText(
+  markdown: string,
+  plainText: string
+): Promise<string> {
+  const { parseHTML } = await import('linkedom');
+  const { document } = parseHTML(markdown);
+
   const imageText = Array.from(document.querySelectorAll('img'))
     .map((image) => {
       const alt = image.getAttribute('alt') ?? '';
@@ -102,6 +110,7 @@ function preserveImageText(markdown: string, plainText: string): string {
   return [plainText, ...missingText].filter(Boolean).join('\n').trim();
 }
 
+/** Converts Markdown to plain text using a BlockNote editor instance, preserving image alt text and captions. */
 async function markdownToPlainTextWithEditor(
   markdown: string,
   editor: ServerBlockNoteEditor
@@ -110,20 +119,6 @@ async function markdownToPlainTextWithEditor(
   const blocks = await editor.tryParseMarkdownToBlocks(markdown);
   validateBlocks(blocks);
   return preserveImageText(markdown, extractPlainText(blocks));
-}
-
-/** Converts validated BlockNote JSON to Markdown with BlockNote's server editor. */
-export async function blockNoteJsonToMarkdown(value: unknown): Promise<string> {
-  validateBlocks(value);
-  if (value.length === 0) return '';
-  const editor = ServerBlockNoteEditor.create();
-  return editor.blocksToMarkdownLossy(value as never);
-}
-
-/** Parses Markdown with BlockNote and returns searchable plain text. */
-export async function markdownToPlainText(markdown: string): Promise<string> {
-  const editor = ServerBlockNoteEditor.create();
-  return markdownToPlainTextWithEditor(markdown, editor);
 }
 
 /** Parses a legacy Markdown document into BlockNote blocks. */
