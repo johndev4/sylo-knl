@@ -7,6 +7,9 @@ const nextConfig: NextConfig = {
     '@blocknote/core',
     '@blocknote/react',
     '@blocknote/server-util',
+    'html-encoding-sniffer',
+    '@exodus/bytes',
+    'jsdom',
   ],
   experimental: {
     authInterrupts: true,
