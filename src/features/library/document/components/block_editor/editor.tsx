@@ -37,16 +37,6 @@ const Editor: React.FC<EditorProps> = ({
     initialContent: initialContent?.length
       ? (initialContent as never)
       : undefined,
-    pasteHandler: ({ event, editor, defaultPasteHandler }) => {
-      const pastedText = event.clipboardData?.getData('text/plain');
-
-      if (pastedText) {
-        editor.pasteMarkdown(pastedText);
-        return true;
-      }
-
-      return defaultPasteHandler();
-    },
   });
 
   const handleEditorChange = () => {
