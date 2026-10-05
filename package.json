@@ -11,7 +11,6 @@
     "lint:fix": "eslint --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx}\"",
-    "test:unit": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:debug": "playwright test --debug",
