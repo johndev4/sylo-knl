@@ -62,13 +62,13 @@ export async function createDocument(
     throw new Error('Forbidden');
   }
 
-  const plainText = await serverConvertBlocksToMarkdown(contentJson);
-  if (plainText.trim().length < 10) {
+  const markdown = await serverConvertBlocksToMarkdown(contentJson);
+  if (markdown.trim().length < 10) {
     throw new Error('Content is too short');
   }
 
   // Markdown is transient; only plain text is chunked and embedded.
-  const chunks = chunkText(plainText);
+  const chunks = chunkText(markdown);
 
   // 2. Generate embeddings for each chunk
   let embeddings: number[][];
@@ -193,18 +193,18 @@ export async function updateDocument(
 
   const contentChanged =
     JSON.stringify(currentDoc.content_json) !== JSON.stringify(contentJson);
-  const plainText = contentChanged
+  const markdown = contentChanged
     ? await serverConvertBlocksToMarkdown(contentJson)
     : '';
 
-  if (contentChanged && plainText.trim().length < 10) {
+  if (contentChanged && markdown.trim().length < 10) {
     throw new Error('Content is too short');
   }
 
   let chunks: string[] = [];
   let embeddings: number[][] = [];
   if (contentChanged) {
-    chunks = chunkText(plainText);
+    chunks = chunkText(markdown);
     try {
       embeddings = await generateEmbeddings(chunks);
     } catch (embedError) {
