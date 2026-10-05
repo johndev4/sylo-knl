@@ -9,15 +9,15 @@ import React from 'react';
 import { getCustomSlashMenuItems } from './custom-slash-menu-items';
 import { useTheme } from 'next-themes';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import type { BlockNoteBlockJson } from '@/lib/document-converters';
+import { BlockNotePartialBlocks } from '@/lib/blocknote/config';
 
 interface EditorProps {
-  onChange: (blocks: BlockNoteBlockJson[], blockCount: number) => void;
-  initialContent?: BlockNoteBlockJson[];
+  onChange: (blocks: BlockNotePartialBlocks, blockCount: number) => void;
+  initialContent?: BlockNotePartialBlocks;
   editable?: boolean;
 }
 
-function countBlocks(blocks: BlockNoteBlockJson[]): number {
+function countBlocks(blocks: BlockNotePartialBlocks): number {
   let count = 0;
   for (const block of blocks) {
     count++;

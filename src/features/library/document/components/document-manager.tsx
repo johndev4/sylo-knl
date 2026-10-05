@@ -37,7 +37,7 @@ import {
 } from '@/components/ui/collapsible';
 import { Button } from '@/components/ui/button';
 import { appToast } from '@/lib/toast';
-import type { BlockNoteBlockJson } from '@/lib/document-converters';
+import type { BlockNotePartialBlocks } from '@/lib/blocknote/config';
 
 interface DocumentManagerProps {
   libraryId: string;
@@ -45,7 +45,7 @@ interface DocumentManagerProps {
   initialData?: {
     id: string;
     title: string;
-    contentJson: BlockNoteBlockJson[];
+    contentJson: BlockNotePartialBlocks;
     tags: string[];
     updated_at: string;
     created_at?: string;
@@ -77,7 +77,7 @@ export function DocumentManager({
 
   const [isEditMode, setIsEditMode] = useState(isNew);
   const [title, setTitle] = useState(initialData?.title || '');
-  const [content, setContent] = useState<BlockNoteBlockJson[]>(
+  const [content, setContent] = useState<BlockNotePartialBlocks>(
     initialData?.contentJson ?? []
   );
   const [tags, setTags] = useState<string[]>(
@@ -434,7 +434,7 @@ export function DocumentManager({
   // ---------------------------------------------------------------------------
 
   const handleEditorChange = useCallback(
-    (blocks: BlockNoteBlockJson[], blockCount: number) => {
+    (blocks: BlockNotePartialBlocks, blockCount: number) => {
       setContent(blocks);
       if (blockCount > 1000) {
         setHasBlockLimitError(true);

@@ -12,11 +12,11 @@ import { randomUUID } from 'crypto';
 import { getUser } from '@/lib/auth/get-user';
 import { requireLibraryRole } from '@/lib/auth/library-role';
 import Link from 'next/link';
+import { serverConvertMarkdownToBlocks } from '@/lib/blocknote/transformer';
 import {
-  type BlockNoteBlockJson,
-  parseBlockNoteJson,
-} from '@/lib/document-converters';
-import { serverConvertMarkdownToBlocks } from '@/lib/server/document-processing';
+  BlockNotePartialBlocksSchema,
+  type BlockNotePartialBlocks,
+} from '@/lib/blocknote/config';
 
 export default async function DocumentPage({
   params,
@@ -72,9 +72,9 @@ async function DocumentPageWrapper({
     );
   }
 
-  let contentJson: BlockNoteBlockJson[] = [];
+  let contentJson: BlockNotePartialBlocks = [];
   if (document.content_json) {
-    contentJson = parseBlockNoteJson(document.content_json);
+    contentJson = BlockNotePartialBlocksSchema.parse(document.content_json);
   } else if (document.content) {
     try {
       contentJson = await serverConvertMarkdownToBlocks(document.content);
