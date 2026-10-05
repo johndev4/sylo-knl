@@ -1,6 +1,6 @@
 # Sync Remote Supabase Database to Local
 
-**Run all commands from `./scripts/supabase_cli`.**
+**Run all commands from project root.**
 
 ## Setup
 
@@ -11,28 +11,34 @@
 cp .env.example .env
 ```
 
-3. Edit `.env` and set:
+3. Edit `.env` (or `.env.local`) and set:
 
 ```ini
-SUPABASE_API_TOKEN="your-supabase-api-token"
+SUPABASE_ACCESS_TOKEN="your-supabase-access-token"
 SUPABASE_PROJECT_REF_ID="your-project-ref"
 ```
 
-Do not commit `.env` or `SUPABASE_API_TOKEN`.
+Do not commit `.env`, `.env.local`, or `SUPABASE_ACCESS_TOKEN`.
 
 ## Run
 
-From `./scripts/supabase_cli`:
+From `./scripts/supabase_cli/sync_remote_to_local`:
 
 ```bash
-chmod +x sync_remote_to_local/sync_remote_to_local.sh
-bash sync_remote_to_local/sync_remote_to_local.sh
+chmod +x sync_remote_to_local.sh
+bash sync_remote_to_local.sh
+```
+
+Or from project root:
+
+```bash
+bash scripts/supabase_cli/sync_remote_to_local/sync_remote_to_local.sh
 ```
 
 To remove the generated seed file automatically:
 
 ```bash
-bash sync_remote_to_local/sync_remote_to_local.sh --clean
+bash scripts/supabase_cli/sync_remote_to_local/sync_remote_to_local.sh --clean
 ```
 
 The generated seed file is saved to:
@@ -43,6 +49,7 @@ The generated seed file is saved to:
 
 ## Troubleshooting
 
-- `SUPABASE_* is not set`: check `./scripts/supabase_cli/.env`.
+- `SUPABASE_ACCESS_TOKEN is not set` or `SUPABASE_PROJECT_REF_ID is not set`: check `.env` or `.env.local`.
 - `npx: command not found`: install Node.js.
 - Docker errors: make sure Docker Desktop is running.
+- Script exits with error: ensure `.env` or `.env.local` exists in project root.

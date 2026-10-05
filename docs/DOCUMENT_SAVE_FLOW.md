@@ -22,7 +22,7 @@ sequenceDiagram
     participant DB as Supabase (Postgres)
 
     Client->>Server: Save Document (JSON)
-    Server->>Server: Convert JSON to Plain Text
+    Server->>Server: Convert JSON to Markdown
     Server->>Server: Chunk Text (1000 chars, 200 overlap)
     Server->>AI: Generate Embeddings for Chunks
     AI-->>Server: Return Embedding Vectors
@@ -37,8 +37,8 @@ sequenceDiagram
 ```
 
 ### Logic Details
-1. **Direct Conversion**: JSON $\rightarrow$ Plain Text (extracted from BlockNote blocks).
-2. **Embedding Generation**: Plain text is chunked and embedded using `gemini-embedding-001` (or configured provider).
+1. **Direct Conversion**: JSON $\rightarrow$ Markdown (extracted from BlockNote blocks).
+2. **Embedding Generation**: Markdown is chunked and embedded using `gemini-embedding-001` (or configured provider).
 3. **Atomic Write**: The `update_document_with_chunks` RPC ensures that the document update and chunk replacement happen as a single unit of work. If the chunk insertion fails, the document metadata is not updated.
 
 ---

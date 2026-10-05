@@ -18,6 +18,8 @@ on:
 
   # Runs on pull requests for preview deployments
   pull_request:
+    branches:
+      - release-001
     paths:
       - "src/**"
       - "public/**"

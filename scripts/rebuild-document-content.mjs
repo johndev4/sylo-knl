@@ -3,12 +3,13 @@ import { embedMany } from 'ai';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { createOllama } from 'ollama-ai-provider-v2';
 import { config as loadEnv } from 'dotenv';
+import { BlockNotePartialBlocksSchema } from "../src/lib/blocknote/config.ts";
 import {
-  blockNoteJsonToPlainText,
-  parseBlockNoteJson,
-} from '../src/lib/document-converters.ts';
-import { serverConvertMarkdownToBlocks } from '../src/lib/server/document-processing.ts';
+  serverConvertBlocksToMarkdown,
+  serverConvertMarkdownToBlocks,
+} from "../src/lib/blocknote/transformer.ts";
 import { chunkText } from '../src/lib/ai/chunking.ts';
+
 
 function log(level, msg) {
   const ts = new Date().toISOString();
@@ -130,10 +131,10 @@ async function processDocument(client, document, options) {
   const source = document.content_json ? 'json' : 'markdown';
   log('DEBUG', `Parsing document=${document.id} title="${document.title}" source=${source}`);
   const blocks = document.content_json
-    ? parseBlockNoteJson(document.content_json)
+    ? BlockNotePartialBlocksSchema.parse(document.content_json)
     : await serverConvertMarkdownToBlocks(document.content ?? '');
-  const plainText = blockNoteJsonToPlainText(blocks);
-  const chunks = chunkText(plainText);
+  const markdown = await serverConvertBlocksToMarkdown(blocks);
+  const chunks = chunkText(markdown);
 
   if (chunks.length === 0) {
     throw new Error('Document has no searchable plain text');

@@ -1,3 +1,4 @@
+import { BlockNotePartialBlockSchema } from '@/lib/blocknote/config';
 import { z } from 'zod';
 
 // -----------------------------------------------------------------------------
@@ -6,14 +7,18 @@ import { z } from 'zod';
 
 export const CreateDocumentInputSchema = z.object({
   title: z.string().min(1, 'Title is required'),
-  contentJson: z.array(z.unknown()).min(1, 'Content is required'),
+  contentJson: z
+    .array(BlockNotePartialBlockSchema)
+    .min(1, 'Content is required'),
   libraryId: z.string().uuid('Invalid Library ID'),
   tags: z.array(z.string()).optional(),
 });
 
 export const UpdateDocumentInputSchema = z.object({
   title: z.string().min(1, 'Title is required'),
-  contentJson: z.array(z.unknown()).min(1, 'Content is required'),
+  contentJson: z
+    .array(BlockNotePartialBlockSchema)
+    .min(1, 'Content is required'),
   tags: z.array(z.string()).optional(),
   lastUpdatedAt: z.string().optional(),
 });
