@@ -98,28 +98,28 @@ export class OllamaLLMProvider implements LLMProvider {
  */
 export class OllamaEmbeddingProvider implements EmbeddingProvider {
   name = 'ollama';
-  dimension = 1536; // Default for most Ollama embedding models; can be overridden
+  dimension = 0; // Updated from the model's actual output after the first embed call
   private embeddingModel =
     process.env.OLLAMA_EMBEDDING_MODEL || 'nomic-embed-text';
   private provider = createOllama({
     baseURL: getOllamaBaseUrl(),
   });
 
-  constructor() {
-    // Validate dimension if specified via env
-    if (process.env.OLLAMA_EMBEDDING_DIMENSION) {
-      this.dimension = parseInt(process.env.OLLAMA_EMBEDDING_DIMENSION, 10);
-    }
-  }
-
   async embed(text: string): Promise<number[]> {
     try {
+      // Don't specify dimensions - let the model use its native dimension
       const model = this.provider.textEmbeddingModel(this.embeddingModel);
 
       const result = await embed({
         model,
         value: text,
       });
+
+      // Update dimension from actual model response (first call)
+      if (this.dimension !== result.embedding.length) {
+        this.dimension = result.embedding.length;
+        console.log(`[OLLAMA] Embedding dimension detected: ${this.dimension}`);
+      }
 
       return result.embedding;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -143,12 +143,22 @@ export class OllamaEmbeddingProvider implements EmbeddingProvider {
 
   async embedMany(texts: string[]): Promise<number[][]> {
     try {
+      // Don't specify dimensions - let the model use its native dimension
       const model = this.provider.textEmbeddingModel(this.embeddingModel);
 
       const result = await embedMany({
         model,
         values: texts,
       });
+
+      // Update dimension from actual model response (first call)
+      if (
+        result.embeddings.length > 0 &&
+        this.dimension !== result.embeddings[0].length
+      ) {
+        this.dimension = result.embeddings[0].length;
+        console.log(`[OLLAMA] Embedding dimension detected: ${this.dimension}`);
+      }
 
       return result.embeddings;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
