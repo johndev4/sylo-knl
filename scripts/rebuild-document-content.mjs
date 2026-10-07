@@ -121,6 +121,11 @@ async function generateBatchEmbeddings(texts) {
       model: provider.textEmbeddingModel(model),
       values: texts,
     });
+
+    if (result.embeddings.length > 0) {
+      log('INFO', `Ollama embedding dimension (actual): ${result.embeddings[0].length}`);
+    }
+
     return result.embeddings;
   }
 
@@ -188,6 +193,7 @@ async function main() {
   const mode = options.apply ? 'APPLY' : 'DRY RUN';
   const targetLibrary = options.libraryId ? `library=${options.libraryId}` : 'all libraries';
   const provider = process.env.EMBEDDING_PROVIDER ?? process.env.LLM_PROVIDER ?? 'google';
+
   log('INFO', `Starting ${mode}: env=${envFile}, target=${targetLibrary}, batchSize=${options.batchSize}, provider=${provider}, force=${options.force}`);
   log('DEBUG', `Supabase URL: ${supabaseUrl}`);
   const startTime = Date.now();

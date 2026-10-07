@@ -181,6 +181,11 @@ async function generateBatchEmbeddings(
         model: providerInstance.textEmbeddingModel(model),
         values: texts,
       });
+      // Log actual embedding dimension from model response
+      if (result.embeddings.length > 0) {
+        const actualDim = result.embeddings[0].length;
+        log(`Ollama embedding dimension (actual): ${actualDim}`);
+      }
       return result.embeddings;
     }
 

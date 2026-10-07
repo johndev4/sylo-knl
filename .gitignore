@@ -77,3 +77,6 @@ pip-selfcheck.json
 __pycache__/
 *.py[codz]
 *$py.class
+
+# Model Context Protocol (MCP) configuration files
+.mcp.json
