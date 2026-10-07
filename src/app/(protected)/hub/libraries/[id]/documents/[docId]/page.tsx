@@ -12,7 +12,7 @@ import { randomUUID } from 'crypto';
 import { getUser } from '@/lib/auth/get-user';
 import { requireLibraryRole } from '@/lib/auth/library-role';
 import Link from 'next/link';
-import { serverConvertMarkdownToBlocks } from '@/lib/blocknote/transformer';
+
 import {
   BlockNotePartialBlocksSchema,
   type BlockNotePartialBlocks,
@@ -72,18 +72,8 @@ async function DocumentPageWrapper({
     );
   }
 
-  let contentJson: BlockNotePartialBlocks = [];
-  if (document.content_json) {
-    contentJson = BlockNotePartialBlocksSchema.parse(document.content_json);
-  } else if (document.content) {
-    try {
-      contentJson = await serverConvertMarkdownToBlocks(document.content);
-    } catch {
-      contentJson = [];
-    }
-  } else {
-    contentJson = [];
-  }
+  const contentJson: BlockNotePartialBlocks =
+    BlockNotePartialBlocksSchema.parse(document.content_json ?? []);
 
   return (
     <DocumentManager

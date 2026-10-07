@@ -49,8 +49,7 @@ export const DocumentAuthorSchema = z.object({
 export const DocumentDetailSchema = z.object({
   id: z.string(),
   title: z.string(),
-  content: z.string().nullable(),
-  content_json: z.array(z.unknown()).nullable(),
+  content_json: z.array(BlockNotePartialBlockSchema),
   tags: z.array(z.string()),
   author_ids: z.array(z.string()),
   library_id: z.string(),

@@ -66,6 +66,7 @@ The migration from legacy Markdown to canonical JSON must be performed carefully
 ### Phase 3: Cleanup (Final State)
 1. **Remove Fallback**: Remove the legacy Markdown read logic from the application.
 2. **Database Cleanup**:
+    - Purge soft-deleted documents (cascades to orphaned chunks and edits).
     - Drop the legacy `content` column from the `documents` table.
     - Add a `NOT NULL` constraint to `content_json`.
 3. **Deploy**: Final deployment of the clean JSON-only architecture.
