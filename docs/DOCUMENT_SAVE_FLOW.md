@@ -43,7 +43,7 @@ sequenceDiagram
 
 ---
 
-## 3. Production Migration Process
+## 3. Production Migration Process (DONE)
 
 The migration from legacy Markdown to canonical JSON must be performed carefully to avoid downtime or data loss.
 
