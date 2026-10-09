@@ -118,6 +118,7 @@ export function TagChipsInput({
           <AutocompleteInput
             ref={inputRef}
             type="text"
+            enterKeyHint="done"
             placeholder="Add tag..."
             aria-label="Tags"
             onKeyDown={handleKeyDown}
