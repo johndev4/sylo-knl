@@ -1,7 +1,8 @@
 'use client';
 
-import { Sidebar, SidebarRail } from '@/components/ui/sidebar';
+import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
+import { Sidebar, SidebarRail, useSidebar } from '@/components/ui/sidebar';
 import { SidebarDocumentList } from '../document/components';
 import { SidebarLibraryNav } from './sidebar-library-nav';
 
@@ -11,6 +12,14 @@ interface LibrarySidebarProps {
 
 export function LibrarySidebar({ userRole }: LibrarySidebarProps) {
   const pathname = usePathname();
+  const { isMobile, setOpenMobile } = useSidebar();
+
+  // Automatically close sidebar on mobile when navigating
+  useEffect(() => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  }, [pathname, isMobile, setOpenMobile]);
 
   // Split the pathname into segments and filter out empty strings
   const segments = pathname.split('/').filter(Boolean);
@@ -28,22 +37,20 @@ export function LibrarySidebar({ userRole }: LibrarySidebarProps) {
   // Render
   // ---------------------------------------------------------------------------
 
-  return (
-    isLibraryRoute && (
-      <Sidebar
-        collapsible="offcanvas"
-        className="top-[4.1rem] h-[calc(100vh-4.1rem)]"
-        aria-label="Library Sidebar"
-      >
-        {/* Content */}
-        {isLibraryDocumentsRoute ? (
-          <SidebarDocumentList userRole={userRole} />
-        ) : (
-          isLibraryInfoRoute && <SidebarLibraryNav userRole={userRole} />
-        )}
+  return isLibraryRoute ? (
+    <Sidebar
+      collapsible="offcanvas"
+      className="top-[4.1rem] h-[calc(100vh-4.1rem)]"
+      aria-label="Library Sidebar"
+    >
+      {/* Content */}
+      {isLibraryDocumentsRoute ? (
+        <SidebarDocumentList userRole={userRole} />
+      ) : isLibraryInfoRoute ? (
+        <SidebarLibraryNav userRole={userRole} />
+      ) : null}
 
-        <SidebarRail />
-      </Sidebar>
-    )
-  );
+      <SidebarRail />
+    </Sidebar>
+  ) : null;
 }

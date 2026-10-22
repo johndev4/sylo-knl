@@ -27,6 +27,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSkeleton,
+  useSidebar,
 } from '@/components/ui/sidebar';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -57,6 +58,13 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
   const params = useParams();
   const libraryId = params?.id as string;
   const pathname = usePathname();
+  const { isMobile, setOpenMobile } = useSidebar();
+
+  const handleNavClick = useCallback(() => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  }, [isMobile, setOpenMobile]);
 
   const [isClient, setIsClient] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -214,6 +222,7 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
                             <Link
                               href={newDocumentPath}
                               onClick={(e) => {
+                                handleNavClick();
                                 if (pathname === newDocumentPath) {
                                   e.preventDefault();
                                   window.dispatchEvent(
@@ -246,6 +255,7 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
                       <Link
                         href={newDocumentPath}
                         onClick={(e) => {
+                          handleNavClick();
                           if (pathname === newDocumentPath) {
                             e.preventDefault();
                             window.dispatchEvent(
@@ -375,6 +385,7 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
                                             <Link
                                               href={`/hub/libraries/${libraryId}/documents/${doc.id}`}
                                               className="flex flex-col items-start gap-0.5"
+                                              onClick={handleNavClick}
                                             >
                                               <div className="flex w-full items-center gap-2">
                                                 <FileText className="text-muted-foreground h-4 w-4 shrink-0" />
@@ -428,7 +439,10 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
             <SidebarMenuItem>
               <SidebarMenuButton
                 render={
-                  <Link href={`/chat?libraryIds=${libraryId}`}>
+                  <Link
+                    href={`/chat?libraryIds=${libraryId}`}
+                    onClick={handleNavClick}
+                  >
                     <MessageSquare />
                     <span>Chat</span>
                   </Link>
@@ -440,7 +454,10 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
             <SidebarMenuItem>
               <SidebarMenuButton
                 render={
-                  <Link href={`/hub/libraries/${libraryId}/info`}>
+                  <Link
+                    href={`/hub/libraries/${libraryId}/info`}
+                    onClick={handleNavClick}
+                  >
                     <Info />
                     <span>Library Info</span>
                     <ChevronRightIcon className="ml-auto" />

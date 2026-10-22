@@ -31,6 +31,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSkeleton,
+  useSidebar,
 } from '@/components/ui/sidebar';
 import { leaveLibrary } from '@/features/library/actions';
 import { createClient } from '@/lib/supabase/client';
@@ -45,6 +46,13 @@ export function SidebarLibraryNav({ userRole }: SidebarLibraryNavProps) {
   const pathname = usePathname();
   const router = useRouter();
   const libraryId = params?.id as string;
+  const { isMobile, setOpenMobile } = useSidebar();
+
+  const handleNavClick = useCallback(() => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  }, [isMobile, setOpenMobile]);
 
   const [libraryName, setLibraryName] = useState('');
   const fetchLibraryName = useCallback(async () => {
@@ -86,6 +94,7 @@ export function SidebarLibraryNav({ userRole }: SidebarLibraryNavProps) {
     try {
       await leaveLibrary(libraryId);
       setIsLeaveDialogOpen(false);
+      handleNavClick();
       router.push('/hub');
       router.refresh();
     } catch (error) {
@@ -116,6 +125,7 @@ export function SidebarLibraryNav({ userRole }: SidebarLibraryNavProps) {
                       <Link
                         href={`/hub/libraries/${libraryId}/documents`}
                         className="relative"
+                        onClick={handleNavClick}
                       >
                         <ChevronLeftIcon className="absolute left-2" />
                         <span className="flex-1 text-center">Library Info</span>
@@ -130,7 +140,10 @@ export function SidebarLibraryNav({ userRole }: SidebarLibraryNavProps) {
                 <SidebarMenuItem>
                   <SidebarMenuButton
                     render={
-                      <Link href={`/hub/libraries/${libraryId}/info`}>
+                      <Link
+                        href={`/hub/libraries/${libraryId}/info`}
+                        onClick={handleNavClick}
+                      >
                         <TargetIcon />
                         <span>Overview</span>
                       </Link>
@@ -147,6 +160,7 @@ export function SidebarLibraryNav({ userRole }: SidebarLibraryNavProps) {
                       render={
                         <Link
                           href={`/hub/libraries/${libraryId}/info/settings`}
+                          onClick={handleNavClick}
                         >
                           <SettingsIcon />
                           <span>Settings</span>
@@ -164,7 +178,10 @@ export function SidebarLibraryNav({ userRole }: SidebarLibraryNavProps) {
                 <SidebarMenuItem>
                   <SidebarMenuButton
                     render={
-                      <Link href={`/hub/libraries/${libraryId}/info/members`}>
+                      <Link
+                        href={`/hub/libraries/${libraryId}/info/members`}
+                        onClick={handleNavClick}
+                      >
                         <UsersIcon />
                         <span>Members</span>
                       </Link>
