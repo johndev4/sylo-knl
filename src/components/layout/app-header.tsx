@@ -33,19 +33,18 @@ export function AppHeader() {
             <div
               className={cn(
                 'flex h-8 w-8 items-center justify-center shadow-xs',
-                'bg-background dark:bg-background',
-                'rounded-md border border-neutral-200 dark:border-neutral-800'
+                'bg-background dark:bg-background'
               )}
             >
               <Image
                 src="/sylo.svg"
                 alt="Sylo Logo"
-                width={150}
-                height={50}
+                width={25}
+                height={25}
                 priority
               />
             </div>
-            <span className="font-logo hidden text-lg font-bold tracking-[0.16em] uppercase select-none sm:inline">
+            <span className="hidden tracking-wider uppercase sm:inline">
               Sylo
             </span>
           </Link>
