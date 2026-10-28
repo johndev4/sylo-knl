@@ -2,7 +2,7 @@
   "name": "sylo-knl",
   "version": "1.0.0",
   "license": "MIT",
-  "author": "John Mistica (https://github.com/johndev4)",
+  "author": "John (https://github.com/johndev4)",
   "private": true,
   "scripts": {
     "dev": "next dev",
