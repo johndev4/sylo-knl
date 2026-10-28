@@ -2,7 +2,6 @@ import { cn } from '@/lib/utils';
 import { ThemeToggle } from './theme-toggle';
 import { AccountDropdown } from './account-dropdown';
 import { Navbar } from './navbar';
-import { EggIcon } from 'lucide-react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { getProfileDropdownUserInfo } from '@/features/user/queries';
@@ -10,6 +9,7 @@ import { getUserNonRedirect } from '@/lib/auth/get-user';
 import { Suspense } from 'react';
 import { DropdownMenu, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { Spinner } from '../ui/spinner';
+import Image from 'next/image';
 
 export function AppHeader() {
   return (
@@ -37,9 +37,15 @@ export function AppHeader() {
                 'rounded-md border border-neutral-200 dark:border-neutral-800'
               )}
             >
-              <EggIcon className="size-4.5" />
+              <Image
+                src="/sylo.svg"
+                alt="Sylo Logo"
+                width={150}
+                height={50}
+                priority
+              />
             </div>
-            <span className="hidden tracking-wider uppercase sm:inline">
+            <span className="font-logo hidden text-lg font-bold tracking-[0.16em] uppercase select-none sm:inline">
               Sylo
             </span>
           </Link>
