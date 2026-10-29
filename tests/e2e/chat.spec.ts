@@ -13,9 +13,9 @@ test.describe('Chat Page UI & Sidebar', () => {
     await page.waitForLoadState('networkidle');
 
     // Sidebar should be present (using role or tag)
-    const sidebar = page.locator('aside').first();
+    const sidebar = page.locator('[data-slot="sidebar"]').first();
     await expect(sidebar).toBeVisible({ timeout: 10000 });
-    await expect(sidebar).toContainText('AI Knowledge Chat');
+    await expect(sidebar).toContainText('Chat');
     await expect(sidebar).toContainText(testData.testLibraryName);
     await expect(sidebar).toContainText(testData.testLibraryName2);
 
@@ -32,24 +32,24 @@ test.describe('Chat Page UI & Sidebar', () => {
     await page.goto('/chat');
     await page.waitForLoadState('networkidle');
 
-    const sidebar = page.locator('aside').first();
+    const sidebar = page.locator('[data-slot="sidebar"]').first();
     await expect(sidebar).toBeVisible({ timeout: 10000 });
 
     // Collapse
-    const collapseBtn = page.getByLabel('Collapse sidebar');
+    const collapseBtn = page.getByLabel('Toggle Sidebar');
     await collapseBtn.click();
 
-    // Sidebar should be in collapsed state (slim div)
-    // In our implementation, the <aside> is replaced by a <div> if !isOpen
+    // Sidebar should be in collapsed state
+    // For offcanvas, the sidebar container is shifted out of view
     await expect(sidebar).not.toBeVisible();
-    const openBtn = page.getByLabel('Open sidebar');
+    const openBtn = page.getByLabel('Toggle Sidebar');
     await expect(openBtn).toBeVisible();
 
     // Expand
     await openBtn.click();
-    await expect(page.locator('aside').first()).toBeVisible();
-    await expect(page.locator('aside').first()).toContainText(
-      'AI Knowledge Chat'
+    await expect(page.locator('[data-slot="sidebar"]').first()).toBeVisible();
+    await expect(page.locator('[data-slot="sidebar"]').first()).toContainText(
+      'Chat'
     );
   });
 });

@@ -7,7 +7,7 @@ dotenv.config({ path: path.resolve(__dirname, '.env.test') });
 import { defineConfig, devices } from '@playwright/test';
 
 const isCI = !!process.env.CI;
-const webServerCommand = 'npm run build && npm start';
+const webServerCommand = 'pnpm run build:start';
 
 console.log(
   `Playwright running in CI: ${isCI}, webServerCommand: ${webServerCommand}`
