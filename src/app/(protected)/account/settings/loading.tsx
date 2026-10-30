@@ -3,24 +3,24 @@ import { Skeleton } from '@/components/ui/skeleton';
 export default function AccountSettingsPageLoading() {
   return (
     <div className="bg-background min-h-screen">
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-6 sm:py-8">
         <div className="max-w-2xl">
           {/* Header */}
-          <div className="mb-8">
+          <div className="mb-6 sm:mb-8">
             <Skeleton className={`h-9 w-56`} />
             <Skeleton className={`mt-2 h-5 w-64`} />
           </div>
 
           {/* Profile Card */}
-          <div className="rounded-xl border">
+          <div className="rounded-xl border [--card-spacing:--spacing(4)] sm:[--card-spacing:--spacing(6)]">
             {/* Card Header */}
-            <div className="space-y-1.5 p-6">
+            <div className="space-y-1.5 p-4 sm:p-6">
               <Skeleton className={`h-6 w-40`} />
               <Skeleton className={`h-4 w-full max-w-md`} />
             </div>
 
             {/* Card Content */}
-            <div className="p-6 pt-0">
+            <div className="p-4 pt-0 sm:p-6 sm:pt-0">
               <div className="space-y-6">
                 {/* Email */}
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -32,19 +32,23 @@ export default function AccountSettingsPageLoading() {
                 </div>
 
                 {/* Avatar Display Section */}
-                <div className="rounded-xl border border-neutral-200 bg-neutral-50/50 p-6 dark:border-neutral-800 dark:bg-neutral-900/50">
-                  <Skeleton className={`mb-4 h-5 w-32`} />
+                <div className="rounded-lg border border-neutral-200 bg-neutral-50/50 p-4 sm:rounded-xl sm:p-6 dark:border-neutral-800 dark:bg-neutral-900/50">
+                  <Skeleton className={`mb-3 h-5 w-32 sm:mb-4`} />
 
-                  <div className="flex flex-wrap gap-4">
+                  <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:gap-4">
                     {/* Google Picture */}
-                    <div className="flex flex-col items-center gap-3 rounded-2xl border-2 p-4">
-                      <Skeleton className={`h-20 w-20 rounded-full`} />
+                    <div className="flex flex-col items-center gap-2 rounded-xl border-2 p-3 sm:gap-3 sm:p-4">
+                      <Skeleton
+                        className={`h-16 w-16 rounded-full sm:h-20 sm:w-20`}
+                      />
                       <Skeleton className={`h-3 w-24`} />
                     </div>
 
                     {/* Initials */}
-                    <div className="flex flex-col items-center gap-3 rounded-2xl border-2 p-4">
-                      <Skeleton className={`h-20 w-20 rounded-full`} />
+                    <div className="flex flex-col items-center gap-2 rounded-xl border-2 p-3 sm:gap-3 sm:p-4">
+                      <Skeleton
+                        className={`h-16 w-16 rounded-full sm:h-20 sm:w-20`}
+                      />
                       <Skeleton className={`h-3 w-16`} />
                     </div>
                   </div>
