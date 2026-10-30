@@ -19,14 +19,14 @@ export function LibrarySummaryHero({ hubData }: LibrarySummaryHeroProps) {
   );
 
   return (
-    <section className="mb-8 grid gap-4 xl:grid-cols-[1.8fr_1fr]">
+    <section className="mb-6 grid gap-4 sm:mb-8 xl:grid-cols-[1.8fr_1fr]">
       <Card className="overflow-hidden border-0 bg-gradient-to-br from-slate-950 via-slate-900 to-neutral-950 text-white shadow-2xl">
-        <CardContent className="space-y-6 p-8 sm:p-10">
+        <CardContent className="space-y-5 p-5 sm:space-y-6 sm:p-8 lg:p-10">
           <div className="space-y-2">
-            <p className="text-sm tracking-[0.24em] text-slate-300 uppercase">
+            <p className="text-xs tracking-[0.12em] text-slate-300 uppercase sm:text-sm sm:tracking-[0.24em]">
               Library Hub overview
             </p>
-            <h2 className="text-3xl font-semibold tracking-tight">
+            <h2 className="text-2xl font-semibold tracking-tight text-balance sm:text-3xl">
               Your knowledge command center
             </h2>
             <p className="max-w-2xl text-sm text-slate-300/90">
@@ -35,18 +35,22 @@ export function LibrarySummaryHero({ hubData }: LibrarySummaryHeroProps) {
             </p>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
-              <p className="text-xs tracking-[0.24em] text-slate-400 uppercase">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
+            <div className="rounded-lg border border-white/10 bg-white/5 p-3 sm:rounded-3xl sm:p-5">
+              <p className="text-[10px] tracking-[0.12em] text-slate-400 uppercase sm:text-xs sm:tracking-[0.24em]">
                 Libraries
               </p>
-              <p className="mt-3 text-3xl font-semibold">{totalLibraries}</p>
+              <p className="mt-2 text-2xl font-semibold sm:mt-3 sm:text-3xl">
+                {totalLibraries}
+              </p>
             </div>
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
-              <p className="text-xs tracking-[0.24em] text-slate-400 uppercase">
+            <div className="rounded-lg border border-white/10 bg-white/5 p-3 sm:rounded-3xl sm:p-5">
+              <p className="text-[10px] tracking-[0.12em] text-slate-400 uppercase sm:text-xs sm:tracking-[0.24em]">
                 Documents
               </p>
-              <p className="mt-3 text-3xl font-semibold">{totalDocs}</p>
+              <p className="mt-2 text-2xl font-semibold sm:mt-3 sm:text-3xl">
+                {totalDocs}
+              </p>
             </div>
           </div>
         </CardContent>
@@ -61,13 +65,13 @@ export function LibrarySummaryHero({ hubData }: LibrarySummaryHeroProps) {
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3">
-            <div className="rounded-3xl bg-neutral-100 p-4 dark:bg-neutral-950">
+            <div className="rounded-lg bg-neutral-100 p-3 sm:rounded-3xl sm:p-4 dark:bg-neutral-950">
               <p className="text-sm font-medium">Fast context retrieval</p>
               <p className="text-muted-foreground mt-2 text-sm">
                 Every document is embedded and indexed for precise results.
               </p>
             </div>
-            <div className="rounded-3xl bg-neutral-100 p-4 dark:bg-neutral-950">
+            <div className="rounded-lg bg-neutral-100 p-3 sm:rounded-3xl sm:p-4 dark:bg-neutral-950">
               <p className="text-sm font-medium">Collaborative knowledge</p>
               <p className="text-muted-foreground mt-2 text-sm">
                 Invite teammates, share libraries, and reduce duplicated

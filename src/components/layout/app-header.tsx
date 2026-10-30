@@ -20,12 +20,12 @@ export function AppHeader() {
         'bg-background/80 backdrop-blur-md'
       )}
     >
-      <div className="flex h-16 w-full items-center justify-between px-4">
+      <div className="flex h-16 w-full items-center justify-between px-3 sm:px-4">
         <div className="flex items-center gap-2 md:gap-4">
           {/* Logo / Brand */}
           <Link
             className={cn(
-              'flex items-center gap-2 text-lg font-bold',
+              'flex min-h-11 min-w-11 items-center justify-center gap-2 text-lg font-bold sm:min-w-0 sm:justify-start',
               'text-foreground'
             )}
             href="/"
@@ -54,7 +54,7 @@ export function AppHeader() {
         </div>
 
         {/* Theme Toggle & Account Dropdown */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <ThemeToggle />
           <Suspense fallback={<AccountDropdownLoading />}>
             <AccountDropdownWrapper />

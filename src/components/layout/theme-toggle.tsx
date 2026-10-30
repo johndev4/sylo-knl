@@ -30,7 +30,7 @@ export function ThemeToggle() {
       onClick={() => setTheme(isDark ? 'light' : 'dark')}
       variant={'ghost'}
       size={'icon'}
-      className="rounded-full"
+      className="size-11 rounded-full sm:size-9"
       aria-label="Toggle theme"
     >
       {isDark ? (
