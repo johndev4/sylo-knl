@@ -24,7 +24,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
-  SidebarTrigger,
 } from '@/components/ui/sidebar';
 import { useChatSidebar } from '@/features/chat/providers/chat-sidebar-provider';
 

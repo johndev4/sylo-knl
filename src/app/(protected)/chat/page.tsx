@@ -1,12 +1,26 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import ReactMarkdown from 'react-markdown';
-import { ArrowUp, Bot, Trash2, User } from 'lucide-react';
+import { useChat } from '@ai-sdk/react';
+import { Streamdown } from 'streamdown';
+import { TextStreamChatTransport, type UIMessage } from 'ai';
+import { Bot, RotateCcw, Trash2, User } from 'lucide-react';
 import AITextLoading from '@/components/kokonutui/ai-text-loading';
+import AIInputSearch, {
+  type AIInputSearchProps,
+} from '@/components/kokonutui/ai-input-search';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import {
   Tooltip,
   TooltipContent,
@@ -14,13 +28,21 @@ import {
 } from '@/components/ui/tooltip';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
-import { cn } from '@/lib/utils';
+import { Bubble, BubbleContent } from '@/components/ui/bubble';
+import {
+  Message,
+  MessageAvatar,
+  MessageContent,
+} from '@/components/ui/message';
 import { useChatSidebar } from '@/features/chat/providers/chat-sidebar-provider';
 
-interface Message {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
+function getMessageText(message: UIMessage | undefined) {
+  return (
+    message?.parts
+      .filter((part) => part.type === 'text')
+      .map((part) => part.text)
+      .join('') ?? ''
+  );
 }
 
 export default function ChatPage() {
@@ -32,300 +54,306 @@ export default function ChatPage() {
     selectedIds,
     selectedLibraries,
   } = useChatSidebar();
-  const inputRef = useRef<HTMLInputElement | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [input, setInput] = useState('');
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-
-  const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, []);
+  const shouldAutoScrollRef = useRef(true);
+  const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
+  const [transport] = useState(
+    () =>
+      new TextStreamChatTransport<UIMessage>({
+        api: '/api/chat',
+        prepareSendMessagesRequest: ({ messages, body }) => ({
+          body: {
+            ...(body ?? {}),
+            messages: messages
+              .filter((message) => message.role !== 'system')
+              .map((message) => ({
+                role: message.role,
+                content: getMessageText(message),
+              })),
+          },
+        }),
+      })
+  );
+  const {
+    messages,
+    sendMessage,
+    setMessages,
+    stop,
+    regenerate,
+    status,
+    clearError,
+  } = useChat({ transport });
+  const isBusy = status === 'submitted' || status === 'streaming';
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages, scrollToBottom]);
+    if (shouldAutoScrollRef.current) {
+      messagesEndRef.current?.scrollIntoView({
+        behavior: 'instant',
+        block: 'end',
+      });
+    }
+  }, [messages]);
 
-  const handleSubmit = useCallback(
-    async (event: React.FormEvent) => {
-      event.preventDefault();
-      if (!input.trim() || isLoading || noneSelected) return;
+  async function handleSearch(
+    query: string,
+    { signal }: Parameters<NonNullable<AIInputSearchProps['onSearch']>>[1]
+  ) {
+    shouldAutoScrollRef.current = true;
+    const abortChat = () => void stop();
+    signal.addEventListener('abort', abortChat, { once: true });
+    try {
+      await sendMessage({ text: query }, { body: { libraryIds: selectedIds } });
+    } finally {
+      signal.removeEventListener('abort', abortChat);
+    }
+  }
 
-      const userMessage: Message = {
-        id: Date.now().toString(),
-        role: 'user',
-        content: input,
-      };
-      setMessages((current) => [...current, userMessage]);
-      setInput('');
-      setIsLoading(true);
+  function clearChat() {
+    if (isBusy) void stop();
+    setMessages([]);
+    clearError();
+    setIsClearDialogOpen(false);
+  }
 
-      try {
-        const response = await fetch('/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            messages: [...messages, userMessage],
-            libraryIds: selectedIds,
-          }),
-        });
-
-        if (!response.ok) {
-          const error = await response
-            .json()
-            .catch(() => ({ error: 'Unknown error' }));
-          throw new Error(error.error ?? 'Failed to get response');
-        }
-        if (!response.body) throw new Error('No response body');
-
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let assistantContent = '';
-        const assistantMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          role: 'assistant',
-          content: '',
-        };
-        setMessages((current) => [...current, assistantMessage]);
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          assistantContent += decoder.decode(value);
-          setMessages((current) => {
-            const updated = [...current];
-            updated[updated.length - 1] = {
-              ...updated[updated.length - 1],
-              content: assistantContent,
-            };
-            return updated;
-          });
-        }
-      } catch (error) {
-        console.error('Chat error:', error);
-        setMessages((current) => [
-          ...current,
-          {
-            id: (Date.now() + 1).toString(),
-            role: 'assistant',
-            content: `Sorry, I encountered an error: ${error instanceof Error ? error.message : 'Please try again.'}`,
-          },
-        ]);
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [input, isLoading, messages, noneSelected, selectedIds]
-  );
-
-  const messageItemVariants = useMemo(
-    () => ({
-      hidden: { opacity: 0, y: 12 },
-      visible: {
-        opacity: 1,
-        y: 0,
-        transition: {
-          duration: prefersReducedMotion ? 0 : 0.28,
-          ease: 'easeOut' as const,
-        },
-      },
-    }),
-    [prefersReducedMotion]
-  );
+  function handleMessagesScroll(event: React.UIEvent<HTMLElement>) {
+    const element = event.currentTarget;
+    shouldAutoScrollRef.current =
+      element.scrollHeight - element.scrollTop - element.clientHeight < 96;
+  }
 
   if (isLoadingLibraries) {
     return (
-      <div className="flex flex-1 items-center justify-center">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
-          className="size-8 rounded-full border-4 border-indigo-500 border-t-transparent"
-        />
+      <div
+        className="text-muted-foreground flex flex-1 items-center justify-center gap-2 text-sm"
+        role="status"
+      >
+        <span className="bg-primary size-2 animate-pulse rounded-full motion-reduce:animate-none" />
+        Loading libraries…
       </div>
     );
   }
 
   return (
-    <div className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
-      <div className="flex items-center justify-between border-b border-neutral-200/10 px-2 py-2 dark:border-neutral-800/20">
-        <SidebarTrigger />
+    <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+      <header className="flex shrink-0 items-center justify-between border-b px-3 py-2 sm:px-5">
+        <div className="flex min-w-0 items-center gap-3">
+          <SidebarTrigger />
+          <div className="min-w-0">
+            <h1 className="truncate text-sm font-semibold">Library Chat</h1>
+            <p className="text-muted-foreground truncate text-xs">
+              {selectedIds.length}{' '}
+              {selectedIds.length === 1 ? 'library' : 'libraries'} selected
+            </p>
+          </div>
+        </div>
         {messages.length > 0 && (
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setMessages([])}
-                  className="text-muted-foreground hover:text-foreground h-8 gap-1.5 text-[10px] font-bold tracking-widest uppercase"
-                  aria-label="Clear chat"
-                >
-                  <Trash2 className="size-3" />
-                  Clear History
-                </Button>
-              }
-            />
-            <TooltipContent>Clear all messages</TooltipContent>
-          </Tooltip>
+          <>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() => setIsClearDialogOpen(true)}
+                    aria-label="Clear chat history"
+                  >
+                    <Trash2 aria-hidden="true" />
+                  </Button>
+                }
+              />
+              <TooltipContent>Clear chat history</TooltipContent>
+            </Tooltip>
+            <AlertDialog
+              open={isClearDialogOpen}
+              onOpenChange={setIsClearDialogOpen}
+            >
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Clear this conversation?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This removes all messages from the current chat.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction variant="destructive" onClick={clearChat}>
+                    Clear conversation
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </>
         )}
-      </div>
+      </header>
 
       <main
         className="flex-1 overflow-y-auto p-4 md:p-6"
         aria-label="Chat messages"
         aria-live="polite"
         aria-atomic="false"
+        onScroll={handleMessagesScroll}
       >
-        <div className="mx-auto max-w-3xl">
+        <div className="mx-auto flex min-h-full w-full max-w-3xl flex-col">
           {messages.length === 0 ? (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: prefersReducedMotion ? 0 : 0.4 }}
-              className="flex flex-col items-center justify-center gap-8 pt-16 text-center"
+              className="flex flex-1 flex-col items-center justify-center gap-7 py-12 text-center"
             >
-              <div className="relative">
-                <div className="flex size-20 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500/20 to-violet-600/20 shadow-inner ring-1 ring-indigo-200 dark:ring-indigo-800">
-                  <Bot className="size-10 text-indigo-500 dark:text-indigo-400" />
-                </div>
-                <div className="absolute -top-1 -right-1 size-4 rounded-full bg-emerald-400 ring-2 ring-white dark:ring-neutral-950" />
+              <div className="bg-muted/50 text-foreground flex size-16 items-center justify-center rounded-2xl border shadow-sm">
+                <Bot className="size-8" aria-hidden="true" />
               </div>
 
-              <div className="max-w-md space-y-2">
-                <h2 className="text-xl font-semibold">
-                  {noneSelected ? 'Pick a library to begin' : 'Ready to answer'}
+              <div className="max-w-lg space-y-2">
+                <h2 className="text-2xl font-semibold">
+                  {noneSelected ? 'Choose a library' : 'Ask your library'}
                 </h2>
-                <p className="text-muted-foreground text-sm">
+                <p className="text-muted-foreground text-sm leading-6">
                   {noneSelected
-                    ? 'Use the library selector in the sidebar to choose which knowledge bases to query.'
-                    : `Querying ${selectedIds.length === libraries.length ? 'all your libraries' : selectedLibraries.map((library) => library.name).join(', ')}. Ask anything and the AI will answer from your documents.`}
+                    ? 'Select one or more knowledge bases from the sidebar to start a conversation.'
+                    : `Searching ${selectedIds.length === libraries.length ? 'all your libraries' : selectedLibraries.map((library) => library.name).join(', ')}. Answers are grounded in your documents.`}
                 </p>
               </div>
-
-              {!noneSelected && (
-                <div className="flex flex-wrap justify-center gap-3">
-                  {[
-                    'What topics are covered?',
-                    'Summarize the key concepts',
-                    'Find recent updates',
-                  ].map((suggestion) => (
-                    <button
-                      key={suggestion}
-                      type="button"
-                      onClick={() => {
-                        setInput(suggestion);
-                        inputRef.current?.focus();
-                      }}
-                      className="rounded-full border border-neutral-200 bg-white px-4 py-1.5 text-sm text-neutral-600 transition-colors hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-400 dark:hover:border-indigo-700 dark:hover:bg-indigo-950/40 dark:hover:text-indigo-400"
-                    >
-                      {suggestion}
-                    </button>
-                  ))}
-                </div>
-              )}
             </motion.div>
           ) : (
-            <div className="flex flex-col gap-5">
-              {messages.map((message, index) => (
-                <motion.div
-                  key={message.id}
-                  variants={messageItemVariants}
-                  initial="hidden"
-                  animate="visible"
-                  className={cn(
-                    'flex gap-3',
-                    message.role === 'user' ? 'justify-end' : 'justify-start'
-                  )}
-                >
-                  {message.role === 'assistant' && (
-                    <div className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 shadow-sm">
-                      <Bot className="size-4 text-white" />
-                    </div>
-                  )}
+            <div className="flex flex-col gap-6 py-2">
+              {messages.map((message, index) => {
+                const content = getMessageText(message);
+                const isLatest = index === messages.length - 1;
 
-                  <div
-                    className={cn(
-                      'max-w-[85%] rounded-2xl px-4 py-3 text-sm shadow-sm',
-                      message.role === 'user'
-                        ? 'bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-950'
-                        : 'border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900'
-                    )}
+                return (
+                  <motion.div
+                    key={message.id}
+                    initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: prefersReducedMotion ? 0 : 0.2 }}
                   >
-                    {message.role === 'assistant' &&
-                    isLoading &&
-                    index === messages.length - 1 &&
-                    message.content === '' ? (
-                      <AITextLoading
-                        texts={[
-                          'Searching libraries…',
-                          'Retrieving context…',
-                          'Composing answer…',
-                        ]}
-                        interval={1400}
-                        className="text-sm font-normal"
-                      />
-                    ) : (
-                      <div className="prose prose-sm dark:prose-invert max-w-none">
-                        <ReactMarkdown>{message.content}</ReactMarkdown>
-                      </div>
-                    )}
-                  </div>
-
-                  {message.role === 'user' && (
-                    <div className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-neutral-900 shadow-sm dark:bg-neutral-100">
-                      <User className="size-4 text-white dark:text-neutral-950" />
-                    </div>
-                  )}
-                </motion.div>
-              ))}
+                    <Message align={message.role === 'user' ? 'end' : 'start'}>
+                      <MessageAvatar
+                        className="bg-background text-muted-foreground size-8 self-start rounded-lg border"
+                        aria-hidden="true"
+                      >
+                        {message.role === 'user' ? (
+                          <User className="size-4" />
+                        ) : (
+                          <Bot className="size-4" />
+                        )}
+                      </MessageAvatar>
+                      <MessageContent className="max-w-[min(100%,52rem)]">
+                        <Bubble
+                          variant={
+                            message.role === 'user' ? 'default' : 'muted'
+                          }
+                          className="max-w-full shadow-sm"
+                        >
+                          <BubbleContent className="px-4 py-3">
+                            {message.role === 'assistant' &&
+                            isBusy &&
+                            isLatest &&
+                            !content ? (
+                              <AITextLoading
+                                texts={[
+                                  'Searching libraries…',
+                                  'Retrieving context…',
+                                  'Composing answer…',
+                                ]}
+                                interval={1400}
+                                className="text-sm font-normal"
+                              />
+                            ) : message.role === 'assistant' ? (
+                              <Streamdown
+                                className="prose prose-sm dark:prose-invert max-w-none break-words"
+                                isAnimating={isBusy && isLatest}
+                              >
+                                {content}
+                              </Streamdown>
+                            ) : (
+                              <p className="break-words whitespace-pre-wrap">
+                                {content}
+                              </p>
+                            )}
+                          </BubbleContent>
+                        </Bubble>
+                      </MessageContent>
+                    </Message>
+                  </motion.div>
+                );
+              })}
+              {isBusy && messages.at(-1)?.role === 'user' && (
+                <Message align="start">
+                  <MessageAvatar
+                    className="bg-background text-muted-foreground size-8 self-start rounded-lg border"
+                    aria-hidden="true"
+                  >
+                    <Bot className="size-4" />
+                  </MessageAvatar>
+                  <MessageContent>
+                    <Bubble variant="muted">
+                      <BubbleContent className="px-4 py-3">
+                        <AITextLoading
+                          texts={[
+                            'Searching libraries…',
+                            'Retrieving context…',
+                            'Composing answer…',
+                          ]}
+                          interval={1400}
+                          className="text-sm font-normal"
+                        />
+                      </BubbleContent>
+                    </Bubble>
+                  </MessageContent>
+                </Message>
+              )}
               <div ref={messagesEndRef} />
             </div>
           )}
         </div>
       </main>
 
-      <footer className="border-t border-neutral-200 bg-white/80 px-4 py-4 backdrop-blur-sm dark:border-neutral-800/50 dark:bg-neutral-950/80">
-        <form
-          onSubmit={handleSubmit}
-          className="mx-auto flex max-w-3xl items-center gap-2"
-        >
-          <div className="relative flex-1">
-            <Input
-              ref={inputRef}
-              id="chat-input"
-              value={input}
-              onChange={(event) => setInput(event.target.value)}
-              placeholder={
-                noneSelected
-                  ? 'Select a library in the sidebar first…'
-                  : 'Ask about your knowledge base…'
-              }
-              className="h-12 rounded-2xl border-neutral-200/60 bg-neutral-50/50 px-4 focus-visible:ring-indigo-400 dark:border-neutral-800/60 dark:bg-neutral-900/50"
-              disabled={isLoading || noneSelected}
-              aria-label="Chat message input"
-              aria-disabled={isLoading || noneSelected}
-            />
-          </div>
-          <Button
-            id="chat-submit"
-            size="icon"
-            type="submit"
-            disabled={isLoading || !input.trim() || noneSelected}
-            className="size-12 shrink-0 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 shadow-sm hover:from-indigo-600 hover:to-violet-700 disabled:opacity-40"
-            aria-label="Send message"
+      <footer className="bg-background/95 supports-[backdrop-filter]:bg-background/80 shrink-0 border-t px-4 py-3 backdrop-blur sm:px-6 sm:py-4">
+        {status === 'error' && (
+          <div
+            className="border-destructive/30 bg-destructive/5 mx-auto mb-3 flex max-w-3xl items-center justify-between gap-3 rounded-lg border px-3 py-2 text-sm"
+            role="alert"
           >
-            {isLoading ? (
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
-                className="size-4 rounded-full border-2 border-white/30 border-t-white"
-              />
-            ) : (
-              <ArrowUp className="size-5" />
-            )}
-          </Button>
-        </form>
-        <p className="text-muted-foreground mt-3 text-center text-[10px] font-medium opacity-60">
+            <span className="text-destructive">
+              Couldn’t generate a response.
+            </span>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() =>
+                void regenerate({ body: { libraryIds: selectedIds } })
+              }
+            >
+              <RotateCcw data-icon="inline-start" />
+              Try again
+            </Button>
+          </div>
+        )}
+        <AIInputSearch
+          className="max-w-3xl py-0"
+          disabled={noneSelected}
+          mode="chat"
+          onSearch={handleSearch}
+          placeholder={
+            noneSelected
+              ? 'Select a library in the sidebar first…'
+              : 'Ask about your documents…'
+          }
+          suggestions={
+            messages.length === 0 && !noneSelected
+              ? [
+                  'What topics are covered?',
+                  'Summarize the key concepts',
+                  'Find recent updates',
+                ]
+              : []
+          }
+        />
+        <p className="text-muted-foreground mx-auto mt-2 max-w-3xl text-center text-xs">
           AI responses are based strictly on your uploaded documents. Always
           verify with source material.
         </p>
