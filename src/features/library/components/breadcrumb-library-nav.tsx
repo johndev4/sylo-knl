@@ -232,18 +232,20 @@ export function BreadcrumbLibraryNav({
   }
 
   return (
-    <Breadcrumb>
-      <BreadcrumbList className="sm:gap-2">
+    <Breadcrumb className="min-w-0 flex-1 overflow-hidden">
+      <BreadcrumbList className="min-w-0 flex-nowrap gap-1 overflow-hidden sm:gap-2">
         {/* Library Selector */}
-        <BreadcrumbItem>
-          <LibraryBigIcon className="size-4" />
-          <div className="flex items-center gap-1">
-            <span>{libraryName}</span>
+        <BreadcrumbItem className="min-w-0">
+          <LibraryBigIcon className="size-4 shrink-0" />
+          <div className="flex min-w-0 items-center gap-1">
+            <span className="max-w-16 min-w-0 truncate sm:max-w-none">
+              {libraryName}
+            </span>
             <LibrarySelectorDropdown />
           </div>
         </BreadcrumbItem>
 
-        <BreadcrumbSeparator>
+        <BreadcrumbSeparator className="shrink-0">
           <SlashIcon />
         </BreadcrumbSeparator>
 
@@ -253,15 +255,20 @@ export function BreadcrumbLibraryNav({
           return (
             <Fragment key={item.key}>
               {index > 0 && (
-                <BreadcrumbSeparator>
+                <BreadcrumbSeparator className="hidden shrink-0 sm:flex">
                   <SlashIcon />
                 </BreadcrumbSeparator>
               )}
-              <BreadcrumbItem>
+              <BreadcrumbItem
+                className={isLast ? 'min-w-0' : 'hidden min-w-0 sm:inline-flex'}
+              >
                 {isLast ? (
-                  <BreadcrumbPage>{item.label}</BreadcrumbPage>
+                  <BreadcrumbPage className="block max-w-28 truncate sm:max-w-none">
+                    {item.label}
+                  </BreadcrumbPage>
                 ) : (
                   <BreadcrumbLink
+                    className="block max-w-28 truncate sm:max-w-none"
                     render={<Link href={item.href}>{item.label}</Link>}
                   />
                 )}
@@ -314,7 +321,13 @@ function LibrarySelectorDropdown() {
         ) : (
           <DropdownMenuTrigger
             render={
-              <Button variant={'ghost'} size={'icon-xs'}>
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                className="size-11 md:size-6"
+                aria-label="Switch library"
+                title="Switch library"
+              >
                 <ChevronsUpDownIcon
                   data-icon="inline-end"
                   className="size-3.5"

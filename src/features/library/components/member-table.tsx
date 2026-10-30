@@ -36,13 +36,14 @@ import {
   DataGridTableRowSelect,
   DataGridTableRowSelectAll,
 } from '@/components/reui/data-grid/data-grid-table';
+import { Checkbox } from '@/components/ui/checkbox';
+import { flexRender, Subscribe, useTable } from '@tanstack/react-table';
 import type {
   ColumnDef,
   PaginationState,
   RowSelectionState,
   SortingState,
 } from '@tanstack/react-table';
-import { useTable } from '@tanstack/react-table';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -231,7 +232,7 @@ export function MemberTable({ libraryId, canManageMembers }: MemberTableProps) {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="w-full justify-between"
+                      className="h-11 w-full justify-between md:h-8"
                     >
                       <span className="min-w-0 truncate">
                         {roleOptions
@@ -316,10 +317,10 @@ export function MemberTable({ libraryId, canManageMembers }: MemberTableProps) {
                   <Button
                     variant="ghost"
                     size="sm"
+                    className="text-destructive hover:bg-destructive/10 hover:text-destructive h-11 md:h-8"
                     disabled={
                       isRemovingSingle || isRemovingMultiple || isUpdatingRole
                     }
-                    className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                     aria-label={`Remove ${member.user?.email}`}
                   >
                     Remove
@@ -411,6 +412,7 @@ export function MemberTable({ libraryId, canManageMembers }: MemberTableProps) {
                   <Button
                     variant="destructive"
                     size="sm"
+                    className="h-11 md:h-8"
                     disabled={isRemovingMultiple}
                   >
                     Remove {selectedMemberIds.length} member(s)
@@ -451,11 +453,102 @@ export function MemberTable({ libraryId, canManageMembers }: MemberTableProps) {
         isLoading={isLoading}
       >
         <div className="w-full space-y-2.5">
-          <DataGridContainer>
-            <DataGridScrollArea>
-              <DataGridTable />
-            </DataGridScrollArea>
-          </DataGridContainer>
+          <div
+            className="divide-y md:hidden"
+            role="list"
+            aria-label="Library members"
+          >
+            {isLoading ? (
+              Array.from({ length: 3 }).map((_, index) => (
+                <div key={index} className="space-y-3 py-4">
+                  <Skeleton className="h-5 w-2/3" />
+                  <Skeleton className="h-4 w-1/2" />
+                </div>
+              ))
+            ) : table.getRowModel().rows.length === 0 ? (
+              <p className="text-muted-foreground py-6 text-center text-sm">
+                No members yet.
+              </p>
+            ) : (
+              table.getRowModel().rows.map((row) => {
+                const cells = row.getVisibleCells();
+                const nameCell = cells.find(
+                  (cell) => cell.column.id === 'name'
+                );
+                const roleCell = cells.find(
+                  (cell) => cell.column.id === 'role'
+                );
+                const joinedCell = cells.find(
+                  (cell) => cell.column.id === 'created_at'
+                );
+                const actionsCell = cells.find(
+                  (cell) => cell.column.id === 'actions'
+                );
+
+                return (
+                  <div key={row.id} role="listitem" className="space-y-3 py-4">
+                    <div className="flex items-start gap-2">
+                      {canManageMembers && (
+                        <Subscribe source={row.table.atoms.rowSelection}>
+                          {() => (
+                            <Checkbox
+                              checked={row.getIsSelected()}
+                              disabled={!row.getCanSelect()}
+                              onCheckedChange={(checked) =>
+                                row.toggleSelected(!!checked)
+                              }
+                              aria-label={`Select member ${row.original.user?.name || row.original.user?.email || 'member'}`}
+                              className="size-6 after:-inset-2.5"
+                            />
+                          )}
+                        </Subscribe>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        {nameCell &&
+                          flexRender(
+                            nameCell.column.columnDef.cell,
+                            nameCell.getContext()
+                          )}
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="min-w-0 space-y-1">
+                        <p className="text-muted-foreground text-xs">Role</p>
+                        {roleCell &&
+                          flexRender(
+                            roleCell.column.columnDef.cell,
+                            roleCell.getContext()
+                          )}
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-muted-foreground text-xs">Joined</p>
+                        {joinedCell &&
+                          flexRender(
+                            joinedCell.column.columnDef.cell,
+                            joinedCell.getContext()
+                          )}
+                      </div>
+                    </div>
+                    {actionsCell && (
+                      <div className="flex justify-end">
+                        {flexRender(
+                          actionsCell.column.columnDef.cell,
+                          actionsCell.getContext()
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+          <div className="hidden md:block">
+            <DataGridContainer>
+              <DataGridScrollArea>
+                <DataGridTable />
+              </DataGridScrollArea>
+            </DataGridContainer>
+          </div>
           <DataGridPagination />
         </div>
       </DataGrid>

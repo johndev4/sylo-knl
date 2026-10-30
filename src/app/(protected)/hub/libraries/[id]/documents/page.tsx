@@ -35,6 +35,7 @@ export default async function DocumentsPage({
 
         {!isViewer && (
           <Button
+            className="min-h-11"
             render={
               <Link href={`/hub/libraries/${libraryId}/documents/new`}>
                 <Plus className="mr-2 h-5 w-5" />

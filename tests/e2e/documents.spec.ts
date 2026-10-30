@@ -428,15 +428,70 @@ test.describe.serial('Document Management', () => {
     await expect(page.getByPlaceholder('Untitled Document')).toHaveValue('');
   });
 
+  test('Document management remains usable on mobile', async ({ page }) => {
+    expect(testDocId).toBeDefined();
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(`/hub/libraries/${libId}/documents/${testDocId}`);
+    await page.waitForLoadState('networkidle');
+
+    const sidebarTrigger = page.getByRole('button', {
+      name: 'Toggle Sidebar',
+    });
+    await expect(sidebarTrigger).toBeVisible();
+    const sidebarTriggerBox = await sidebarTrigger.boundingBox();
+    expect(sidebarTriggerBox?.height).toBeGreaterThanOrEqual(44);
+
+    await sidebarTrigger.click();
+    const searchInput = page.getByRole('textbox', {
+      name: 'Search documents',
+    });
+    await expect(searchInput).toBeVisible();
+    const searchBox = await searchInput.boundingBox();
+    expect(searchBox?.height).toBeGreaterThanOrEqual(44);
+    await page.keyboard.press('Escape');
+
+    const switchLibraryButton = page.getByRole('button', {
+      name: 'Switch library',
+    });
+    await expect(switchLibraryButton).toBeVisible();
+    const switchLibraryBox = await switchLibraryButton.boundingBox();
+    expect(switchLibraryBox?.height).toBeGreaterThanOrEqual(44);
+
+    const editButton = page.getByRole('button', { name: 'Edit document' });
+    await expect(editButton).toBeVisible();
+    const editBox = await editButton.boundingBox();
+    expect(editBox?.height).toBeGreaterThanOrEqual(44);
+    await editButton.click();
+
+    const saveButton = page.getByRole('button', { name: 'Save', exact: true });
+    const cancelButton = page.getByRole('button', {
+      name: 'Cancel editing',
+    });
+    await expect(saveButton).toBeVisible();
+    await expect(cancelButton).toBeVisible();
+    const saveBox = await saveButton.boundingBox();
+    const cancelBox = await cancelButton.boundingBox();
+    expect(saveBox?.height).toBeGreaterThanOrEqual(44);
+    expect(cancelBox?.height).toBeGreaterThanOrEqual(44);
+
+    await expect(
+      page.evaluate(
+        () =>
+          document.documentElement.scrollWidth <=
+          document.documentElement.clientWidth
+      )
+    ).resolves.toBe(true);
+  });
+
   test('Delete an existing document with confirmation', async ({ page }) => {
     expect(testDocId).toBeDefined();
     await page.goto(`/hub/libraries/${libId}/documents/${testDocId}`);
     await page.waitForLoadState('networkidle');
 
     // Verify delete button is visible (we are OWNER)
-    const deleteBtn = page.getByLabel('Delete document', {
-      exact: true,
-    });
+    const deleteBtn = page.locator(
+      'button[aria-label="Delete document"]:visible'
+    );
     await expect(deleteBtn).toBeVisible({});
 
     await deleteBtn.click();

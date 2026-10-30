@@ -22,9 +22,9 @@ async function LibraryBreadcrumbWrapper({ params }: LibraryBreadcrumbProps) {
   if (!libraryName) throw new Error('Library not found');
 
   return (
-    <header className="bg-background flex h-12 shrink-0 items-center gap-2 border-b border-neutral-200/50 px-4 dark:border-neutral-800/50">
-      <SidebarTrigger className="-ml-1" />
-      <Separator orientation="vertical" className="mr-2 h-4" />
+    <header className="bg-background flex h-12 shrink-0 items-center gap-1 border-b border-neutral-200/50 px-3 sm:gap-2 sm:px-4 dark:border-neutral-800/50">
+      <SidebarTrigger className="-ml-1 size-11 md:size-8" />
+      <Separator orientation="vertical" className="mr-1 h-4 sm:mr-2" />
       <BreadcrumbLibraryNav libraryName={libraryName} />
     </header>
   );
