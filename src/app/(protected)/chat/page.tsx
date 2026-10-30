@@ -26,7 +26,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { SidebarTrigger } from '@/components/ui/sidebar';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { Bubble, BubbleContent } from '@/components/ui/bubble';
 import {
@@ -34,9 +33,11 @@ import {
   MessageAvatar,
   MessageContent,
 } from '@/components/ui/message';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { useSession } from '@/components/providers/auth-provider';
 import { useChatHistory } from '@/features/chat/hooks/use-chat-history';
-import { useChatSidebar } from '@/features/chat/providers/chat-sidebar-provider';
+import { useChatLibrary } from '@/features/chat/providers/chat-library-provider';
+import { LibrarySelectorButton } from '@/features/chat/components/library-selector-button';
 import { appToast } from '@/lib/toast';
 
 const emptySubscribe = () => () => {};
@@ -60,8 +61,8 @@ function getMessageText(message: UIMessage | undefined) {
 
 function ChatView({ userId }: { userId?: string | null }) {
   const prefersReducedMotion = useReducedMotion();
-  const { libraries, noneSelected, selectedIds, selectedLibraries } =
-    useChatSidebar();
+  const { allSelected, noneSelected, selectedIds, selectedLibraries } =
+    useChatLibrary();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const shouldAutoScrollRef = useRef(true);
   const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
@@ -145,18 +146,18 @@ function ChatView({ userId }: { userId?: string | null }) {
       element.scrollHeight - element.scrollTop - element.clientHeight < 96;
   }
 
+  const selectedCountLabel = allSelected
+    ? 'All libraries'
+    : `${selectedIds.length} ${selectedIds.length === 1 ? 'library' : 'libraries'} selected`;
+
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-      <header className="flex shrink-0 items-center justify-between border-b px-3 py-2 sm:px-5">
-        <div className="flex min-w-0 items-center gap-3">
-          <SidebarTrigger />
-          <div className="min-w-0">
-            <h1 className="truncate text-sm font-semibold">Library Chat</h1>
-            <p className="text-muted-foreground truncate text-xs">
-              {selectedIds.length}{' '}
-              {selectedIds.length === 1 ? 'library' : 'libraries'} selected
-            </p>
-          </div>
+      <header className="flex shrink-0 items-center justify-between border-b px-3 py-2 sm:px-6">
+        <div className="min-w-0">
+          <h1 className="truncate text-sm font-semibold">Library Chat</h1>
+          <p className="text-muted-foreground truncate text-xs">
+            {selectedCountLabel}
+          </p>
         </div>
         {messages.length > 0 && (
           <>
@@ -198,12 +199,16 @@ function ChatView({ userId }: { userId?: string | null }) {
         )}
       </header>
 
-      <main
-        className="flex-1 overflow-y-auto p-4 md:p-6"
-        aria-label="Chat messages"
-        aria-live="polite"
-        aria-atomic="false"
-        onScroll={handleMessagesScroll}
+      <ScrollArea
+        className="min-h-0 min-w-0 flex-1"
+        viewportProps={{
+          render: <main />,
+          className: 'overflow-y-auto p-3 sm:p-4 md:p-6',
+          'aria-label': 'Chat messages',
+          'aria-live': 'polite',
+          'aria-atomic': false,
+          onScroll: handleMessagesScroll,
+        }}
       >
         <div className="mx-auto flex min-h-full w-full max-w-3xl flex-col">
           {messages.length === 0 ? (
@@ -223,8 +228,8 @@ function ChatView({ userId }: { userId?: string | null }) {
                 </h2>
                 <p className="text-muted-foreground text-sm leading-6">
                   {noneSelected
-                    ? 'Select one or more knowledge bases from the sidebar to start a conversation.'
-                    : `Searching ${selectedIds.length === libraries.length ? 'all your libraries' : selectedLibraries.map((library) => library.name).join(', ')}. Answers are grounded in your documents.`}
+                    ? 'Select one or more knowledge bases from the library picker below to start a conversation.'
+                    : `Searching ${allSelected ? 'all your libraries' : selectedLibraries.map((library) => library.name).join(', ')}. Answers are grounded in your documents.`}
                 </p>
               </div>
             </motion.div>
@@ -321,16 +326,16 @@ function ChatView({ userId }: { userId?: string | null }) {
             </div>
           )}
         </div>
-      </main>
+      </ScrollArea>
 
-      <footer className="bg-background/95 supports-[backdrop-filter]:bg-background/80 shrink-0 border-t px-4 py-3 backdrop-blur sm:px-6 sm:py-4">
+      <footer className="bg-background/95 supports-[backdrop-filter]:bg-background/80 shrink-0 border-t px-3 py-2 backdrop-blur sm:px-6 sm:py-4">
         {status === 'error' && (
           <div
-            className="border-destructive/30 bg-destructive/5 mx-auto mb-3 flex max-w-3xl items-center justify-between gap-3 rounded-lg border px-3 py-2 text-sm"
+            className="border-destructive/30 bg-destructive/5 mx-auto mb-3 flex max-w-3xl flex-wrap items-center justify-between gap-3 rounded-lg border px-3 py-2 text-sm"
             role="alert"
           >
             <span className="text-destructive">
-              Couldn’t generate a response.
+              Couldn&apos;t generate a response.
             </span>
             <Button
               type="button"
@@ -350,9 +355,10 @@ function ChatView({ userId }: { userId?: string | null }) {
           disabled={noneSelected}
           mode="chat"
           onSearch={handleSearch}
+          librarySelector={<LibrarySelectorButton />}
           placeholder={
             noneSelected
-              ? 'Select a library in the sidebar first…'
+              ? 'Select a library below first…'
               : 'Ask about your documents…'
           }
           suggestions={
@@ -365,7 +371,7 @@ function ChatView({ userId }: { userId?: string | null }) {
               : []
           }
         />
-        <p className="text-muted-foreground mx-auto mt-2 max-w-3xl text-center text-xs">
+        <p className="text-muted-foreground mx-auto mt-1 max-w-3xl text-center text-[10px] leading-4 sm:mt-2 sm:text-xs">
           AI responses are based strictly on your uploaded documents. Always
           verify with source material.
         </p>
@@ -377,7 +383,7 @@ function ChatView({ userId }: { userId?: string | null }) {
 export default function ChatPage() {
   const isMounted = useMounted();
   const { user } = useSession();
-  const { isLoadingLibraries } = useChatSidebar();
+  const { isLoadingLibraries } = useChatLibrary();
 
   if (isLoadingLibraries || !isMounted) {
     return (

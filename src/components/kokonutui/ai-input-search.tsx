@@ -104,6 +104,11 @@ export interface AIInputSearchProps {
       onSource: (source: SearchSource) => void;
     }
   ) => Promise<void> | void;
+  /**
+   * Optional slot rendered on the left side of the bottom toolbar when
+   * `mode === 'chat'`. Use it to embed a library selector or other controls.
+   */
+  librarySelector?: React.ReactNode;
   className?: string;
 }
 
@@ -1034,6 +1039,7 @@ export default function AI_Input_Search({
   models = DEFAULT_MODELS,
   defaultModel = 'Sonnet 5.5',
   onSearch,
+  librarySelector,
   className,
 }: AIInputSearchProps) {
   const [value, setValue] = useState('');
@@ -1238,7 +1244,7 @@ export default function AI_Input_Search({
 
             <Textarea
               aria-label="Message"
-              className="min-h-[56px] w-full resize-none rounded-none border-none bg-transparent px-4 pt-3.5 pb-1 text-[15px] leading-relaxed text-black placeholder:text-black/35 focus-visible:ring-0 focus-visible:ring-offset-0 dark:bg-transparent dark:text-white dark:placeholder:text-white/35"
+              className="min-h-[56px] w-full resize-none rounded-none border-none bg-transparent px-4 pt-3.5 pb-1 text-base leading-relaxed text-black placeholder:text-black/35 focus-visible:ring-0 focus-visible:ring-offset-0 sm:text-[15px] dark:bg-transparent dark:text-white dark:placeholder:text-white/35"
               onChange={(e) => {
                 setValue(e.target.value);
                 adjustHeight();
@@ -1272,6 +1278,7 @@ export default function AI_Input_Search({
             />
 
             <div className="flex items-center gap-1 px-2.5 pt-1 pb-2.5">
+              {mode === 'chat' && librarySelector}
               {mode === 'demo' && (
                 <>
                   <button

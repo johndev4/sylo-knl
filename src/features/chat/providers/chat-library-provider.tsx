@@ -17,7 +17,7 @@ export interface ChatLibrary {
   role: string;
 }
 
-interface ChatSidebarContextValue {
+interface ChatLibraryContextValue {
   libraries: ChatLibrary[];
   selectedIds: string[];
   isLoadingLibraries: boolean;
@@ -29,17 +29,20 @@ interface ChatSidebarContextValue {
   clearSelection: () => void;
 }
 
-const ChatSidebarContext = createContext<ChatSidebarContextValue | null>(null);
+const ChatLibraryContext = createContext<ChatLibraryContextValue | null>(null);
 
-export function useChatSidebar() {
-  const context = useContext(ChatSidebarContext);
+export function useChatLibrary() {
+  const context = useContext(ChatLibraryContext);
   if (!context) {
-    throw new Error('useChatSidebar must be used within ChatSidebarProvider.');
+    throw new Error('useChatLibrary must be used within ChatLibraryProvider.');
   }
   return context;
 }
 
-export function ChatSidebarProvider({
+/** @deprecated Use `useChatLibrary` instead. */
+export const useChatSidebar = useChatLibrary;
+
+export function ChatLibraryProvider({
   children,
 }: {
   children: React.ReactNode;
@@ -49,20 +52,21 @@ export function ChatSidebarProvider({
   const searchParams = useSearchParams();
   const { user } = useSession();
   const { libraries, isLoading: isLoadingLibraries } = useUserLibrariesSWR();
+
+  // null means "no param in URL yet" → will auto-select all after load
   const libraryIdsParam = searchParams.get('libraryIds');
   const requestedSelectedIds = useMemo(
-    () => libraryIdsParam?.split(',').filter(Boolean) ?? [],
+    () => libraryIdsParam?.split(',').filter(Boolean) ?? null,
     [libraryIdsParam]
   );
-  const selectedIds = useMemo(
-    () =>
-      isLoadingLibraries
-        ? requestedSelectedIds
-        : requestedSelectedIds.filter((id) =>
-            libraries.some((library) => library.id === id)
-          ),
-    [isLoadingLibraries, libraries, requestedSelectedIds]
-  );
+
+  const selectedIds = useMemo(() => {
+    if (requestedSelectedIds === null) return [];
+    if (isLoadingLibraries) return requestedSelectedIds;
+    return requestedSelectedIds.filter((id) =>
+      libraries.some((library) => library.id === id)
+    );
+  }, [isLoadingLibraries, libraries, requestedSelectedIds]);
 
   const updateSearchParams = useCallback(
     (ids: string[]) => {
@@ -74,12 +78,22 @@ export function ChatSidebarProvider({
     [pathname, router]
   );
 
+  // Redirect unauthenticated users
   useEffect(() => {
     if (!user) router.push('/login');
   }, [router, user]);
 
+  // Auto-select all libraries when no libraryIds param in URL
   useEffect(() => {
-    if (isLoadingLibraries) return;
+    if (isLoadingLibraries || libraryIdsParam !== null) return;
+    if (libraries.length > 0) {
+      updateSearchParams(libraries.map((l) => l.id));
+    }
+  }, [isLoadingLibraries, libraries, libraryIdsParam, updateSearchParams]);
+
+  // Strip invalid IDs from URL after libraries load
+  useEffect(() => {
+    if (isLoadingLibraries || requestedSelectedIds === null) return;
     if (selectedIds.length !== requestedSelectedIds.length) {
       updateSearchParams(selectedIds);
     }
@@ -143,8 +157,11 @@ export function ChatSidebarProvider({
   );
 
   return (
-    <ChatSidebarContext.Provider value={contextValue}>
+    <ChatLibraryContext.Provider value={contextValue}>
       {children}
-    </ChatSidebarContext.Provider>
+    </ChatLibraryContext.Provider>
   );
 }
+
+/** @deprecated Use `ChatLibraryProvider` instead. */
+export const ChatSidebarProvider = ChatLibraryProvider;

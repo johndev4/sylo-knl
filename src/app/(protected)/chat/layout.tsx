@@ -1,6 +1,4 @@
-import { SidebarLayout } from '@/components/layout/sidebar-layout';
-import { ChatSidebar } from '@/features/chat/components/chat-sidebar';
-import { ChatSidebarProvider } from '@/features/chat/providers/chat-sidebar-provider';
+import { ChatLibraryProvider } from '@/features/chat/providers/chat-library-provider';
 
 export default function ChatLayout({
   children,
@@ -8,12 +6,10 @@ export default function ChatLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ChatSidebarProvider>
-      <SidebarLayout sidebar={<ChatSidebar />}>
-        <div className="bg-background relative flex min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto">
-          {children}
-        </div>
-      </SidebarLayout>
-    </ChatSidebarProvider>
+    <ChatLibraryProvider>
+      <div className="bg-background relative flex h-[calc(100dvh-4.5rem)] min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        {children}
+      </div>
+    </ChatLibraryProvider>
   );
 }
