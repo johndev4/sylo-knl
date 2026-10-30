@@ -132,7 +132,7 @@ export function SidebarLibraryNav({ userRole }: SidebarLibraryNavProps) {
                       </Link>
                     }
                     tooltip="Manage Documents"
-                    className="font-semibold"
+                    className="min-h-11 font-semibold md:min-h-8"
                   />
                 </SidebarMenuItem>
 
@@ -150,6 +150,7 @@ export function SidebarLibraryNav({ userRole }: SidebarLibraryNavProps) {
                     }
                     isActive={pathname === `/hub/libraries/${libraryId}/info`}
                     tooltip="Overview"
+                    className="min-h-11 md:min-h-8"
                   />
                 </SidebarMenuItem>
 
@@ -170,6 +171,7 @@ export function SidebarLibraryNav({ userRole }: SidebarLibraryNavProps) {
                         `/hub/libraries/${libraryId}/settings`
                       )}
                       tooltip="Settings"
+                      className="min-h-11 md:min-h-8"
                     />
                   </SidebarMenuItem>
                 )}
@@ -190,6 +192,7 @@ export function SidebarLibraryNav({ userRole }: SidebarLibraryNavProps) {
                       `/hub/libraries/${libraryId}/info/members`
                     )}
                     tooltip="Members"
+                    className="min-h-11 md:min-h-8"
                   />
                 </SidebarMenuItem>
               </SidebarMenu>
@@ -212,7 +215,7 @@ export function SidebarLibraryNav({ userRole }: SidebarLibraryNavProps) {
             <SidebarMenuItem className="group-data-[collapsible=icon]:hidden">
               <SidebarMenuButton
                 onClick={handleOpenLeaveDialog}
-                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                className="text-destructive hover:bg-destructive/10 hover:text-destructive min-h-11 md:min-h-8"
                 tooltip="Leave Library"
               >
                 <LogOut />

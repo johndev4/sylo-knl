@@ -55,6 +55,41 @@ test.describe.serial('Library Invites', () => {
     await expect(table.locator('td').nth(1)).toContainText('EDITOR');
   });
 
+  test('member and invite management is usable on mobile', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(`/hub/libraries/${testData.testLibraryId}/info/members`);
+    await page.waitForLoadState('networkidle');
+
+    const memberList = page.getByRole('list', { name: 'Library members' });
+    const inviteList = page.getByRole('list', {
+      name: 'Active invite links',
+    });
+    await expect(memberList).toBeVisible();
+    await expect(inviteList).toBeVisible();
+
+    const copyButton = inviteList.getByRole('button', {
+      name: 'Copy',
+      exact: true,
+    });
+    const revokeButton = inviteList.getByRole('button', {
+      name: 'Revoke',
+      exact: true,
+    });
+    await expect(copyButton).toBeVisible();
+    await expect(revokeButton).toBeVisible();
+    expect((await copyButton.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+    expect((await revokeButton.boundingBox())?.height).toBeGreaterThanOrEqual(
+      44
+    );
+    await expect(
+      page.evaluate(
+        () =>
+          document.documentElement.scrollWidth <=
+          document.documentElement.clientWidth
+      )
+    ).resolves.toBe(true);
+  });
+
   test('second user can accept an invite link and is added as a member with the correct role', async ({
     page,
     context,
@@ -68,7 +103,7 @@ test.describe.serial('Library Invites', () => {
 
     // Copy the invite link
     const table = page.getByLabel('Active Invites section', { exact: true });
-    const copyButton = table.locator('button', { hasText: 'Copy' });
+    const copyButton = table.locator('button:visible', { hasText: 'Copy' });
     await copyButton.click();
 
     // Retrieve the copied invite link from the clipboard and extract the pathname
@@ -110,5 +145,25 @@ test.describe.serial('Library Invites', () => {
     const user2Row = page.locator('tr', { hasText: testData.testUser2Email });
     await expect(user2Row).toBeVisible();
     await expect(user2Row.locator('td', { hasText: 'EDITOR' })).toBeVisible();
+  });
+
+  test('members can be selected for bulk removal on mobile', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(`/hub/libraries/${testData.testLibraryId}/info/members`);
+    await page.waitForLoadState('networkidle');
+
+    const memberList = page.getByRole('list', { name: 'Library members' });
+    const invitedMember = memberList
+      .getByRole('listitem')
+      .filter({ hasText: testData.testUser2Email });
+    const selectMember = invitedMember.getByRole('checkbox');
+    await expect(selectMember).toBeVisible();
+    await expect(selectMember).toBeEnabled();
+    await selectMember.click();
+    await expect(
+      page.getByRole('button', { name: 'Remove 1 member(s)' })
+    ).toBeVisible();
   });
 });

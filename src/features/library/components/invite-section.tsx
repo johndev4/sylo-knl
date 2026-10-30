@@ -464,11 +464,94 @@ export function InviteSection({ libraryId }: InviteSectionProps) {
           isLoading={isLoading}
         >
           <div className="w-full space-y-2.5">
-            <DataGridContainer>
-              <DataGridScrollArea>
-                <DataGridTable />
-              </DataGridScrollArea>
-            </DataGridContainer>
+            <div
+              className="divide-y md:hidden"
+              role="list"
+              aria-label="Active invite links"
+            >
+              {isLoading ? (
+                Array.from({ length: 3 }).map((_, index) => (
+                  <div key={index} className="space-y-3 py-4">
+                    <Skeleton className="h-5 w-2/3" />
+                    <Skeleton className="h-4 w-1/2" />
+                  </div>
+                ))
+              ) : table.getRowModel().rows.length === 0 ? (
+                <p className="text-muted-foreground py-6 text-center text-sm">
+                  No active invites.
+                </p>
+              ) : (
+                table.getRowModel().rows.map((row) => {
+                  const invite = row.original;
+
+                  return (
+                    <div
+                      key={invite.id}
+                      role="listitem"
+                      className="space-y-3 py-4"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-muted-foreground mb-1 text-xs">
+                          Code
+                        </p>
+                        <code className="font-mono text-sm break-all">
+                          {invite.invite_code}
+                        </code>
+                      </div>
+                      <dl className="grid grid-cols-2 gap-3 text-sm">
+                        <div className="space-y-1">
+                          <dt className="text-muted-foreground text-xs">
+                            Role
+                          </dt>
+                          <dd>{invite.role}</dd>
+                        </div>
+                        <div className="space-y-1">
+                          <dt className="text-muted-foreground text-xs">
+                            Uses
+                          </dt>
+                          <dd>
+                            {invite.use_count} / {invite.max_uses || '∞'}
+                          </dd>
+                        </div>
+                        <div className="col-span-2 space-y-1">
+                          <dt className="text-muted-foreground text-xs">
+                            Expires
+                          </dt>
+                          <dd>
+                            {invite.expires_at
+                              ? new Date(invite.expires_at).toLocaleString()
+                              : 'Never'}
+                          </dd>
+                        </div>
+                      </dl>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          className="h-11 flex-1"
+                          onClick={() => handleCopyLink(invite.invite_code)}
+                        >
+                          Copy
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          className="h-11 flex-1"
+                          onClick={() => setInviteToRevoke(invite)}
+                        >
+                          Revoke
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+            <div className="hidden md:block">
+              <DataGridContainer>
+                <DataGridScrollArea>
+                  <DataGridTable />
+                </DataGridScrollArea>
+              </DataGridContainer>
+            </div>
             <DataGridPagination />
           </div>
         </DataGrid>
