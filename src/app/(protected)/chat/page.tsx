@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { motion } from 'framer-motion';
 import { useChat } from '@ai-sdk/react';
 import { Streamdown } from 'streamdown';
@@ -34,7 +34,20 @@ import {
   MessageAvatar,
   MessageContent,
 } from '@/components/ui/message';
+import { useSession } from '@/components/providers/auth-provider';
+import { useChatHistory } from '@/features/chat/hooks/use-chat-history';
 import { useChatSidebar } from '@/features/chat/providers/chat-sidebar-provider';
+import { appToast } from '@/lib/toast';
+
+const emptySubscribe = () => () => {};
+
+function useMounted() {
+  return useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
+}
 
 function getMessageText(message: UIMessage | undefined) {
   return (
@@ -45,18 +58,17 @@ function getMessageText(message: UIMessage | undefined) {
   );
 }
 
-export default function ChatPage() {
+function ChatView({ userId }: { userId?: string | null }) {
   const prefersReducedMotion = useReducedMotion();
-  const {
-    libraries,
-    isLoadingLibraries,
-    noneSelected,
-    selectedIds,
-    selectedLibraries,
-  } = useChatSidebar();
+  const { libraries, noneSelected, selectedIds, selectedLibraries } =
+    useChatSidebar();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const shouldAutoScrollRef = useRef(true);
   const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
+  const { getStoredMessages, saveHistory, clearHistory } =
+    useChatHistory(userId);
+  const [initialMessages] = useState(() => getStoredMessages());
+
   const [transport] = useState(
     () =>
       new TextStreamChatTransport<UIMessage>({
@@ -74,6 +86,7 @@ export default function ChatPage() {
         }),
       })
   );
+
   const {
     messages,
     sendMessage,
@@ -82,8 +95,17 @@ export default function ChatPage() {
     regenerate,
     status,
     clearError,
-  } = useChat({ transport });
+  } = useChat({
+    transport,
+    messages: initialMessages,
+  });
   const isBusy = status === 'submitted' || status === 'streaming';
+
+  useEffect(() => {
+    if (status === 'ready' || status === 'error') {
+      saveHistory(messages);
+    }
+  }, [messages, saveHistory, status]);
 
   useEffect(() => {
     if (shouldAutoScrollRef.current) {
@@ -111,26 +133,16 @@ export default function ChatPage() {
   function clearChat() {
     if (isBusy) void stop();
     setMessages([]);
+    clearHistory();
     clearError();
     setIsClearDialogOpen(false);
+    appToast.success('Chat history cleared');
   }
 
   function handleMessagesScroll(event: React.UIEvent<HTMLElement>) {
     const element = event.currentTarget;
     shouldAutoScrollRef.current =
       element.scrollHeight - element.scrollTop - element.clientHeight < 96;
-  }
-
-  if (isLoadingLibraries) {
-    return (
-      <div
-        className="text-muted-foreground flex flex-1 items-center justify-center gap-2 text-sm"
-        role="status"
-      >
-        <span className="bg-primary size-2 animate-pulse rounded-full motion-reduce:animate-none" />
-        Loading libraries…
-      </div>
-    );
   }
 
   return (
@@ -360,4 +372,24 @@ export default function ChatPage() {
       </footer>
     </div>
   );
+}
+
+export default function ChatPage() {
+  const isMounted = useMounted();
+  const { user } = useSession();
+  const { isLoadingLibraries } = useChatSidebar();
+
+  if (isLoadingLibraries || !isMounted) {
+    return (
+      <div
+        className="text-muted-foreground flex flex-1 items-center justify-center gap-2 text-sm"
+        role="status"
+      >
+        <span className="bg-primary size-2 animate-pulse rounded-full motion-reduce:animate-none" />
+        {isLoadingLibraries ? 'Loading libraries…' : 'Loading conversation…'}
+      </div>
+    );
+  }
+
+  return <ChatView key={user?.id ?? 'anonymous'} userId={user?.id} />;
 }
