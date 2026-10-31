@@ -30,20 +30,14 @@ export function AppHeader() {
             )}
             href="/"
           >
-            <div
-              className={cn(
-                'flex h-8 w-8 items-center justify-center shadow-xs',
-                'bg-background dark:bg-background'
-              )}
-            >
-              <Image
-                src="/sylo.svg"
-                alt="Sylo Logo"
-                width={25}
-                height={25}
-                priority
-              />
-            </div>
+            <Image
+              src="/sylo_minimal.svg"
+              alt="Sylo Logo"
+              width={40}
+              height={40}
+              className="size-10 shrink-0 dark:brightness-0 dark:invert"
+              priority
+            />
             <span className="hidden tracking-wider uppercase sm:inline">
               Sylo
             </span>

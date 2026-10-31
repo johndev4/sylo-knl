@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 1024 1024"
+     role="img" aria-labelledby="title desc">
+  <title id="title">SYLO abstract symbol</title>
+  <desc id="desc">Two interlocking curved forms create an abstract, minimal brand mark.</desc>
+  <g fill="none" stroke="#111827" stroke-width="112"
+     stroke-linecap="round" stroke-linejoin="round">
+    <path d="M 665 255
+             C 610 198, 525 190, 452 238
+             L 365 310
+             C 270 389, 270 535, 365 614
+             C 439 676, 539 665, 600 601"/>
+    <path d="M 359 769
+             C 416 826, 501 834, 574 786
+             L 661 714
+             C 756 635, 756 489, 661 410
+             C 587 348, 487 359, 426 423"/>
+  </g>
+</svg>
