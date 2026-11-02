@@ -83,13 +83,8 @@ export function ChatLibraryProvider({
     if (!user) router.push('/login');
   }, [router, user]);
 
-  // Auto-select all libraries when no libraryIds param in URL
-  useEffect(() => {
-    if (isLoadingLibraries || libraryIdsParam !== null) return;
-    if (libraries.length > 0) {
-      updateSearchParams(libraries.map((l) => l.id));
-    }
-  }, [isLoadingLibraries, libraries, libraryIdsParam, updateSearchParams]);
+  // We no longer auto-select all libraries by default.
+  // Selection must be explicit via the UI or URL parameters.
 
   // Strip invalid IDs from URL after libraries load
   useEffect(() => {
