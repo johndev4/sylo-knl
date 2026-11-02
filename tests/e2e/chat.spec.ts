@@ -8,16 +8,13 @@ test.describe('Chat Page UI & Sidebar', () => {
     testData = getTestData();
   });
 
-  test('Sidebar and Pinned Input layout', async ({ page }) => {
+  test('Library Selector and Pinned Input layout', async ({ page }) => {
     await page.goto('/chat');
     await page.waitForLoadState('networkidle');
 
-    // Sidebar should be present (using role or tag)
-    const sidebar = page.locator('aside').first();
-    await expect(sidebar).toBeVisible({ timeout: 10000 });
-    await expect(sidebar).toContainText('AI Knowledge Chat');
-    await expect(sidebar).toContainText(testData.testLibraryName);
-    await expect(sidebar).toContainText(testData.testLibraryName2);
+    // Inline library selector should be present
+    const selector = page.getByRole('button', { name: /Select librar|All libraries|libraries/i });
+    await expect(selector).toBeVisible({ timeout: 10000 });
 
     // Input section should be pinned at the bottom
     const footer = page.locator('footer');
@@ -28,28 +25,18 @@ test.describe('Chat Page UI & Sidebar', () => {
     await expect(messagesArea).toHaveClass(/overflow-y-auto/);
   });
 
-  test('Sidebar toggling works', async ({ page }) => {
+  // Sidebar toggling is no longer applicable as sidebar was removed.
+  // We verify the library selector opens a popover instead.
+  test('Library selector opens popover', async ({ page }) => {
     await page.goto('/chat');
     await page.waitForLoadState('networkidle');
 
-    const sidebar = page.locator('aside').first();
-    await expect(sidebar).toBeVisible({ timeout: 10000 });
+    const selector = page.getByRole('button', { name: /Select librar|All libraries|libraries/i });
+    await selector.click();
 
-    // Collapse
-    const collapseBtn = page.getByLabel('Collapse sidebar');
-    await collapseBtn.click();
-
-    // Sidebar should be in collapsed state (slim div)
-    // In our implementation, the <aside> is replaced by a <div> if !isOpen
-    await expect(sidebar).not.toBeVisible();
-    const openBtn = page.getByLabel('Open sidebar');
-    await expect(openBtn).toBeVisible();
-
-    // Expand
-    await openBtn.click();
-    await expect(page.locator('aside').first()).toBeVisible();
-    await expect(page.locator('aside').first()).toContainText(
-      'AI Knowledge Chat'
-    );
+    // Command palette/Popover should be visible
+    const popover = page.locator('[role="dialog"]');
+    await expect(popover).toBeVisible();
+    await expect(popover.locator('input[placeholder="Search libraries…"]')).toBeVisible();
   });
 });

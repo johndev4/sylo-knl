@@ -62,7 +62,7 @@ export function LibrariesBentoGrid({ hubData }: LibraryGridProps) {
     <>
       <section aria-label="Library dashboard" className="w-full">
         <motion.div
-          className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3"
+          className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
@@ -81,10 +81,10 @@ export function LibrariesBentoGrid({ hubData }: LibraryGridProps) {
                   isFeatured ? 'md:col-span-2' : ''
                 )}
               >
-                <Card className="relative flex h-full flex-col overflow-hidden border border-neutral-200/50 bg-white/60 shadow-sm backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-neutral-300/50 hover:shadow-lg dark:border-neutral-800/50 dark:bg-neutral-950/60 dark:hover:border-neutral-700/50">
+                <Card className="relative flex h-full flex-col overflow-hidden border border-neutral-200/50 bg-white/60 shadow-sm backdrop-blur-sm transition-[border-color,box-shadow,transform] duration-300 hover:-translate-y-1 hover:border-neutral-300/50 hover:shadow-lg dark:border-neutral-800/50 dark:bg-neutral-950/60 dark:hover:border-neutral-700/50">
                   <CardContent className="space-y-2 pb-4">
                     <div className="flex items-center justify-between gap-3">
-                      <div className="flex-1 overflow-hidden">
+                      <div className="min-w-0 flex-1 overflow-hidden">
                         <CardTitle className="text-foreground truncate text-xl font-semibold">
                           {space.name}
                         </CardTitle>
@@ -115,7 +115,7 @@ export function LibrariesBentoGrid({ hubData }: LibraryGridProps) {
                           </Link>
                         }
                         variant="default"
-                        className="w-full"
+                        className="h-11 w-full sm:h-8"
                         size="sm"
                         aria-label={`Open chat for ${space.name}`}
                         onClick={(e) => e.stopPropagation()}
@@ -129,7 +129,7 @@ export function LibrariesBentoGrid({ hubData }: LibraryGridProps) {
                           </Link>
                         }
                         variant="outline"
-                        className="w-full"
+                        className="h-11 w-full sm:h-8"
                         size="sm"
                         aria-label={`View documents for ${space.name}`}
                         onClick={(e) => e.stopPropagation()}

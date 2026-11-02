@@ -152,9 +152,12 @@ export function DocumentActions({
             variant="outline"
             size="sm"
             onClick={onEnterEditMode}
-            className="text-muted-foreground"
+            className="text-muted-foreground h-11"
+            aria-label="Edit document"
+            title="Edit document"
           >
             <Edit className="h-4 w-4" />
+            <span>Edit</span>
           </Button>
         )}
         {!isNew && isEditMode && (
@@ -163,9 +166,12 @@ export function DocumentActions({
             variant="outline"
             size="sm"
             onClick={onCancel}
-            className="text-muted-foreground"
+            className="text-muted-foreground h-11"
+            aria-label="Cancel editing"
+            title="Cancel editing"
           >
             <X className="h-4 w-4" />
+            <span>Cancel</span>
           </Button>
         )}
         {isEditMode && !isViewer && (
@@ -174,12 +180,18 @@ export function DocumentActions({
             size="sm"
             onClick={onSave}
             disabled={saveDisabled}
-            className="rounded-lg bg-[#10b981] px-4 font-semibold text-white shadow-sm hover:bg-[#059669]"
+            className="h-11 rounded-lg bg-[#10b981] px-4 font-semibold text-white shadow-sm hover:bg-[#059669]"
           >
             {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Saving…</span>
+              </>
             ) : (
-              <Save className="h-4 w-4" />
+              <>
+                <Save className="h-4 w-4" />
+                <span>Save</span>
+              </>
             )}
           </Button>
         )}
@@ -192,8 +204,9 @@ export function DocumentActions({
                   variant="outline"
                   size="sm"
                   disabled={isDeleting}
-                  className="text-destructive hover:bg-destructive/10 border-neutral-200 dark:border-neutral-800"
-                  aria-label="Delete document(mobile)"
+                  className="text-destructive hover:bg-destructive/10 h-11 w-11 sm:h-8 sm:w-auto"
+                  aria-label="Delete document"
+                  title="Delete document"
                 >
                   {isDeleting ? (
                     <Loader2 className="h-4 w-4 animate-spin" />

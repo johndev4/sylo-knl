@@ -177,8 +177,10 @@ export function SidebarDocumentList({ userRole }: SidebarDocumentListProps) {
                   <Search className="text-muted-foreground absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2" />
                   <Input
                     placeholder="Search docs…"
+                    name="documentSearch"
+                    aria-label="Search documents"
                     autoComplete="off"
-                    className="focus-visible:ring-primary/30 border-sidebar-border bg-sidebar-accent/50 h-8 pr-8 pl-8 text-xs focus-visible:ring-1"
+                    className="focus-visible:ring-primary/30 border-sidebar-border bg-sidebar-accent/50 h-11 pr-8 pl-8 text-base focus-visible:ring-1 md:h-8 md:text-xs"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />

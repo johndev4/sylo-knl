@@ -169,18 +169,20 @@ export default function AccountSettingsForm({
 
   return (
     <div className="bg-background min-h-screen">
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-6 sm:py-8">
         <div className="max-w-2xl">
           {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold">Account Settings</h1>
+          <div className="mb-6 sm:mb-8">
+            <h1 className="text-2xl font-bold text-balance sm:text-3xl">
+              Account Settings
+            </h1>
             <p className="text-muted-foreground mt-2">
               Manage your profile information
             </p>
           </div>
 
           {/* Profile Card */}
-          <Card>
+          <Card className="[--card-spacing:--spacing(4)] sm:[--card-spacing:--spacing(6)]">
             <CardHeader>
               <CardTitle>Profile Information</CardTitle>
 
@@ -212,12 +214,12 @@ export default function AccountSettingsForm({
 
                 {/* Avatar Display Section */}
                 {profile.avatarUrl && (
-                  <div className="rounded-xl border border-neutral-200 bg-neutral-50/50 p-6 dark:border-neutral-800 dark:bg-neutral-900/50">
-                    <Label className="mb-4 block text-sm font-semibold tracking-tight">
+                  <div className="rounded-lg border border-neutral-200 bg-neutral-50/50 p-4 sm:rounded-xl sm:p-6 dark:border-neutral-800 dark:bg-neutral-900/50">
+                    <Label className="mb-3 block text-sm font-semibold tracking-tight sm:mb-4">
                       Avatar Display
                     </Label>
 
-                    <div className="flex flex-wrap gap-4">
+                    <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:gap-4">
                       {/* Google Picture Option */}
                       <button
                         type="button"
@@ -229,7 +231,7 @@ export default function AccountSettingsForm({
                           }))
                         }
                         className={cn(
-                          'relative flex flex-col items-center gap-3 rounded-2xl border-2 p-4 transition-[border-color,background-color,box-shadow] duration-200 motion-reduce:transition-none',
+                          'relative flex w-full flex-col items-center gap-2 rounded-xl border-2 p-3 transition-[border-color,background-color,box-shadow] duration-200 motion-reduce:transition-none sm:w-auto sm:gap-3 sm:p-4',
                           formData.useAvatarUrl
                             ? 'border-primary bg-primary/5 shadow-sm'
                             : 'border-transparent bg-white hover:border-neutral-300 dark:bg-neutral-950 dark:hover:border-neutral-700'
@@ -241,7 +243,7 @@ export default function AccountSettingsForm({
                             email={profile.email}
                             avatarUrl={profile.avatarUrl}
                             useAvatarUrl={true}
-                            className="h-20 w-20 text-2xl shadow-sm"
+                            className="h-16 w-16 text-xl shadow-sm sm:h-20 sm:w-20 sm:text-2xl"
                           />
 
                           {formData.useAvatarUrl && (
@@ -274,7 +276,7 @@ export default function AccountSettingsForm({
                           }))
                         }
                         className={cn(
-                          'relative flex flex-col items-center gap-3 rounded-2xl border-2 p-4 transition-[border-color,background-color,box-shadow] duration-200 motion-reduce:transition-none',
+                          'relative flex w-full flex-col items-center gap-2 rounded-xl border-2 p-3 transition-[border-color,background-color,box-shadow] duration-200 motion-reduce:transition-none sm:w-auto sm:gap-3 sm:p-4',
                           !formData.useAvatarUrl
                             ? 'border-primary bg-primary/5 shadow-sm'
                             : 'border-transparent bg-white hover:border-neutral-300 dark:bg-neutral-950 dark:hover:border-neutral-700'
@@ -286,12 +288,12 @@ export default function AccountSettingsForm({
                             email={profile.email}
                             useAvatarUrl={false}
                             className={cn(
-                              'h-20 w-20 text-2xl font-bold shadow-sm',
+                              'h-16 w-16 text-xl font-bold shadow-sm sm:h-20 sm:w-20 sm:text-2xl',
                               !formData.useAvatarUrl
                                 ? 'bg-primary/10 text-primary'
                                 : 'bg-neutral-200 dark:bg-neutral-800'
                             )}
-                            fallbackClassName="text-2xl font-bold"
+                            fallbackClassName="text-xl font-bold sm:text-2xl"
                           />
 
                           {!formData.useAvatarUrl && (

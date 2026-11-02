@@ -613,7 +613,11 @@ export function DocumentManager({
           className="float-right"
           aria-label="Toggle details"
           render={
-            <Button variant={'ghost'} size={'icon-xs'}>
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              className="size-11 md:size-6"
+            >
               <ChevronsUpDownIcon data-icon="inline-end" className="size-3.5" />
             </Button>
           }

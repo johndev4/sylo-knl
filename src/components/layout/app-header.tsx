@@ -2,7 +2,6 @@ import { cn } from '@/lib/utils';
 import { ThemeToggle } from './theme-toggle';
 import { AccountDropdown } from './account-dropdown';
 import { Navbar } from './navbar';
-import { EggIcon } from 'lucide-react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { getProfileDropdownUserInfo } from '@/features/user/queries';
@@ -10,6 +9,7 @@ import { getUserNonRedirect } from '@/lib/auth/get-user';
 import { Suspense } from 'react';
 import { DropdownMenu, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { Spinner } from '../ui/spinner';
+import Image from 'next/image';
 
 export function AppHeader() {
   return (
@@ -20,25 +20,24 @@ export function AppHeader() {
         'bg-background/80 backdrop-blur-md'
       )}
     >
-      <div className="flex h-16 w-full items-center justify-between px-4">
+      <div className="flex h-16 w-full items-center justify-between px-3 sm:px-4">
         <div className="flex items-center gap-2 md:gap-4">
           {/* Logo / Brand */}
           <Link
             className={cn(
-              'flex items-center gap-2 text-lg font-bold',
+              'flex min-h-11 min-w-11 items-center justify-center gap-2 text-lg font-bold sm:min-w-0 sm:justify-start',
               'text-foreground'
             )}
             href="/"
           >
-            <div
-              className={cn(
-                'flex h-8 w-8 items-center justify-center shadow-xs',
-                'bg-background dark:bg-background',
-                'rounded-md border border-neutral-200 dark:border-neutral-800'
-              )}
-            >
-              <EggIcon className="size-4.5" />
-            </div>
+            <Image
+              src="/sylo_minimal.svg"
+              alt="Sylo Logo"
+              width={40}
+              height={40}
+              className="size-10 shrink-0 dark:brightness-0 dark:invert"
+              priority
+            />
             <span className="hidden tracking-wider uppercase sm:inline">
               Sylo
             </span>
@@ -49,7 +48,7 @@ export function AppHeader() {
         </div>
 
         {/* Theme Toggle & Account Dropdown */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <ThemeToggle />
           <Suspense fallback={<AccountDropdownLoading />}>
             <AccountDropdownWrapper />

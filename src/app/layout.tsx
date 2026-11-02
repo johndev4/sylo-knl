@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { AppThemeProvider } from '@/components/providers/app-theme-provider';
 import { cn } from '@/lib/utils';
@@ -13,8 +13,12 @@ import { Toaster } from '@/components/ui/sonner';
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
 export const metadata: Metadata = {
-  title: 'Sylo',
+  title: 'Sylo - AI Knowledge Library',
   description: 'An AI-powered knowledge library',
+};
+
+export const viewport: Viewport = {
+  interactiveWidget: 'resizes-content',
 };
 
 export default function RootLayout({

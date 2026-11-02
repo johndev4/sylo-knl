@@ -56,7 +56,7 @@ const Editor: React.FC<EditorProps> = ({
         editable={editable}
         theme={resolvedTheme === 'dark' ? 'dark' : 'light'}
         onChange={handleEditorChange}
-        slashMenu={true}
+        slashMenu={false}
         portalElements={{ default: document.body }}
       >
         <SuggestionMenuController

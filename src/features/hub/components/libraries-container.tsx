@@ -110,7 +110,7 @@ export function LibrariesContainer({ hubData }: LibrariesContainerProps) {
 
   return (
     <motion.div
-      className="w-full space-y-4 px-0 sm:px-0"
+      className="w-full space-y-4"
       variants={panelVariants}
       initial="hidden"
       animate="visible"
@@ -125,13 +125,13 @@ export function LibrariesContainer({ hubData }: LibrariesContainerProps) {
         layout
       >
         {/* Left: Search & Filters */}
-        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+        <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto">
           <Input
-            placeholder="Search libraries..."
+            placeholder="Search libraries…"
             aria-label="Search libraries"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full cursor-text sm:w-48"
+            className="col-span-2 h-11 w-full cursor-text sm:col-span-1 sm:h-9 sm:w-48"
           />
 
           {/* Role Filter */}
@@ -141,7 +141,7 @@ export function LibrariesContainer({ hubData }: LibrariesContainerProps) {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="w-full sm:w-auto"
+                  className="h-11 w-full sm:h-8 sm:w-auto"
                 >
                   {roleFilter ? `Role: ${roleFilter}` : 'All Roles'}
                   <ChevronDown className="ml-1 h-4 w-4" />
@@ -170,7 +170,7 @@ export function LibrariesContainer({ hubData }: LibrariesContainerProps) {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="w-full sm:w-auto"
+                  className="h-11 w-full sm:h-8 sm:w-auto"
                 >
                   Sort:{' '}
                   {sortBy === 'created'
@@ -207,14 +207,14 @@ export function LibrariesContainer({ hubData }: LibrariesContainerProps) {
         </div>
 
         {/* Right: View Toggle + Create */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between gap-2 sm:justify-end">
           <div className="flex items-center gap-1 rounded-lg border border-neutral-200 bg-neutral-100/50 p-1 dark:border-neutral-800 dark:bg-neutral-900/50">
             {(['grid', 'table'] as const).map((mode) => (
               <button
                 key={mode}
                 onClick={() => setViewMode(mode)}
                 className={cn(
-                  'focus-visible:ring-ring relative flex h-8 w-8 items-center justify-center rounded-md transition-colors outline-none focus-visible:ring-1 focus-visible:ring-offset-1',
+                  'focus-visible:ring-ring relative flex h-11 w-11 items-center justify-center rounded-md transition-colors outline-none focus-visible:ring-1 focus-visible:ring-offset-1 sm:h-8 sm:w-8',
                   viewMode === mode
                     ? 'text-foreground'
                     : 'text-muted-foreground hover:text-foreground hover:bg-neutral-200/50 dark:hover:bg-neutral-800/50'
@@ -237,7 +237,11 @@ export function LibrariesContainer({ hubData }: LibrariesContainerProps) {
               </button>
             ))}
           </div>
-          <CreateLibraryDialog size="sm" variant="outline" />
+          <CreateLibraryDialog
+            size="sm"
+            variant="outline"
+            triggerClassName="h-11 sm:h-8"
+          />
         </div>
       </motion.div>
 

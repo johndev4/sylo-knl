@@ -26,15 +26,15 @@ export function Navbar() {
   }
 
   return (
-    <NavigationMenu className="ml-4 hidden items-center gap-1 md:flex">
-      <NavigationMenuList className="">
+    <NavigationMenu className="ml-1 flex items-center gap-1 md:ml-4">
+      <NavigationMenuList>
         {/* Hub Nav Item */}
-        <NavigationMenuItem className="hidden md:flex">
+        <NavigationMenuItem>
           <NavigationMenuLink
             render={<Link href="/hub">Hub</Link>}
             className={navigationMenuTriggerStyle({
               className: cn(
-                'focus-visible:ring-ring mr-1 px-3 text-sm font-medium transition-colors focus-visible:ring-1 focus-visible:outline-none',
+                'focus-visible:ring-ring mr-1 h-11 min-w-11 justify-center px-2 text-xs font-medium transition-colors focus-visible:ring-1 focus-visible:outline-none sm:px-3 sm:text-sm md:h-9',
                 pathname.startsWith('/hub')
                   ? 'text-foreground bg-neutral-100 dark:bg-neutral-800/50'
                   : 'text-muted-foreground hover:text-foreground hover:bg-neutral-100/50 dark:hover:bg-neutral-800/30'
@@ -44,12 +44,12 @@ export function Navbar() {
         </NavigationMenuItem>
 
         {/* Chat Nav Item */}
-        <NavigationMenuItem className="hidden md:flex">
+        <NavigationMenuItem>
           <NavigationMenuLink
             render={<Link href="/chat">Chat</Link>}
             className={navigationMenuTriggerStyle({
               className: cn(
-                'focus-visible:ring-ring mx-auto px-3 text-sm font-medium transition-colors focus-visible:ring-1 focus-visible:outline-none',
+                'focus-visible:ring-ring mx-auto h-11 min-w-11 justify-center px-2 text-xs font-medium transition-colors focus-visible:ring-1 focus-visible:outline-none sm:px-3 sm:text-sm md:h-9',
                 pathname.startsWith('/chat')
                   ? 'text-foreground bg-neutral-100 dark:bg-neutral-800/50'
                   : 'text-muted-foreground hover:text-foreground hover:bg-neutral-100/50 dark:hover:bg-neutral-800/30'
