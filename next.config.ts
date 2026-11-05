@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
     '@blocknote/core',
     '@blocknote/react',
     '@blocknote/server-util',
+    '@blocknote/xl-pdf-exporter',
   ],
   experimental: {
     authInterrupts: true,

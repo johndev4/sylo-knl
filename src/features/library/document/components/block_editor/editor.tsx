@@ -5,7 +5,7 @@ import { BlockNoteEditor } from '@blocknote/core';
 import { SuggestionMenuController, useCreateBlockNote } from '@blocknote/react';
 import { BlockNoteView } from '@blocknote/shadcn';
 import '@blocknote/shadcn/style.css';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { getCustomSlashMenuItems } from './custom-slash-menu-items';
 import { useTheme } from 'next-themes';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -15,6 +15,7 @@ interface EditorProps {
   onChange: (blocks: BlockNotePartialBlocks, blockCount: number) => void;
   initialContent?: BlockNotePartialBlocks;
   editable?: boolean;
+  onEditorReady?: (editor: BlockNoteEditor) => void;
 }
 
 function countBlocks(blocks: BlockNotePartialBlocks): number {
@@ -30,6 +31,7 @@ const Editor: React.FC<EditorProps> = ({
   onChange,
   initialContent,
   editable = true,
+  onEditorReady,
 }) => {
   const { resolvedTheme } = useTheme();
 
@@ -38,6 +40,12 @@ const Editor: React.FC<EditorProps> = ({
       ? (initialContent as never)
       : undefined,
   });
+
+  useEffect(() => {
+    if (onEditorReady) {
+      onEditorReady(editor);
+    }
+  }, [editor, onEditorReady]);
 
   const handleEditorChange = () => {
     const blocks = editor.document;
