@@ -1,5 +1,8 @@
 import { Button } from '@/components/ui/button';
 import { Edit, X, Save, Loader2, Trash2, AlertTriangle } from 'lucide-react';
+import type { BlockNoteEditor } from '@blocknote/core';
+import { DocumentExportMenu } from './document-export-menu';
+import type { DocumentExportMetadata } from '../utils/export-document';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,6 +24,8 @@ interface DocumentActionsProps {
   isDeleting: boolean;
   hasBlockLimitError: boolean;
   canDelete?: boolean;
+  exportMetadata?: DocumentExportMetadata;
+  editor?: BlockNoteEditor | null;
   onEnterEditMode: () => void;
   onCancel: () => void;
   onSave: () => void;
@@ -36,6 +41,8 @@ export function DocumentActions({
   isDeleting,
   hasBlockLimitError,
   canDelete = true,
+  exportMetadata,
+  editor,
   onEnterEditMode,
   onCancel,
   onSave,
@@ -81,6 +88,13 @@ export function DocumentActions({
     <div className="flex items-center gap-2">
       {/* Desktop (sm+) */}
       <div className="hidden items-center gap-2 sm:flex">
+        {!isNew && !isEditMode && exportMetadata && editor && (
+          <DocumentExportMenu
+            metadata={exportMetadata}
+            editor={editor}
+            variant="desktop"
+          />
+        )}
         {!isNew && !isEditMode && !isViewer && (
           <Button
             type="button"
@@ -146,17 +160,24 @@ export function DocumentActions({
 
       {/* Mobile (below sm) */}
       <div className="flex items-center gap-2 sm:hidden">
+        {!isNew && !isEditMode && exportMetadata && editor && (
+          <DocumentExportMenu
+            metadata={exportMetadata}
+            editor={editor}
+            variant="mobile"
+          />
+        )}
         {!isNew && !isEditMode && !isViewer && (
           <Button
             type="button"
             variant="outline"
             size="sm"
             onClick={onEnterEditMode}
-            className="text-muted-foreground h-11"
+            className="text-muted-foreground h-11 touch-manipulation"
             aria-label="Edit document"
             title="Edit document"
           >
-            <Edit className="h-4 w-4" />
+            <Edit className="h-4 w-4" aria-hidden="true" />
             <span>Edit</span>
           </Button>
         )}
@@ -166,11 +187,11 @@ export function DocumentActions({
             variant="outline"
             size="sm"
             onClick={onCancel}
-            className="text-muted-foreground h-11"
+            className="text-muted-foreground h-11 touch-manipulation"
             aria-label="Cancel editing"
             title="Cancel editing"
           >
-            <X className="h-4 w-4" />
+            <X className="h-4 w-4" aria-hidden="true" />
             <span>Cancel</span>
           </Button>
         )}
@@ -180,16 +201,16 @@ export function DocumentActions({
             size="sm"
             onClick={onSave}
             disabled={saveDisabled}
-            className="h-11 rounded-lg bg-[#10b981] px-4 font-semibold text-white shadow-sm hover:bg-[#059669]"
+            className="h-11 touch-manipulation rounded-lg bg-[#10b981] px-4 font-semibold text-white shadow-sm hover:bg-[#059669]"
           >
             {isLoading ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
                 <span>Saving…</span>
               </>
             ) : (
               <>
-                <Save className="h-4 w-4" />
+                <Save className="h-4 w-4" aria-hidden="true" />
                 <span>Save</span>
               </>
             )}
@@ -204,14 +225,17 @@ export function DocumentActions({
                   variant="outline"
                   size="sm"
                   disabled={isDeleting}
-                  className="text-destructive hover:bg-destructive/10 h-11 w-11 sm:h-8 sm:w-auto"
+                  className="text-destructive hover:bg-destructive/10 h-11 w-11 touch-manipulation sm:h-8 sm:w-auto"
                   aria-label="Delete document"
                   title="Delete document"
                 >
                   {isDeleting ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2
+                      className="h-4 w-4 animate-spin"
+                      aria-hidden="true"
+                    />
                   ) : (
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="h-4 w-4" aria-hidden="true" />
                   )}
                 </Button>
               }

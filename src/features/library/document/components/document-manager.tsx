@@ -37,7 +37,9 @@ import {
 } from '@/components/ui/collapsible';
 import { Button } from '@/components/ui/button';
 import { appToast } from '@/lib/toast';
+import type { BlockNoteEditor } from '@blocknote/core';
 import type { BlockNotePartialBlocks } from '@/lib/blocknote/config';
+import type { DocumentExportMetadata } from '../utils/export-document';
 
 interface DocumentManagerProps {
   libraryId: string;
@@ -86,6 +88,13 @@ export function DocumentManager({
   const [tagInput, setTagInput] = useState('');
   const tagSuggestionsData = useTagSuggestions(libraryId, tagInput, tags);
   const [editorResetKey, setEditorResetKey] = useState(0);
+  const [editorInstance, setEditorInstance] = useState<BlockNoteEditor | null>(
+    null
+  );
+
+  const handleEditorReady = useCallback((editor: BlockNoteEditor) => {
+    setEditorInstance(editor);
+  }, []);
 
   // Track the most recently saved updated_at so the OCC check
   // always sends the current server timestamp (not the stale prop).
@@ -128,9 +137,12 @@ export function DocumentManager({
   // Navigation guard — shows AlertDialog instead of window.confirm
   // ---------------------------------------------------------------------------
 
-  const handleNavigationAttempt = useCallback((href: string) => {
-    setPendingAction({ type: 'navigate', href });
-  }, []);
+  const handleNavigationAttempt = useCallback(
+    (href: string) => {
+      setPendingAction({ type: 'navigate', href });
+    },
+    [setPendingAction]
+  );
 
   useNavigationGuard(
     isDirty && !ignoreNavigationGuard,
@@ -180,11 +192,17 @@ export function DocumentManager({
     }
 
     setPendingAction(null);
-  }, [pendingAction, resetToInitialData, resetNewDocumentDraft, router]);
+  }, [
+    pendingAction,
+    resetToInitialData,
+    resetNewDocumentDraft,
+    router,
+    setPendingAction,
+  ]);
 
   const handleDismissDiscard = useCallback(() => {
     setPendingAction(null);
-  }, []);
+  }, [setPendingAction]);
 
   // ---------------------------------------------------------------------------
   // Cancel button handler
@@ -196,7 +214,7 @@ export function DocumentManager({
     } else {
       resetToInitialData();
     }
-  }, [isDirty, resetToInitialData]);
+  }, [isDirty, resetToInitialData, setPendingAction]);
 
   // ---------------------------------------------------------------------------
   // Effects
@@ -296,6 +314,18 @@ export function DocumentManager({
   const now = new Date().toISOString();
   const createdAt = initialData?.created_at || now;
   const updatedAt = initialData?.updated_at || now;
+
+  const exportMetadata: DocumentExportMetadata = useMemo(
+    () => ({
+      id: initialData?.id,
+      title: title || 'Untitled Document',
+      tags,
+      createdAt,
+      updatedAt,
+      authors: initialData?.authors,
+    }),
+    [initialData?.id, initialData?.authors, title, tags, createdAt, updatedAt]
+  );
 
   // ---------------------------------------------------------------------------
   // Tag handlers
@@ -443,7 +473,7 @@ export function DocumentManager({
         setHasBlockLimitError(false);
       }
     },
-    []
+    [setHasBlockLimitError]
   );
 
   // ---------------------------------------------------------------------------
@@ -525,6 +555,8 @@ export function DocumentManager({
           isDeleting={isDeleting}
           hasBlockLimitError={hasBlockLimitError}
           canDelete={canDelete}
+          exportMetadata={exportMetadata}
+          editor={editorInstance}
           onEnterEditMode={() => setIsEditMode(true)}
           onCancel={handleCancel}
           onSave={handleSubmit}
@@ -633,6 +665,7 @@ export function DocumentManager({
               initialContent={content}
               onChange={handleEditorChange}
               editable={isEditMode && userRole !== 'VIEWER'}
+              onEditorReady={handleEditorReady}
             />
           </div>
         </div>

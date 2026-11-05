@@ -44,7 +44,7 @@ concurrency:
 
 jobs:
   deploy:
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     env:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}

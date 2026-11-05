@@ -1,5 +1,6 @@
 <div align="center">
-  <h1>Sylo</h1>
+  <img src="public/sylo_minimal.svg" alt="Sylo Logo" width="120" height="120" style="margin-bottom: 1rem;" />
+  <h1>Sylo-KNL</h1>
   <p><strong>AI-powered knowledge library with hybrid RAG retrieval and collaborative document management.</strong></p>
 </div>
 
