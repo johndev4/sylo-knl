@@ -35,7 +35,7 @@ export function AppHeader() {
               alt="Sylo Logo"
               width={40}
               height={40}
-              className="size-10 shrink-0 dark:brightness-0 dark:invert"
+              className="size-10 shrink-0"
               priority
             />
             <span className="hidden tracking-wider uppercase sm:inline">
