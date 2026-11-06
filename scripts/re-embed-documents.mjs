@@ -166,8 +166,10 @@ async function generateBatchEmbeddings(
       const providerInstance = createGoogleGenerativeAI({
         apiKey: googleApiKey,
       });
+      const model =
+        process.env.GOOGLE_EMBEDDING_MODEL || 'gemini-embedding-001';
       const result = await embedMany({
-        model: providerInstance.textEmbeddingModel('gemini-embedding-001'),
+        model: providerInstance.textEmbeddingModel(model),
         values: texts,
       });
       return result.embeddings;

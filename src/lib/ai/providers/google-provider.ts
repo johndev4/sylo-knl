@@ -37,7 +37,9 @@ function initializeGoogleAI() {
 export class GoogleLLMProvider implements LLMProvider {
   name = 'google';
   private googleAI = initializeGoogleAI();
-  private model = this.googleAI('gemini-2.5-flash');
+  private model = this.googleAI(
+    process.env.GOOGLE_LLM_MODEL || 'gemini-3.8-flash'
+  );
 
   async generate(input: GenerateInput): Promise<GenerateOutput> {
     try {
@@ -104,7 +106,7 @@ export class GoogleEmbeddingProvider implements EmbeddingProvider {
   dimension = 3072;
   private googleAI = initializeGoogleAI();
   private embeddingModel = this.googleAI.textEmbeddingModel(
-    'gemini-embedding-001'
+    process.env.GOOGLE_EMBEDDING_MODEL || 'gemini-embedding-001'
   );
 
   async embed(text: string): Promise<number[]> {

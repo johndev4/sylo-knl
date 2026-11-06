@@ -38,7 +38,7 @@ sequenceDiagram
 
 ### Logic Details
 1. **Direct Conversion**: JSON $\rightarrow$ Markdown (extracted from BlockNote blocks).
-2. **Embedding Generation**: Markdown is chunked and embedded using `gemini-embedding-001` (or configured provider).
+2. **Embedding Generation**: Markdown is chunked and embedded using `gemini-embedding-001` (or configured via `GOOGLE_EMBEDDING_MODEL` / configured provider).
 3. **Atomic Write**: The `update_document_with_chunks` RPC ensures that the document update and chunk replacement happen as a single unit of work. If the chunk insertion fails, the document metadata is not updated.
 
 ---

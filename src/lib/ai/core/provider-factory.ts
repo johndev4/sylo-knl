@@ -62,14 +62,14 @@ export function getProviderInfo() {
       model:
         process.env.LLM_PROVIDER === 'ollama'
           ? process.env.OLLAMA_LLM_MODEL || 'mistral'
-          : 'gemini-2.5-flash',
+          : process.env.GOOGLE_LLM_MODEL || 'gemini-3.8-flash',
     },
     embedding: {
       name: embeddingProvider.name,
       model:
         process.env.EMBEDDING_PROVIDER === 'ollama'
           ? process.env.OLLAMA_EMBEDDING_MODEL || 'nomic-embed-text'
-          : 'gemini-embedding-001',
+          : process.env.GOOGLE_EMBEDDING_MODEL || 'gemini-embedding-001',
       dimension: embeddingProvider.dimension,
     },
   };
