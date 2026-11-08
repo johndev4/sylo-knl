@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
+  <title id="title">Sylo Signal</title>
+  <desc id="desc">A geometric S formed from five modular blue bars.</desc>
+  <g fill="#1447E6">
+    <path d="M12 10h40v10H22v7H12z"/>
+    <path d="M42 17h10v20H42z"/>
+    <path d="M22 27h30v10H22z"/>
+    <path d="M12 34h10v20H12z"/>
+    <path d="M12 44h40v10H12z"/>
+  </g>
+</svg>

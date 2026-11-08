@@ -31,7 +31,7 @@ export function AppHeader() {
             href="/"
           >
             <Image
-              src="/sylo_minimal.svg"
+              src="/assets/logo/sylo-icon.svg"
               alt="Sylo Logo"
               width={40}
               height={40}
