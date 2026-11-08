@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
+  <title id="title">Sylo</title>
+  <desc id="desc">A white geometric S on a blue square.</desc>
+  <rect width="64" height="64" rx="14" fill="#1447E6"/>
+  <g fill="#fff">
+    <path d="M16 14h32v8H24v6H16z"/>
+    <path d="M40 18h8v20h-8z"/>
+    <path d="M24 26h24v8H24z"/>
+    <path d="M16 30h8v20h-8z"/>
+    <path d="M16 42h32v8H16z"/>
+  </g>
+</svg>

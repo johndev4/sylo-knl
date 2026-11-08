@@ -15,6 +15,16 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 export const metadata: Metadata = {
   title: 'Sylo - AI Knowledge Library',
   description: 'An AI-powered knowledge library',
+  icons: {
+    icon: [
+      { url: '/assets/logo/favicon.svg', type: 'image/svg+xml' },
+      {
+        url: '/assets/logo/favicon.ico',
+        type: 'image/x-icon',
+        sizes: '16x16 32x32',
+      },
+    ],
+  },
 };
 
 export const viewport: Viewport = {
