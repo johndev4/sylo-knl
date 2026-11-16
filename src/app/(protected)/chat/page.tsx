@@ -61,8 +61,13 @@ function getMessageText(message: UIMessage | undefined) {
 
 function ChatView({ userId }: { userId?: string | null }) {
   const prefersReducedMotion = useReducedMotion();
-  const { allSelected, noneSelected, selectedIds, selectedLibraries } =
-    useChatLibrary();
+  const {
+    allSelected,
+    noneSelected,
+    selectedIds,
+    selectedLibraries,
+    libraries,
+  } = useChatLibrary();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const shouldAutoScrollRef = useRef(true);
   const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
@@ -146,9 +151,12 @@ function ChatView({ userId }: { userId?: string | null }) {
       element.scrollHeight - element.scrollTop - element.clientHeight < 96;
   }
 
-  const selectedCountLabel = allSelected
-    ? 'All libraries'
-    : `${selectedIds.length} ${selectedIds.length === 1 ? 'library' : 'libraries'} selected`;
+  const selectedCountLabel =
+    allSelected && libraries.length > 1
+      ? 'All libraries'
+      : selectedIds.length === 1
+        ? (selectedLibraries[0]?.name ?? '1 library selected')
+        : `${selectedIds.length} ${selectedIds.length === 1 ? 'library' : 'libraries'} selected`;
 
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
@@ -229,7 +237,7 @@ function ChatView({ userId }: { userId?: string | null }) {
                 <p className="text-muted-foreground text-sm leading-6">
                   {noneSelected
                     ? 'Select one or more knowledge bases from the library picker below to start a conversation.'
-                    : `Searching ${allSelected ? 'all your libraries' : selectedLibraries.map((library) => library.name).join(', ')}. Answers are grounded in your documents.`}
+                    : `Searching ${allSelected && libraries.length > 1 ? 'all your libraries' : selectedLibraries.map((library) => library.name).join(', ')}. Answers are grounded in your documents.`}
                 </p>
               </div>
             </motion.div>

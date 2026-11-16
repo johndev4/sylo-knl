@@ -27,12 +27,12 @@ export function LibrarySelectorButton() {
 
   const label = useMemo(() => {
     if (libraries.length === 0) return 'No libraries';
-    if (allSelected) return 'All libraries';
     if (selectedIds.length === 0) return 'Select library';
     if (selectedIds.length === 1) {
       const lib = libraries.find((l) => l.id === selectedIds[0]);
       return lib?.name ?? '1 library';
     }
+    if (allSelected && libraries.length > 1) return 'All libraries';
     return `${selectedIds.length} libraries`;
   }, [libraries, allSelected, selectedIds]);
 
