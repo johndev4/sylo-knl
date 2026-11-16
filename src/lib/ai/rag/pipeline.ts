@@ -1,12 +1,14 @@
 /**
  * RAG pipeline orchestration.
  * Coordinates the full flow:
- * 1. Query analysis (conversation memory + query reformulation + tag keyword extraction)
- * 2. Conversational-only fast branch (bypasses retrieval if message is purely conversational)
- * 3. Parallel hybrid retrieval (vector similarity search + tag-based keyword search)
- * 4. Deduplication and hybrid ranking
- * 5. Context building with balanced grounding
- * 6. LLM streaming response
+ * 1. Query analysis (conversation memory + query reformulation + tag keyword extraction + intent classification)
+ * 2. Document action fast-path (guides user to Library Document Editor and drafts content)
+ * 3. Scope guardrail fast-path (politely declines off-topic requests and explains capabilities)
+ * 4. Conversational-only fast-path (bypasses retrieval if message is purely conversational)
+ * 5. Parallel hybrid retrieval (vector similarity search + tag-based keyword search)
+ * 6. Deduplication and hybrid ranking
+ * 7. Context building with balanced grounding
+ * 8. LLM streaming response
  */
 
 import { generateEmbedding } from '@/lib/ai/embeddings';
@@ -21,11 +23,14 @@ import {
   buildPromptContext,
   buildSystemPrompt,
   buildConversationalSystemPrompt,
+  buildOutOfScopeSystemPrompt,
+  buildDocumentActionSystemPrompt,
 } from './context-builder';
 import { analyzeChatQuery } from './query-analyzer';
 
 /**
- * Execute full enhanced RAG chat flow with chat memory and hybrid retrieval
+ * Execute full enhanced RAG chat flow with chat memory, tag search, scope guardrails,
+ * and document editor guidance.
  */
 export async function* executeRAGChat(
   userQuery: string,
@@ -33,15 +38,39 @@ export async function* executeRAGChat(
   userMessages: Array<{ role: 'user' | 'assistant'; content: string }>
 ): AsyncIterable<StreamChunk> {
   try {
-    // Step 1: Analyze query with conversational memory
+    // Step 1: Analyze query with conversational memory and intent detection
     const analysis = await analyzeChatQuery(userMessages);
     console.log('[RAG] Query analysis result:', {
+      isDocumentActionRequest: analysis.isDocumentActionRequest,
+      isOutOfScope: analysis.isOutOfScope,
       isConversationalOnly: analysis.isConversationalOnly,
       standaloneQuery: analysis.standaloneQuery,
       tagKeywords: analysis.tagKeywords,
     });
 
-    // Step 2: If purely conversational, stream directly from conversation memory
+    // Step 2a: If document creation / update requested, guide to editor and draft content
+    if (analysis.isDocumentActionRequest) {
+      console.log(
+        '[RAG] Handling document creation/addition request with editor guidance'
+      );
+      const docActionPrompt = buildDocumentActionSystemPrompt();
+      for await (const chunk of streamAnswer(docActionPrompt, userMessages)) {
+        yield chunk;
+      }
+      return;
+    }
+
+    // Step 2b: If out-of-scope, decline politely and explain capabilities
+    if (analysis.isOutOfScope) {
+      console.log('[RAG] Handling as out-of-scope request');
+      const outOfScopePrompt = buildOutOfScopeSystemPrompt();
+      for await (const chunk of streamAnswer(outOfScopePrompt, userMessages)) {
+        yield chunk;
+      }
+      return;
+    }
+
+    // Step 2c: If purely conversational, stream directly from conversation memory
     if (analysis.isConversationalOnly) {
       console.log('[RAG] Handling as conversational-only from chat memory');
       const conversationalPrompt = buildConversationalSystemPrompt();

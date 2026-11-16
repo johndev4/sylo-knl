@@ -1,14 +1,18 @@
 /**
  * Query analysis and conversation memory integration for RAG.
  * Analyzes conversation history to:
- * 1. Identify purely conversational messages (greetings, meta-chat questions).
- * 2. Reformulate follow-up questions into standalone semantic queries.
- * 3. Extract relevant tag keywords for tag-based document matching.
+ * 1. Detect document creation/modification requests (prompting to use Library Document Editor).
+ * 2. Detect out-of-scope requests (unrelated general knowledge, external tasks).
+ * 3. Identify purely conversational messages (greetings, meta-chat questions, Sylo help).
+ * 4. Reformulate follow-up questions into standalone semantic queries.
+ * 5. Extract relevant tag keywords for tag-based document matching.
  */
 
 import { generateAnswer } from '@/lib/ai/core/llm';
 
 export interface AnalyzedQuery {
+  isDocumentActionRequest: boolean;
+  isOutOfScope: boolean;
   isConversationalOnly: boolean;
   standaloneQuery: string;
   tagKeywords: string[];
@@ -80,12 +84,16 @@ const QUERY_ANALYSIS_SYSTEM_PROMPT = `You are a query analysis assistant for a R
 Analyze the user's latest message in context of the ongoing conversation history.
 
 Tasks:
-1. "isConversationalOnly": Set to true IF AND ONLY IF the user's message is a greeting, small talk, pleasantry, acknowledgment, or asking about the conversation itself (e.g. "summarize what we discussed", "repeat your last point", "hello", "thank you") that requires NO external knowledge base document retrieval. If the user asks any factual, topical, or document-related question, set to false.
-2. "standaloneQuery": A standalone, clear search query rewritten to resolve pronouns ("it", "they", "the first one", "that project") and conversational references using prior messages, suitable for vector search. If isConversationalOnly is true, provide an empty string.
-3. "tagKeywords": Array of 1 to 5 concise, lowercase topic keywords or potential document tags (e.g. ["architecture", "auth", "onboarding"]) extracted from the user's question. If isConversationalOnly is true or no clear topics exist, return an empty array.
+1. "isDocumentActionRequest": Set to true IF the user's message is asking to create a document, add or save content as a document, insert information into a document, or update an existing document in a library (e.g. "Create a document called X", "Add this note to the library", "Save our conversation as a document", "Insert this section into doc Y").
+2. "isOutOfScope": Set to true IF the user's message is asking for external general knowledge (e.g., world trivia, recipes, weather, celebrity gossip, unrelated general news), asking to write code or essays from scratch unrelated to the user's libraries, or asking to perform external tasks outside of Sylo. Set to false if isDocumentActionRequest is true or if it asks about documents/topics/facts in their libraries, asks about using Sylo/library chat, or is conversational dialogue.
+3. "isConversationalOnly": Set to true IF AND ONLY IF the user's message is a greeting, small talk, pleasantry, acknowledgment, question about how to use Sylo, or asking about the conversation history itself (e.g. "summarize what we discussed", "repeat your last point", "hello", "thank you") that requires NO external knowledge base document retrieval. If isDocumentActionRequest or isOutOfScope is true, set this to false.
+4. "standaloneQuery": A standalone, clear search query rewritten to resolve pronouns ("it", "they", "the first one", "that project") and conversational references using prior messages, suitable for vector search. If isDocumentActionRequest, isConversationalOnly, or isOutOfScope is true, provide an empty string.
+5. "tagKeywords": Array of 1 to 5 concise, lowercase topic keywords or potential document tags (e.g. ["architecture", "auth", "onboarding"]) extracted from the user's question. If isDocumentActionRequest, isConversationalOnly, or isOutOfScope is true or no clear topics exist, return an empty array.
 
 Return ONLY a valid JSON object in this exact shape without extra commentary:
 {
+  "isDocumentActionRequest": boolean,
+  "isOutOfScope": boolean,
   "isConversationalOnly": boolean,
   "standaloneQuery": string,
   "tagKeywords": string[]
@@ -100,6 +108,8 @@ export async function analyzeChatQuery(
   const latestMessage = messages[messages.length - 1];
   if (!latestMessage || !latestMessage.content.trim()) {
     return {
+      isDocumentActionRequest: false,
+      isOutOfScope: false,
       isConversationalOnly: true,
       standaloneQuery: '',
       tagKeywords: [],
@@ -117,6 +127,8 @@ export async function analyzeChatQuery(
     )
   ) {
     return {
+      isDocumentActionRequest: false,
+      isOutOfScope: false,
       isConversationalOnly: true,
       standaloneQuery: '',
       tagKeywords: [],
@@ -156,20 +168,38 @@ export async function analyzeChatQuery(
 
     const parsed = JSON.parse(cleaned);
 
+    const isDocumentActionRequest = Boolean(parsed.isDocumentActionRequest);
+    const isOutOfScope =
+      !isDocumentActionRequest && Boolean(parsed.isOutOfScope);
+    const isConversationalOnly =
+      !isDocumentActionRequest &&
+      !isOutOfScope &&
+      Boolean(parsed.isConversationalOnly);
+    const isSpecialBranch =
+      isDocumentActionRequest || isOutOfScope || isConversationalOnly;
+
     return {
-      isConversationalOnly: Boolean(parsed.isConversationalOnly),
+      isDocumentActionRequest,
+      isOutOfScope,
+      isConversationalOnly,
       standaloneQuery:
+        !isSpecialBranch &&
         typeof parsed.standaloneQuery === 'string' &&
         parsed.standaloneQuery.trim().length > 0
           ? parsed.standaloneQuery.trim()
-          : queryText,
-      tagKeywords: Array.isArray(parsed.tagKeywords)
-        ? parsed.tagKeywords
-            .filter(
-              (t: unknown) => typeof t === 'string' && t.trim().length > 0
-            )
-            .map((t: string) => t.trim().toLowerCase())
-        : extractSimpleKeywords(queryText),
+          : isSpecialBranch
+            ? ''
+            : queryText,
+      tagKeywords:
+        !isSpecialBranch && Array.isArray(parsed.tagKeywords)
+          ? parsed.tagKeywords
+              .filter(
+                (t: unknown) => typeof t === 'string' && t.trim().length > 0
+              )
+              .map((t: string) => t.trim().toLowerCase())
+          : isSpecialBranch
+            ? []
+            : extractSimpleKeywords(queryText),
     };
   } catch (error) {
     console.warn(
@@ -177,6 +207,8 @@ export async function analyzeChatQuery(
       error
     );
     return {
+      isDocumentActionRequest: false,
+      isOutOfScope: false,
       isConversationalOnly: false,
       standaloneQuery: queryText,
       tagKeywords: extractSimpleKeywords(queryText),
