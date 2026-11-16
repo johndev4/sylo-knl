@@ -99,6 +99,29 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const { data: selectedLibraries, error: librariesError } = await supabase
+      .from('libraries')
+      .select('id, name')
+      .in('id', authorizedIds);
+
+    if (librariesError) {
+      console.error('[CHAT] Library lookup error:', librariesError);
+      return NextResponse.json(
+        { error: 'Failed to load selected libraries' },
+        { status: 500 }
+      );
+    }
+
+    const selectedLibraryNames = (selectedLibraries ?? []).map(
+      (library) => library.name
+    );
+    if (selectedLibraryNames.length !== authorizedIds.length) {
+      return NextResponse.json(
+        { error: 'Failed to load selected libraries' },
+        { status: 500 }
+      );
+    }
+
     // Get the latest user message for embedding
     const latestMessage = messages[messages.length - 1];
 
@@ -106,7 +129,8 @@ export async function POST(req: NextRequest) {
     const chunks = executeRAGChat(
       latestMessage.content,
       authorizedIds,
-      messages
+      messages,
+      selectedLibraryNames
     );
     const stream = streamChunksToResponse(chunks);
 

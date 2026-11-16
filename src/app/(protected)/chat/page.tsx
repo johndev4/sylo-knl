@@ -371,11 +371,15 @@ function ChatView({ userId }: { userId?: string | null }) {
           }
           suggestions={
             messages.length === 0 && !noneSelected
-              ? [
-                  'What topics are covered?',
-                  'Summarize the key concepts',
-                  'Find recent updates',
-                ]
+              ? selectedIds.length === 1
+                ? [
+                    'What is this library mainly about?',
+                    'What are the most important takeaways from this library?',
+                  ]
+                : [
+                    'What are these libraries mainly about?',
+                    'What are the most important takeaways across these libraries?',
+                  ]
               : []
           }
         />

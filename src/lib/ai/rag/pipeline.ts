@@ -35,7 +35,8 @@ import { analyzeChatQuery } from './query-analyzer';
 export async function* executeRAGChat(
   userQuery: string,
   libraryIds: string[],
-  userMessages: Array<{ role: 'user' | 'assistant'; content: string }>
+  userMessages: Array<{ role: 'user' | 'assistant'; content: string }>,
+  selectedLibraryNames: string[]
 ): AsyncIterable<StreamChunk> {
   try {
     // Step 1: Analyze query with conversational memory and intent detection
@@ -53,7 +54,8 @@ export async function* executeRAGChat(
       console.log(
         '[RAG] Handling document creation/addition request with editor guidance'
       );
-      const docActionPrompt = buildDocumentActionSystemPrompt();
+      const docActionPrompt =
+        buildDocumentActionSystemPrompt(selectedLibraryNames);
       for await (const chunk of streamAnswer(docActionPrompt, userMessages)) {
         yield chunk;
       }
@@ -63,7 +65,8 @@ export async function* executeRAGChat(
     // Step 2b: If out-of-scope, decline politely and explain capabilities
     if (analysis.isOutOfScope) {
       console.log('[RAG] Handling as out-of-scope request');
-      const outOfScopePrompt = buildOutOfScopeSystemPrompt();
+      const outOfScopePrompt =
+        buildOutOfScopeSystemPrompt(selectedLibraryNames);
       for await (const chunk of streamAnswer(outOfScopePrompt, userMessages)) {
         yield chunk;
       }
@@ -73,7 +76,8 @@ export async function* executeRAGChat(
     // Step 2c: If purely conversational, stream directly from conversation memory
     if (analysis.isConversationalOnly) {
       console.log('[RAG] Handling as conversational-only from chat memory');
-      const conversationalPrompt = buildConversationalSystemPrompt();
+      const conversationalPrompt =
+        buildConversationalSystemPrompt(selectedLibraryNames);
       for await (const chunk of streamAnswer(
         conversationalPrompt,
         userMessages
@@ -123,7 +127,10 @@ export async function* executeRAGChat(
 
     // Step 5: Build context from hybrid chunks with balanced grounding
     const contextContent = buildPromptContext(mergedChunks);
-    const systemPrompt = buildSystemPrompt(contextContent);
+    const systemPrompt = buildSystemPrompt(
+      contextContent,
+      selectedLibraryNames
+    );
 
     // Step 6: Stream LLM response
     for await (const chunk of streamAnswer(systemPrompt, userMessages)) {

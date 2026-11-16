@@ -85,8 +85,8 @@ Analyze the user's latest message in context of the ongoing conversation history
 
 Tasks:
 1. "isDocumentActionRequest": Set to true IF the user's message is asking to create a document, add or save content as a document, insert information into a document, or update an existing document in a library (e.g. "Create a document called X", "Add this note to the library", "Save our conversation as a document", "Insert this section into doc Y").
-2. "isOutOfScope": Set to true IF the user's message is asking for external general knowledge (e.g., world trivia, recipes, weather, celebrity gossip, unrelated general news), asking to write code or essays from scratch unrelated to the user's libraries, or asking to perform external tasks outside of Sylo. Set to false if isDocumentActionRequest is true or if it asks about documents/topics/facts in their libraries, asks about using Sylo/library chat, or is conversational dialogue.
-3. "isConversationalOnly": Set to true IF AND ONLY IF the user's message is a greeting, small talk, pleasantry, acknowledgment, question about how to use Sylo, or asking about the conversation history itself (e.g. "summarize what we discussed", "repeat your last point", "hello", "thank you") that requires NO external knowledge base document retrieval. If isDocumentActionRequest or isOutOfScope is true, set this to false.
+2. "isOutOfScope": Set to true IF the user's message is asking for external general knowledge (e.g., world trivia, recipes, weather, celebrity gossip, unrelated general news), asking to write code or essays from scratch unrelated to the user's libraries, or asking to perform external tasks outside of Sylo. Set to false if isDocumentActionRequest is true or if it asks about documents/topics/facts in their libraries, including broad library overviews and key takeaways, asks about using Sylo/library chat, or is conversational dialogue.
+3. "isConversationalOnly": Set to true IF AND ONLY IF the user's message is a greeting, small talk, pleasantry, acknowledgment, question about how to use Sylo, or asking about the conversation history itself (e.g. "summarize what we discussed", "repeat your last point", "hello", "thank you") that requires NO external knowledge base document retrieval. Questions asking for summaries, main topics, or key takeaways from library documents require retrieval and are NOT conversational-only. If isDocumentActionRequest or isOutOfScope is true, set this to false.
 4. "standaloneQuery": A standalone, clear search query rewritten to resolve pronouns ("it", "they", "the first one", "that project") and conversational references using prior messages, suitable for vector search. If isDocumentActionRequest, isConversationalOnly, or isOutOfScope is true, provide an empty string.
 5. "tagKeywords": Array of 1 to 5 concise, lowercase topic keywords or potential document tags (e.g. ["architecture", "auth", "onboarding"]) extracted from the user's question. If isDocumentActionRequest, isConversationalOnly, or isOutOfScope is true or no clear topics exist, return an empty array.
 
@@ -118,6 +118,22 @@ export async function analyzeChatQuery(
 
   const queryText = latestMessage.content.trim();
   const history = messages.slice(0, -1);
+
+  if (
+    history.length === 0 &&
+    /\b(?:library|libraries|documents?)\b/i.test(queryText) &&
+    /\b(?:mainly about|main topics?|(?:key|important) takeaways)\b/i.test(
+      queryText
+    )
+  ) {
+    return {
+      isDocumentActionRequest: false,
+      isOutOfScope: false,
+      isConversationalOnly: false,
+      standaloneQuery: queryText,
+      tagKeywords: [],
+    };
+  }
 
   // Quick check for obvious greetings on a fresh session
   if (
