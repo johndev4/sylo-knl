@@ -9,7 +9,8 @@ export const CreateDocumentInputSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   contentJson: z
     .array(BlockNotePartialBlockSchema)
-    .min(1, 'Content is required'),
+    .min(1, 'Content is required')
+    .max(1000, 'Document cannot exceed 1,000 blocks'),
   libraryId: z.string().uuid('Invalid Library ID'),
   tags: z.array(z.string()).optional(),
 });
@@ -18,7 +19,8 @@ export const UpdateDocumentInputSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   contentJson: z
     .array(BlockNotePartialBlockSchema)
-    .min(1, 'Content is required'),
+    .min(1, 'Content is required')
+    .max(1000, 'Document cannot exceed 1,000 blocks'),
   tags: z.array(z.string()).optional(),
   lastUpdatedAt: z.string().optional(),
 });
