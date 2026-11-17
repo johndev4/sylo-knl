@@ -27,6 +27,7 @@ import {
   buildDocumentActionSystemPrompt,
 } from './context-builder';
 import { analyzeChatQuery } from './query-analyzer';
+import type { ScopedRetrievalFilters } from './retrieve';
 
 /**
  * Execute full enhanced RAG chat flow with chat memory, tag search, scope guardrails,
@@ -36,7 +37,8 @@ export async function* executeRAGChat(
   userQuery: string,
   libraryIds: string[],
   userMessages: Array<{ role: 'user' | 'assistant'; content: string }>,
-  selectedLibraryNames: string[]
+  selectedLibraryNames: string[],
+  mentionScope?: ScopedRetrievalFilters
 ): AsyncIterable<StreamChunk> {
   try {
     // Step 1: Analyze query with conversational memory and intent detection
@@ -88,28 +90,35 @@ export async function* executeRAGChat(
     }
 
     const effectiveQuery = analysis.standaloneQuery || userQuery;
+    const hasMentionScope =
+      !!mentionScope &&
+      (mentionScope.documentIds.length > 0 || mentionScope.tags.length > 0);
+    const retrievalTags = hasMentionScope
+      ? mentionScope.tags
+      : analysis.tagKeywords;
 
     // Step 3: Run parallel hybrid retrieval (vector search + tag keyword search)
     const [vectorChunks, tagChunks] = await Promise.all([
       (async () => {
         try {
           const queryEmbedding = await generateEmbedding(effectiveQuery);
-          return await retrieveRelevantChunks(queryEmbedding, libraryIds, 5);
+          return await retrieveRelevantChunks(
+            queryEmbedding,
+            libraryIds,
+            5,
+            mentionScope
+          );
         } catch (error) {
           console.error('[RAG] Vector retrieval failed:', error);
           return [];
         }
       })(),
       (async () => {
-        if (!analysis.tagKeywords || analysis.tagKeywords.length === 0) {
+        if (!retrievalTags || retrievalTags.length === 0) {
           return [];
         }
         try {
-          return await retrieveChunksByTags(
-            libraryIds,
-            analysis.tagKeywords,
-            4
-          );
+          return await retrieveChunksByTags(libraryIds, retrievalTags, 4);
         } catch (error) {
           console.error('[RAG] Tag keyword retrieval failed:', error);
           return [];

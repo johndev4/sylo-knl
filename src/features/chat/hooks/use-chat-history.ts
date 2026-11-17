@@ -6,18 +6,18 @@ import type { UIMessage } from 'ai';
 const STORAGE_PREFIX = 'sylo:chat-history:v1:';
 const MAX_MESSAGES = 100;
 
-interface StoredChatHistory {
+interface StoredChatHistory<METADATA = unknown> {
   version: 1;
   updatedAt: number;
-  messages: UIMessage[];
+  messages: UIMessage<METADATA>[];
 }
 
 function getStorageKey(userId: string): string {
   return `${STORAGE_PREFIX}${userId}`;
 }
 
-export function useChatHistory(userId?: string | null) {
-  const getStoredMessages = useCallback((): UIMessage[] => {
+export function useChatHistory<METADATA = unknown>(userId?: string | null) {
+  const getStoredMessages = useCallback((): UIMessage<METADATA>[] => {
     if (!userId || typeof window === 'undefined') {
       return [];
     }
@@ -34,7 +34,7 @@ export function useChatHistory(userId?: string | null) {
         (parsed as StoredChatHistory).version === 1 &&
         Array.isArray((parsed as StoredChatHistory).messages)
       ) {
-        return (parsed as StoredChatHistory).messages;
+        return (parsed as StoredChatHistory<METADATA>).messages;
       }
     } catch (error) {
       console.warn('Failed to load local chat history:', error);
@@ -44,7 +44,7 @@ export function useChatHistory(userId?: string | null) {
   }, [userId]);
 
   const saveHistory = useCallback(
-    (messages: UIMessage[]) => {
+    (messages: UIMessage<METADATA>[]) => {
       if (!userId || typeof window === 'undefined') return;
 
       try {

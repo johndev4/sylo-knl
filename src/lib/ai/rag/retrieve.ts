@@ -17,6 +17,11 @@ export interface RetrievedChunk {
   similarity: number;
 }
 
+export interface ScopedRetrievalFilters {
+  documentIds: string[];
+  tags: string[];
+}
+
 /**
  * Retrieve relevant document chunks based on query embedding
  * Uses cosine similarity distance for ranking via Supabase RPC
@@ -24,17 +29,28 @@ export interface RetrievedChunk {
 export async function retrieveRelevantChunks(
   queryEmbedding: number[],
   libraryIds: string[],
-  limit: number = 5
+  limit: number = 5,
+  scope?: ScopedRetrievalFilters
 ): Promise<RetrievedChunk[]> {
   const supabase = await createClient();
+  const isScoped =
+    !!scope && (scope.documentIds.length > 0 || scope.tags.length > 0);
 
   const { data: chunks, error } = await supabase.rpc(
-    'match_document_chunks_multi',
-    {
-      query_embedding: queryEmbedding,
-      match_count: limit,
-      filter_library_ids: libraryIds.length > 0 ? libraryIds : null,
-    }
+    isScoped ? 'match_document_chunks_scoped' : 'match_document_chunks_multi',
+    isScoped
+      ? {
+          query_embedding: queryEmbedding,
+          match_count: limit,
+          filter_library_ids: libraryIds.length > 0 ? libraryIds : null,
+          filter_document_ids: scope.documentIds,
+          filter_tags: scope.tags,
+        }
+      : {
+          query_embedding: queryEmbedding,
+          match_count: limit,
+          filter_library_ids: libraryIds.length > 0 ? libraryIds : null,
+        }
   );
 
   if (error) {

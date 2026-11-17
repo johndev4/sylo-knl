@@ -78,6 +78,35 @@ export interface SearchSource {
   color?: string;
 }
 
+export type ChatMentionSuggestion =
+  | {
+      type: 'document';
+      id: string;
+      label: string;
+      libraryName: string;
+    }
+  | {
+      type: 'tag';
+      value: string;
+      label: string;
+    };
+
+export type ChatMention =
+  | {
+      type: 'document';
+      id: string;
+      label: string;
+      libraryName: string;
+    }
+  | { type: 'tag'; value: string; label: string };
+
+interface ActiveMention {
+  type: ChatMentionSuggestion['type'];
+  query: string;
+  start: number;
+  end: number;
+}
+
 export interface AIInputSearchProps {
   /** Hides demo-only tools, model selection, attachments, and source trace. */
   mode?: 'demo' | 'chat';
@@ -100,15 +129,21 @@ export interface AIInputSearchProps {
       tool: SearchTool | null;
       model: string;
       files: File[];
+      mentions: ChatMention[];
       signal: AbortSignal;
       onSource: (source: SearchSource) => void;
     }
   ) => Promise<void> | void;
+  onMentionSearch?: (
+    type: ChatMentionSuggestion['type'],
+    query: string
+  ) => Promise<ChatMentionSuggestion[]>;
   /**
    * Optional slot rendered on the left side of the bottom toolbar when
    * `mode === 'chat'`. Use it to embed a library selector or other controls.
    */
   librarySelector?: React.ReactNode;
+  mentionScopeKey?: string;
   className?: string;
 }
 
@@ -1039,10 +1074,22 @@ export default function AI_Input_Search({
   models = DEFAULT_MODELS,
   defaultModel = 'Sonnet 5.5',
   onSearch,
+  onMentionSearch,
   librarySelector,
+  mentionScopeKey,
   className,
 }: AIInputSearchProps) {
   const [value, setValue] = useState('');
+  const [mentions, setMentions] = useState<ChatMention[]>([]);
+  const [activeMention, setActiveMention] = useState<ActiveMention | null>(
+    null
+  );
+  const [mentionSuggestions, setMentionSuggestions] = useState<
+    ChatMentionSuggestion[]
+  >([]);
+  const [activeMentionIndex, setActiveMentionIndex] = useState(0);
+  const [isLoadingMentions, setIsLoadingMentions] = useState(false);
+  const [mentionSearchFailed, setMentionSearchFailed] = useState(false);
   const [toolId, setToolId] = useState<string | null>(defaultTool);
   const [menuOpen, setMenuOpen] = useState(false);
   const [model, setModel] = useState(defaultModel);
@@ -1064,12 +1111,56 @@ export default function AI_Input_Search({
     minHeight: 56,
     maxHeight: 200,
   });
+  const mentionListId = `${listId}-mentions`;
 
   const tool =
     mode === 'chat' ? null : (tools.find((t) => t.id === toolId) ?? null);
   const running = phase === 'working';
 
   useEffect(() => () => abortRef.current?.abort(), []);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMentions([]);
+    setActiveMention(null);
+  }, [mentionScopeKey]);
+
+  useEffect(() => {
+    if (!activeMention || !onMentionSearch || !activeMention.query.trim()) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setMentionSuggestions([]);
+      setIsLoadingMentions(false);
+      setMentionSearchFailed(false);
+      return;
+    }
+
+    let cancelled = false;
+    setIsLoadingMentions(true);
+    setMentionSearchFailed(false);
+    const timer = setTimeout(() => {
+      void onMentionSearch(activeMention.type, activeMention.query)
+        .then((results) => {
+          if (!cancelled) {
+            setMentionSuggestions(results);
+            setActiveMentionIndex(0);
+          }
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setMentionSuggestions([]);
+            setMentionSearchFailed(true);
+          }
+        })
+        .finally(() => {
+          if (!cancelled) setIsLoadingMentions(false);
+        });
+    }, 180);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [activeMention, onMentionSearch]);
 
   // The clock ticks only while a run is going, from zero each time.
   useEffect(() => {
@@ -1098,6 +1189,50 @@ export default function AI_Input_Search({
     }
   };
 
+  const selectMention = (suggestion: ChatMentionSuggestion) => {
+    if (!activeMention) return;
+
+    const before = value.slice(0, activeMention.start);
+    let after = value.slice(activeMention.end);
+    if (before.endsWith(' ') && after.startsWith(' ')) after = after.slice(1);
+    const nextValue = `${before}${after}`;
+    const nextCaret = before.length;
+    const selectedMention: ChatMention =
+      suggestion.type === 'document'
+        ? {
+            type: 'document',
+            id: suggestion.id,
+            label: suggestion.label,
+            libraryName: suggestion.libraryName,
+          }
+        : {
+            type: 'tag',
+            value: suggestion.value,
+            label: suggestion.label,
+          };
+
+    setValue(nextValue);
+    setMentions((current) => {
+      const alreadySelected = current.some((mention) =>
+        mention.type === 'document' && selectedMention.type === 'document'
+          ? mention.id === selectedMention.id
+          : mention.type === 'tag' && selectedMention.type === 'tag'
+            ? mention.value.toLowerCase() ===
+              selectedMention.value.toLowerCase()
+            : false
+      );
+      if (alreadySelected || current.length >= 10) return current;
+      return [...current, selectedMention];
+    });
+    setActiveMention(null);
+    setMentionSuggestions([]);
+    requestAnimationFrame(() => {
+      textareaRef.current?.focus();
+      textareaRef.current?.setSelectionRange(nextCaret, nextCaret);
+    });
+    adjustHeight();
+  };
+
   const submit = async () => {
     const query = value.trim();
     if (!query || running || disabled) {
@@ -1106,8 +1241,11 @@ export default function AI_Input_Search({
     const controller = new AbortController();
     abortRef.current = controller;
     const attached = files;
+    const attachedMentions = mentions;
     setValue('');
     setFiles([]);
+    setMentions([]);
+    setActiveMention(null);
     adjustHeight(true);
     setSources([]);
     setElapsed(0);
@@ -1132,6 +1270,7 @@ export default function AI_Input_Search({
             tool,
             model,
             files: attached,
+            mentions: attachedMentions,
             signal: controller.signal,
             onSource,
           })
@@ -1170,6 +1309,60 @@ export default function AI_Input_Search({
 
   const canSubmit = !disabled && value.trim().length > 0 && !running;
 
+  const handleValueChange = (nextValue: string, cursor: number) => {
+    setValue(nextValue);
+    setActiveMentionIndex(0);
+    const beforeCursor = nextValue.slice(0, cursor);
+    const match = /(?:^|\s)([@#])([^\s@#]*)$/.exec(beforeCursor);
+    if (!match) {
+      setActiveMention(null);
+      return;
+    }
+
+    const triggerOffset = match[0].lastIndexOf(match[1]);
+    setActiveMention({
+      type: match[1] === '@' ? 'document' : 'tag',
+      query: match[2],
+      start: beforeCursor.length - match[0].length + triggerOffset,
+      end: cursor,
+    });
+  };
+
+  const handleMentionKeyDown = (
+    event: React.KeyboardEvent<HTMLTextAreaElement>
+  ) => {
+    if (!activeMention) return false;
+
+    if (event.key === 'ArrowDown' && mentionSuggestions.length > 0) {
+      event.preventDefault();
+      setActiveMentionIndex((index) => (index + 1) % mentionSuggestions.length);
+      return true;
+    }
+    if (event.key === 'ArrowUp' && mentionSuggestions.length > 0) {
+      event.preventDefault();
+      setActiveMentionIndex(
+        (index) =>
+          (index - 1 + mentionSuggestions.length) % mentionSuggestions.length
+      );
+      return true;
+    }
+    if (
+      event.key === 'Enter' &&
+      !event.shiftKey &&
+      mentionSuggestions[activeMentionIndex]
+    ) {
+      event.preventDefault();
+      selectMention(mentionSuggestions[activeMentionIndex]);
+      return true;
+    }
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      setActiveMention(null);
+      return true;
+    }
+    return false;
+  };
+
   return (
     <MotionConfig reducedMotion="user">
       <div className={cn('mx-auto w-full max-w-lg py-4', className)}>
@@ -1206,7 +1399,7 @@ export default function AI_Input_Search({
           {/* Card on a soft frame, as in AI Prompt; the trace opens in the frame. */}
           <div
             className={cn(
-              'flex flex-col rounded-[18px] bg-white ring-1 ring-black/[0.08] dark:bg-zinc-900 dark:ring-white/10',
+              'relative flex flex-col rounded-[18px] bg-white ring-1 ring-black/[0.08] dark:bg-zinc-900 dark:ring-white/10',
               'shadow-[0_1px_2px_rgb(0_0_0/0.04),0_6px_20px_-10px_rgb(0_0_0/0.12)]',
               'transition-shadow duration-150 has-[textarea:focus-visible]:ring-black/20 dark:has-[textarea:focus-visible]:ring-white/25'
             )}
@@ -1242,17 +1435,149 @@ export default function AI_Input_Search({
               )}
             </AnimatePresence>
 
+            {mode === 'chat' && mentions.length > 0 && (
+              <ul
+                aria-label="Selected references"
+                className="flex flex-wrap gap-1.5 px-3 pt-3"
+              >
+                {mentions.map((mention) => {
+                  const key =
+                    mention.type === 'document'
+                      ? `document:${mention.id}`
+                      : `tag:${mention.value.toLowerCase()}`;
+                  return (
+                    <li
+                      className="bg-muted text-foreground inline-flex max-w-full items-center gap-1 rounded-md px-2 py-1 text-xs"
+                      key={key}
+                    >
+                      <span className="truncate">
+                        {mention.type === 'document' ? '@' : '#'}
+                        {mention.label}
+                      </span>
+                      <button
+                        aria-label={`Remove ${mention.label}`}
+                        className="text-muted-foreground hover:text-foreground shrink-0 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2"
+                        onClick={() =>
+                          setMentions((current) =>
+                            current.filter((item) =>
+                              item.type === 'document' &&
+                              mention.type === 'document'
+                                ? item.id !== mention.id
+                                : item.type === 'tag' && mention.type === 'tag'
+                                  ? item.value.toLowerCase() !==
+                                    mention.value.toLowerCase()
+                                  : true
+                            )
+                          )
+                        }
+                        type="button"
+                      >
+                        <X aria-hidden="true" className="size-3" />
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+
+            {mode === 'chat' && activeMention && (
+              <div className="bg-popover text-popover-foreground absolute inset-x-2 bottom-full z-20 mb-2 overflow-hidden rounded-lg border shadow-md">
+                <div
+                  aria-label={`${activeMention.type === 'document' ? 'Documents' : 'Tags'} suggestions`}
+                  aria-orientation="vertical"
+                  className="max-h-56 overflow-y-auto p-1"
+                  id={mentionListId}
+                  role="listbox"
+                >
+                  {isLoadingMentions ? (
+                    <p
+                      className="text-muted-foreground px-3 py-2 text-sm"
+                      role="status"
+                    >
+                      Searching…
+                    </p>
+                  ) : mentionSearchFailed ? (
+                    <p
+                      className="text-muted-foreground px-3 py-2 text-sm"
+                      role="status"
+                    >
+                      Couldn&apos;t load suggestions.
+                    </p>
+                  ) : mentions.length >= 10 ? (
+                    <p
+                      className="text-muted-foreground px-3 py-2 text-sm"
+                      role="status"
+                    >
+                      Remove a reference to add another (10 maximum).
+                    </p>
+                  ) : mentionSuggestions.length === 0 ? (
+                    <p
+                      className="text-muted-foreground px-3 py-2 text-sm"
+                      role="status"
+                    >
+                      {activeMention.query
+                        ? 'No matching references.'
+                        : `Type to search ${activeMention.type === 'document' ? 'documents' : 'tags'}.`}
+                    </p>
+                  ) : (
+                    mentionSuggestions.map((suggestion, index) => {
+                      const key =
+                        suggestion.type === 'document'
+                          ? `document:${suggestion.id}`
+                          : `tag:${suggestion.value.toLowerCase()}`;
+                      return (
+                        <button
+                          aria-selected={index === activeMentionIndex}
+                          className={cn(
+                            'flex w-full items-start justify-between gap-3 rounded-md px-3 py-2 text-left text-sm',
+                            index === activeMentionIndex
+                              ? 'bg-accent text-accent-foreground'
+                              : 'hover:bg-accent/60'
+                          )}
+                          id={`${mentionListId}-${index}`}
+                          key={key}
+                          onClick={() => selectMention(suggestion)}
+                          onMouseDown={(event) => event.preventDefault()}
+                          role="option"
+                          type="button"
+                        >
+                          <span className="min-w-0 truncate">
+                            {suggestion.type === 'document' ? '@' : '#'}
+                            {suggestion.label}
+                          </span>
+                          {suggestion.type === 'document' && (
+                            <span className="text-muted-foreground shrink-0 text-xs">
+                              {suggestion.libraryName}
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            )}
+
             <Textarea
               aria-label="Message"
+              aria-activedescendant={
+                activeMention && mentionSuggestions[activeMentionIndex]
+                  ? `${mentionListId}-${activeMentionIndex}`
+                  : undefined
+              }
+              aria-controls={activeMention ? mentionListId : undefined}
+              aria-expanded={Boolean(activeMention)}
+              aria-haspopup="listbox"
               className="min-h-[56px] w-full resize-none rounded-none border-none bg-transparent px-4 pt-3.5 pb-1 text-base leading-relaxed text-black placeholder:text-black/35 focus-visible:ring-0 focus-visible:ring-offset-0 sm:text-[15px] dark:bg-transparent dark:text-white dark:placeholder:text-white/35"
               onChange={(e) => {
-                setValue(e.target.value);
+                handleValueChange(e.target.value, e.target.selectionStart);
                 adjustHeight();
               }}
               onKeyDown={(e) => {
                 if (e.nativeEvent.isComposing) {
                   return;
                 }
+                if (handleMentionKeyDown(e)) return;
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
                   submit();
@@ -1260,12 +1585,9 @@ export default function AI_Input_Search({
                   e.preventDefault();
                   stop();
                 } else if (e.key === '/' && value === '') {
-                  // "/" in an empty box opens the tools, keyboard first.
                   e.preventDefault();
                   setMenuOpen(true);
                 } else if (e.key === 'Backspace' && value === '' && toolId) {
-                  // Backspace in an empty box takes the chip off, as in a
-                  // tag field.
                   e.preventDefault();
                   setToolId(null);
                 }
