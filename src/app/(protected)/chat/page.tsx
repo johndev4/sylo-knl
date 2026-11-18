@@ -476,9 +476,10 @@ function ChatView({ userId }: { userId?: string | null }) {
           }
         />
         <p className="text-muted-foreground mx-auto mt-1 max-w-3xl text-center text-[10px] leading-4 sm:mt-2 sm:text-xs">
-          Type <kbd className="rounded border px-1">@</kbd> to find a document or{' '}
-          <kbd className="rounded border px-1">#</kbd> to find tags. AI responses
-          are based on your uploaded documents; verify with source material.
+          Type <kbd className="rounded border px-1">@</kbd> to find a document
+          or <kbd className="rounded border px-1">#</kbd> to find tags. AI
+          responses are based on your uploaded documents; verify with source
+          material.
         </p>
       </footer>
     </div>

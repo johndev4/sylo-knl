@@ -386,6 +386,11 @@ export function DocumentManager({
         });
 
         setIgnoreNavigationGuard(true);
+        if (data?.indexing) {
+          appToast.info(
+            'Document saved! AI indexing is in progress — this document will be fully searchable via AI shortly.'
+          );
+        }
         router.push(`/hub/libraries/${libraryId}/documents/${data.documentId}`);
         router.refresh();
       } else {
@@ -403,6 +408,12 @@ export function DocumentManager({
         // Update latest timestamp for next OCC check
         if (data?.document?.updated_at) {
           latestUpdatedAt.current = data.document.updated_at;
+        }
+
+        if (data?.indexing) {
+          appToast.info(
+            'Document updated! AI indexing is in progress — this document will be fully searchable via AI shortly.'
+          );
         }
 
         setIsEditMode(false);
