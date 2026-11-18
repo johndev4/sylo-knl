@@ -14,6 +14,24 @@ const chatRequestSchema = z.object({
   libraryIds: z
     .array(z.string().uuid())
     .min(1, 'At least one libraryId is required'),
+  mentionScope: z
+    .object({
+      documentIds: z
+        .array(z.string().uuid())
+        .max(10)
+        .refine((ids) => new Set(ids).size === ids.length),
+      tags: z
+        .array(z.string().trim().min(1).max(100))
+        .max(10)
+        .refine(
+          (tags) =>
+            new Set(tags.map((tag) => tag.toLowerCase())).size === tags.length
+        ),
+    })
+    .strict()
+    .refine((scope) => scope.documentIds.length + scope.tags.length <= 10)
+    .nullable()
+    .optional(),
 });
 
 /**
@@ -70,7 +88,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { messages, libraryIds } = parsed.data;
+    const {
+      messages,
+      libraryIds,
+      mentionScope: requestedMentionScope,
+    } = parsed.data;
     console.log('[CHAT] LibraryIDs:', libraryIds);
 
     // Fetch all libraries the current user has access to
@@ -99,6 +121,68 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const documentIds = requestedMentionScope?.documentIds ?? [];
+    if (documentIds.length > 0) {
+      const { data: selectedDocuments, error: documentsError } = await supabase
+        .from('documents')
+        .select('id')
+        .in('id', documentIds)
+        .in('library_id', authorizedIds)
+        .is('deleted_at', null);
+
+      if (documentsError) {
+        console.error('[CHAT] Document scope lookup error:', documentsError);
+        return NextResponse.json(
+          { error: 'Failed to verify selected documents' },
+          { status: 500 }
+        );
+      }
+
+      if ((selectedDocuments ?? []).length !== documentIds.length) {
+        return NextResponse.json(
+          {
+            error:
+              'One or more selected documents are not available in the selected libraries',
+          },
+          { status: 403 }
+        );
+      }
+    }
+
+    const mentionScope = requestedMentionScope
+      ? {
+          documentIds,
+          tags: [
+            ...new Map(
+              requestedMentionScope.tags.map((tag) => [tag.toLowerCase(), tag])
+            ).values(),
+          ],
+        }
+      : undefined;
+
+    const { data: selectedLibraries, error: librariesError } = await supabase
+      .from('libraries')
+      .select('id, name')
+      .in('id', authorizedIds);
+
+    if (librariesError) {
+      console.error('[CHAT] Library lookup error:', librariesError);
+      return NextResponse.json(
+        { error: 'Failed to load selected libraries' },
+        { status: 500 }
+      );
+    }
+
+    const selectedLibraryNames = (selectedLibraries ?? []).map(
+      (library) => library.name
+    );
+    if (selectedLibraryNames.length !== authorizedIds.length) {
+      return NextResponse.json(
+        { error: 'Failed to load selected libraries' },
+        { status: 500 }
+      );
+    }
+
     // Get the latest user message for embedding
     const latestMessage = messages[messages.length - 1];
 
@@ -106,7 +190,9 @@ export async function POST(req: NextRequest) {
     const chunks = executeRAGChat(
       latestMessage.content,
       authorizedIds,
-      messages
+      messages,
+      selectedLibraryNames,
+      mentionScope
     );
     const stream = streamChunksToResponse(chunks);
 

@@ -33,6 +33,7 @@
   - [Environment Variables](#environment-variables)
   - [Database Setup & Migrations](#database-setup--migrations)
   - [Available Scripts](#available-scripts)
+  - [Unit Tests](#unit-tests)
 - [Deployment](#deployment)
   - [1. Supabase (Database & Auth)](#1-supabase-database--auth)
   - [2. Vercel (Hosting)](#2-vercel-hosting)
@@ -190,6 +191,20 @@ supabase db push
 | `pnpm format`           | Formats code using Prettier                                      |
 | `pnpm test:e2e`         | Runs Playwright end-to-end test suite                            |
 | `pnpm migrate:re-embed` | Utility script to re-generate document embeddings                |
+
+### Unit Tests
+
+Jest discovers unit tests in `tests/unit/**/*.test.ts` (see `jest.config.cjs`). Run the full unit test suite with:
+
+```bash
+pnpm exec jest --runInBand
+```
+
+To run one test file, pass its path:
+
+```bash
+pnpm exec jest --runInBand tests/unit/query-analyzer.test.ts
+```
 
 ---
 

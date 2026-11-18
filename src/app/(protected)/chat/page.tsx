@@ -1,6 +1,12 @@
 'use client';
 
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react';
 import { motion } from 'framer-motion';
 import { useChat } from '@ai-sdk/react';
 import { Streamdown } from 'streamdown';
@@ -8,6 +14,7 @@ import { TextStreamChatTransport, type UIMessage } from 'ai';
 import { Bot, RotateCcw, Trash2, User } from 'lucide-react';
 import AITextLoading from '@/components/kokonutui/ai-text-loading';
 import AIInputSearch, {
+  type ChatMention,
   type AIInputSearchProps,
 } from '@/components/kokonutui/ai-input-search';
 import { Button } from '@/components/ui/button';
@@ -38,7 +45,21 @@ import { useSession } from '@/components/providers/auth-provider';
 import { useChatHistory } from '@/features/chat/hooks/use-chat-history';
 import { useChatLibrary } from '@/features/chat/providers/chat-library-provider';
 import { LibrarySelectorButton } from '@/features/chat/components/library-selector-button';
+import { searchChatMentions } from '@/features/chat/queries';
+import { createClient } from '@/lib/supabase/client';
 import { appToast } from '@/lib/toast';
+
+interface ChatRetrievalScope {
+  documentIds: string[];
+  tags: string[];
+  references: ChatMention[];
+}
+
+interface ChatMessageMetadata {
+  retrievalScope?: ChatRetrievalScope;
+}
+
+type ChatMessage = UIMessage<ChatMessageMetadata>;
 
 const emptySubscribe = () => () => {};
 
@@ -50,7 +71,7 @@ function useMounted() {
   );
 }
 
-function getMessageText(message: UIMessage | undefined) {
+function getMessageText(message: ChatMessage | undefined) {
   return (
     message?.parts
       .filter((part) => part.type === 'text')
@@ -61,22 +82,55 @@ function getMessageText(message: UIMessage | undefined) {
 
 function ChatView({ userId }: { userId?: string | null }) {
   const prefersReducedMotion = useReducedMotion();
-  const { allSelected, noneSelected, selectedIds, selectedLibraries } =
-    useChatLibrary();
+  const { user } = useSession();
+  const {
+    allSelected,
+    noneSelected,
+    selectedIds,
+    selectedLibraries,
+    libraries,
+  } = useChatLibrary();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const shouldAutoScrollRef = useRef(true);
   const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
   const { getStoredMessages, saveHistory, clearHistory } =
-    useChatHistory(userId);
-  const [initialMessages] = useState(() => getStoredMessages());
+    useChatHistory<ChatMessageMetadata>(userId);
+  const [initialMessages] = useState<ChatMessage[]>(() => getStoredMessages());
+  const onMentionSearch = useCallback(
+    (type: 'document' | 'tag', query: string) => {
+      if (!user || selectedIds.length === 0) return Promise.resolve([]);
+      return searchChatMentions(
+        selectedIds,
+        type,
+        query,
+        Object.fromEntries(
+          libraries.map((library) => [library.id, library.name])
+        ),
+        createClient()
+      );
+    },
+    [libraries, selectedIds, user]
+  );
 
   const [transport] = useState(
     () =>
-      new TextStreamChatTransport<UIMessage>({
+      new TextStreamChatTransport<ChatMessage>({
         api: '/api/chat',
         prepareSendMessagesRequest: ({ messages, body }) => ({
           body: {
             ...(body ?? {}),
+            mentionScope: (() => {
+              const scope = [...messages]
+                .reverse()
+                .find((message) => message.role === 'user')
+                ?.metadata?.retrievalScope;
+              return scope
+                ? {
+                    documentIds: scope.documentIds,
+                    tags: scope.tags,
+                  }
+                : null;
+            })(),
             messages: messages
               .filter((message) => message.role !== 'system')
               .map((message) => ({
@@ -119,13 +173,30 @@ function ChatView({ userId }: { userId?: string | null }) {
 
   async function handleSearch(
     query: string,
-    { signal }: Parameters<NonNullable<AIInputSearchProps['onSearch']>>[1]
+    {
+      signal,
+      mentions,
+    }: Parameters<NonNullable<AIInputSearchProps['onSearch']>>[1]
   ) {
     shouldAutoScrollRef.current = true;
     const abortChat = () => void stop();
     signal.addEventListener('abort', abortChat, { once: true });
     try {
-      await sendMessage({ text: query }, { body: { libraryIds: selectedIds } });
+      const documentIds = mentions
+        .filter((mention) => mention.type === 'document')
+        .map((mention) => mention.id);
+      const tags = mentions
+        .filter((mention) => mention.type === 'tag')
+        .map((mention) => mention.value);
+      await sendMessage(
+        {
+          text: query,
+          metadata: {
+            retrievalScope: { documentIds, tags, references: mentions },
+          },
+        },
+        { body: { libraryIds: selectedIds } }
+      );
     } finally {
       signal.removeEventListener('abort', abortChat);
     }
@@ -146,9 +217,12 @@ function ChatView({ userId }: { userId?: string | null }) {
       element.scrollHeight - element.scrollTop - element.clientHeight < 96;
   }
 
-  const selectedCountLabel = allSelected
-    ? 'All libraries'
-    : `${selectedIds.length} ${selectedIds.length === 1 ? 'library' : 'libraries'} selected`;
+  const selectedCountLabel =
+    allSelected && libraries.length > 1
+      ? 'All libraries'
+      : selectedIds.length === 1
+        ? (selectedLibraries[0]?.name ?? '1 library selected')
+        : `${selectedIds.length} ${selectedIds.length === 1 ? 'library' : 'libraries'} selected`;
 
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
@@ -229,7 +303,7 @@ function ChatView({ userId }: { userId?: string | null }) {
                 <p className="text-muted-foreground text-sm leading-6">
                   {noneSelected
                     ? 'Select one or more knowledge bases from the library picker below to start a conversation.'
-                    : `Searching ${allSelected ? 'all your libraries' : selectedLibraries.map((library) => library.name).join(', ')}. Answers are grounded in your documents.`}
+                    : `Searching ${allSelected && libraries.length > 1 ? 'all your libraries' : selectedLibraries.map((library) => library.name).join(', ')}. Answers are grounded in your documents.`}
                 </p>
               </div>
             </motion.div>
@@ -238,6 +312,10 @@ function ChatView({ userId }: { userId?: string | null }) {
               {messages.map((message, index) => {
                 const content = getMessageText(message);
                 const isLatest = index === messages.length - 1;
+                const references =
+                  message.role === 'user'
+                    ? (message.metadata?.retrievalScope?.references ?? [])
+                    : [];
 
                 return (
                   <motion.div
@@ -265,6 +343,26 @@ function ChatView({ userId }: { userId?: string | null }) {
                           className="max-w-full shadow-sm"
                         >
                           <BubbleContent className="px-4 py-3">
+                            {references.length > 0 && (
+                              <ul
+                                aria-label="Referenced documents and tags"
+                                className="mb-2 flex flex-wrap gap-1.5"
+                              >
+                                {references.map((reference) => (
+                                  <li
+                                    className="bg-background/70 rounded-md px-2 py-1 text-xs"
+                                    key={
+                                      reference.type === 'document'
+                                        ? `document:${reference.id}`
+                                        : `tag:${reference.value.toLowerCase()}`
+                                    }
+                                  >
+                                    {reference.type === 'document' ? '@' : '#'}
+                                    {reference.label}
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
                             {message.role === 'assistant' &&
                             isBusy &&
                             isLatest &&
@@ -355,6 +453,8 @@ function ChatView({ userId }: { userId?: string | null }) {
           disabled={noneSelected}
           mode="chat"
           onSearch={handleSearch}
+          onMentionSearch={onMentionSearch}
+          mentionScopeKey={[...selectedIds].sort().join(',')}
           librarySelector={<LibrarySelectorButton />}
           placeholder={
             noneSelected
@@ -363,17 +463,22 @@ function ChatView({ userId }: { userId?: string | null }) {
           }
           suggestions={
             messages.length === 0 && !noneSelected
-              ? [
-                  'What topics are covered?',
-                  'Summarize the key concepts',
-                  'Find recent updates',
-                ]
+              ? selectedIds.length === 1
+                ? [
+                    'What is this library mainly about?',
+                    'What are the most important takeaways from this library?',
+                  ]
+                : [
+                    'What are these libraries mainly about?',
+                    'What are the most important takeaways across these libraries?',
+                  ]
               : []
           }
         />
         <p className="text-muted-foreground mx-auto mt-1 max-w-3xl text-center text-[10px] leading-4 sm:mt-2 sm:text-xs">
-          AI responses are based strictly on your uploaded documents. Always
-          verify with source material.
+          Type <kbd className="rounded border px-1">@</kbd> to find a document or{' '}
+          <kbd className="rounded border px-1">#</kbd> to find tags. AI responses
+          are based on your uploaded documents; verify with source material.
         </p>
       </footer>
     </div>
