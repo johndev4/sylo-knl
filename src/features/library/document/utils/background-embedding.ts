@@ -1,50 +1,75 @@
 import { createServiceClient } from '@/lib/supabase/service';
 import { generateEmbeddings } from '@/lib/ai/embeddings';
+import { isRateLimitError } from '@/lib/ai/utils/rate-limiter';
 
 const BATCH_SIZE = 5;
 const BATCH_DELAY_MS = 1000;
+const MAX_EXECUTION_TIME_MS = 50_000; // 50 seconds safety timeout for Next.js after()
 
 /**
  * Background worker function to embed document chunks after a document is saved.
  * Designed to be called inside Next.js `after()` so it runs asynchronously
  * after the HTTP response / Server Action has returned to the user.
  *
- * Batches chunks into groups of 5 with a 1-second delay between batches to stay
- * safely within Google Free Tier rate limits (30,000 tokens/minute).
+ * Batches chunks into groups of 5 with proactive token pacing and reactive 429
+ * backoff to stay safely within Google Free Tier rate limits (30,000 tokens/minute).
+ *
+ * If processing reaches the 50-second limit or hits a rate-limit cooldown,
+ * remaining chunks are safely preserved as 'pending' for the scheduled cron worker
+ * (`/api/embed-pending`) to finish over time.
  */
 export async function processDocumentChunksInBackground(
   documentId: string
 ): Promise<void> {
+  const startTime = Date.now();
+
   try {
     const supabase = createServiceClient();
 
-    // Fetch pending chunks for this specific document
-    const { data: pending, error: fetchError } = await supabase
+    // Fetch pending or previously failed chunks for this specific document (self-healing)
+    const { data: chunks, error: fetchError } = await supabase
       .from('document_chunks')
       .select('id, content')
       .eq('document_id', documentId)
-      .eq('embedding_status', 'pending')
+      .in('embedding_status', ['pending', 'failed'])
       .order('created_at', { ascending: true });
 
     if (fetchError) {
       console.error(
-        `[ASYNC-EMBEDDING] Failed to fetch pending chunks for doc ${documentId}:`,
+        `[ASYNC-EMBEDDING] Failed to fetch chunks for doc ${documentId}:`,
         fetchError
       );
       return;
     }
 
-    if (!pending || pending.length === 0) {
+    if (!chunks || chunks.length === 0) {
       return;
     }
 
     console.log(
-      `[ASYNC-EMBEDDING] Processing ${pending.length} chunk(s) for document ${documentId}`
+      `[ASYNC-EMBEDDING] Processing ${chunks.length} chunk(s) for document ${documentId}`
     );
 
     // Process in batches
-    for (let i = 0; i < pending.length; i += BATCH_SIZE) {
-      const batch = pending.slice(i, i + BATCH_SIZE);
+    for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
+      // Check execution timeout to stay safely within serverless / runtime bounds
+      if (Date.now() - startTime > MAX_EXECUTION_TIME_MS) {
+        const remainingCount = chunks.length - i;
+        console.log(
+          `[ASYNC-EMBEDDING] Max duration (${MAX_EXECUTION_TIME_MS / 1000}s) reached for doc ${documentId}. Leaving ${remainingCount} chunk(s) as 'pending' for cron worker.`
+        );
+        // Ensure remaining chunks are marked as 'pending' so cron can pick them up
+        await supabase
+          .from('document_chunks')
+          .update({ embedding_status: 'pending' })
+          .in(
+            'id',
+            chunks.slice(i).map((c) => c.id)
+          );
+        return;
+      }
+
+      const batch = chunks.slice(i, i + BATCH_SIZE);
 
       try {
         const embeddings = await generateEmbeddings(
@@ -65,15 +90,30 @@ export async function processDocumentChunksInBackground(
         );
 
         console.log(
-          `[ASYNC-EMBEDDING] Embedded ${batch.length} chunk(s) for doc ${documentId} (${Math.min(i + BATCH_SIZE, pending.length)}/${pending.length})`
+          `[ASYNC-EMBEDDING] Embedded ${batch.length} chunk(s) for doc ${documentId} (${Math.min(i + BATCH_SIZE, chunks.length)}/${chunks.length})`
         );
       } catch (batchError) {
+        if (isRateLimitError(batchError)) {
+          console.warn(
+            `[ASYNC-EMBEDDING] Rate limit / quota exceeded for doc ${documentId}. Preserving remaining chunks as 'pending' for cron worker.`
+          );
+          // Preserve current and remaining batches as 'pending' so the cron worker finishes them
+          await supabase
+            .from('document_chunks')
+            .update({ embedding_status: 'pending' })
+            .in(
+              'id',
+              chunks.slice(i).map((c) => c.id)
+            );
+          return;
+        }
+
         console.error(
-          `[ASYNC-EMBEDDING] Batch error for doc ${documentId}:`,
+          `[ASYNC-EMBEDDING] Non-recoverable batch error for doc ${documentId}:`,
           batchError
         );
 
-        // Mark as failed so they don't block subsequent operations
+        // Mark only this specific unrecoverable batch as failed
         await supabase
           .from('document_chunks')
           .update({ embedding_status: 'failed' })
@@ -84,7 +124,7 @@ export async function processDocumentChunksInBackground(
       }
 
       // Add a rate-limiting delay between batches if more remain
-      if (i + BATCH_SIZE < pending.length) {
+      if (i + BATCH_SIZE < chunks.length) {
         await new Promise((resolve) => setTimeout(resolve, BATCH_DELAY_MS));
       }
     }

@@ -13,6 +13,7 @@ import type {
   LLMProvider,
 } from '../types/provider-types';
 import { ProviderConfigError, ProviderError } from '../types/provider-types';
+import { googleEmbeddingLimiter } from '../utils/rate-limiter';
 
 /**
  * Initialize Google AI client
@@ -110,37 +111,41 @@ export class GoogleEmbeddingProvider implements EmbeddingProvider {
   );
 
   async embed(text: string): Promise<number[]> {
-    try {
-      const result = await embed({
-        model: this.embeddingModel,
-        value: text,
-      });
+    return googleEmbeddingLimiter.executeWithRateLimit([text], async () => {
+      try {
+        const result = await embed({
+          model: this.embeddingModel,
+          value: text,
+        });
 
-      return result.embedding;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-      throw new ProviderError(
-        `Google embedding generation failed: ${error.message}`,
-        error.status
-      );
-    }
+        return result.embedding;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } catch (error: any) {
+        throw new ProviderError(
+          `Google embedding generation failed: ${error.message}`,
+          error.status
+        );
+      }
+    });
   }
 
   async embedMany(texts: string[]): Promise<number[][]> {
-    try {
-      const result = await embedMany({
-        model: this.embeddingModel,
-        values: texts,
-      });
+    return googleEmbeddingLimiter.executeWithRateLimit(texts, async () => {
+      try {
+        const result = await embedMany({
+          model: this.embeddingModel,
+          values: texts,
+        });
 
-      return result.embeddings;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-      throw new ProviderError(
-        `Google batch embedding generation failed: ${error.message}`,
-        error.status
-      );
-    }
+        return result.embeddings;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } catch (error: any) {
+        throw new ProviderError(
+          `Google batch embedding generation failed: ${error.message}`,
+          error.status
+        );
+      }
+    });
   }
 }
 
