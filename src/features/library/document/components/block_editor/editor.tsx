@@ -16,7 +16,11 @@ const getClientSnapshot = () => true;
 const getServerSnapshot = () => false;
 
 interface EditorProps {
-  onChange: (blocks: BlockNotePartialBlocks, blockCount: number) => void;
+  onChange: (
+    blocks: BlockNotePartialBlocks,
+    blockCount: number,
+    isUserEdit?: boolean
+  ) => void;
   initialContent?: BlockNotePartialBlocks;
   editable?: boolean;
   onEditorReady?: (editor: BlockNoteEditor) => void;
@@ -51,6 +55,7 @@ const Editor: React.FC<EditorProps> = ({
     getServerSnapshot
   );
   const [isEditorMounted, setIsEditorMounted] = useState(false);
+  const isInitialMount = React.useRef(true);
 
   const handleViewRef = useCallback(
     (element: HTMLDivElement | null) => {
@@ -65,7 +70,14 @@ const Editor: React.FC<EditorProps> = ({
   const handleEditorChange = () => {
     const blocks = editor.document;
     const blockCount = countBlocks(blocks);
-    onChange(blocks, blockCount);
+    const wasInitial = isInitialMount.current;
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+    }
+    const isFocused =
+      typeof editor.isFocused === 'function' ? editor.isFocused() : false;
+    const isUserEdit = !wasInitial && (isFocused || Boolean(editable));
+    onChange(blocks, blockCount, isUserEdit);
   };
 
   // ---------------------------------------------------------------------------

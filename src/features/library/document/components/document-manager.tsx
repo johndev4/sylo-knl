@@ -105,6 +105,7 @@ export function DocumentManager({
   const [hasBlockLimitError, setHasBlockLimitError] = useState(false);
   const [ignoreNavigationGuard, setIgnoreNavigationGuard] = useState(false);
   const [isMetaOpen, setIsMetaOpen] = useState(true);
+  const [isContentDirty, setIsContentDirty] = useState(false);
 
   /**
    * When non-null, the "Unsaved Changes" AlertDialog is shown.
@@ -121,17 +122,19 @@ export function DocumentManager({
   const isDirty = useMemo(() => {
     // For new documents: any character (including whitespace / newlines) is a change
     if (isNew) {
-      return title !== '' || content.length > 0 || tags.length > 0;
+      return (
+        title !== '' || isContentDirty || content.length > 0 || tags.length > 0
+      );
     }
 
-    return (
-      title !== (initialData?.title ?? '') ||
-      JSON.stringify(content) !==
-        JSON.stringify(initialData?.contentJson ?? []) ||
+    const tagsChanged =
       JSON.stringify(tags) !==
-        JSON.stringify((initialData?.tags ?? []).map((t) => t.toUpperCase()))
+      JSON.stringify((initialData?.tags ?? []).map((t) => t.toUpperCase()));
+
+    return (
+      title !== (initialData?.title ?? '') || isContentDirty || tagsChanged
     );
-  }, [isNew, title, content, tags, initialData]);
+  }, [isNew, title, isContentDirty, content.length, tags, initialData]);
 
   // ---------------------------------------------------------------------------
   // Navigation guard — shows AlertDialog instead of window.confirm
@@ -158,6 +161,7 @@ export function DocumentManager({
     setContent([]);
     setTags([]);
     setTagInput('');
+    setIsContentDirty(false);
     setEditorResetKey((prev) => prev + 1);
   }, []);
 
@@ -166,6 +170,7 @@ export function DocumentManager({
     setContent(initialData?.contentJson ?? []);
     setTags((initialData?.tags ?? []).map((t) => t.toUpperCase()));
     setTagInput('');
+    setIsContentDirty(false);
     setEditorResetKey((prev) => prev + 1);
     setIsEditMode(false);
   }, [initialData]);
@@ -402,6 +407,7 @@ export function DocumentManager({
             contentJson: content,
             tags,
             lastUpdatedAt: latestUpdatedAt.current,
+            contentModified: isContentDirty,
           },
         });
 
@@ -410,10 +416,14 @@ export function DocumentManager({
           latestUpdatedAt.current = data.document.updated_at;
         }
 
+        setIsContentDirty(false);
+
         if (data?.indexing) {
           appToast.info(
             'Document updated! AI indexing is in progress — this document will be fully searchable via AI shortly.'
           );
+        } else {
+          appToast.success('Document updated successfully.');
         }
 
         setIsEditMode(false);
@@ -475,8 +485,15 @@ export function DocumentManager({
   // ---------------------------------------------------------------------------
 
   const handleEditorChange = useCallback(
-    (blocks: BlockNotePartialBlocks, blockCount: number) => {
+    (
+      blocks: BlockNotePartialBlocks,
+      blockCount: number,
+      isUserEdit?: boolean
+    ) => {
       setContent(blocks);
+      if (isUserEdit) {
+        setIsContentDirty(true);
+      }
       if (blockCount > 1000) {
         setHasBlockLimitError(true);
         appToast.warning('Warning: Document exceeds 1000 blocks limit.');

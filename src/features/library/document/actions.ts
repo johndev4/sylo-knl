@@ -148,7 +148,7 @@ export async function updateDocument(
   const supabase = await createClient();
   const user = await getUser();
 
-  const { title, contentJson, tags, lastUpdatedAt } =
+  const { title, contentJson, tags, lastUpdatedAt, contentModified } =
     UpdateDocumentInputSchema.parse(input);
 
   const { data: currentDoc, error: docError } = await supabase
@@ -190,19 +190,27 @@ export async function updateDocument(
     updatedAuthorIds = [...updatedAuthorIds, user.id];
   }
 
-  const contentChanged =
-    JSON.stringify(currentDoc.content_json) !== JSON.stringify(contentJson);
-  const markdown = contentChanged
-    ? await serverConvertBlocksToMarkdown(contentJson)
-    : '';
-
-  if (contentChanged && markdown.trim().length < 10) {
-    throw new Error('Content is too short');
-  }
-
+  // Semantic content change detection (async-cheap-condition-before-await)
+  let contentChanged = false;
+  let markdown = '';
   let chunks: string[] = [];
-  if (contentChanged) {
-    chunks = chunkText(markdown);
+
+  if (contentModified !== false) {
+    const incomingMarkdown = await serverConvertBlocksToMarkdown(contentJson);
+    const currentMarkdown = await serverConvertBlocksToMarkdown(
+      currentDoc.content_json
+    );
+
+    if (incomingMarkdown.trim() !== currentMarkdown.trim()) {
+      contentChanged = true;
+      markdown = incomingMarkdown;
+
+      if (markdown.trim().length < 10) {
+        throw new Error('Content is too short');
+      }
+
+      chunks = chunkText(markdown);
+    }
   }
 
   // Save document and chunks atomically if content changed (embeddings generated asynchronously)

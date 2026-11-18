@@ -23,6 +23,7 @@ export const UpdateDocumentInputSchema = z.object({
     .max(1000, 'Document cannot exceed 1,000 blocks'),
   tags: z.array(z.string()).optional(),
   lastUpdatedAt: z.string().optional(),
+  contentModified: z.boolean().optional(),
 });
 
 export const DocumentListItemSchema = z.object({
