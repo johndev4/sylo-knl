@@ -20,7 +20,7 @@ AS $$
 		dc.id,
 		dc.document_id,
 		dc.content,
-		1 - (dc.embedding <=> query_embedding) AS similarity,
+		1 - (dc.embedding OPERATOR(extensions.<=>) query_embedding) AS similarity,
 		d.title,
 		l.name AS library_name
 	FROM public.document_chunks dc
@@ -54,6 +54,6 @@ AS $$
 				)
 			)
 		)
-	ORDER BY dc.embedding <=> query_embedding
+	ORDER BY dc.embedding OPERATOR(extensions.<=>) query_embedding
 	LIMIT match_count;
 $$;
