@@ -101,13 +101,13 @@ BEGIN
     dc.id,
     dc.document_id,
     dc.content,
-    1 - (dc.embedding <=> query_embedding) AS similarity
+    1 - (dc.embedding OPERATOR(extensions.<=>) query_embedding) AS similarity
   FROM document_chunks dc
   JOIN documents d ON dc.document_id = d.id
   WHERE (filter_library_id IS NULL OR d.library_id = filter_library_id)
     AND d.deleted_at IS NULL
     AND dc.embedding_status = 'done'
-  ORDER BY dc.embedding <=> query_embedding
+  ORDER BY dc.embedding OPERATOR(extensions.<=>) query_embedding
   LIMIT match_count;
 END;
 $$;
@@ -133,7 +133,7 @@ BEGIN
     dc.id,
     dc.document_id,
     dc.content,
-    1 - (dc.embedding <=> query_embedding) AS similarity,
+    1 - (dc.embedding OPERATOR(extensions.<=>) query_embedding) AS similarity,
     d.title,
     l.name AS library_name
   FROM document_chunks dc
@@ -146,7 +146,7 @@ BEGIN
     )
     AND d.deleted_at IS NULL
     AND dc.embedding_status = 'done'
-  ORDER BY dc.embedding <=> query_embedding
+  ORDER BY dc.embedding OPERATOR(extensions.<=>) query_embedding
   LIMIT match_count;
 END;
 $$;
@@ -172,7 +172,7 @@ CREATE OR REPLACE FUNCTION public.match_document_chunks_scoped(
     dc.id,
     dc.document_id,
     dc.content,
-    1 - (dc.embedding <=> query_embedding) AS similarity,
+    1 - (dc.embedding OPERATOR(extensions.<=>) query_embedding) AS similarity,
     d.title,
     l.name AS library_name
   FROM public.document_chunks dc
@@ -206,6 +206,6 @@ CREATE OR REPLACE FUNCTION public.match_document_chunks_scoped(
       )
     )
   )
-  ORDER BY dc.embedding <=> query_embedding
+  ORDER BY dc.embedding OPERATOR(extensions.<=>) query_embedding
   LIMIT match_count;
 $$;
