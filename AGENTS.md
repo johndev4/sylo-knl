@@ -50,9 +50,10 @@ supabase db pull                # Sync schema changes
 ### 1. Data Ingestion Flow
 
 1. User uploads/saves documents via web interface → `src/features/library/document/actions.ts`
-2. Documents stored in Supabase with metadata (tags, title, libraryId)
-3. Document chunked and embedded → `src/lib/ai/chunking.ts` + `src/lib/ai/embeddings.ts`
-4. Embeddings stored in pgvector column for similarity search
+2. Documents stored in Supabase with metadata (`title`, `content_json`, `tags`, `libraryId`)
+3. Document text chunked (`1000` chars, `200` overlap) and stored atomically with `embedding_status = 'pending'`
+4. Background worker automatically triggered via Next.js `after()` (`src/features/library/document/utils/background-embedding.ts`) or cron endpoint (`/api/embed-pending`)
+5. Chunks embedded in rate-safe batches via `src/lib/ai/embeddings.ts` and stored in pgvector column (`embedding_status = 'done'`)
 
 ### 2. Retrieval Flow (RAG)
 

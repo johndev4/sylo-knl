@@ -1,17 +1,21 @@
 import { test, expect } from '@playwright/test';
 import { getTestData } from './utils/test-data';
 import { randomUUID } from 'crypto';
-import { mockSupabaseDocuments } from './utils/helpers';
+import { getSupabaseClient, mockSupabaseDocuments } from './utils/helpers';
 
 test.describe.serial('Document Management', () => {
   let libId: string;
   let testDocName: string;
   let testDocId: string;
+  let testUserEmail: string;
+  let testUserPassword: string;
 
   test.beforeAll(() => {
     const testData = getTestData();
     libId = testData.testLibraryId;
     testDocName = `Integration Test Doc ${randomUUID()}`;
+    testUserEmail = testData.testUserEmail;
+    testUserPassword = testData.testUserPassword;
   });
 
   test('Shows inline unauthorized component on restricted library page', async ({
@@ -485,6 +489,24 @@ test.describe.serial('Document Management', () => {
 
   test('Delete an existing document with confirmation', async ({ page }) => {
     expect(testDocId).toBeDefined();
+    const { supabase, isServiceRole } = getSupabaseClient();
+
+    if (!isServiceRole) {
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email: testUserEmail,
+        password: testUserPassword,
+      });
+      expect(authError).toBeNull();
+    }
+
+    const { count: chunksBeforeDelete, error: beforeDeleteError } =
+      await supabase
+        .from('document_chunks')
+        .select('id', { count: 'exact', head: true })
+        .eq('document_id', testDocId);
+    expect(beforeDeleteError).toBeNull();
+    expect(chunksBeforeDelete).toBeGreaterThan(0);
+
     await page.goto(`/hub/libraries/${libId}/documents/${testDocId}`);
     await page.waitForLoadState('networkidle');
 
@@ -514,5 +536,20 @@ test.describe.serial('Document Management', () => {
     await expect(page).toHaveURL(
       new RegExp(`/hub/libraries/${libId}/documents$`)
     );
+
+    const { data: deletedDocument, error: documentError } = await supabase
+      .from('documents')
+      .select('id, deleted_at')
+      .eq('id', testDocId)
+      .single();
+    expect(documentError).toBeNull();
+    expect(deletedDocument?.deleted_at).not.toBeNull();
+
+    const { count: chunksAfterDelete, error: afterDeleteError } = await supabase
+      .from('document_chunks')
+      .select('id', { count: 'exact', head: true })
+      .eq('document_id', testDocId);
+    expect(afterDeleteError).toBeNull();
+    expect(chunksAfterDelete).toBe(0);
   });
 });

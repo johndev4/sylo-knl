@@ -47,8 +47,11 @@ default_pool_size = 20
 # Maximum number of client connections allowed.
 max_client_conn = 100
 
+# Optional local-only convenience: uncomment to sync these values to Vault when
+# initializing or resetting the local database. Otherwise, manage secrets in Studio.
 # [db.vault]
-# secret_key = "env(SECRET_VALUE)"
+# embed_worker_base_url = "env(EMBED_WORKER_BASE_URL)"
+# cron_secret = "env(CRON_SECRET)"
 
 [db.migrations]
 # If disabled, migrations will be skipped during a db push or reset.
