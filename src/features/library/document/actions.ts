@@ -2,8 +2,9 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { chunkText } from '@/lib/ai/chunking';
-import { generateEmbeddings } from '@/lib/ai/embeddings';
 import { revalidatePath } from 'next/cache';
+import { after } from 'next/server';
+import { processDocumentChunksInBackground } from './utils/background-embedding';
 import {
   CreateDocumentInput,
   CreateDocumentInputSchema,
@@ -27,7 +28,7 @@ import { serverConvertBlocksToMarkdown } from '@/lib/blocknote/transformer';
  */
 export async function createDocument(
   input: CreateDocumentInput
-): Promise<{ success: true; documentId: string }> {
+): Promise<{ success: true; documentId: string; indexing: boolean }> {
   const supabase = await createClient();
   const user = await getUser();
 
@@ -67,26 +68,10 @@ export async function createDocument(
     throw new Error('Content is too short');
   }
 
-  // Markdown is transient; only plain text is chunked and embedded.
+  // Markdown is transient; only plain text is chunked.
   const chunks = chunkText(markdown);
 
-  // 2. Generate embeddings for each chunk
-  let embeddings: number[][];
-  try {
-    console.log(
-      '[INGESTION] Generating embeddings for',
-      chunks.length,
-      'chunks'
-    );
-    embeddings = await generateEmbeddings(chunks);
-    console.log('[INGESTION] Successfully generated embeddings');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (embedError: any) {
-    console.error('[INGESTION] Embedding generation failed:', embedError);
-    throw embedError;
-  }
-
-  // 3. Store Document
+  // Store Document
   const { data: document, error: docError } = await supabase
     .from('documents')
     .insert({
@@ -103,7 +88,7 @@ export async function createDocument(
     throw new Error(docError?.message || 'Failed to create document');
   }
 
-  // 3. Store Document and Chunks Atomically
+  // Store Document and Chunks Atomically (embeddings generated asynchronously)
   const { error: saveError } = await supabase.rpc(
     'update_document_with_chunks',
     {
@@ -112,9 +97,8 @@ export async function createDocument(
       p_content_json: contentJson,
       p_tags: tags || [],
       p_author_ids: [user.id],
-      p_chunks: chunks.map((chunkContent, i) => ({
+      p_chunks: chunks.map((chunkContent) => ({
         content: chunkContent,
-        embedding: JSON.stringify(embeddings[i]),
       })),
     }
   );
@@ -124,9 +108,20 @@ export async function createDocument(
     throw new Error('Failed to save document and chunks');
   }
 
+  // Schedule background embedding without blocking the user response (server-after-nonblocking)
+  if (chunks.length > 0) {
+    after(async () => {
+      await processDocumentChunksInBackground(document.id);
+    });
+  }
+
   revalidatePath(`/hub/libraries/${libraryId}/documents`);
 
-  return { success: true, documentId: document.id };
+  return {
+    success: true,
+    documentId: document.id,
+    indexing: chunks.length > 0,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -145,11 +140,15 @@ export async function createDocument(
 export async function updateDocument(
   docId: string,
   input: UpdateDocumentInput
-): Promise<{ success: true; document: { updated_at: string } }> {
+): Promise<{
+  success: true;
+  document: { updated_at: string };
+  indexing: boolean;
+}> {
   const supabase = await createClient();
   const user = await getUser();
 
-  const { title, contentJson, tags, lastUpdatedAt } =
+  const { title, contentJson, tags, lastUpdatedAt, contentModified } =
     UpdateDocumentInputSchema.parse(input);
 
   const { data: currentDoc, error: docError } = await supabase
@@ -191,32 +190,30 @@ export async function updateDocument(
     updatedAuthorIds = [...updatedAuthorIds, user.id];
   }
 
-  const contentChanged =
-    JSON.stringify(currentDoc.content_json) !== JSON.stringify(contentJson);
-  const markdown = contentChanged
-    ? await serverConvertBlocksToMarkdown(contentJson)
-    : '';
-
-  if (contentChanged && markdown.trim().length < 10) {
-    throw new Error('Content is too short');
-  }
-
+  // Semantic content change detection (async-cheap-condition-before-await)
+  let contentChanged = false;
+  let markdown = '';
   let chunks: string[] = [];
-  let embeddings: number[][] = [];
-  if (contentChanged) {
-    chunks = chunkText(markdown);
-    try {
-      embeddings = await generateEmbeddings(chunks);
-    } catch (embedError) {
-      console.error(
-        '[INGESTION UPDATE] Embedding generation failed:',
-        embedError
-      );
-      throw embedError;
+
+  if (contentModified !== false) {
+    const incomingMarkdown = await serverConvertBlocksToMarkdown(contentJson);
+    const currentMarkdown = await serverConvertBlocksToMarkdown(
+      currentDoc.content_json
+    );
+
+    if (incomingMarkdown.trim() !== currentMarkdown.trim()) {
+      contentChanged = true;
+      markdown = incomingMarkdown;
+
+      if (markdown.trim().length < 10) {
+        throw new Error('Content is too short');
+      }
+
+      chunks = chunkText(markdown);
     }
   }
 
-  // Re-embed if content changed
+  // Save document and chunks atomically if content changed (embeddings generated asynchronously)
   if (contentChanged) {
     const { error: saveError } = await supabase.rpc(
       'update_document_with_chunks',
@@ -226,9 +223,8 @@ export async function updateDocument(
         p_content_json: contentJson,
         p_tags: tags || [],
         p_author_ids: updatedAuthorIds,
-        p_chunks: chunks.map((chunkContent, i) => ({
+        p_chunks: chunks.map((chunkContent) => ({
           content: chunkContent,
-          embedding: JSON.stringify(embeddings[i]),
         })),
       }
     );
@@ -256,9 +252,20 @@ export async function updateDocument(
     }
   }
 
+  // Schedule background embedding without blocking the user response (server-after-nonblocking)
+  if (contentChanged && chunks.length > 0) {
+    after(async () => {
+      await processDocumentChunksInBackground(docId);
+    });
+  }
+
   revalidatePath(`/hub/libraries/${currentDoc.library_id}/documents/${docId}`);
 
-  return { success: true, document: { updated_at: new Date().toISOString() } };
+  return {
+    success: true,
+    document: { updated_at: new Date().toISOString() },
+    indexing: contentChanged && chunks.length > 0,
+  };
 }
 
 // ---------------------------------------------------------------------------

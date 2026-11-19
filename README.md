@@ -112,12 +112,17 @@ Sylo is engineered to give you complete ownership of your data: deploy it secure
    Edit `.env.local` with your database credentials and AI provider configuration (see [Environment Variables](#environment-variables) below).
 
 4. **Initialize database schema**:
-   Apply migrations to your Supabase instance:
+   Apply migrations to your local Supabase instance:
 
    ```bash
    supabase db push
-   # or apply via Supabase CLI against your linked project
    ```
+
+   For the optional cron-based embedding fallback, set `CRON_SECRET` in the app
+   environment and add matching `cron_secret` and `embed_worker_base_url` values
+   to that database's Vault in Supabase Studio. This is configured separately
+   for local and remote databases. See the
+   [Embedding & Background Indexing Guide](docs/EMBEDDING_API_GUIDE.md).
 
 5. **Start the development server**:
    ```bash
@@ -136,6 +141,9 @@ Configure the following variables in `.env.local`:
 ```env
 # App URL
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
+
+# Optional cron fallback: set in the app environment and also in Supabase Vault
+CRON_SECRET="<generate-a-random-secret>"
 
 # Supabase (Project Settings -> API)
 NEXT_PUBLIC_SUPABASE_URL="https://your-project.supabase.co"
@@ -173,9 +181,14 @@ supabase migration up
 # Link to an existing remote project
 supabase link --project-ref <your-project-ref>
 
-# Push migrations to the remote database
-supabase db push
+supabase db push --remote
 ```
+
+The cron migration registers the fallback embedding worker. Vault secrets are
+not required to apply migrations; configure them separately in Studio for each
+database where you want the cron fallback enabled. See the
+[Embedding & Background Indexing Guide](docs/EMBEDDING_API_GUIDE.md) for setup
+and verification steps.
 
 ---
 
@@ -233,6 +246,7 @@ Sylo is optimized for seamless deployment on Vercel:
    - `NEXT_PUBLIC_SUPABASE_URL`: Supabase project URL
    - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`: Supabase anon key
    - `SUPABASE_SECRET_KEY`: Supabase service role key
+   - `CRON_SECRET`: random secret also stored as `cron_secret` in the production Supabase Vault
    - `LLM_PROVIDER`: `google`
    - `EMBEDDING_PROVIDER`: `google`
    - `GOOGLE_GENERATIVE_AI_API_KEY`: Google AI Studio API key
