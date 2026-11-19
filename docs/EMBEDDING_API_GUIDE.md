@@ -25,17 +25,21 @@ Large documents contain dozens or hundreds of chunks. Generating embeddings sync
 The route handler `POST /api/embed-pending` is protected by a bearer secret token (`CRON_SECRET`).
 
 ### Prerequisites
-1. Ensure your Next.js application server is running:
+1. Set `CRON_SECRET` in the application's environment. Use the same value in
+  the corresponding Supabase Vault secret named `cron_secret`.
+2. Ensure your Next.js application server is running:
    ```bash
    pnpm dev
    ```
    *(Verify it is listening on `http://localhost:3000`)*
 
-2. Retrieve your `CRON_SECRET` from `.env.local`:
-   ```bash
-   # Example from .env.local:
-   CRON_SECRET="131b85a88ebeecef316b268b6eb439039b52415ca9b7fc2d832a073e7c1f795c"
-   ```
+For local development, store `CRON_SECRET` and
+`EMBED_WORKER_BASE_URL=http://host.docker.internal:3000` in the ignored
+`.env.local` file. The base URL must be reachable from the Supabase database
+container. In production, set `CRON_SECRET` in Vercel and set the matching
+`cron_secret` plus the deployed app URL in the production Supabase Vault.
+Before running a manual API test, make `CRON_SECRET` available in your terminal
+session; Next.js loading `.env.local` does not export it to the shell.
 
 ---
 
@@ -45,7 +49,7 @@ The route handler `POST /api/embed-pending` is protected by a bearer secret toke
 
 ```bash
 curl -X POST http://localhost:3000/api/embed-pending \
-  -H "Authorization: Bearer 131b85a88ebeecef316b268b6eb439039b52415ca9b7fc2d832a073e7c1f795c"
+  -H "Authorization: Bearer ${CRON_SECRET}"
 ```
 
 #### Using PowerShell (Windows)
@@ -53,7 +57,7 @@ curl -X POST http://localhost:3000/api/embed-pending \
 ```powershell
 Invoke-RestMethod -Method Post `
   -Uri "http://localhost:3000/api/embed-pending" `
-  -Headers @{ Authorization = "Bearer 131b85a88ebeecef316b268b6eb439039b52415ca9b7fc2d832a073e7c1f795c" }
+  -Headers @{ Authorization = "Bearer $env:CRON_SECRET" }
 ```
 
 ---
@@ -119,24 +123,66 @@ Then run the `curl` or `Invoke-RestMethod` command again to observe them process
 
 ---
 
-## 4. Optional: Automated `pg_cron` Setup
+## 4. Automated `pg_cron` Setup
 
-If you wish to configure Supabase's built-in `pg_cron` to continuously run the worker:
+Migration `20261118222156_schedule_embedding_worker_cron.sql` registers the
+`sylo-embedding-worker` job to call `/api/embed-pending` every minute. It reads
+the URL and bearer token from that database's Vault; no secret is stored in the
+migration.
 
-### Local Development (via Docker host bridge):
-```sql
-SELECT cron.schedule(
-  'embed-pending-chunks',
-  '* * * * *',
-  $$
-    SELECT net.http_post(
-      url     := 'http://host.docker.internal:3000/api/embed-pending',
-      headers := '{"Authorization": "Bearer 131b85a88ebeecef316b268b6eb439039b52415ca9b7fc2d832a073e7c1f795c", "Content-Type": "application/json"}'::jsonb,
-      body    := '{}'::jsonb
-    );
-  $$
-);
+### Local Development
+
+The `[db.vault]` section in `supabase/config.toml` maps local environment values
+to the Vault names the job expects. Add these to `.env.local` before initializing
+or resetting the local database:
+
+```env
+EMBED_WORKER_BASE_URL="http://host.docker.internal:3000"
+CRON_SECRET="<generate-a-random-secret>"
 ```
 
-### Production:
-Replace `http://host.docker.internal:3000` with your deployed URL (e.g. `https://your-domain.com`) and supply your production `CRON_SECRET`.
+The resolved `[db.vault]` values are loaded into local Vault when the database
+is initialized or reset. A normal `supabase stop` followed by `supabase start`
+does not resync them. If you change these environment values later, run
+`supabase db reset` to reload them; this recreates the local database and
+reapplies migrations and seed data. To preserve local database contents, update
+the Vault secrets directly through Supabase Studio instead.
+
+### Production
+
+Set `CRON_SECRET` in Vercel and manage these two secrets separately in the
+production Supabase Vault (for example, through Supabase Studio):
+
+- `embed_worker_base_url`: the deployed app's base URL, such as
+  `https://your-domain.com`
+- `cron_secret`: the exact value configured as Vercel's `CRON_SECRET`
+
+Deploy migrations with `supabase db push --remote --skip-vault`. The
+`--skip-vault` flag is important: it prevents local `[db.vault]` values from
+overwriting the production secrets. The database must be able to reach the app's
+URL.
+
+If the earlier prefixed-key schedule was already installed, create the new
+`embed_worker_base_url` and `cron_secret` Vault entries, then run the updated
+`SELECT cron.schedule(...)` statement from the migration once against production.
+It uses the same job name and replaces that job's command; editing an already
+applied migration file alone does not update the production job.
+
+### Verify the Schedule and Requests
+
+Confirm that the job is registered:
+
+```sql
+SELECT jobname, schedule, active
+FROM cron.job
+WHERE jobname = 'sylo-embedding-worker';
+```
+
+After the next scheduled run, inspect the most recent HTTP responses:
+
+```sql
+SELECT status_code, error_msg, content, created
+FROM net._http_response
+ORDER BY created DESC
+LIMIT 5;
+```

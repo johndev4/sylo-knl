@@ -112,12 +112,18 @@ Sylo is engineered to give you complete ownership of your data: deploy it secure
    Edit `.env.local` with your database credentials and AI provider configuration (see [Environment Variables](#environment-variables) below).
 
 4. **Initialize database schema**:
-   Apply migrations to your Supabase instance:
+   Apply migrations to your local Supabase instance:
 
    ```bash
    supabase db push
-   # or apply via Supabase CLI against your linked project
    ```
+
+   For local cron-based embedding recovery, set `EMBED_WORKER_BASE_URL`
+   and `CRON_SECRET` in `.env.local`. The local `[db.vault]` config loads them
+   into Vault when the database is initialized or reset; ordinary
+   `supabase stop` / `supabase start` does not resync them. See the
+   [Embedding & Background Indexing Guide](docs/EMBEDDING_API_GUIDE.md) for
+   worker testing, production Vault setup, and cron verification.
 
 5. **Start the development server**:
    ```bash
@@ -136,6 +142,10 @@ Configure the following variables in `.env.local`:
 ```env
 # App URL
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
+
+# Internal embedding worker (used by local Supabase pg_cron)
+EMBED_WORKER_BASE_URL="http://host.docker.internal:3000"
+CRON_SECRET="<generate-a-random-secret>"
 
 # Supabase (Project Settings -> API)
 NEXT_PUBLIC_SUPABASE_URL="https://your-project.supabase.co"
@@ -173,9 +183,16 @@ supabase migration up
 # Link to an existing remote project
 supabase link --project-ref <your-project-ref>
 
-# Push migrations to the remote database
-supabase db push
+# Push migrations without syncing local Vault values to production
+supabase db push --remote --skip-vault
 ```
+
+The cron migration registers the fallback embedding worker. Production needs
+`CRON_SECRET` in Vercel and matching `cron_secret` plus
+`embed_worker_base_url` secrets in the production Supabase Vault. Keep
+production Vault values separate from local config. See the
+[Embedding & Background Indexing Guide](docs/EMBEDDING_API_GUIDE.md) for the
+complete setup and verification steps.
 
 ---
 
@@ -233,6 +250,7 @@ Sylo is optimized for seamless deployment on Vercel:
    - `NEXT_PUBLIC_SUPABASE_URL`: Supabase project URL
    - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`: Supabase anon key
    - `SUPABASE_SECRET_KEY`: Supabase service role key
+   - `CRON_SECRET`: random secret also stored as `cron_secret` in the production Supabase Vault
    - `LLM_PROVIDER`: `google`
    - `EMBEDDING_PROVIDER`: `google`
    - `GOOGLE_GENERATIVE_AI_API_KEY`: Google AI Studio API key

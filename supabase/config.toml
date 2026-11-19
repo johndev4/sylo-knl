@@ -47,8 +47,13 @@ default_pool_size = 20
 # Maximum number of client connections allowed.
 max_client_conn = 100
 
-# [db.vault]
-# secret_key = "env(SECRET_VALUE)"
+# Local worker secrets are loaded into Vault when the local database is
+# initialized or reset; ordinary `supabase stop` / `supabase start` does not
+# resync them. For hosted projects, use `db push --remote --skip-vault` because
+# production worker secrets are managed separately in the hosted project's Vault.
+[db.vault]
+embed_worker_base_url = "env(EMBED_WORKER_BASE_URL)"
+cron_secret = "env(CRON_SECRET)"
 
 [db.migrations]
 # If disabled, migrations will be skipped during a db push or reset.
