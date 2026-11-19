@@ -38,16 +38,33 @@ Vault secret.
 
 ## Test and Verify
 
-With the app running, send a manual request. In PowerShell, make sure
-`$env:CRON_SECRET` is set in the current terminal session:
+With the app running, send a manual request. Make sure `CRON_SECRET` is set in
+the current terminal session before you send it.
+
+### Windows (PowerShell)
 
 ```powershell
+$env:CRON_SECRET = (Get-Content .env.local | Select-String '^CRON_SECRET=' | ForEach-Object { $_.Line.Split('=', 2)[1].Trim('"') })
+
 Invoke-RestMethod -Method Post `
   -Uri "http://localhost:3000/api/embed-pending" `
   -Headers @{ Authorization = "Bearer $env:CRON_SECRET" }
 ```
 
-The response reports the number of chunks processed; `401 Unauthorized` means
+### Linux and macOS (bash or zsh)
+
+Run this from the project folder that contains `.env.local`:
+
+```bash
+export CRON_SECRET=$(grep '^CRON_SECRET=' .env.local | cut -d= -f2- | tr -d '"')
+
+curl -X POST "http://localhost:3000/api/embed-pending" \
+  -H "Authorization: Bearer $CRON_SECRET"
+```
+
+If you get a 401, run `echo $CRON_SECRET` to confirm the variable is set. If it
+prints nothing, check that `.env.local` is in the current directory and contains
+a `CRON_SECRET=` line. The response reports the number of chunks processed; `401 Unauthorized` means
 the app environment secret is missing or does not match the request.
 
 In Studio's SQL Editor, check that the cron job is registered and inspect recent
