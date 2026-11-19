@@ -1,6 +1,6 @@
 -- Schedule the fallback embedding worker once per minute.
 -- Remains idle until both Vault secrets exist: embed_worker_base_url, cron_secret.
--- Deploy with `supabase db push --remote --skip-vault` if local [db.vault] differs.
+-- Configure secrets separately in each database's Supabase Studio Vault.
 SELECT cron.schedule(
 	'embedding-worker',
 	'* * * * *',

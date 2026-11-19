@@ -1,58 +1,45 @@
-# Embedding & Background Indexing Guide
+# Embedding Worker Setup
 
-This guide explains how document embedding works in Sylo, how background workers index chunks, and how to manually test and trigger the embedding worker API.
+Sylo processes embeddings after a document is saved. The optional `pg_cron`
+worker calls `/api/embed-pending` once per minute as a fallback for pending
+chunks. Its URL and bearer token are read from that database's Supabase Vault.
 
----
+## Configure the Worker
 
-## 1. Overview
+1. Set `CRON_SECRET` in the Next.js app environment (`.env.local` locally, or
+   your hosting provider's environment settings). Generate a random value, for
+   example with `openssl rand -hex 32`.
+2. Open Supabase Studio for the database where the worker should run. For local
+   Supabase, Studio is at `http://localhost:54323`; for a hosted project, use
+   that project's dashboard. In **Database > Vault**, create these secrets:
 
-Sylo uses vector embeddings (Google Generative AI `gemini-embedding-001` or Ollama `nomic-embed-text`) for vector similarity search in the RAG retrieval pipeline.
+   | Name | Value |
+   | --- | --- |
+   | `embed_worker_base_url` | The app's base URL, reachable from Postgres; do not include `/api/embed-pending` |
+   | `cron_secret` | The exact `CRON_SECRET` value set in the app environment |
 
-### Why Background Indexing?
-Large documents contain dozens or hundreds of chunks. Generating embeddings synchronously in the save request caused:
-1. Long blocking wait times for the user.
-2. Third-party API rate limit failures (e.g., Google Free Tier token quota exceeded: `30,000 tokens/minute`).
+   For local Supabase with the app running on your machine, use
+   `http://host.docker.internal:3000` as the base URL. For hosted or self-hosted
+   deployments, use the public app URL or an address reachable on the shared
+   network. Avoid `localhost` unless Postgres and the app share that network
+   namespace.
 
-### Architecture
-- **Save Trigger**: Chunks are initially saved with `embedding_status = 'pending'`.
-- **Primary Processing**: Next.js Server Actions trigger an asynchronous background worker via `after()` ([`server-after-nonblocking`](file:///c:/Users/pahrs/DEV_PROJECTS/sylo-knl/.agents/skills/vercel-react-best-practices/rules/server-after-nonblocking.md)), processing chunks in batches of 5 with 1-second delays.
-- **Secondary Processing / Cron**: The `/api/embed-pending` endpoint can be called on a schedule (`pg_cron`, external cron, or manual curl) to catch any orphaned or retryable chunks.
+3. Apply migrations normally. For local development, run `supabase migration up`;
+   for a linked hosted project, run `supabase db push --remote`. The `[db.vault]`
+   block in `supabase/config.toml` is optional and remains commented out by
+   default, so migrations do not need local secret values. If you opt into that
+   block, it can sync environment values during database initialization/reset;
+   do not use it to manage hosted production secrets.
 
----
+Vault values are per database. Set them separately in local Studio and in each
+hosted or self-hosted Supabase project where you enable this fallback worker.
+When rotating `CRON_SECRET`, update both the app environment and the matching
+Vault secret.
 
-## 2. Testing the Embedding Worker API (`/api/embed-pending`)
+## Test and Verify
 
-The route handler `POST /api/embed-pending` is protected by a bearer secret token (`CRON_SECRET`).
-
-### Prerequisites
-1. Set `CRON_SECRET` in the application's environment. Use the same value in
-  the corresponding Supabase Vault secret named `cron_secret`.
-2. Ensure your Next.js application server is running:
-   ```bash
-   pnpm dev
-   ```
-   *(Verify it is listening on `http://localhost:3000`)*
-
-For local development, store `CRON_SECRET` and
-`EMBED_WORKER_BASE_URL=http://host.docker.internal:3000` in the ignored
-`.env.local` file. The base URL must be reachable from the Supabase database
-container. In production, set `CRON_SECRET` in Vercel and set the matching
-`cron_secret` plus the deployed app URL in the production Supabase Vault.
-Before running a manual API test, make `CRON_SECRET` available in your terminal
-session; Next.js loading `.env.local` does not export it to the shell.
-
----
-
-### Running the API Test
-
-#### Using `curl` (Terminal / Git Bash / macOS / Linux)
-
-```bash
-curl -X POST http://localhost:3000/api/embed-pending \
-  -H "Authorization: Bearer ${CRON_SECRET}"
-```
-
-#### Using PowerShell (Windows)
+With the app running, send a manual request. In PowerShell, make sure
+`$env:CRON_SECRET` is set in the current terminal session:
 
 ```powershell
 Invoke-RestMethod -Method Post `
@@ -60,129 +47,23 @@ Invoke-RestMethod -Method Post `
   -Headers @{ Authorization = "Bearer $env:CRON_SECRET" }
 ```
 
----
+The response reports the number of chunks processed; `401 Unauthorized` means
+the app environment secret is missing or does not match the request.
 
-### Expected Responses
-
-#### 1. Chunks Processed Successfully
-When pending chunks are present in `document_chunks`:
-```json
-{
-  "processed": 5
-}
-```
-*(The endpoint processes up to 5 chunks per invocation to protect against rate limits).*
-
-#### 2. No Pending Chunks
-When all chunks already have embeddings and status is `'done'`:
-```json
-{
-  "processed": 0
-}
-```
-
-#### 3. Unauthorized (Missing or Invalid Secret)
-```json
-{
-  "error": "Unauthorized"
-}
-```
-Status code: `401 Unauthorized`.
-
----
-
-## 3. Database Verification Queries
-
-You can verify the embedding status of your chunks in Supabase Studio SQL Editor (`http://localhost:54323` locally or your hosted Supabase dashboard):
-
-### Check Status Counts
-```sql
-SELECT embedding_status, COUNT(*) 
-FROM public.document_chunks 
-GROUP BY embedding_status;
-```
-
-### Inspect Recent Chunks
-```sql
-SELECT id, document_id, embedding_status, embedding IS NOT NULL AS has_vector, created_at
-FROM public.document_chunks
-ORDER BY created_at DESC
-LIMIT 10;
-```
-
-### Reset Failed or Pending Chunks for Retesting
-If you want to simulate re-embedding existing chunks:
-```sql
-UPDATE public.document_chunks
-SET embedding_status = 'pending', embedding = NULL
-WHERE id IN (
-  SELECT id FROM public.document_chunks LIMIT 5
-);
-```
-Then run the `curl` or `Invoke-RestMethod` command again to observe them processing into `'done'`.
-
----
-
-## 4. Automated `pg_cron` Setup
-
-Migration `20261118222156_schedule_embedding_worker_cron.sql` registers the
-`sylo-embedding-worker` job to call `/api/embed-pending` every minute. It reads
-the URL and bearer token from that database's Vault; no secret is stored in the
-migration.
-
-### Local Development
-
-The `[db.vault]` section in `supabase/config.toml` maps local environment values
-to the Vault names the job expects. Add these to `.env.local` before initializing
-or resetting the local database:
-
-```env
-EMBED_WORKER_BASE_URL="http://host.docker.internal:3000"
-CRON_SECRET="<generate-a-random-secret>"
-```
-
-The resolved `[db.vault]` values are loaded into local Vault when the database
-is initialized or reset. A normal `supabase stop` followed by `supabase start`
-does not resync them. If you change these environment values later, run
-`supabase db reset` to reload them; this recreates the local database and
-reapplies migrations and seed data. To preserve local database contents, update
-the Vault secrets directly through Supabase Studio instead.
-
-### Production
-
-Set `CRON_SECRET` in Vercel and manage these two secrets separately in the
-production Supabase Vault (for example, through Supabase Studio):
-
-- `embed_worker_base_url`: the deployed app's base URL, such as
-  `https://your-domain.com`
-- `cron_secret`: the exact value configured as Vercel's `CRON_SECRET`
-
-Deploy migrations with `supabase db push --remote --skip-vault`. The
-`--skip-vault` flag is important: it prevents local `[db.vault]` values from
-overwriting the production secrets. The database must be able to reach the app's
-URL.
-
-If the earlier prefixed-key schedule was already installed, create the new
-`embed_worker_base_url` and `cron_secret` Vault entries, then run the updated
-`SELECT cron.schedule(...)` statement from the migration once against production.
-It uses the same job name and replaces that job's command; editing an already
-applied migration file alone does not update the production job.
-
-### Verify the Schedule and Requests
-
-Confirm that the job is registered:
+In Studio's SQL Editor, check that the cron job is registered and inspect recent
+HTTP responses:
 
 ```sql
 SELECT jobname, schedule, active
 FROM cron.job
-WHERE jobname = 'sylo-embedding-worker';
-```
+WHERE jobname = 'embedding-worker';
 
-After the next scheduled run, inspect the most recent HTTP responses:
-
-```sql
 SELECT status_code, error_msg, content, created
 FROM net._http_response
 ORDER BY created DESC
 LIMIT 5;
 ```
+
+For self-hosting, the same setup applies: make sure the database can reach the
+application URL and configure the Vault secrets in the Studio instance attached
+to that database.

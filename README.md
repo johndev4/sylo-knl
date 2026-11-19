@@ -118,12 +118,11 @@ Sylo is engineered to give you complete ownership of your data: deploy it secure
    supabase db push
    ```
 
-   For local cron-based embedding recovery, set `EMBED_WORKER_BASE_URL`
-   and `CRON_SECRET` in `.env.local`. The local `[db.vault]` config loads them
-   into Vault when the database is initialized or reset; ordinary
-   `supabase stop` / `supabase start` does not resync them. See the
-   [Embedding & Background Indexing Guide](docs/EMBEDDING_API_GUIDE.md) for
-   worker testing, production Vault setup, and cron verification.
+   For the optional cron-based embedding fallback, set `CRON_SECRET` in the app
+   environment and add matching `cron_secret` and `embed_worker_base_url` values
+   to that database's Vault in Supabase Studio. This is configured separately
+   for local and remote databases. See the
+   [Embedding & Background Indexing Guide](docs/EMBEDDING_API_GUIDE.md).
 
 5. **Start the development server**:
    ```bash
@@ -143,8 +142,7 @@ Configure the following variables in `.env.local`:
 # App URL
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
 
-# Internal embedding worker (used by local Supabase pg_cron)
-EMBED_WORKER_BASE_URL="http://host.docker.internal:3000"
+# Optional cron fallback: set in the app environment and also in Supabase Vault
 CRON_SECRET="<generate-a-random-secret>"
 
 # Supabase (Project Settings -> API)
@@ -183,16 +181,14 @@ supabase migration up
 # Link to an existing remote project
 supabase link --project-ref <your-project-ref>
 
-# Push migrations without syncing local Vault values to production
-supabase db push --remote --skip-vault
+supabase db push --remote
 ```
 
-The cron migration registers the fallback embedding worker. Production needs
-`CRON_SECRET` in Vercel and matching `cron_secret` plus
-`embed_worker_base_url` secrets in the production Supabase Vault. Keep
-production Vault values separate from local config. See the
-[Embedding & Background Indexing Guide](docs/EMBEDDING_API_GUIDE.md) for the
-complete setup and verification steps.
+The cron migration registers the fallback embedding worker. Vault secrets are
+not required to apply migrations; configure them separately in Studio for each
+database where you want the cron fallback enabled. See the
+[Embedding & Background Indexing Guide](docs/EMBEDDING_API_GUIDE.md) for setup
+and verification steps.
 
 ---
 
