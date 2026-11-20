@@ -1,3 +1,4 @@
+import { timingSafeEqual } from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import { generateEmbeddings } from '@/lib/ai/embeddings';
@@ -35,7 +36,13 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  if (authHeader !== `Bearer ${secret}`) {
+  const expectedAuth = Buffer.from(`Bearer ${secret}`);
+  const providedAuth = Buffer.from(authHeader);
+
+  if (
+    providedAuth.length !== expectedAuth.length ||
+    !timingSafeEqual(providedAuth, expectedAuth)
+  ) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
