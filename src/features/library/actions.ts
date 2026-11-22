@@ -4,6 +4,8 @@ import crypto from 'crypto';
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { getUser } from '@/lib/auth/get-user';
+import { logger } from '@/lib/logging/logger';
+import { getRequestId } from '@/lib/logging/request';
 
 /**
  * Creates a new library with the current user as the owner.
@@ -14,6 +16,12 @@ import { getUser } from '@/lib/auth/get-user';
 export async function createLibrary(name: string) {
   const supabase = await createClient();
   const user = await getUser();
+  const correlationId = getRequestId();
+  const startedAt = performance.now();
+  logger.info('Create library action started', {
+    correlationId,
+    userId: user.id,
+  });
 
   // Duplicate name check — scoped to this user's existing libraries (case-insensitive)
   const { data: existing } = await supabase
@@ -36,12 +44,24 @@ export async function createLibrary(name: string) {
   });
 
   if (error) {
+    logger.error('Create library RPC failed', {
+      correlationId,
+      userId: user.id,
+      duration: Math.round(performance.now() - startedAt),
+      error,
+    });
     throw new Error(error.message || 'Failed to create library');
   }
 
   const library = data as { id: string; name: string };
 
   revalidatePath('/hub');
+  logger.info('Create library action completed', {
+    correlationId,
+    userId: user.id,
+    libraryId: library.id,
+    duration: Math.round(performance.now() - startedAt),
+  });
   return library;
 }
 
@@ -53,7 +73,8 @@ export async function createLibrary(name: string) {
  */
 export async function deleteLibrary(libraryId: string) {
   const supabase = await createClient();
-  await getUser();
+  const user = await getUser();
+  const correlationId = getRequestId();
 
   // RLS will ensure only OWNER can delete
   const { error } = await supabase
@@ -61,7 +82,15 @@ export async function deleteLibrary(libraryId: string) {
     .delete()
     .eq('id', libraryId);
 
-  if (error) throw new Error(error.message || 'Failed to delete library');
+  if (error) {
+    logger.error('Delete library failed', {
+      correlationId,
+      userId: user.id,
+      libraryId,
+      error,
+    });
+    throw new Error(error.message || 'Failed to delete library');
+  }
 
   revalidatePath('/hub');
   return { success: true };
@@ -117,7 +146,12 @@ export async function updateLibraryName(libraryId: string, newName: string) {
     .eq('id', libraryId);
 
   if (error) {
-    console.error('Failed to update library name:', error);
+    logger.error('Library rename failed', {
+      correlationId: getRequestId(),
+      userId: user.id,
+      libraryId,
+      error,
+    });
     throw new Error(error.message || 'Failed to update library name');
   }
 
@@ -195,7 +229,13 @@ export async function updateLibraryMemberRole(
     .single();
 
   if (error) {
-    console.error('Failed to update member role:', error);
+    logger.error('Library member role update failed', {
+      correlationId: getRequestId(),
+      userId: user.id,
+      libraryId,
+      targetUserId: userId,
+      error,
+    });
     throw new Error('Failed to update member role');
   }
 
@@ -254,7 +294,13 @@ export async function removeLibraryMember(libraryId: string, userId: string) {
     .eq('user_id', userId);
 
   if (error) {
-    console.error('Failed to remove member:', error);
+    logger.error('Library member removal failed', {
+      correlationId: getRequestId(),
+      userId: user.id,
+      libraryId,
+      targetUserId: userId,
+      error,
+    });
     throw new Error('Failed to remove member');
   }
 
@@ -375,7 +421,12 @@ export async function createLibraryInvite(
     .single();
 
   if (error || !invite) {
-    console.error('Failed to create invite:', error);
+    logger.error('Library invite creation failed', {
+      correlationId: getRequestId(),
+      userId: user.id,
+      libraryId,
+      error: error ?? new Error('Invite not returned'),
+    });
     throw new Error('Failed to create invite');
   }
 
@@ -415,7 +466,13 @@ export async function revokeLibraryInvite(libraryId: string, inviteId: string) {
     .single();
 
   if (error) {
-    console.error('Failed to revoke invite:', error);
+    logger.error('Library invite revocation failed', {
+      correlationId: getRequestId(),
+      userId: user.id,
+      libraryId,
+      inviteId,
+      error,
+    });
     throw new Error('Failed to revoke invite');
   }
 

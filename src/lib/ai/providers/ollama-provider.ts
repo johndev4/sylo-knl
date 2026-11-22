@@ -118,21 +118,12 @@ export class OllamaEmbeddingProvider implements EmbeddingProvider {
       // Update dimension from actual model response (first call)
       if (this.dimension !== result.embedding.length) {
         this.dimension = result.embedding.length;
-        console.log(`[OLLAMA] Embedding dimension detected: ${this.dimension}`);
       }
 
       return result.embedding;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       // Log detailed error for debugging
-      console.error('[OLLAMA EMBED ERROR]', {
-        model: this.embeddingModel,
-        baseUrl: getOllamaBaseUrl(),
-        message: error.message,
-        status: error.status,
-        cause: error.cause,
-        errorType: error.constructor.name,
-      });
 
       throw new ProviderError(
         `Ollama embedding generation failed: ${error.message}. Make sure Ollama is running at ${getOllamaBaseUrl()} and model "${this.embeddingModel}" is available.`,
@@ -157,22 +148,12 @@ export class OllamaEmbeddingProvider implements EmbeddingProvider {
         this.dimension !== result.embeddings[0].length
       ) {
         this.dimension = result.embeddings[0].length;
-        console.log(`[OLLAMA] Embedding dimension detected: ${this.dimension}`);
       }
 
       return result.embeddings;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       // Log detailed error for debugging
-      console.error('[OLLAMA EMBEDMANY ERROR]', {
-        model: this.embeddingModel,
-        baseUrl: getOllamaBaseUrl(),
-        textCount: texts.length,
-        message: error.message,
-        status: error.status,
-        cause: error.cause,
-        errorType: error.constructor.name,
-      });
 
       throw new ProviderError(
         `Ollama batch embedding generation failed: ${error.message}. Make sure Ollama is running at ${getOllamaBaseUrl()} and model "${this.embeddingModel}" is available (e.g., pull it with: ollama pull ${this.embeddingModel})`,

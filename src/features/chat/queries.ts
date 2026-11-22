@@ -15,7 +15,6 @@ export async function getUserLibraries(supabase: SupabaseClient, user: User) {
     .order('created_at', { ascending: true });
 
   if (error) {
-    console.error('Failed to fetch user libraries:', error);
     throw new Error('Failed to fetch libraries');
   }
 

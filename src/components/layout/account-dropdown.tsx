@@ -64,9 +64,7 @@ export function AccountDropdown({
       setIsOpen(false);
       await logout();
       window.location.replace('/login');
-    } catch (err) {
-      console.error('Logout failed:', err);
-    }
+    } catch {}
   };
 
   // ---------------------------------------------------------------------------

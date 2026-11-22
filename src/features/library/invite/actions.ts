@@ -7,14 +7,21 @@ import {
   JoinInviteResult,
 } from '@/features/library/invite/invite-schema';
 import { getUser } from '@/lib/auth/get-user';
+import { logger } from '@/lib/logging/logger';
+import { getRequestId } from '@/lib/logging/request';
 
 export async function joinLibraryAction(
   rawInviteCode: string
 ): Promise<JoinInviteResult> {
+  const correlationId = getRequestId();
   try {
     // 1. Validate Input
     const inputParsed = joinInviteInputSchema.safeParse(rawInviteCode);
     if (!inputParsed.success) {
+      logger.warn('Library invite validation failed', {
+        correlationId,
+        statusCode: 400,
+      });
       return { success: false, error: inputParsed.error.message };
     }
 
@@ -30,7 +37,10 @@ export async function joinLibraryAction(
     });
 
     if (error) {
-      console.error('Failed to join library via invite:', error);
+      logger.error('Library invite join failed', {
+        correlationId,
+        error,
+      });
       return {
         success: false,
         error: error.message || 'Failed to join library',
@@ -43,13 +53,19 @@ export async function joinLibraryAction(
       data,
     });
     if (!outputParsed.success) {
-      console.error('Output validation failed:', outputParsed.error);
+      logger.error('Library invite join output validation failed', {
+        correlationId,
+        error: outputParsed.error,
+      });
       return { success: false, error: 'Invalid data format returned' };
     }
 
     return { success: true, data: outputParsed.data.data };
   } catch (error) {
-    console.error('Error in joinLibraryAction:', error);
+    logger.error('Library invite join unexpected failure', {
+      correlationId,
+      error,
+    });
     return { success: false, error: 'Internal server error' };
   }
 }

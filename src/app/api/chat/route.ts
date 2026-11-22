@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { executeRAGChat } from '@/lib/ai/rag/pipeline';
 import { z } from 'zod';
+import { logger } from '@/lib/logging/logger';
+import {
+  getRequestContext,
+  isSlowDuration,
+  logDurationMs,
+  REQUEST_ID_HEADER,
+} from '@/lib/logging/request';
 
 export const maxDuration = 60; // allow longer timeout for RAG
 
@@ -39,7 +46,8 @@ const chatRequestSchema = z.object({
  */
 function streamChunksToResponse(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  chunks: AsyncIterable<any>
+  chunks: AsyncIterable<any>,
+  requestContext: { requestId: string; method: string; path: string }
 ): ReadableStream<Uint8Array> {
   return new ReadableStream({
     async start(controller) {
@@ -59,6 +67,10 @@ function streamChunksToResponse(
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
+        logger.error('Chat response stream failed', {
+          ...requestContext,
+          error,
+        });
         controller.error(error);
       }
     },
@@ -66,6 +78,10 @@ function streamChunksToResponse(
 }
 
 export async function POST(req: NextRequest) {
+  const requestContext = getRequestContext(req);
+  const startedAt = performance.now();
+  logger.info('Chat request received', requestContext);
+
   try {
     const supabase = await createClient();
     const {
@@ -74,7 +90,18 @@ export async function POST(req: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      logger.warn('Chat authentication failed', {
+        ...requestContext,
+        statusCode: 401,
+        error: authError ?? undefined,
+      });
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        {
+          status: 401,
+          headers: { [REQUEST_ID_HEADER]: requestContext.requestId },
+        }
+      );
     }
 
     const body = await req.json();
@@ -82,9 +109,17 @@ export async function POST(req: NextRequest) {
     // Validate request body with Zod
     const parsed = chatRequestSchema.safeParse(body);
     if (!parsed.success) {
+      logger.warn('Chat validation failed', {
+        ...requestContext,
+        statusCode: 400,
+        issueCount: parsed.error.issues.length,
+      });
       return NextResponse.json(
         { error: parsed.error.issues[0]?.message ?? 'Invalid request body' },
-        { status: 400 }
+        {
+          status: 400,
+          headers: { [REQUEST_ID_HEADER]: requestContext.requestId },
+        }
       );
     }
 
@@ -93,7 +128,11 @@ export async function POST(req: NextRequest) {
       libraryIds,
       mentionScope: requestedMentionScope,
     } = parsed.data;
-    console.log('[CHAT] LibraryIDs:', libraryIds);
+    const userContext = {
+      ...requestContext,
+      userId: user.id,
+      libraryCount: libraryIds.length,
+    };
 
     // Fetch all libraries the current user has access to
     const { data: memberships, error: membershipError } = await supabase
@@ -103,10 +142,16 @@ export async function POST(req: NextRequest) {
       .in('library_id', libraryIds);
 
     if (membershipError) {
-      console.error('[CHAT] Membership lookup error:', membershipError);
+      logger.error('Chat membership lookup failed', {
+        ...userContext,
+        error: membershipError,
+      });
       return NextResponse.json(
         { error: 'Failed to verify library access' },
-        { status: 500 }
+        {
+          status: 500,
+          headers: { [REQUEST_ID_HEADER]: requestContext.requestId },
+        }
       );
     }
 
@@ -115,9 +160,17 @@ export async function POST(req: NextRequest) {
     // Reject if any requested library is not authorized
     const unauthorized = libraryIds.filter((id) => !authorizedIds.includes(id));
     if (unauthorized.length > 0) {
+      logger.warn('Chat library authorization failed', {
+        ...userContext,
+        statusCode: 403,
+        unauthorizedLibraryCount: unauthorized.length,
+      });
       return NextResponse.json(
         { error: 'Forbidden: access denied to one or more libraries' },
-        { status: 403 }
+        {
+          status: 403,
+          headers: { [REQUEST_ID_HEADER]: requestContext.requestId },
+        }
       );
     }
 
@@ -131,20 +184,34 @@ export async function POST(req: NextRequest) {
         .is('deleted_at', null);
 
       if (documentsError) {
-        console.error('[CHAT] Document scope lookup error:', documentsError);
+        logger.error('Chat document scope lookup failed', {
+          ...userContext,
+          error: documentsError,
+        });
         return NextResponse.json(
           { error: 'Failed to verify selected documents' },
-          { status: 500 }
+          {
+            status: 500,
+            headers: { [REQUEST_ID_HEADER]: requestContext.requestId },
+          }
         );
       }
 
       if ((selectedDocuments ?? []).length !== documentIds.length) {
+        logger.warn('Chat document scope authorization failed', {
+          ...userContext,
+          statusCode: 403,
+          requestedDocumentCount: documentIds.length,
+        });
         return NextResponse.json(
           {
             error:
               'One or more selected documents are not available in the selected libraries',
           },
-          { status: 403 }
+          {
+            status: 403,
+            headers: { [REQUEST_ID_HEADER]: requestContext.requestId },
+          }
         );
       }
     }
@@ -166,10 +233,16 @@ export async function POST(req: NextRequest) {
       .in('id', authorizedIds);
 
     if (librariesError) {
-      console.error('[CHAT] Library lookup error:', librariesError);
+      logger.error('Chat library lookup failed', {
+        ...userContext,
+        error: librariesError,
+      });
       return NextResponse.json(
         { error: 'Failed to load selected libraries' },
-        { status: 500 }
+        {
+          status: 500,
+          headers: { [REQUEST_ID_HEADER]: requestContext.requestId },
+        }
       );
     }
 
@@ -177,9 +250,18 @@ export async function POST(req: NextRequest) {
       (library) => library.name
     );
     if (selectedLibraryNames.length !== authorizedIds.length) {
+      logger.error('Chat selected library count mismatch', {
+        ...userContext,
+        statusCode: 500,
+        selectedLibraryCount: selectedLibraryNames.length,
+        authorizedLibraryCount: authorizedIds.length,
+      });
       return NextResponse.json(
         { error: 'Failed to load selected libraries' },
-        { status: 500 }
+        {
+          status: 500,
+          headers: { [REQUEST_ID_HEADER]: requestContext.requestId },
+        }
       );
     }
 
@@ -194,20 +276,37 @@ export async function POST(req: NextRequest) {
       selectedLibraryNames,
       mentionScope
     );
-    const stream = streamChunksToResponse(chunks);
+    const stream = streamChunksToResponse(chunks, requestContext);
+
+    const duration = logDurationMs(startedAt);
+    logger.info('Chat request completed', {
+      ...userContext,
+      statusCode: 200,
+      duration,
+    });
+    if (isSlowDuration(duration, 'request')) {
+      logger.warn('Slow chat request detected', {
+        ...userContext,
+        statusCode: 200,
+        duration,
+      });
+    }
 
     return new NextResponse(stream, {
       headers: {
         'Content-Type': 'text/plain; charset=utf-8',
         'Transfer-Encoding': 'chunked',
+        [REQUEST_ID_HEADER]: requestContext.requestId,
       },
     });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
-    console.error('[CHAT ERROR] Full error:', error);
-    console.error('[CHAT ERROR] Message:', error.message);
-    console.error('[CHAT ERROR] Code:', error.code);
-    console.error('[CHAT ERROR] Meta:', error.meta);
+    logger.error('Chat request failed unexpectedly', {
+      ...requestContext,
+      statusCode: 500,
+      duration: logDurationMs(startedAt),
+      error,
+    });
 
     if (error.name === 'SyntaxError' && error.message?.includes('JSON')) {
       return NextResponse.json(
@@ -222,20 +321,20 @@ export async function POST(req: NextRequest) {
       error.message?.includes('22P02')
     ) {
       return NextResponse.json(
+        { error: 'Invalid database input' },
         {
-          error: 'Invalid database input (Vector or UUID format)',
-          details: error.message,
-        },
-        { status: 400 }
+          status: 400,
+          headers: { [REQUEST_ID_HEADER]: requestContext.requestId },
+        }
       );
     }
 
     return NextResponse.json(
+      { error: 'Internal server error' },
       {
-        error: 'Internal Server Error',
-        details: error.message,
-      },
-      { status: 500 }
+        status: 500,
+        headers: { [REQUEST_ID_HEADER]: requestContext.requestId },
+      }
     );
   }
 }

@@ -36,9 +36,7 @@ export function useChatHistory<METADATA = unknown>(userId?: string | null) {
       ) {
         return (parsed as StoredChatHistory<METADATA>).messages;
       }
-    } catch (error) {
-      console.warn('Failed to load local chat history:', error);
-    }
+    } catch {}
 
     return [];
   }, [userId]);
@@ -64,9 +62,7 @@ export function useChatHistory<METADATA = unknown>(userId?: string | null) {
           getStorageKey(userId),
           JSON.stringify(payload)
         );
-      } catch (error) {
-        console.warn('Failed to save local chat history:', error);
-      }
+      } catch {}
     },
     [userId]
   );
@@ -76,9 +72,7 @@ export function useChatHistory<METADATA = unknown>(userId?: string | null) {
 
     try {
       window.localStorage.removeItem(getStorageKey(userId));
-    } catch (error) {
-      console.warn('Failed to clear local chat history:', error);
-    }
+    } catch {}
   }, [userId]);
 
   return {

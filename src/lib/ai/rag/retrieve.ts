@@ -54,7 +54,6 @@ export async function retrieveRelevantChunks(
   );
 
   if (error) {
-    console.error('[RETRIEVE VECTOR ERROR]', error);
     throw error;
   }
 
@@ -91,10 +90,6 @@ export async function retrieveChunksByTags(
   }
 
   // Graceful fallback to PostgREST query if RPC is not deployed yet
-  console.warn(
-    '[RETRIEVE BY TAGS] RPC unavailable, falling back to PostgREST query:',
-    rpcError?.message
-  );
 
   try {
     const { data: docs, error: docError } = await supabase
@@ -114,7 +109,6 @@ export async function retrieveChunksByTags(
       .limit(limit);
 
     if (docError || !docs) {
-      console.warn('[RETRIEVE BY TAGS FALLBACK ERROR]', docError);
       return [];
     }
 
@@ -146,8 +140,7 @@ export async function retrieveChunksByTags(
     }
 
     return fallbackChunks;
-  } catch (fallbackError) {
-    console.error('[RETRIEVE BY TAGS EXCEPTION]', fallbackError);
+  } catch {
     return [];
   }
 }

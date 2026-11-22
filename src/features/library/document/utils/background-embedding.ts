@@ -35,10 +35,6 @@ export async function processDocumentChunksInBackground(
       .order('created_at', { ascending: true });
 
     if (fetchError) {
-      console.error(
-        `[ASYNC-EMBEDDING] Failed to fetch chunks for doc ${documentId}:`,
-        fetchError
-      );
       return;
     }
 
@@ -46,18 +42,10 @@ export async function processDocumentChunksInBackground(
       return;
     }
 
-    console.log(
-      `[ASYNC-EMBEDDING] Processing ${chunks.length} chunk(s) for document ${documentId}`
-    );
-
     // Process in batches
     for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
       // Check execution timeout to stay safely within serverless / runtime bounds
       if (Date.now() - startTime > MAX_EXECUTION_TIME_MS) {
-        const remainingCount = chunks.length - i;
-        console.log(
-          `[ASYNC-EMBEDDING] Max duration (${MAX_EXECUTION_TIME_MS / 1000}s) reached for doc ${documentId}. Leaving ${remainingCount} chunk(s) as 'pending' for cron worker.`
-        );
         // Ensure remaining chunks are marked as 'pending' so cron can pick them up
         await supabase
           .from('document_chunks')
@@ -88,15 +76,8 @@ export async function processDocumentChunksInBackground(
               .eq('id', chunk.id)
           )
         );
-
-        console.log(
-          `[ASYNC-EMBEDDING] Embedded ${batch.length} chunk(s) for doc ${documentId} (${Math.min(i + BATCH_SIZE, chunks.length)}/${chunks.length})`
-        );
       } catch (batchError) {
         if (isRateLimitError(batchError)) {
-          console.warn(
-            `[ASYNC-EMBEDDING] Rate limit / quota exceeded for doc ${documentId}. Preserving remaining chunks as 'pending' for cron worker.`
-          );
           // Preserve current and remaining batches as 'pending' so the cron worker finishes them
           await supabase
             .from('document_chunks')
@@ -107,11 +88,6 @@ export async function processDocumentChunksInBackground(
             );
           return;
         }
-
-        console.error(
-          `[ASYNC-EMBEDDING] Non-recoverable batch error for doc ${documentId}:`,
-          batchError
-        );
 
         // Mark only this specific unrecoverable batch as failed
         await supabase
@@ -128,14 +104,5 @@ export async function processDocumentChunksInBackground(
         await new Promise((resolve) => setTimeout(resolve, BATCH_DELAY_MS));
       }
     }
-
-    console.log(
-      `[ASYNC-EMBEDDING] Completed indexing for document ${documentId}`
-    );
-  } catch (err) {
-    console.error(
-      `[ASYNC-EMBEDDING] Unexpected error processing doc ${documentId}:`,
-      err
-    );
-  }
+  } catch {}
 }

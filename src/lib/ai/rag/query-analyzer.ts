@@ -217,11 +217,7 @@ export async function analyzeChatQuery(
             ? []
             : extractSimpleKeywords(queryText),
     };
-  } catch (error) {
-    console.warn(
-      '[QUERY ANALYZER] Analysis failed or timed out, using fallback:',
-      error
-    );
+  } catch {
     return {
       isDocumentActionRequest: false,
       isOutOfScope: false,

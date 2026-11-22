@@ -117,8 +117,6 @@ export default function AccountSettingsForm({
         await mutate(SWR_PROFILE_KEY);
         appToast.success('Profile updated successfully!');
       } catch (error) {
-        console.error('Error updating profile:', error);
-
         // Handle Zod validation errors
         if (
           error &&

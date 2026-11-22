@@ -43,19 +43,9 @@ export async function* executeRAGChat(
   try {
     // Step 1: Analyze query with conversational memory and intent detection
     const analysis = await analyzeChatQuery(userMessages);
-    console.log('[RAG] Query analysis result:', {
-      isDocumentActionRequest: analysis.isDocumentActionRequest,
-      isOutOfScope: analysis.isOutOfScope,
-      isConversationalOnly: analysis.isConversationalOnly,
-      standaloneQuery: analysis.standaloneQuery,
-      tagKeywords: analysis.tagKeywords,
-    });
 
     // Step 2a: If document creation / update requested, guide to editor and draft content
     if (analysis.isDocumentActionRequest) {
-      console.log(
-        '[RAG] Handling document creation/addition request with editor guidance'
-      );
       const docActionPrompt =
         buildDocumentActionSystemPrompt(selectedLibraryNames);
       for await (const chunk of streamAnswer(docActionPrompt, userMessages)) {
@@ -66,7 +56,6 @@ export async function* executeRAGChat(
 
     // Step 2b: If out-of-scope, decline politely and explain capabilities
     if (analysis.isOutOfScope) {
-      console.log('[RAG] Handling as out-of-scope request');
       const outOfScopePrompt =
         buildOutOfScopeSystemPrompt(selectedLibraryNames);
       for await (const chunk of streamAnswer(outOfScopePrompt, userMessages)) {
@@ -77,7 +66,6 @@ export async function* executeRAGChat(
 
     // Step 2c: If purely conversational, stream directly from conversation memory
     if (analysis.isConversationalOnly) {
-      console.log('[RAG] Handling as conversational-only from chat memory');
       const conversationalPrompt =
         buildConversationalSystemPrompt(selectedLibraryNames);
       for await (const chunk of streamAnswer(
@@ -108,8 +96,7 @@ export async function* executeRAGChat(
             5,
             mentionScope
           );
-        } catch (error) {
-          console.error('[RAG] Vector retrieval failed:', error);
+        } catch {
           return [];
         }
       })(),
@@ -119,20 +106,14 @@ export async function* executeRAGChat(
         }
         try {
           return await retrieveChunksByTags(libraryIds, retrievalTags, 4);
-        } catch (error) {
-          console.error('[RAG] Tag keyword retrieval failed:', error);
+        } catch {
           return [];
         }
       })(),
     ]);
 
-    console.log(
-      `[RAG] Retrieved chunks - Vector: ${vectorChunks.length}, Tags: ${tagChunks.length}`
-    );
-
     // Step 4: Merge, deduplicate, and rank chunks
     const mergedChunks = mergeAndRankChunks(vectorChunks, tagChunks, 7);
-    console.log(`[RAG] Merged chunks for context: ${mergedChunks.length}`);
 
     // Step 5: Build context from hybrid chunks with balanced grounding
     const contextContent = buildPromptContext(mergedChunks);
@@ -147,7 +128,6 @@ export async function* executeRAGChat(
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
-    console.error('[RAG] Pipeline exception:', error);
     yield {
       type: 'error',
       error: `RAG pipeline error: ${error.message}`,

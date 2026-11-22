@@ -31,7 +31,6 @@ export async function getInviteDetails(rawInviteCode: string) {
       .single();
 
     if (error || !invite) {
-      console.error('Failed to fetch invite details:', error);
       return { error: 'Invite not found' };
     }
 
@@ -56,13 +55,11 @@ export async function getInviteDetails(rawInviteCode: string) {
     });
 
     if (!outputParsed.success) {
-      console.error('Output validation failed:', outputParsed.error);
       return { error: 'Invalid data format returned' };
     }
 
     return { data: outputParsed.data };
-  } catch (error) {
-    console.error('Error fetching invite:', error);
+  } catch {
     return { error: 'Internal server error' };
   }
 }

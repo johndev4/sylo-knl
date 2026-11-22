@@ -62,9 +62,7 @@ export function SidebarLibraryNav({ userRole }: SidebarLibraryNavProps) {
     try {
       const value = await getLibraryName(libraryId, supabase);
       setLibraryName(value || '');
-    } catch (err) {
-      console.error(err);
-    }
+    } catch {}
   }, [libraryId, userRole]);
 
   const [isLeaveDialogOpen, setIsLeaveDialogOpen] = useState(false);

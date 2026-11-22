@@ -13,6 +13,8 @@ import {
 } from '@/features/library/document/document-schema';
 import { getUser } from '@/lib/auth/get-user';
 import { serverConvertBlocksToMarkdown } from '@/lib/blocknote/transformer';
+import { logger } from '@/lib/logging/logger';
+import { getRequestId } from '@/lib/logging/request';
 
 // ---------------------------------------------------------------------------
 // createDocument — mirrors POST /api/documents
@@ -31,9 +33,23 @@ export async function createDocument(
 ): Promise<{ success: true; documentId: string; indexing: boolean }> {
   const supabase = await createClient();
   const user = await getUser();
+  const correlationId = getRequestId();
+  const startedAt = performance.now();
+  logger.info('Create document action started', {
+    correlationId,
+    userId: user.id,
+  });
 
-  const { title, contentJson, libraryId, tags } =
-    CreateDocumentInputSchema.parse(input);
+  const parsed = CreateDocumentInputSchema.safeParse(input);
+  if (!parsed.success) {
+    logger.warn('Create document validation failed', {
+      correlationId,
+      userId: user.id,
+      issueCount: parsed.error.issues.length,
+    });
+    throw parsed.error;
+  }
+  const { title, contentJson, libraryId, tags } = parsed.data;
 
   // Ensure personal space exists when targeting it
   if (libraryId === user.id) {
@@ -104,7 +120,14 @@ export async function createDocument(
   );
 
   if (saveError) {
-    console.error('[INGESTION ERROR] Atomic save failed:', saveError);
+    logger.error('Document atomic save failed', {
+      correlationId,
+      userId: user.id,
+      libraryId,
+      documentId: document.id,
+      duration: Math.round(performance.now() - startedAt),
+      error: saveError,
+    });
     throw new Error('Failed to save document and chunks');
   }
 
@@ -116,6 +139,13 @@ export async function createDocument(
   }
 
   revalidatePath(`/hub/libraries/${libraryId}/documents`);
+  logger.info('Create document action completed', {
+    correlationId,
+    userId: user.id,
+    libraryId,
+    documentId: document.id,
+    duration: Math.round(performance.now() - startedAt),
+  });
 
   return {
     success: true,
@@ -147,9 +177,26 @@ export async function updateDocument(
 }> {
   const supabase = await createClient();
   const user = await getUser();
+  const correlationId = getRequestId();
+  const startedAt = performance.now();
+  logger.info('Update document action started', {
+    correlationId,
+    userId: user.id,
+    documentId: docId,
+  });
 
+  const parsed = UpdateDocumentInputSchema.safeParse(input);
+  if (!parsed.success) {
+    logger.warn('Update document validation failed', {
+      correlationId,
+      userId: user.id,
+      documentId: docId,
+      issueCount: parsed.error.issues.length,
+    });
+    throw parsed.error;
+  }
   const { title, contentJson, tags, lastUpdatedAt, contentModified } =
-    UpdateDocumentInputSchema.parse(input);
+    parsed.data;
 
   const { data: currentDoc, error: docError } = await supabase
     .from('documents')
@@ -230,7 +277,13 @@ export async function updateDocument(
     );
 
     if (saveError) {
-      console.error('[INGESTION ERROR] Atomic update failed:', saveError);
+      logger.error('Document atomic update failed', {
+        correlationId,
+        userId: user.id,
+        documentId: docId,
+        duration: Math.round(performance.now() - startedAt),
+        error: saveError,
+      });
       throw new Error('Failed to update document and chunks');
     }
   } else {
@@ -260,6 +313,12 @@ export async function updateDocument(
   }
 
   revalidatePath(`/hub/libraries/${currentDoc.library_id}/documents/${docId}`);
+  logger.info('Update document action completed', {
+    correlationId,
+    userId: user.id,
+    documentId: docId,
+    duration: Math.round(performance.now() - startedAt),
+  });
 
   return {
     success: true,
@@ -281,6 +340,13 @@ export async function deleteDocument(
 ): Promise<{ success: true }> {
   const supabase = await createClient();
   const user = await getUser();
+  const correlationId = getRequestId();
+  const startedAt = performance.now();
+  logger.info('Delete document action started', {
+    correlationId,
+    userId: user.id,
+    documentId: docId,
+  });
 
   const { data: currentDoc, error: docError } = await supabase
     .from('documents')
@@ -319,6 +385,12 @@ export async function deleteDocument(
   if (deleteError) throw deleteError;
 
   revalidatePath(`/hub/libraries/${currentDoc.library_id}/documents`);
+  logger.info('Delete document action completed', {
+    correlationId,
+    userId: user.id,
+    documentId: docId,
+    duration: Math.round(performance.now() - startedAt),
+  });
 
   return { success: true };
 }

@@ -142,15 +142,9 @@ export class TokenBucketLimiter {
           oldest.timestamp + this.windowMs - now + 200
         );
 
-        console.log(
-          `[TOKEN-LIMITER] Approaching token limit (${currentUsage + tokens}/${this.maxTokensPerWindow} tokens). Pacing execution: waiting ${(waitMs / 1000).toFixed(1)}s...`
-        );
         await sleep(waitMs);
       } else {
         // If single batch itself is larger than maxTokensPerWindow, record and proceed
-        console.warn(
-          `[TOKEN-LIMITER] Batch size (${tokens} tokens) exceeds single window budget (${this.maxTokensPerWindow}). Proceeding with caution.`
-        );
         this.records.push({ timestamp: now, tokens });
         return;
       }
@@ -180,9 +174,6 @@ export class TokenBucketLimiter {
         attempt++;
         if (attempt <= maxRetries && isRateLimitError(error)) {
           const delayMs = parseRetryDelay(error);
-          console.warn(
-            `[TOKEN-LIMITER] Rate limit encountered on attempt ${attempt}/${maxRetries}. Backing off for ${(delayMs / 1000).toFixed(1)}s...`
-          );
           await sleep(delayMs);
 
           // After waiting, clear expired records
