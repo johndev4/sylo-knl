@@ -2,6 +2,7 @@
 
 import { useCallback } from 'react';
 import type { UIMessage } from 'ai';
+import { logger } from '@/lib/logging/logger';
 
 const STORAGE_PREFIX = 'sylo:chat-history:v1:';
 const MAX_MESSAGES = 100;
@@ -36,7 +37,9 @@ export function useChatHistory<METADATA = unknown>(userId?: string | null) {
       ) {
         return (parsed as StoredChatHistory<METADATA>).messages;
       }
-    } catch {}
+    } catch (error: unknown) {
+      logger.warn('Unable to read saved chat history', { error });
+    }
 
     return [];
   }, [userId]);
@@ -62,7 +65,9 @@ export function useChatHistory<METADATA = unknown>(userId?: string | null) {
           getStorageKey(userId),
           JSON.stringify(payload)
         );
-      } catch {}
+      } catch (error: unknown) {
+        logger.warn('Unable to save chat history', { error });
+      }
     },
     [userId]
   );
@@ -72,7 +77,9 @@ export function useChatHistory<METADATA = unknown>(userId?: string | null) {
 
     try {
       window.localStorage.removeItem(getStorageKey(userId));
-    } catch {}
+    } catch (error: unknown) {
+      logger.warn('Unable to clear saved chat history', { error });
+    }
   }, [userId]);
 
   return {

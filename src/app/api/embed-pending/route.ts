@@ -10,6 +10,9 @@ import {
   logDurationMs,
   REQUEST_ID_HEADER,
 } from '@/lib/logging/request';
+import { AppError } from '@/lib/errors/app-error';
+import { ERROR_CODES } from '@/lib/errors/error-codes';
+import { createApiErrorResponse } from '@/lib/errors/error-handler';
 
 /**
  * Number of pending chunks to embed per cron invocation.
@@ -34,18 +37,14 @@ export async function POST(req: NextRequest) {
   const requestContext = getRequestContext(req);
   try {
     return await handlePost(req, requestContext);
-  } catch (error) {
-    logger.error('Embedding worker unexpected failure', {
-      ...requestContext,
-      error,
+  } catch (error: unknown) {
+    return createApiErrorResponse(error, {
+      requestId: requestContext.requestId,
+      context: {
+        ...requestContext,
+        statusCode: 500,
+      },
     });
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      {
-        status: 500,
-        headers: { [REQUEST_ID_HEADER]: requestContext.requestId },
-      }
-    );
   }
 }
 
@@ -61,17 +60,10 @@ async function handlePost(
   const secret = process.env.CRON_SECRET;
 
   if (!secret) {
-    logger.fatal('Embedding worker secret is not configured', {
-      ...requestContext,
-      statusCode: 500,
+    return createApiErrorResponse(new AppError(ERROR_CODES.INTERNAL_ERROR), {
+      requestId: requestContext.requestId,
+      context: { ...requestContext, statusCode: 500 },
     });
-    return NextResponse.json(
-      { error: 'Server misconfiguration' },
-      {
-        status: 500,
-        headers: { [REQUEST_ID_HEADER]: requestContext.requestId },
-      }
-    );
   }
 
   const expectedAuth = Buffer.from(`Bearer ${secret}`);
@@ -81,15 +73,11 @@ async function handlePost(
     providedAuth.length !== expectedAuth.length ||
     !timingSafeEqual(providedAuth, expectedAuth)
   ) {
-    logger.warn('Embedding worker authentication failed', {
-      ...requestContext,
-      statusCode: 401,
-    });
-    return NextResponse.json(
-      { error: 'Unauthorized' },
+    return createApiErrorResponse(
+      new AppError(ERROR_CODES.AUTHENTICATION_REQUIRED),
       {
-        status: 401,
-        headers: { [REQUEST_ID_HEADER]: requestContext.requestId },
+        requestId: requestContext.requestId,
+        context: { ...requestContext, statusCode: 401 },
       }
     );
   }
@@ -106,15 +94,13 @@ async function handlePost(
     .limit(BATCH_SIZE);
 
   if (fetchError) {
-    logger.error('Embedding worker pending chunk query failed', {
-      ...requestContext,
-      error: fetchError,
-    });
-    return NextResponse.json(
-      { error: 'Failed to load embedding work' },
+    return createApiErrorResponse(
+      new AppError(ERROR_CODES.DATABASE_ERROR, undefined, {
+        cause: fetchError,
+      }),
       {
-        status: 500,
-        headers: { [REQUEST_ID_HEADER]: requestContext.requestId },
+        requestId: requestContext.requestId,
+        context: { ...requestContext, statusCode: 500 },
       }
     );
   }
@@ -131,10 +117,15 @@ async function handlePost(
       .limit(BATCH_SIZE);
 
     if (failedError) {
-      logger.error('Embedding worker recovery chunk query failed', {
-        ...requestContext,
-        error: failedError,
-      });
+      return createApiErrorResponse(
+        new AppError(ERROR_CODES.DATABASE_ERROR, undefined, {
+          cause: failedError,
+        }),
+        {
+          requestId: requestContext.requestId,
+          context: { ...requestContext, statusCode: 500 },
+        }
+      );
     } else if (failedChunks && failedChunks.length > 0) {
       chunks = failedChunks;
       logger.info('Embedding worker recovering failed chunks', {
@@ -170,44 +161,60 @@ async function handlePost(
     const ids = chunks.map((c) => c.id);
 
     if (isRateLimitError(err)) {
-      logger.warn('Embedding worker rate limited', {
-        ...requestContext,
-        chunkCount: chunks.length,
-      });
-      // Ensure they stay as pending so next cron execution picks them up
-      await supabase
+      const { error: resetError } = await supabase
         .from('document_chunks')
         .update({ embedding_status: 'pending' })
         .in('id', ids);
 
-      return NextResponse.json(
-        {
-          message: 'Rate limit encountered, deferred to next run',
-          processed: 0,
+      if (resetError) {
+        return createApiErrorResponse(
+          new AppError(ERROR_CODES.DATABASE_ERROR, undefined, {
+            cause: new AggregateError([err, resetError]),
+          }),
+          {
+            requestId: requestContext.requestId,
+            context: { ...requestContext, statusCode: 500 },
+          }
+        );
+      }
+
+      return createApiErrorResponse(new AppError(ERROR_CODES.RATE_LIMITED), {
+        requestId: requestContext.requestId,
+        context: {
+          ...requestContext,
+          statusCode: 429,
+          chunkCount: chunks.length,
         },
-        {
-          status: 429,
-          headers: { [REQUEST_ID_HEADER]: requestContext.requestId },
-        }
-      );
+      });
     }
 
-    // Mark batch as 'failed' for non-rate-limit errors so they don't loop endlessly
-    await supabase
+    // Mark batch as 'failed' for non-rate-limit errors so they don't loop endlessly.
+    const { error: markFailedError } = await supabase
       .from('document_chunks')
       .update({ embedding_status: 'failed' })
       .in('id', ids);
 
-    logger.error('Embedding worker provider request failed', {
-      ...requestContext,
-      chunkCount: chunks.length,
-      error: err,
-    });
-    return NextResponse.json(
-      { error: 'Embedding generation failed' },
+    if (markFailedError) {
+      return createApiErrorResponse(
+        new AppError(ERROR_CODES.DATABASE_ERROR, undefined, {
+          cause: new AggregateError([err, markFailedError]),
+        }),
+        {
+          requestId: requestContext.requestId,
+          context: { ...requestContext, statusCode: 500 },
+        }
+      );
+    }
+
+    return createApiErrorResponse(
+      new AppError(ERROR_CODES.INTERNAL_ERROR, undefined, { cause: err }),
       {
-        status: 500,
-        headers: { [REQUEST_ID_HEADER]: requestContext.requestId },
+        requestId: requestContext.requestId,
+        context: {
+          ...requestContext,
+          statusCode: 500,
+          chunkCount: chunks.length,
+        },
       }
     );
   }
@@ -224,19 +231,29 @@ async function handlePost(
   );
 
   const results = await Promise.all(updatePromises);
+  const failedUpdates = results.flatMap((result, index) =>
+    result.error ? [{ index, error: result.error }] : []
+  );
+  const successCount = results.length - failedUpdates.length;
 
-  let successCount = 0;
-  results.forEach((res, i) => {
-    if (res.error) {
-      logger.error('Embedding worker chunk update failed', {
-        ...requestContext,
-        chunkIndex: i,
-        error: res.error,
-      });
-    } else {
-      successCount++;
-    }
-  });
+  if (failedUpdates.length > 0) {
+    return createApiErrorResponse(
+      new AppError(ERROR_CODES.DATABASE_ERROR, undefined, {
+        cause: new AggregateError(
+          failedUpdates.map(({ error }) => error),
+          'Some embedding updates failed'
+        ),
+      }),
+      {
+        requestId: requestContext.requestId,
+        context: {
+          ...requestContext,
+          statusCode: 500,
+          failedChunkCount: failedUpdates.length,
+        },
+      }
+    );
+  }
 
   logger.info('Embedding worker batch completed', {
     ...requestContext,

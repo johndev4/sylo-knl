@@ -9,6 +9,9 @@ import {
   logDurationMs,
   REQUEST_ID_HEADER,
 } from '@/lib/logging/request';
+import { AppError } from '@/lib/errors/app-error';
+import { ERROR_CODES } from '@/lib/errors/error-codes';
+import { createApiErrorResponse } from '@/lib/errors/error-handler';
 
 export const maxDuration = 60; // allow longer timeout for RAG
 
@@ -57,7 +60,9 @@ function streamChunksToResponse(
             controller.enqueue(new TextEncoder().encode(chunk.content || ''));
           } else if (chunk.type === 'error') {
             controller.enqueue(
-              new TextEncoder().encode(`[ERROR] ${chunk.error}`)
+              new TextEncoder().encode(
+                '[ERROR] An unexpected error occurred. Please try again.'
+              )
             );
             controller.close();
             break;
@@ -90,16 +95,13 @@ export async function POST(req: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      logger.warn('Chat authentication failed', {
-        ...requestContext,
-        statusCode: 401,
-        error: authError ?? undefined,
-      });
-      return NextResponse.json(
-        { error: 'Unauthorized' },
+      return createApiErrorResponse(
+        new AppError(ERROR_CODES.AUTHENTICATION_REQUIRED, undefined, {
+          cause: authError,
+        }),
         {
-          status: 401,
-          headers: { [REQUEST_ID_HEADER]: requestContext.requestId },
+          requestId: requestContext.requestId,
+          context: { ...requestContext, statusCode: 401 },
         }
       );
     }
@@ -109,18 +111,14 @@ export async function POST(req: NextRequest) {
     // Validate request body with Zod
     const parsed = chatRequestSchema.safeParse(body);
     if (!parsed.success) {
-      logger.warn('Chat validation failed', {
-        ...requestContext,
-        statusCode: 400,
-        issueCount: parsed.error.issues.length,
+      return createApiErrorResponse(parsed.error, {
+        requestId: requestContext.requestId,
+        context: {
+          ...requestContext,
+          statusCode: 400,
+          issueCount: parsed.error.issues.length,
+        },
       });
-      return NextResponse.json(
-        { error: parsed.error.issues[0]?.message ?? 'Invalid request body' },
-        {
-          status: 400,
-          headers: { [REQUEST_ID_HEADER]: requestContext.requestId },
-        }
-      );
     }
 
     const {
@@ -142,15 +140,13 @@ export async function POST(req: NextRequest) {
       .in('library_id', libraryIds);
 
     if (membershipError) {
-      logger.error('Chat membership lookup failed', {
-        ...userContext,
-        error: membershipError,
-      });
-      return NextResponse.json(
-        { error: 'Failed to verify library access' },
+      return createApiErrorResponse(
+        new AppError(ERROR_CODES.DATABASE_ERROR, undefined, {
+          cause: membershipError,
+        }),
         {
-          status: 500,
-          headers: { [REQUEST_ID_HEADER]: requestContext.requestId },
+          requestId: requestContext.requestId,
+          context: { ...userContext, statusCode: 500 },
         }
       );
     }
@@ -160,18 +156,14 @@ export async function POST(req: NextRequest) {
     // Reject if any requested library is not authorized
     const unauthorized = libraryIds.filter((id) => !authorizedIds.includes(id));
     if (unauthorized.length > 0) {
-      logger.warn('Chat library authorization failed', {
-        ...userContext,
-        statusCode: 403,
-        unauthorizedLibraryCount: unauthorized.length,
+      return createApiErrorResponse(new AppError(ERROR_CODES.FORBIDDEN), {
+        requestId: requestContext.requestId,
+        context: {
+          ...userContext,
+          statusCode: 403,
+          unauthorizedLibraryCount: unauthorized.length,
+        },
       });
-      return NextResponse.json(
-        { error: 'Forbidden: access denied to one or more libraries' },
-        {
-          status: 403,
-          headers: { [REQUEST_ID_HEADER]: requestContext.requestId },
-        }
-      );
     }
 
     const documentIds = requestedMentionScope?.documentIds ?? [];
@@ -184,35 +176,26 @@ export async function POST(req: NextRequest) {
         .is('deleted_at', null);
 
       if (documentsError) {
-        logger.error('Chat document scope lookup failed', {
-          ...userContext,
-          error: documentsError,
-        });
-        return NextResponse.json(
-          { error: 'Failed to verify selected documents' },
+        return createApiErrorResponse(
+          new AppError(ERROR_CODES.DATABASE_ERROR, undefined, {
+            cause: documentsError,
+          }),
           {
-            status: 500,
-            headers: { [REQUEST_ID_HEADER]: requestContext.requestId },
+            requestId: requestContext.requestId,
+            context: { ...userContext, statusCode: 500 },
           }
         );
       }
 
       if ((selectedDocuments ?? []).length !== documentIds.length) {
-        logger.warn('Chat document scope authorization failed', {
-          ...userContext,
-          statusCode: 403,
-          requestedDocumentCount: documentIds.length,
-        });
-        return NextResponse.json(
-          {
-            error:
-              'One or more selected documents are not available in the selected libraries',
+        return createApiErrorResponse(new AppError(ERROR_CODES.FORBIDDEN), {
+          requestId: requestContext.requestId,
+          context: {
+            ...userContext,
+            statusCode: 403,
+            requestedDocumentCount: documentIds.length,
           },
-          {
-            status: 403,
-            headers: { [REQUEST_ID_HEADER]: requestContext.requestId },
-          }
-        );
+        });
       }
     }
 
@@ -233,15 +216,13 @@ export async function POST(req: NextRequest) {
       .in('id', authorizedIds);
 
     if (librariesError) {
-      logger.error('Chat library lookup failed', {
-        ...userContext,
-        error: librariesError,
-      });
-      return NextResponse.json(
-        { error: 'Failed to load selected libraries' },
+      return createApiErrorResponse(
+        new AppError(ERROR_CODES.DATABASE_ERROR, undefined, {
+          cause: librariesError,
+        }),
         {
-          status: 500,
-          headers: { [REQUEST_ID_HEADER]: requestContext.requestId },
+          requestId: requestContext.requestId,
+          context: { ...userContext, statusCode: 500 },
         }
       );
     }
@@ -250,19 +231,15 @@ export async function POST(req: NextRequest) {
       (library) => library.name
     );
     if (selectedLibraryNames.length !== authorizedIds.length) {
-      logger.error('Chat selected library count mismatch', {
-        ...userContext,
-        statusCode: 500,
-        selectedLibraryCount: selectedLibraryNames.length,
-        authorizedLibraryCount: authorizedIds.length,
+      return createApiErrorResponse(new AppError(ERROR_CODES.DATABASE_ERROR), {
+        requestId: requestContext.requestId,
+        context: {
+          ...userContext,
+          statusCode: 500,
+          selectedLibraryCount: selectedLibraryNames.length,
+          authorizedLibraryCount: authorizedIds.length,
+        },
       });
-      return NextResponse.json(
-        { error: 'Failed to load selected libraries' },
-        {
-          status: 500,
-          headers: { [REQUEST_ID_HEADER]: requestContext.requestId },
-        }
-      );
     }
 
     // Get the latest user message for embedding
@@ -299,42 +276,14 @@ export async function POST(req: NextRequest) {
         [REQUEST_ID_HEADER]: requestContext.requestId,
       },
     });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (error: any) {
-    logger.error('Chat request failed unexpectedly', {
-      ...requestContext,
-      statusCode: 500,
-      duration: logDurationMs(startedAt),
-      error,
+  } catch (error: unknown) {
+    return createApiErrorResponse(error, {
+      requestId: requestContext.requestId,
+      context: {
+        ...requestContext,
+        statusCode: 500,
+        duration: logDurationMs(startedAt),
+      },
     });
-
-    if (error.name === 'SyntaxError' && error.message?.includes('JSON')) {
-      return NextResponse.json(
-        { error: 'Invalid JSON in request body' },
-        { status: 400 }
-      );
-    }
-
-    if (
-      error.code === 'P2V001' ||
-      error.meta?.code === '22P02' ||
-      error.message?.includes('22P02')
-    ) {
-      return NextResponse.json(
-        { error: 'Invalid database input' },
-        {
-          status: 400,
-          headers: { [REQUEST_ID_HEADER]: requestContext.requestId },
-        }
-      );
-    }
-
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      {
-        status: 500,
-        headers: { [REQUEST_ID_HEADER]: requestContext.requestId },
-      }
-    );
   }
 }

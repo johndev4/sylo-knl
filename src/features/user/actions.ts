@@ -9,6 +9,9 @@ import {
 } from './user-schema';
 import { logger } from '@/lib/logging/logger';
 import { getRequestId } from '@/lib/logging/request';
+import { AppError } from '@/lib/errors/app-error';
+import { ERROR_CODES } from '@/lib/errors/error-codes';
+import { withActionErrorHandling } from '@/lib/errors/error-handler';
 
 /**
  * Updates the user profile for the currently authenticated user.
@@ -17,7 +20,7 @@ import { getRequestId } from '@/lib/logging/request';
  * @param data - Partial profile data to update
  * @returns The updated user profile mapped to frontend-friendly camelCase
  */
-export async function updateUserProfile(data: UpdateProfileInput) {
+async function updateUserProfileImpl(data: UpdateProfileInput) {
   const correlationId = getRequestId();
   const startedAt = performance.now();
   const user = await getUser();
@@ -44,13 +47,9 @@ export async function updateUserProfile(data: UpdateProfileInput) {
     .single();
 
   if (error || !updatedUser) {
-    logger.error('User profile update failed', {
-      correlationId,
-      userId: user.id,
-      duration: Math.max(0, Math.round(performance.now() - startedAt)),
-      error: error ?? new Error('Update failed'),
+    throw new AppError(ERROR_CODES.DATABASE_ERROR, undefined, {
+      cause: error ?? new Error('Update failed'),
     });
-    throw error || new Error('Update failed');
   }
   logger.info('User profile updated', {
     correlationId,
@@ -66,5 +65,11 @@ export async function updateUserProfile(data: UpdateProfileInput) {
     bio: updatedUser.bio,
     timezone: updatedUser.timezone,
     useAvatarUrl: updatedUser.use_avatar_url,
+  });
+}
+
+export async function updateUserProfile(data: UpdateProfileInput) {
+  return withActionErrorHandling(() => updateUserProfileImpl(data), {
+    action: 'updateUserProfile',
   });
 }

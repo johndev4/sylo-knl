@@ -4,6 +4,7 @@
  */
 
 import { createClient } from '@/lib/supabase/server';
+import { logger } from '@/lib/logging/logger';
 
 /**
  * Retrieved document chunk with metadata
@@ -109,6 +110,11 @@ export async function retrieveChunksByTags(
       .limit(limit);
 
     if (docError || !docs) {
+      if (docError) {
+        logger.error('Tag retrieval fallback query failed', {
+          error: docError,
+        });
+      }
       return [];
     }
 
@@ -140,7 +146,8 @@ export async function retrieveChunksByTags(
     }
 
     return fallbackChunks;
-  } catch {
+  } catch (error: unknown) {
+    logger.error('Tag retrieval fallback failed unexpectedly', { error });
     return [];
   }
 }

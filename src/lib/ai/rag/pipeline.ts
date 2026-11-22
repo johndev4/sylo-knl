@@ -28,6 +28,7 @@ import {
 } from './context-builder';
 import { analyzeChatQuery } from './query-analyzer';
 import type { ScopedRetrievalFilters } from './retrieve';
+import { logger } from '@/lib/logging/logger';
 
 /**
  * Execute full enhanced RAG chat flow with chat memory, tag search, scope guardrails,
@@ -96,7 +97,13 @@ export async function* executeRAGChat(
             5,
             mentionScope
           );
-        } catch {
+        } catch (error: unknown) {
+          logger.warn(
+            'Vector retrieval failed; continuing without vector results',
+            {
+              error,
+            }
+          );
           return [];
         }
       })(),
@@ -106,7 +113,10 @@ export async function* executeRAGChat(
         }
         try {
           return await retrieveChunksByTags(libraryIds, retrievalTags, 4);
-        } catch {
+        } catch (error: unknown) {
+          logger.warn('Tag retrieval failed; continuing without tag results', {
+            error,
+          });
           return [];
         }
       })(),
@@ -126,11 +136,11 @@ export async function* executeRAGChat(
     for await (const chunk of streamAnswer(systemPrompt, userMessages)) {
       yield chunk;
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (error: any) {
+  } catch (error: unknown) {
+    logger.error('RAG pipeline failed', { error });
     yield {
       type: 'error',
-      error: `RAG pipeline error: ${error.message}`,
+      error: 'An unexpected error occurred. Please try again.',
     };
   }
 }

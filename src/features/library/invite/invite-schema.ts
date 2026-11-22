@@ -32,14 +32,24 @@ export const joinInviteInputSchema = z
 
 // JoinLibraryAction Output Schema
 export const joinInviteOutputSchema = z.object({
-  success: z.boolean(),
-  data: z.unknown().optional(),
-  error: z.string().optional(),
+  success: z.literal(true),
+  data: z.unknown(),
 });
+
+export const joinInviteResultSchema = z.union([
+  joinInviteOutputSchema,
+  z.object({
+    success: z.literal(false),
+    error: z.object({
+      code: z.string(),
+      message: z.string(),
+    }),
+  }),
+]);
 
 // ------------------------------------------------------------------------------
 // Types
 // ------------------------------------------------------------------------------
 
 export type InviteDetails = z.infer<typeof inviteDetailsSchema>;
-export type JoinInviteResult = z.infer<typeof joinInviteOutputSchema>;
+export type JoinInviteResult = z.infer<typeof joinInviteResultSchema>;

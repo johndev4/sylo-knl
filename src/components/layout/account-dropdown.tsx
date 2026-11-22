@@ -24,6 +24,8 @@ import { UserAvatar } from '../shared/user-avatar';
 import { logout } from '@/features/auth/actions';
 import { useSession } from '../providers/auth-provider';
 import { useState } from 'react';
+import { appToast } from '@/lib/toast';
+import { unwrapActionResult } from '@/lib/errors/app-error';
 
 /**
  * Standalone SWR fetcher for the account dropdown.
@@ -62,9 +64,15 @@ export function AccountDropdown({
   const handleLogout = async () => {
     try {
       setIsOpen(false);
-      await logout();
+      unwrapActionResult(await logout());
       window.location.replace('/login');
-    } catch {}
+    } catch (error) {
+      appToast.error(
+        error instanceof Error
+          ? error.message
+          : 'Unable to log out. Please try again.'
+      );
+    }
   };
 
   // ---------------------------------------------------------------------------

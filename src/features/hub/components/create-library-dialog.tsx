@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/dialog';
 import { Plus, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { unwrapActionResult } from '@/lib/errors/app-error';
 
 interface CreateLibraryDialogProps {
   triggerClassName?: string;
@@ -48,7 +49,7 @@ export function CreateLibraryDialog({
     setError(null);
 
     try {
-      await createLibrary(name);
+      unwrapActionResult(await createLibrary(name));
       setIsOpen(false);
       setName('');
       setError(null);

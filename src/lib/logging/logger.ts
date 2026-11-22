@@ -28,17 +28,25 @@ const LEVEL_PRIORITY: Record<LogLevel, number> = {
 };
 
 const REDACTED_KEYS =
-  /(authorization|cookie|password|pass(code)?|secret|token|api[_-]?key|private[_-]?key|client[_-]?secret|session|credential)/i;
+  /(authorization|cookie|password|pass(code)?|secret|token|api[_-]?key|private[_-]?key|client[_-]?secret|session|credential|email|phone|address|full[_-]?name|first[_-]?name|last[_-]?name|birth|ssn|user[_-]?id)/i;
 
 const CONTROL_CHARACTERS = /[\u0000-\u001f\u007f-\u009f]/g;
+const EMAIL_ADDRESS = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi;
+
+function environmentValue(name: string): string | undefined {
+  if (typeof process === 'undefined') return undefined;
+  return name === 'NODE_ENV' ? process.env.NODE_ENV : process.env[name];
+}
 
 function configuredLevel(): LogLevel {
-  const level = process.env.LOG_LEVEL?.toLowerCase();
+  const level = environmentValue('LOG_LEVEL')?.toLowerCase();
   return level && level in LEVEL_PRIORITY ? (level as LogLevel) : 'info';
 }
 
 function isProduction(): boolean {
-  return process.env.NODE_ENV === 'production';
+  return (
+    typeof process !== 'undefined' && process.env.NODE_ENV === 'production'
+  );
 }
 
 export function sanitizeLogValue(value: unknown, depth = 0): unknown {
@@ -50,6 +58,7 @@ export function sanitizeLogValue(value: unknown, depth = 0): unknown {
         /(password|secret|token|api[_-]?key|session)\s*[:=]\s*[^\s,&;]+/gi,
         '$1=[REDACTED]'
       )
+      .replace(EMAIL_ADDRESS, '[REDACTED_EMAIL]')
       .replace(CONTROL_CHARACTERS, ' ')
       .slice(0, 2000);
   }
@@ -83,7 +92,9 @@ export function serializeError(error: unknown): LogError {
     if ('code' in error && typeof error.code === 'string') {
       result.code = sanitizeLogValue(error.code) as string;
     }
-    if (error.cause !== undefined) {
+    if (error instanceof AggregateError) {
+      result.cause = sanitizeLogValue(error.errors);
+    } else if (error.cause !== undefined) {
       result.cause = sanitizeLogValue(error.cause);
     }
     if (!isProduction()) {
@@ -126,7 +137,7 @@ function write(
     timestamp: new Date().toISOString(),
     level,
     message: sanitizeLogValue(message),
-    environment: process.env.NODE_ENV ?? 'development',
+    environment: environmentValue('NODE_ENV') ?? 'development',
     service: 'sylo-knl',
   };
 
@@ -134,7 +145,7 @@ function write(
   Object.assign(entry, sanitizedContext);
 
   const format =
-    process.env.LOG_FORMAT?.toLowerCase() ??
+    environmentValue('LOG_FORMAT')?.toLowerCase() ??
     (isProduction() ? 'json' : 'pretty');
 
   if (format === 'json') {

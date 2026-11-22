@@ -14,6 +14,12 @@ export const UserLibraryRoleEnum = z.enum([
 
 export const LibraryIdSchema = z.uuid('Invalid library id');
 
+export const LibraryNameSchema = z
+  .string()
+  .trim()
+  .min(1, 'Library name is required')
+  .max(50, 'Library name cannot exceed 50 characters');
+
 export const TagSuggestionsQuerySchema = z.string();
 
 export const UpdateLibraryMemberRoleInputSchema = z.object({

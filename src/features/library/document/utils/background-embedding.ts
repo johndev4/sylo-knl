@@ -1,6 +1,7 @@
 import { createServiceClient } from '@/lib/supabase/service';
 import { generateEmbeddings } from '@/lib/ai/embeddings';
 import { isRateLimitError } from '@/lib/ai/utils/rate-limiter';
+import { logger } from '@/lib/logging/logger';
 
 const BATCH_SIZE = 5;
 const BATCH_DELAY_MS = 1000;
@@ -35,6 +36,10 @@ export async function processDocumentChunksInBackground(
       .order('created_at', { ascending: true });
 
     if (fetchError) {
+      logger.error('Background embedding chunk query failed', {
+        documentId,
+        error: fetchError,
+      });
       return;
     }
 
@@ -47,13 +52,19 @@ export async function processDocumentChunksInBackground(
       // Check execution timeout to stay safely within serverless / runtime bounds
       if (Date.now() - startTime > MAX_EXECUTION_TIME_MS) {
         // Ensure remaining chunks are marked as 'pending' so cron can pick them up
-        await supabase
+        const { error: deferError } = await supabase
           .from('document_chunks')
           .update({ embedding_status: 'pending' })
           .in(
             'id',
             chunks.slice(i).map((c) => c.id)
           );
+        if (deferError) {
+          logger.error('Background embedding deferral failed', {
+            documentId,
+            error: deferError,
+          });
+        }
         return;
       }
 
@@ -65,7 +76,7 @@ export async function processDocumentChunksInBackground(
         );
 
         // Parallelized updates (Vercel React Best Practices: async-parallel)
-        await Promise.all(
+        const updateResults = await Promise.all(
           batch.map((chunk, idx) =>
             supabase
               .from('document_chunks')
@@ -76,27 +87,54 @@ export async function processDocumentChunksInBackground(
               .eq('id', chunk.id)
           )
         );
+        const updateErrors = updateResults.flatMap((result) =>
+          result.error ? [result.error] : []
+        );
+        if (updateErrors.length > 0) {
+          logger.error('Background embedding chunk updates failed', {
+            documentId,
+            failedCount: updateErrors.length,
+            errors: updateErrors,
+          });
+        }
       } catch (batchError) {
         if (isRateLimitError(batchError)) {
           // Preserve current and remaining batches as 'pending' so the cron worker finishes them
-          await supabase
+          const { error: deferError } = await supabase
             .from('document_chunks')
             .update({ embedding_status: 'pending' })
             .in(
               'id',
               chunks.slice(i).map((c) => c.id)
             );
+          if (deferError) {
+            logger.error('Background embedding rate-limit deferral failed', {
+              documentId,
+              error: deferError,
+            });
+          } else {
+            logger.warn('Background embedding paused due to rate limiting', {
+              documentId,
+              deferredChunkCount: chunks.length - i,
+            });
+          }
           return;
         }
 
         // Mark only this specific unrecoverable batch as failed
-        await supabase
+        const { error: markFailedError } = await supabase
           .from('document_chunks')
           .update({ embedding_status: 'failed' })
           .in(
             'id',
             batch.map((c) => c.id)
           );
+        logger.error('Background embedding batch failed', {
+          documentId,
+          batchSize: batch.length,
+          error: batchError,
+          ...(markFailedError ? { markFailedError } : {}),
+        });
       }
 
       // Add a rate-limiting delay between batches if more remain
@@ -104,5 +142,10 @@ export async function processDocumentChunksInBackground(
         await new Promise((resolve) => setTimeout(resolve, BATCH_DELAY_MS));
       }
     }
-  } catch {}
+  } catch (error: unknown) {
+    logger.error('Background embedding task failed unexpectedly', {
+      documentId,
+      error,
+    });
+  }
 }

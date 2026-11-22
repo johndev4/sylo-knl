@@ -23,6 +23,7 @@ import type {
 import { createDocument, deleteDocument, updateDocument } from './actions';
 import { getRecentlyAddedTags, searchLibraryTags } from '../queries';
 import useSWR from 'swr';
+import { unwrapActionResult } from '@/lib/errors/app-error';
 
 // ---------------------------------------------------------------------------
 // Constant Variables
@@ -227,7 +228,7 @@ export function useCreateDocumentSWR(libraryId: string) {
   const { trigger, isMutating } = useSWRMutation(
     DOCUMENTS_SWR_KEY,
     async (_, { arg }: { arg: { input: CreateDocumentInput } }) =>
-      await createDocument(arg.input),
+      unwrapActionResult(await createDocument(arg.input)),
     {
       onSuccess: () => {
         mutate();
@@ -252,7 +253,7 @@ export function useUpdateDocumentSWR(libraryId: string) {
     async (
       _,
       { arg }: { arg: { docId: string; input: UpdateDocumentInput } }
-    ) => await updateDocument(arg.docId, arg.input),
+    ) => unwrapActionResult(await updateDocument(arg.docId, arg.input)),
     {
       onSuccess: () => {
         mutate();
@@ -275,7 +276,7 @@ export function useDeleteDocumentSWR(libraryId: string) {
   const { trigger, isMutating } = useSWRMutation(
     DOCUMENTS_SWR_KEY,
     async (_, { arg }: { arg: { docId: string } }) =>
-      await deleteDocument(arg.docId),
+      unwrapActionResult(await deleteDocument(arg.docId)),
     {
       onSuccess: () => {
         mutate();

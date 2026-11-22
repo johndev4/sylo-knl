@@ -9,6 +9,7 @@
  */
 
 import { generateAnswer } from '@/lib/ai/core/llm';
+import { logger } from '@/lib/logging/logger';
 
 export interface AnalyzedQuery {
   isDocumentActionRequest: boolean;
@@ -218,6 +219,7 @@ export async function analyzeChatQuery(
             : extractSimpleKeywords(queryText),
     };
   } catch {
+    logger.warn('Chat query analysis failed; using the original query');
     return {
       isDocumentActionRequest: false,
       isOutOfScope: false,

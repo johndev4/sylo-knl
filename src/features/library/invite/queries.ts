@@ -3,6 +3,7 @@ import {
   inviteDetailsSchema,
   inviteCodeSchema,
 } from '@/features/library/invite/invite-schema';
+import { logger } from '@/lib/logging/logger';
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceKey = process.env.SUPABASE_SECRET_KEY;
@@ -18,7 +19,7 @@ export async function getInviteDetails(rawInviteCode: string) {
     // 1. Validate Input
     const inputParsed = inviteCodeSchema.safeParse(rawInviteCode);
     if (!inputParsed.success) {
-      return { error: inputParsed.error.message };
+      return { error: 'This invite link is invalid.' };
     }
 
     const inviteCode = inputParsed.data;
@@ -31,6 +32,10 @@ export async function getInviteDetails(rawInviteCode: string) {
       .single();
 
     if (error || !invite) {
+      if (error && error.code !== 'PGRST116') {
+        logger.error('Invite details query failed', { error });
+        return { error: 'Unable to load this invite. Please try again.' };
+      }
       return { error: 'Invite not found' };
     }
 
@@ -55,11 +60,15 @@ export async function getInviteDetails(rawInviteCode: string) {
     });
 
     if (!outputParsed.success) {
+      logger.error('Invite details output validation failed', {
+        issueCount: outputParsed.error.issues.length,
+      });
       return { error: 'Invalid data format returned' };
     }
 
     return { data: outputParsed.data };
-  } catch {
+  } catch (error: unknown) {
+    logger.error('Invite details request failed unexpectedly', { error });
     return { error: 'Internal server error' };
   }
 }

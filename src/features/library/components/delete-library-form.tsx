@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/card';
 import { AlertTriangle, Loader2 } from 'lucide-react';
 import { deleteLibrary } from '@/features/library/actions';
+import { unwrapActionResult } from '@/lib/errors/app-error';
 
 interface DeleteLibraryFormProps {
   libraryId: string;
@@ -61,7 +62,7 @@ export function DeleteLibraryForm({
     setError(null);
 
     try {
-      await deleteLibrary(libraryId);
+      unwrapActionResult(await deleteLibrary(libraryId));
       router.push('/hub');
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {

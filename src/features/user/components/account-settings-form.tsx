@@ -24,6 +24,7 @@ import {
 import { cn } from '@/lib/utils';
 import { appToast } from '@/lib/toast';
 import { updateUserProfile } from '@/features/user/actions';
+import { unwrapActionResult } from '@/lib/errors/app-error';
 import { VALID_TIMEZONES } from '@/lib/constants';
 import { SWR_PROFILE_KEY } from '@/features/user/queries';
 import { UserProfile } from '../user-schema';
@@ -108,7 +109,9 @@ export default function AccountSettingsForm({
 
     startTransition(async () => {
       try {
-        const updatedProfile = await updateUserProfile(formData);
+        const updatedProfile = unwrapActionResult(
+          await updateUserProfile(formData)
+        );
 
         setProfile(updatedProfile);
         setSaveSuccess(true);

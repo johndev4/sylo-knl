@@ -5,6 +5,7 @@ import {
 } from '@/lib/logging/logger';
 import {
   getRequestId,
+  getRequestContext,
   isSlowDuration,
   REQUEST_ID_HEADER,
 } from '@/lib/logging/request';
@@ -55,18 +56,26 @@ describe('structured logging', () => {
         password: 'hunter2',
         authorization: 'Bearer abc',
         api_key: 'sk-test',
+        userId: 'private-user-id',
         nested: { session_token: 'session-value' },
       })
     ).toEqual({
       password: '[REDACTED]',
       authorization: '[REDACTED]',
       api_key: '[REDACTED]',
+      userId: '[REDACTED]',
       nested: { session_token: '[REDACTED]' },
+    });
+    expect(sanitizeLogValue({ email: 'person@example.com' })).toEqual({
+      email: '[REDACTED]',
     });
 
     expect(
       sanitizeLogValue('Authorization: Bearer abc123')
     ).toContain('[REDACTED]');
+    expect(sanitizeLogValue('Contact person@example.com')).toBe(
+      'Contact [REDACTED_EMAIL]'
+    );
   });
 
   it('sanitizes log-injection control characters', () => {
@@ -95,6 +104,13 @@ describe('structured logging', () => {
     expect(
       getRequestId({ [REQUEST_ID_HEADER]: 'bad id\nforged' })
     ).toMatch(/^[a-zA-Z0-9-]+$/);
+  });
+
+  it('omits query strings from logged request paths', () => {
+    const request = new Request(
+      'https://example.test/api/chat?token=private-value'
+    );
+    expect(getRequestContext(request).path).toBe('/api/chat');
   });
 
   it('uses configurable slow-operation thresholds', () => {

@@ -16,14 +16,12 @@ export function getRequestId(
     return incoming;
   }
 
-  try {
-    if (
-      typeof crypto !== 'undefined' &&
-      typeof crypto.randomUUID === 'function'
-    ) {
-      return crypto.randomUUID();
-    }
-  } catch {}
+  if (
+    typeof crypto !== 'undefined' &&
+    typeof crypto.randomUUID === 'function'
+  ) {
+    return crypto.randomUUID();
+  }
 
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
 }
@@ -40,7 +38,7 @@ export function getRequestContext(
   return {
     requestId: requestId ?? getRequestId(request.headers),
     method: request.method,
-    path: `${url.pathname}${url.search}`,
+    path: url.pathname,
   };
 }
 
