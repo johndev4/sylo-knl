@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { updateLibraryName } from '@/features/library/actions';
 import { appToast } from '@/lib/toast';
+import { unwrapActionResult } from '@/lib/errors/app-error';
 
 interface RenameLibraryFormProps {
   libraryId: string;
@@ -28,7 +29,7 @@ export function RenameLibraryForm({
 
     try {
       setIsUpdating(true);
-      await updateLibraryName(libraryId, trimmedName);
+      unwrapActionResult(await updateLibraryName(libraryId, trimmedName));
       setOriginalName(trimmedName);
       appToast.success('Library renamed successfully');
     } catch (err) {

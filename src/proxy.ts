@@ -9,10 +9,6 @@ const PROTECTED_ROUTES = ['/hub', '/chat', '/account'];
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? '';
 
-if (supabaseUrl === '' || supabaseKey === '') {
-  throw new Error('[AUTH GUARD] Missing Supabase env vars');
-}
-
 export async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
   const response = NextResponse.next({ request });
@@ -44,7 +40,8 @@ export async function proxy(request: NextRequest) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = LOGIN_PATH;
     loginUrl.searchParams.set('redirect', `${pathname}${search}`);
-    return NextResponse.redirect(loginUrl);
+    const redirectResponse = NextResponse.redirect(loginUrl);
+    return redirectResponse;
   }
 
   // Redirect authenticated users away from the login page
@@ -52,7 +49,8 @@ export async function proxy(request: NextRequest) {
     const hubUrl = request.nextUrl.clone();
     hubUrl.pathname = '/hub';
     hubUrl.searchParams.delete('redirect'); // Remove the redirect param to avoid redirect loops
-    return NextResponse.redirect(hubUrl);
+    const redirectResponse = NextResponse.redirect(hubUrl);
+    return redirectResponse;
   }
 
   return response;

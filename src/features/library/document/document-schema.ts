@@ -15,6 +15,8 @@ export const CreateDocumentInputSchema = z.object({
   tags: z.array(z.string()).optional(),
 });
 
+export const DocumentIdSchema = z.uuid('Invalid document id');
+
 export const UpdateDocumentInputSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   contentJson: z

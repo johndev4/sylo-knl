@@ -2,6 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { executeRAGChat } from '@/lib/ai/rag/pipeline';
 import { z } from 'zod';
+import { logger } from '@/lib/logging/logger';
+import {
+  getRequestContext,
+  isSlowDuration,
+  logDurationMs,
+  REQUEST_ID_HEADER,
+} from '@/lib/logging/request';
+import { AppError } from '@/lib/errors/app-error';
+import { ERROR_CODES } from '@/lib/errors/error-codes';
+import { createApiErrorResponse } from '@/lib/errors/error-handler';
 
 export const maxDuration = 60; // allow longer timeout for RAG
 
@@ -39,7 +49,8 @@ const chatRequestSchema = z.object({
  */
 function streamChunksToResponse(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  chunks: AsyncIterable<any>
+  chunks: AsyncIterable<any>,
+  requestContext: { requestId: string; method: string; path: string }
 ): ReadableStream<Uint8Array> {
   return new ReadableStream({
     async start(controller) {
@@ -49,7 +60,9 @@ function streamChunksToResponse(
             controller.enqueue(new TextEncoder().encode(chunk.content || ''));
           } else if (chunk.type === 'error') {
             controller.enqueue(
-              new TextEncoder().encode(`[ERROR] ${chunk.error}`)
+              new TextEncoder().encode(
+                '[ERROR] An unexpected error occurred. Please try again.'
+              )
             );
             controller.close();
             break;
@@ -59,6 +72,10 @@ function streamChunksToResponse(
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
+        logger.error('Chat response stream failed', {
+          ...requestContext,
+          error,
+        });
         controller.error(error);
       }
     },
@@ -66,6 +83,10 @@ function streamChunksToResponse(
 }
 
 export async function POST(req: NextRequest) {
+  const requestContext = getRequestContext(req);
+  const startedAt = performance.now();
+  logger.info('Chat request received', requestContext);
+
   try {
     const supabase = await createClient();
     const {
@@ -74,7 +95,15 @@ export async function POST(req: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createApiErrorResponse(
+        new AppError(ERROR_CODES.AUTHENTICATION_REQUIRED, undefined, {
+          cause: authError,
+        }),
+        {
+          requestId: requestContext.requestId,
+          context: { ...requestContext, statusCode: 401 },
+        }
+      );
     }
 
     const body = await req.json();
@@ -82,10 +111,14 @@ export async function POST(req: NextRequest) {
     // Validate request body with Zod
     const parsed = chatRequestSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: parsed.error.issues[0]?.message ?? 'Invalid request body' },
-        { status: 400 }
-      );
+      return createApiErrorResponse(parsed.error, {
+        requestId: requestContext.requestId,
+        context: {
+          ...requestContext,
+          statusCode: 400,
+          issueCount: parsed.error.issues.length,
+        },
+      });
     }
 
     const {
@@ -93,7 +126,11 @@ export async function POST(req: NextRequest) {
       libraryIds,
       mentionScope: requestedMentionScope,
     } = parsed.data;
-    console.log('[CHAT] LibraryIDs:', libraryIds);
+    const userContext = {
+      ...requestContext,
+      userId: user.id,
+      libraryCount: libraryIds.length,
+    };
 
     // Fetch all libraries the current user has access to
     const { data: memberships, error: membershipError } = await supabase
@@ -103,10 +140,14 @@ export async function POST(req: NextRequest) {
       .in('library_id', libraryIds);
 
     if (membershipError) {
-      console.error('[CHAT] Membership lookup error:', membershipError);
-      return NextResponse.json(
-        { error: 'Failed to verify library access' },
-        { status: 500 }
+      return createApiErrorResponse(
+        new AppError(ERROR_CODES.DATABASE_ERROR, undefined, {
+          cause: membershipError,
+        }),
+        {
+          requestId: requestContext.requestId,
+          context: { ...userContext, statusCode: 500 },
+        }
       );
     }
 
@@ -115,10 +156,14 @@ export async function POST(req: NextRequest) {
     // Reject if any requested library is not authorized
     const unauthorized = libraryIds.filter((id) => !authorizedIds.includes(id));
     if (unauthorized.length > 0) {
-      return NextResponse.json(
-        { error: 'Forbidden: access denied to one or more libraries' },
-        { status: 403 }
-      );
+      return createApiErrorResponse(new AppError(ERROR_CODES.FORBIDDEN), {
+        requestId: requestContext.requestId,
+        context: {
+          ...userContext,
+          statusCode: 403,
+          unauthorizedLibraryCount: unauthorized.length,
+        },
+      });
     }
 
     const documentIds = requestedMentionScope?.documentIds ?? [];
@@ -131,21 +176,26 @@ export async function POST(req: NextRequest) {
         .is('deleted_at', null);
 
       if (documentsError) {
-        console.error('[CHAT] Document scope lookup error:', documentsError);
-        return NextResponse.json(
-          { error: 'Failed to verify selected documents' },
-          { status: 500 }
+        return createApiErrorResponse(
+          new AppError(ERROR_CODES.DATABASE_ERROR, undefined, {
+            cause: documentsError,
+          }),
+          {
+            requestId: requestContext.requestId,
+            context: { ...userContext, statusCode: 500 },
+          }
         );
       }
 
       if ((selectedDocuments ?? []).length !== documentIds.length) {
-        return NextResponse.json(
-          {
-            error:
-              'One or more selected documents are not available in the selected libraries',
+        return createApiErrorResponse(new AppError(ERROR_CODES.FORBIDDEN), {
+          requestId: requestContext.requestId,
+          context: {
+            ...userContext,
+            statusCode: 403,
+            requestedDocumentCount: documentIds.length,
           },
-          { status: 403 }
-        );
+        });
       }
     }
 
@@ -166,10 +216,14 @@ export async function POST(req: NextRequest) {
       .in('id', authorizedIds);
 
     if (librariesError) {
-      console.error('[CHAT] Library lookup error:', librariesError);
-      return NextResponse.json(
-        { error: 'Failed to load selected libraries' },
-        { status: 500 }
+      return createApiErrorResponse(
+        new AppError(ERROR_CODES.DATABASE_ERROR, undefined, {
+          cause: librariesError,
+        }),
+        {
+          requestId: requestContext.requestId,
+          context: { ...userContext, statusCode: 500 },
+        }
       );
     }
 
@@ -177,10 +231,15 @@ export async function POST(req: NextRequest) {
       (library) => library.name
     );
     if (selectedLibraryNames.length !== authorizedIds.length) {
-      return NextResponse.json(
-        { error: 'Failed to load selected libraries' },
-        { status: 500 }
-      );
+      return createApiErrorResponse(new AppError(ERROR_CODES.DATABASE_ERROR), {
+        requestId: requestContext.requestId,
+        context: {
+          ...userContext,
+          statusCode: 500,
+          selectedLibraryCount: selectedLibraryNames.length,
+          authorizedLibraryCount: authorizedIds.length,
+        },
+      });
     }
 
     // Get the latest user message for embedding
@@ -194,48 +253,37 @@ export async function POST(req: NextRequest) {
       selectedLibraryNames,
       mentionScope
     );
-    const stream = streamChunksToResponse(chunks);
+    const stream = streamChunksToResponse(chunks, requestContext);
+
+    const duration = logDurationMs(startedAt);
+    logger.info('Chat request completed', {
+      ...userContext,
+      statusCode: 200,
+      duration,
+    });
+    if (isSlowDuration(duration, 'request')) {
+      logger.warn('Slow chat request detected', {
+        ...userContext,
+        statusCode: 200,
+        duration,
+      });
+    }
 
     return new NextResponse(stream, {
       headers: {
         'Content-Type': 'text/plain; charset=utf-8',
         'Transfer-Encoding': 'chunked',
+        [REQUEST_ID_HEADER]: requestContext.requestId,
       },
     });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (error: any) {
-    console.error('[CHAT ERROR] Full error:', error);
-    console.error('[CHAT ERROR] Message:', error.message);
-    console.error('[CHAT ERROR] Code:', error.code);
-    console.error('[CHAT ERROR] Meta:', error.meta);
-
-    if (error.name === 'SyntaxError' && error.message?.includes('JSON')) {
-      return NextResponse.json(
-        { error: 'Invalid JSON in request body' },
-        { status: 400 }
-      );
-    }
-
-    if (
-      error.code === 'P2V001' ||
-      error.meta?.code === '22P02' ||
-      error.message?.includes('22P02')
-    ) {
-      return NextResponse.json(
-        {
-          error: 'Invalid database input (Vector or UUID format)',
-          details: error.message,
-        },
-        { status: 400 }
-      );
-    }
-
-    return NextResponse.json(
-      {
-        error: 'Internal Server Error',
-        details: error.message,
+  } catch (error: unknown) {
+    return createApiErrorResponse(error, {
+      requestId: requestContext.requestId,
+      context: {
+        ...requestContext,
+        statusCode: 500,
+        duration: logDurationMs(startedAt),
       },
-      { status: 500 }
-    );
+    });
   }
 }

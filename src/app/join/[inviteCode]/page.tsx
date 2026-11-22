@@ -27,9 +27,9 @@ export default async function JoinPage({
     const joinResult = await joinLibraryAction(inviteCode);
 
     // Redirect with error message if it fails
-    if (!joinResult.success && joinResult.error) {
+    if (!joinResult.success) {
       redirect(
-        `/join/${inviteCode}?error=${encodeURIComponent(joinResult.error)}`
+        `/join/${inviteCode}?error=${encodeURIComponent(joinResult.error.message)}`
       );
     }
 

@@ -36,8 +36,6 @@ export async function getLibraryMembers(
   libraryId: string,
   supabase: SupabaseClient
 ) {
-  console.debug(`[DEBUG] fetchLibraryMembers called for: ${libraryId}`);
-
   // Fetch all members with user details
   const { data: members, error } = await supabase
     .from('library_members')
@@ -54,7 +52,6 @@ export async function getLibraryMembers(
     .order('created_at', { ascending: true });
 
   if (error) {
-    console.error('Failed to fetch members:', error);
     throw new Error('Failed to fetch members');
   }
 
@@ -84,7 +81,6 @@ export async function getLibraryInvites(
     .order('created_at', { ascending: false });
 
   if (error) {
-    console.error('Failed to fetch invites:', error);
     throw new Error('Failed to fetch invites');
   }
 
@@ -161,7 +157,6 @@ export async function getLibraryTagSuggestions(
     .is('deleted_at', null);
 
   if (error) {
-    console.error('[LIBRARY TAGS QUERY ERROR]', error);
     throw new Error('Failed to fetch tag suggestions');
   }
 
@@ -213,7 +208,6 @@ export async function getLibraryAllTags(
     .is('deleted_at', null);
 
   if (error) {
-    console.error('[LIBRARY ALL TAGS ERROR]', error);
     throw new Error('Failed to fetch library tags');
   }
 
@@ -264,7 +258,6 @@ export async function searchLibraryTags(
     .not('tags', 'is', null);
 
   if (error) {
-    console.error('[SEARCH LIBRARY TAGS ERROR]', error);
     throw new Error('Failed to search library tags');
   }
 
@@ -311,7 +304,6 @@ export async function getRecentlyAddedTags(
     .limit(50); // Fetch recent docs to extract tags from
 
   if (error) {
-    console.error('[RECENTLY ADDED TAGS ERROR]', error);
     throw new Error('Failed to fetch recently added tags');
   }
 
@@ -346,7 +338,6 @@ export async function getUserLibraries(supabase: SupabaseClient, user: User) {
     .order('created_at', { ascending: true });
 
   if (error) {
-    console.error('Failed to fetch user libraries:', error);
     throw new Error('Failed to fetch libraries');
   }
 

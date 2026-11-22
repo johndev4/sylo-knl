@@ -4,6 +4,18 @@ import crypto from 'crypto';
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { getUser } from '@/lib/auth/get-user';
+import { logger } from '@/lib/logging/logger';
+import { getRequestId } from '@/lib/logging/request';
+import { AppError } from '@/lib/errors/app-error';
+import { ERROR_CODES } from '@/lib/errors/error-codes';
+import { withActionErrorHandling } from '@/lib/errors/error-handler';
+import {
+  CreateInviteInputSchema,
+  DeleteLibraryMemberInputSchema,
+  LibraryIdSchema,
+  LibraryNameSchema,
+  UpdateLibraryMemberRoleInputSchema,
+} from './library-schema';
 
 /**
  * Creates a new library with the current user as the owner.
@@ -11,37 +23,63 @@ import { getUser } from '@/lib/auth/get-user';
  *
  * @param name - The name of the library to create
  */
-export async function createLibrary(name: string) {
+async function createLibraryImpl(name: string) {
   const supabase = await createClient();
   const user = await getUser();
+  const correlationId = getRequestId();
+  const startedAt = performance.now();
+  logger.info('Create library action started', {
+    correlationId,
+    userId: user.id,
+  });
+  const parsedName = LibraryNameSchema.parse(name);
 
   // Duplicate name check — scoped to this user's existing libraries (case-insensitive)
-  const { data: existing } = await supabase
+  const { data: existing, error: existingError } = await supabase
     .from('library_members')
     .select('library:libraries(name)')
     .eq('user_id', user.id);
+  if (existingError) {
+    throw new AppError(ERROR_CODES.DATABASE_ERROR, undefined, {
+      cause: existingError,
+    });
+  }
 
   const duplicate = (existing ?? []).some(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (m: any) => m.library?.name?.toLowerCase() === name.trim().toLowerCase()
+    (m: any) => m.library?.name?.toLowerCase() === parsedName.toLowerCase()
   );
 
   if (duplicate) {
-    throw new Error(`A library named "${name.trim()}" already exists.`);
+    throw new AppError(
+      ERROR_CODES.CONFLICT,
+      'A library with this name already exists.'
+    );
   }
 
   // Create library and owner membership atomically via RPC
   const { data, error } = await supabase.rpc('create_library_with_owner', {
-    w_name: name,
+    w_name: parsedName,
   });
 
   if (error) {
-    throw new Error(error.message || 'Failed to create library');
+    throw new AppError(ERROR_CODES.DATABASE_ERROR, undefined, {
+      cause: error,
+    });
   }
 
+  if (!data) {
+    throw new AppError(ERROR_CODES.DATABASE_ERROR);
+  }
   const library = data as { id: string; name: string };
 
   revalidatePath('/hub');
+  logger.info('Create library action completed', {
+    correlationId,
+    userId: user.id,
+    libraryId: library.id,
+    duration: Math.round(performance.now() - startedAt),
+  });
   return library;
 }
 
@@ -51,17 +89,22 @@ export async function createLibrary(name: string) {
  *
  * @param libraryId - The unique identifier of the library to delete
  */
-export async function deleteLibrary(libraryId: string) {
+async function deleteLibraryImpl(libraryId: string) {
   const supabase = await createClient();
   await getUser();
+  const parsedLibraryId = LibraryIdSchema.parse(libraryId);
 
   // RLS will ensure only OWNER can delete
   const { error } = await supabase
     .from('libraries')
     .delete()
-    .eq('id', libraryId);
+    .eq('id', parsedLibraryId);
 
-  if (error) throw new Error(error.message || 'Failed to delete library');
+  if (error) {
+    throw new AppError(ERROR_CODES.DATABASE_ERROR, undefined, {
+      cause: error,
+    });
+  }
 
   revalidatePath('/hub');
   return { success: true };
@@ -73,16 +116,24 @@ export async function deleteLibrary(libraryId: string) {
  *
  * @param ids - Array of library IDs to delete
  */
-export async function deleteLibraries(ids: string[]) {
-  if (!ids.length) return { success: true };
+async function deleteLibrariesImpl(ids: string[]) {
+  const parsedIds = LibraryIdSchema.array().parse(ids);
+  if (!parsedIds.length) return { success: true };
 
   const supabase = await createClient();
   await getUser();
 
   // RLS ensures only libraries where user is OWNER are deleted
-  const { error } = await supabase.from('libraries').delete().in('id', ids);
+  const { error } = await supabase
+    .from('libraries')
+    .delete()
+    .in('id', parsedIds);
 
-  if (error) throw new Error(error.message || 'Failed to delete libraries');
+  if (error) {
+    throw new AppError(ERROR_CODES.DATABASE_ERROR, undefined, {
+      cause: error,
+    });
+  }
 
   revalidatePath('/hub');
   return { success: true };
@@ -95,33 +146,41 @@ export async function deleteLibraries(ids: string[]) {
  * @param libraryId - The unique identifier of the library to rename
  * @param newName - The new name for the library
  */
-export async function updateLibraryName(libraryId: string, newName: string) {
+async function updateLibraryNameImpl(libraryId: string, newName: string) {
   const supabase = await createClient();
   const user = await getUser();
+  const parsedLibraryId = LibraryIdSchema.parse(libraryId);
+  const parsedName = LibraryNameSchema.parse(newName);
 
   // Check if requester is OWNER or ADMIN of library
-  const { data: membership } = await supabase
+  const { data: membership, error: membershipError } = await supabase
     .from('library_members')
     .select('role')
-    .eq('library_id', libraryId)
+    .eq('library_id', parsedLibraryId)
     .eq('user_id', user.id)
     .single();
 
+  if (membershipError && membershipError.code !== 'PGRST116') {
+    throw new AppError(ERROR_CODES.DATABASE_ERROR, undefined, {
+      cause: membershipError,
+    });
+  }
   if (!membership || !['OWNER', 'ADMIN'].includes(membership.role)) {
-    throw new Error('Only owners and admins can rename the library');
+    throw new AppError(ERROR_CODES.FORBIDDEN);
   }
 
   const { error } = await supabase
     .from('libraries')
-    .update({ name: newName.trim() })
-    .eq('id', libraryId);
+    .update({ name: parsedName })
+    .eq('id', parsedLibraryId);
 
   if (error) {
-    console.error('Failed to update library name:', error);
-    throw new Error(error.message || 'Failed to update library name');
+    throw new AppError(ERROR_CODES.DATABASE_ERROR, undefined, {
+      cause: error,
+    });
   }
 
-  revalidatePath(`/hub/libraries/${libraryId}`);
+  revalidatePath(`/hub/libraries/${parsedLibraryId}`);
   revalidatePath('/hub');
   return { success: true };
 }
@@ -135,54 +194,68 @@ export async function updateLibraryName(libraryId: string, newName: string) {
  * @param userId - The unique identifier of the user whose role to update
  * @param role - The new role to assign (ADMIN, EDITOR, or VIEWER)
  */
-export async function updateLibraryMemberRole(
+async function updateLibraryMemberRoleImpl(
   libraryId: string,
   userId: string,
   role: 'ADMIN' | 'EDITOR' | 'VIEWER'
 ) {
   const supabase = await createClient();
   const user = await getUser();
+  const parsedLibraryId = LibraryIdSchema.parse(libraryId);
+  const parsedUserId = DeleteLibraryMemberInputSchema.parse({ userId }).userId;
+  const parsedRole = UpdateLibraryMemberRoleInputSchema.parse({ role }).role;
 
   // Check if requester is OWNER or ADMIN of library
-  const { data: requesterMembership } = await supabase
+  const { data: requesterMembership, error: requesterError } = await supabase
     .from('library_members')
     .select('role')
-    .eq('library_id', libraryId)
+    .eq('library_id', parsedLibraryId)
     .eq('user_id', user.id)
     .single();
 
+  if (requesterError && requesterError.code !== 'PGRST116') {
+    throw new AppError(ERROR_CODES.DATABASE_ERROR, undefined, {
+      cause: requesterError,
+    });
+  }
   if (
     !requesterMembership ||
     !['OWNER', 'ADMIN'].includes(requesterMembership.role)
   ) {
-    throw new Error('Only owners and admins can modify member roles');
+    throw new AppError(ERROR_CODES.FORBIDDEN);
   }
 
   // Check target member
-  const { data: targetMembership } = await supabase
+  const { data: targetMembership, error: targetError } = await supabase
     .from('library_members')
     .select('role')
-    .eq('library_id', libraryId)
-    .eq('user_id', userId)
+    .eq('library_id', parsedLibraryId)
+    .eq('user_id', parsedUserId)
     .single();
 
-  if (!targetMembership) throw new Error('Member not found in library');
+  if (targetError && targetError.code !== 'PGRST116') {
+    throw new AppError(ERROR_CODES.DATABASE_ERROR, undefined, {
+      cause: targetError,
+    });
+  }
+  if (!targetMembership) {
+    throw new AppError(ERROR_CODES.RESOURCE_NOT_FOUND);
+  }
 
   // Prevent modifying the library OWNER or assigning OWNER role by non-owners
   if (targetMembership.role === 'OWNER') {
-    throw new Error('Cannot modify the role of the library OWNER');
-  }
-
-  if ((role as string) === 'OWNER' && requesterMembership.role !== 'OWNER') {
-    throw new Error('Only the library OWNER can transfer ownership');
+    throw new AppError(
+      ERROR_CODES.FORBIDDEN,
+      'The library owner role cannot be changed.'
+    );
   }
 
   // Update
   const { data: updatedMember, error } = await supabase
     .from('library_members')
-    .update({ role })
-    .eq('library_id', libraryId)
-    .eq('user_id', userId)
+    .update({ role: parsedRole })
+    .eq('library_id', parsedLibraryId)
+    .eq('user_id', parsedUserId)
     .select(
       `
       library_id,
@@ -195,11 +268,12 @@ export async function updateLibraryMemberRole(
     .single();
 
   if (error) {
-    console.error('Failed to update member role:', error);
-    throw new Error('Failed to update member role');
+    throw new AppError(ERROR_CODES.DATABASE_ERROR, undefined, {
+      cause: error,
+    });
   }
 
-  revalidatePath(`/hub/libraries/${libraryId}`);
+  revalidatePath(`/hub/libraries/${parsedLibraryId}`);
   return updatedMember;
 }
 
@@ -211,54 +285,70 @@ export async function updateLibraryMemberRole(
  * @param libraryId - The unique identifier of the library
  * @param userId - The unique identifier of the user to remove
  */
-export async function removeLibraryMember(libraryId: string, userId: string) {
+async function removeLibraryMemberImpl(libraryId: string, userId: string) {
   const supabase = await createClient();
   const user = await getUser();
+  const parsedLibraryId = LibraryIdSchema.parse(libraryId);
+  const parsedUserId = DeleteLibraryMemberInputSchema.parse({ userId }).userId;
 
   // Check requester
-  const { data: requesterMembership } = await supabase
+  const { data: requesterMembership, error: requesterError } = await supabase
     .from('library_members')
     .select('role')
-    .eq('library_id', libraryId)
+    .eq('library_id', parsedLibraryId)
     .eq('user_id', user.id)
     .single();
 
+  if (requesterError && requesterError.code !== 'PGRST116') {
+    throw new AppError(ERROR_CODES.DATABASE_ERROR, undefined, {
+      cause: requesterError,
+    });
+  }
   if (
     !requesterMembership ||
     !['OWNER', 'ADMIN'].includes(requesterMembership.role)
   ) {
-    throw new Error('Only owners and admins can remove members');
+    throw new AppError(ERROR_CODES.FORBIDDEN);
   }
 
   // Check target
-  const { data: targetMembership } = await supabase
+  const { data: targetMembership, error: targetError } = await supabase
     .from('library_members')
     .select('role')
-    .eq('library_id', libraryId)
-    .eq('user_id', userId)
+    .eq('library_id', parsedLibraryId)
+    .eq('user_id', parsedUserId)
     .single();
 
-  if (!targetMembership) throw new Error('Member not found');
+  if (targetError && targetError.code !== 'PGRST116') {
+    throw new AppError(ERROR_CODES.DATABASE_ERROR, undefined, {
+      cause: targetError,
+    });
+  }
+  if (!targetMembership) {
+    throw new AppError(ERROR_CODES.RESOURCE_NOT_FOUND);
+  }
 
   // Prevent removing the library OWNER
   if (targetMembership.role === 'OWNER') {
-    throw new Error(
-      'Cannot remove the library OWNER. The library owner cannot leave or be removed.'
+    throw new AppError(
+      ERROR_CODES.FORBIDDEN,
+      'The library owner cannot be removed.'
     );
   }
 
   const { error } = await supabase
     .from('library_members')
     .delete()
-    .eq('library_id', libraryId)
-    .eq('user_id', userId);
+    .eq('library_id', parsedLibraryId)
+    .eq('user_id', parsedUserId);
 
   if (error) {
-    console.error('Failed to remove member:', error);
-    throw new Error('Failed to remove member');
+    throw new AppError(ERROR_CODES.DATABASE_ERROR, undefined, {
+      cause: error,
+    });
   }
 
-  revalidatePath(`/hub/libraries/${libraryId}`);
+  revalidatePath(`/hub/libraries/${parsedLibraryId}`);
   return { success: true };
 }
 
@@ -269,21 +359,30 @@ export async function removeLibraryMember(libraryId: string, userId: string) {
  * @param libraryId - The unique identifier of the library
  * @param userIds - Array of user IDs to remove from the library
  */
-export async function removeMultipleLibraryMembers(
+async function removeMultipleLibraryMembersImpl(
   libraryId: string,
   userIds: string[]
 ) {
+  const parsedLibraryId = LibraryIdSchema.parse(libraryId);
+  const parsedUserIds = DeleteLibraryMemberInputSchema.array()
+    .parse(userIds.map((userId) => ({ userId })))
+    .map(({ userId }) => userId);
+
   const results = await Promise.allSettled(
-    userIds.map((userId) => removeLibraryMember(libraryId, userId))
+    parsedUserIds.map((userId) =>
+      removeLibraryMemberImpl(parsedLibraryId, userId)
+    )
   );
 
-  const failed = results.filter((r) => r.status === 'rejected');
-  if (failed.length > 0) {
-    throw new Error(`Failed to remove ${failed.length} member(s)`);
+  const failed = results.find(
+    (result): result is PromiseRejectedResult => result.status === 'rejected'
+  );
+  if (failed) {
+    throw failed.reason;
   }
 
-  revalidatePath(`/hub/libraries/${libraryId}`);
-  return { success: true, removedCount: userIds.length };
+  revalidatePath(`/hub/libraries/${parsedLibraryId}`);
+  return { success: true, removedCount: parsedUserIds.length };
 }
 
 /**
@@ -292,33 +391,45 @@ export async function removeMultipleLibraryMembers(
  *
  * @param libraryId - The unique identifier of the library to leave
  */
-export async function leaveLibrary(libraryId: string) {
+async function leaveLibraryImpl(libraryId: string) {
   const supabase = await createClient();
   const user = await getUser();
+  const parsedLibraryId = LibraryIdSchema.parse(libraryId);
 
   const { data: membership, error: membershipError } = await supabase
     .from('library_members')
     .select('role')
-    .eq('library_id', libraryId)
+    .eq('library_id', parsedLibraryId)
     .eq('user_id', user.id)
     .single();
 
-  if (membershipError || !membership) {
-    throw new Error('Not a member of this library');
+  if (membershipError && membershipError.code !== 'PGRST116') {
+    throw new AppError(ERROR_CODES.DATABASE_ERROR, undefined, {
+      cause: membershipError,
+    });
+  }
+  if (!membership) {
+    throw new AppError(
+      ERROR_CODES.FORBIDDEN,
+      'You are not a member of this library.'
+    );
   }
 
   if (membership.role === 'OWNER') {
-    throw new Error(
-      'Library owner cannot leave. Delete or transfer ownership first.'
+    throw new AppError(
+      ERROR_CODES.FORBIDDEN,
+      'The library owner must transfer ownership before leaving.'
     );
   }
 
   const { error } = await supabase.rpc('leave_library', {
-    p_library_id: libraryId,
+    p_library_id: parsedLibraryId,
   });
 
   if (error) {
-    throw new Error(error.message || 'Failed to leave library');
+    throw new AppError(ERROR_CODES.DATABASE_ERROR, undefined, {
+      cause: error,
+    });
   }
 
   revalidatePath('/hub');
@@ -335,7 +446,7 @@ export async function leaveLibrary(libraryId: string) {
  * @param expiresAt - Optional expiration date/time for the invite
  * @param maxUses - Optional maximum number of times the invite can be used
  */
-export async function createLibraryInvite(
+async function createLibraryInviteImpl(
   libraryId: string,
   role: 'VIEWER' | 'EDITOR',
   expiresAt?: string | null,
@@ -343,16 +454,27 @@ export async function createLibraryInvite(
 ) {
   const supabase = await createClient();
   const user = await getUser();
+  const parsedLibraryId = LibraryIdSchema.parse(libraryId);
+  const parsedInput = CreateInviteInputSchema.parse({
+    role,
+    expiresAt,
+    maxUses,
+  });
 
-  const { data: membership } = await supabase
+  const { data: membership, error: membershipError } = await supabase
     .from('library_members')
     .select('role')
-    .eq('library_id', libraryId)
+    .eq('library_id', parsedLibraryId)
     .eq('user_id', user.id)
     .single();
 
+  if (membershipError && membershipError.code !== 'PGRST116') {
+    throw new AppError(ERROR_CODES.DATABASE_ERROR, undefined, {
+      cause: membershipError,
+    });
+  }
   if (!membership || !['OWNER', 'ADMIN'].includes(membership.role)) {
-    throw new Error('Only owners and admins can create invites');
+    throw new AppError(ERROR_CODES.FORBIDDEN);
   }
 
   // Generate invite code
@@ -364,22 +486,23 @@ export async function createLibraryInvite(
   const { data: invite, error } = await supabase
     .from('library_invites')
     .insert({
-      library_id: libraryId,
+      library_id: parsedLibraryId,
       invite_code: inviteCode,
-      role,
+      role: parsedInput.role,
       created_by: user.id,
-      expires_at: expiresAt || null,
-      max_uses: maxUses || null,
+      expires_at: parsedInput.expiresAt || null,
+      max_uses: parsedInput.maxUses || null,
     })
     .select()
     .single();
 
   if (error || !invite) {
-    console.error('Failed to create invite:', error);
-    throw new Error('Failed to create invite');
+    throw new AppError(ERROR_CODES.DATABASE_ERROR, undefined, {
+      cause: error ?? new Error('Invite not returned'),
+    });
   }
 
-  revalidatePath(`/hub/libraries/${libraryId}`);
+  revalidatePath(`/hub/libraries/${parsedLibraryId}`);
   return invite;
 }
 
@@ -391,38 +514,124 @@ export async function createLibraryInvite(
  * @param libraryId - The unique identifier of the library
  * @param inviteId - The unique identifier of the invite to revoke
  */
-export async function revokeLibraryInvite(libraryId: string, inviteId: string) {
+async function revokeLibraryInviteImpl(libraryId: string, inviteId: string) {
   const supabase = await createClient();
   const user = await getUser();
+  const parsedLibraryId = LibraryIdSchema.parse(libraryId);
+  const parsedInviteId = LibraryIdSchema.parse(inviteId);
 
-  const { data: membership } = await supabase
+  const { data: membership, error: membershipError } = await supabase
     .from('library_members')
     .select('role')
-    .eq('library_id', libraryId)
+    .eq('library_id', parsedLibraryId)
     .eq('user_id', user.id)
     .single();
 
+  if (membershipError && membershipError.code !== 'PGRST116') {
+    throw new AppError(ERROR_CODES.DATABASE_ERROR, undefined, {
+      cause: membershipError,
+    });
+  }
   if (!membership || !['OWNER', 'ADMIN'].includes(membership.role)) {
-    throw new Error('Only owners and admins can revoke invites');
+    throw new AppError(ERROR_CODES.FORBIDDEN);
   }
 
   const { data: updatedInvite, error } = await supabase
     .from('library_invites')
     .update({ is_active: false, updated_at: new Date().toISOString() })
-    .eq('id', inviteId)
-    .eq('library_id', libraryId)
+    .eq('id', parsedInviteId)
+    .eq('library_id', parsedLibraryId)
     .select()
     .single();
 
-  if (error) {
-    console.error('Failed to revoke invite:', error);
-    throw new Error('Failed to revoke invite');
+  if (error && error.code !== 'PGRST116') {
+    throw new AppError(ERROR_CODES.DATABASE_ERROR, undefined, {
+      cause: error,
+    });
   }
 
   if (!updatedInvite) {
-    throw new Error('Invite not found');
+    throw new AppError(ERROR_CODES.RESOURCE_NOT_FOUND);
   }
 
-  revalidatePath(`/hub/libraries/${libraryId}`);
+  revalidatePath(`/hub/libraries/${parsedLibraryId}`);
   return { success: true };
+}
+
+export async function createLibrary(name: string) {
+  return withActionErrorHandling(() => createLibraryImpl(name), {
+    action: 'createLibrary',
+  });
+}
+
+export async function deleteLibrary(libraryId: string) {
+  return withActionErrorHandling(() => deleteLibraryImpl(libraryId), {
+    action: 'deleteLibrary',
+  });
+}
+
+export async function deleteLibraries(ids: string[]) {
+  return withActionErrorHandling(() => deleteLibrariesImpl(ids), {
+    action: 'deleteLibraries',
+  });
+}
+
+export async function updateLibraryName(libraryId: string, newName: string) {
+  return withActionErrorHandling(
+    () => updateLibraryNameImpl(libraryId, newName),
+    { action: 'updateLibraryName' }
+  );
+}
+
+export async function updateLibraryMemberRole(
+  libraryId: string,
+  userId: string,
+  role: 'ADMIN' | 'EDITOR' | 'VIEWER'
+) {
+  return withActionErrorHandling(
+    () => updateLibraryMemberRoleImpl(libraryId, userId, role),
+    { action: 'updateLibraryMemberRole' }
+  );
+}
+
+export async function removeLibraryMember(libraryId: string, userId: string) {
+  return withActionErrorHandling(
+    () => removeLibraryMemberImpl(libraryId, userId),
+    { action: 'removeLibraryMember' }
+  );
+}
+
+export async function removeMultipleLibraryMembers(
+  libraryId: string,
+  userIds: string[]
+) {
+  return withActionErrorHandling(
+    () => removeMultipleLibraryMembersImpl(libraryId, userIds),
+    { action: 'removeMultipleLibraryMembers' }
+  );
+}
+
+export async function leaveLibrary(libraryId: string) {
+  return withActionErrorHandling(() => leaveLibraryImpl(libraryId), {
+    action: 'leaveLibrary',
+  });
+}
+
+export async function createLibraryInvite(
+  libraryId: string,
+  role: 'VIEWER' | 'EDITOR',
+  expiresAt?: string | null,
+  maxUses?: number | null
+) {
+  return withActionErrorHandling(
+    () => createLibraryInviteImpl(libraryId, role, expiresAt, maxUses),
+    { action: 'createLibraryInvite' }
+  );
+}
+
+export async function revokeLibraryInvite(libraryId: string, inviteId: string) {
+  return withActionErrorHandling(
+    () => revokeLibraryInviteImpl(libraryId, inviteId),
+    { action: 'revokeLibraryInvite' }
+  );
 }

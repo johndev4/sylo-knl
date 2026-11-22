@@ -12,6 +12,7 @@ import {
   removeMultipleLibraryMembers,
 } from '@/features/library/actions';
 import type { Invite } from '@/features/library/library-schema';
+import { unwrapActionResult } from '@/lib/errors/app-error';
 
 export const LIBRARY_MEMBERS_SWR_KEY = (libraryId: string) =>
   ['members', libraryId] as const;
@@ -92,11 +93,13 @@ export function useCreateLibraryInviteSWR(libraryId: string) {
       }
     }
 
-    return createLibraryInvite(
-      libraryId,
-      arg.role,
-      parsedExpiresAt,
-      parsedMaxUses
+    return unwrapActionResult(
+      await createLibraryInvite(
+        libraryId,
+        arg.role,
+        parsedExpiresAt,
+        parsedMaxUses
+      )
     );
   });
 
@@ -113,7 +116,7 @@ export function useRevokeLibraryInviteSWR(libraryId: string) {
     InvitesKey,
     string
   >(LIBRARY_INVITES_SWR_KEY(libraryId), async (_, { arg }) => {
-    await revokeLibraryInvite(libraryId, arg);
+    unwrapActionResult(await revokeLibraryInvite(libraryId, arg));
   });
 
   return {
@@ -129,7 +132,9 @@ export function useUpdateLibraryMemberRoleSWR(libraryId: string) {
     MembersKey,
     { userId: string; newRole: 'ADMIN' | 'EDITOR' | 'VIEWER' }
   >(LIBRARY_MEMBERS_SWR_KEY(libraryId), async (_, { arg }) => {
-    await updateLibraryMemberRole(libraryId, arg.userId, arg.newRole);
+    unwrapActionResult(
+      await updateLibraryMemberRole(libraryId, arg.userId, arg.newRole)
+    );
   });
 
   return {
@@ -145,7 +150,7 @@ export function useRemoveLibraryMemberSWR(libraryId: string) {
     MembersKey,
     string
   >(LIBRARY_MEMBERS_SWR_KEY(libraryId), async (_, { arg }) => {
-    await removeLibraryMember(libraryId, arg);
+    unwrapActionResult(await removeLibraryMember(libraryId, arg));
   });
 
   return {
@@ -161,7 +166,7 @@ export function useRemoveMultipleLibraryMembersSWR(libraryId: string) {
     MembersKey,
     string[]
   >(LIBRARY_MEMBERS_SWR_KEY(libraryId), async (_, { arg }) => {
-    await removeMultipleLibraryMembers(libraryId, arg);
+    unwrapActionResult(await removeMultipleLibraryMembers(libraryId, arg));
   });
 
   return {

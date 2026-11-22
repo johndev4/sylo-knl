@@ -8,11 +8,17 @@ import { processDocumentChunksInBackground } from './utils/background-embedding'
 import {
   CreateDocumentInput,
   CreateDocumentInputSchema,
+  DocumentIdSchema,
   UpdateDocumentInput,
   UpdateDocumentInputSchema,
 } from '@/features/library/document/document-schema';
 import { getUser } from '@/lib/auth/get-user';
 import { serverConvertBlocksToMarkdown } from '@/lib/blocknote/transformer';
+import { logger } from '@/lib/logging/logger';
+import { getRequestId } from '@/lib/logging/request';
+import { AppError } from '@/lib/errors/app-error';
+import { ERROR_CODES } from '@/lib/errors/error-codes';
+import { withActionErrorHandling } from '@/lib/errors/error-handler';
 
 // ---------------------------------------------------------------------------
 // createDocument — mirrors POST /api/documents
@@ -26,46 +32,78 @@ import { serverConvertBlocksToMarkdown } from '@/lib/blocknote/transformer';
  * @param input.libraryId - The UUID of the library where the document will be created
  * @param input.tags - Optional array of tags to associate with the document
  */
-export async function createDocument(
+async function createDocumentImpl(
   input: CreateDocumentInput
 ): Promise<{ success: true; documentId: string; indexing: boolean }> {
   const supabase = await createClient();
   const user = await getUser();
+  const correlationId = getRequestId();
+  const startedAt = performance.now();
+  logger.info('Create document action started', {
+    correlationId,
+    userId: user.id,
+  });
 
-  const { title, contentJson, libraryId, tags } =
-    CreateDocumentInputSchema.parse(input);
+  const parsed = CreateDocumentInputSchema.safeParse(input);
+  if (!parsed.success) {
+    throw parsed.error;
+  }
+  const { title, contentJson, libraryId, tags } = parsed.data;
 
   // Ensure personal space exists when targeting it
   if (libraryId === user.id) {
-    const { data: existingSpace } = await supabase
+    const { data: existingSpace, error: existingSpaceError } = await supabase
       .from('libraries')
       .select('id')
       .eq('id', user.id)
-      .single();
+      .maybeSingle();
+    if (existingSpaceError) {
+      throw new AppError(ERROR_CODES.DATABASE_ERROR, undefined, {
+        cause: existingSpaceError,
+      });
+    }
     if (!existingSpace) {
-      await supabase
+      const { error: libraryError } = await supabase
         .from('libraries')
         .insert({ id: user.id, name: 'Personal Knowledge Base' });
-      await supabase
+      if (libraryError) {
+        throw new AppError(ERROR_CODES.DATABASE_ERROR, undefined, {
+          cause: libraryError,
+        });
+      }
+      const { error: memberError } = await supabase
         .from('library_members')
         .insert({ library_id: user.id, user_id: user.id, role: 'OWNER' });
+      if (memberError) {
+        throw new AppError(ERROR_CODES.DATABASE_ERROR, undefined, {
+          cause: memberError,
+        });
+      }
     }
   }
 
-  const { data: membership } = await supabase
+  const { data: membership, error: membershipError } = await supabase
     .from('library_members')
     .select('library_id, role')
     .eq('library_id', libraryId)
     .eq('user_id', user.id)
     .single();
 
+  if (membershipError && membershipError.code !== 'PGRST116') {
+    throw new AppError(ERROR_CODES.DATABASE_ERROR, undefined, {
+      cause: membershipError,
+    });
+  }
   if (!membership || membership.role === 'VIEWER') {
-    throw new Error('Forbidden');
+    throw new AppError(ERROR_CODES.FORBIDDEN);
   }
 
   const markdown = await serverConvertBlocksToMarkdown(contentJson);
   if (markdown.trim().length < 10) {
-    throw new Error('Content is too short');
+    throw new AppError(
+      ERROR_CODES.VALIDATION_ERROR,
+      'Document content must be at least 10 characters long.'
+    );
   }
 
   // Markdown is transient; only plain text is chunked.
@@ -85,7 +123,9 @@ export async function createDocument(
     .single();
 
   if (docError || !document) {
-    throw new Error(docError?.message || 'Failed to create document');
+    throw new AppError(ERROR_CODES.DATABASE_ERROR, undefined, {
+      cause: docError,
+    });
   }
 
   // Store Document and Chunks Atomically (embeddings generated asynchronously)
@@ -104,8 +144,9 @@ export async function createDocument(
   );
 
   if (saveError) {
-    console.error('[INGESTION ERROR] Atomic save failed:', saveError);
-    throw new Error('Failed to save document and chunks');
+    throw new AppError(ERROR_CODES.DATABASE_ERROR, undefined, {
+      cause: saveError,
+    });
   }
 
   // Schedule background embedding without blocking the user response (server-after-nonblocking)
@@ -116,6 +157,13 @@ export async function createDocument(
   }
 
   revalidatePath(`/hub/libraries/${libraryId}/documents`);
+  logger.info('Create document action completed', {
+    correlationId,
+    userId: user.id,
+    libraryId,
+    documentId: document.id,
+    duration: Math.round(performance.now() - startedAt),
+  });
 
   return {
     success: true,
@@ -137,7 +185,7 @@ export async function createDocument(
  * @param input.tags - Optional array of tags to associate with the document
  * @param input.lastUpdatedAt - Optional timestamp for optimistic concurrency control
  */
-export async function updateDocument(
+async function updateDocumentImpl(
   docId: string,
   input: UpdateDocumentInput
 ): Promise<{
@@ -147,29 +195,53 @@ export async function updateDocument(
 }> {
   const supabase = await createClient();
   const user = await getUser();
+  const correlationId = getRequestId();
+  const startedAt = performance.now();
+  logger.info('Update document action started', {
+    correlationId,
+    userId: user.id,
+    documentId: docId,
+  });
 
+  const parsedDocId = DocumentIdSchema.parse(docId);
+  const parsed = UpdateDocumentInputSchema.safeParse(input);
+  if (!parsed.success) {
+    throw parsed.error;
+  }
   const { title, contentJson, tags, lastUpdatedAt, contentModified } =
-    UpdateDocumentInputSchema.parse(input);
+    parsed.data;
 
   const { data: currentDoc, error: docError } = await supabase
     .from('documents')
     .select('library_id, updated_at, author_ids, content_json')
-    .eq('id', docId)
+    .eq('id', parsedDocId)
     .is('deleted_at', null)
     .single();
 
-  if (docError || !currentDoc) throw new Error('Document not found');
+  if (docError && docError.code !== 'PGRST116') {
+    throw new AppError(ERROR_CODES.DATABASE_ERROR, undefined, {
+      cause: docError,
+    });
+  }
+  if (!currentDoc) {
+    throw new AppError(ERROR_CODES.RESOURCE_NOT_FOUND);
+  }
 
   // Check RBAC
-  const { data: membership } = await supabase
+  const { data: membership, error: membershipError } = await supabase
     .from('library_members')
     .select('role')
     .eq('library_id', currentDoc.library_id)
     .eq('user_id', user.id)
     .single();
 
+  if (membershipError && membershipError.code !== 'PGRST116') {
+    throw new AppError(ERROR_CODES.DATABASE_ERROR, undefined, {
+      cause: membershipError,
+    });
+  }
   if (!membership || membership.role === 'VIEWER') {
-    throw new Error('Forbidden');
+    throw new AppError(ERROR_CODES.FORBIDDEN);
   }
 
   // OCC check
@@ -177,11 +249,10 @@ export async function updateDocument(
     const currentUpdated = new Date(currentDoc.updated_at).getTime();
     const clientUpdated = new Date(lastUpdatedAt).getTime();
     if (currentUpdated > clientUpdated) {
-      const conflictError = new Error(
+      throw new AppError(
+        ERROR_CODES.CONFLICT,
         'Conflict: Document was edited by another user. Please refresh to get the latest version.'
       );
-      (conflictError as Error & { conflict: boolean }).conflict = true;
-      throw conflictError;
     }
   }
 
@@ -206,7 +277,10 @@ export async function updateDocument(
       markdown = incomingMarkdown;
 
       if (markdown.trim().length < 10) {
-        throw new Error('Content is too short');
+        throw new AppError(
+          ERROR_CODES.VALIDATION_ERROR,
+          'Document content must be at least 10 characters long.'
+        );
       }
 
       chunks = chunkText(markdown);
@@ -230,8 +304,9 @@ export async function updateDocument(
     );
 
     if (saveError) {
-      console.error('[INGESTION ERROR] Atomic update failed:', saveError);
-      throw new Error('Failed to update document and chunks');
+      throw new AppError(ERROR_CODES.DATABASE_ERROR, undefined, {
+        cause: saveError,
+      });
     }
   } else {
     const { error: updateError } = await supabase
@@ -246,9 +321,9 @@ export async function updateDocument(
       .eq('id', docId);
 
     if (updateError) {
-      throw new Error(
-        updateError.message || 'Failed to update document metadata'
-      );
+      throw new AppError(ERROR_CODES.DATABASE_ERROR, undefined, {
+        cause: updateError,
+      });
     }
   }
 
@@ -260,6 +335,12 @@ export async function updateDocument(
   }
 
   revalidatePath(`/hub/libraries/${currentDoc.library_id}/documents/${docId}`);
+  logger.info('Update document action completed', {
+    correlationId,
+    userId: user.id,
+    documentId: docId,
+    duration: Math.round(performance.now() - startedAt),
+  });
 
   return {
     success: true,
@@ -276,49 +357,103 @@ export async function updateDocument(
  * Ensures the user has appropriate permissions before deletion.
  * @param docId - The UUID of the document to delete
  */
-export async function deleteDocument(
-  docId: string
-): Promise<{ success: true }> {
+async function deleteDocumentImpl(docId: string): Promise<{ success: true }> {
   const supabase = await createClient();
   const user = await getUser();
+  const parsedDocId = DocumentIdSchema.parse(docId);
+  const correlationId = getRequestId();
+  const startedAt = performance.now();
+  logger.info('Delete document action started', {
+    correlationId,
+    userId: user.id,
+    documentId: parsedDocId,
+  });
 
   const { data: currentDoc, error: docError } = await supabase
     .from('documents')
     .select('library_id, author_ids')
-    .eq('id', docId)
+    .eq('id', parsedDocId)
     .is('deleted_at', null)
     .single();
 
-  if (docError || !currentDoc) throw new Error('Document not found');
+  if (docError && docError.code !== 'PGRST116') {
+    throw new AppError(ERROR_CODES.DATABASE_ERROR, undefined, {
+      cause: docError,
+    });
+  }
+  if (!currentDoc) {
+    throw new AppError(ERROR_CODES.RESOURCE_NOT_FOUND);
+  }
 
   // Check RBAC
-  const { data: membership } = await supabase
+  const { data: membership, error: membershipError } = await supabase
     .from('library_members')
     .select('role')
     .eq('library_id', currentDoc.library_id)
     .eq('user_id', user.id)
     .single();
 
+  if (membershipError && membershipError.code !== 'PGRST116') {
+    throw new AppError(ERROR_CODES.DATABASE_ERROR, undefined, {
+      cause: membershipError,
+    });
+  }
   if (!membership || membership.role === 'VIEWER') {
-    throw new Error('Forbidden');
+    throw new AppError(ERROR_CODES.FORBIDDEN);
   }
 
   // EDITORS cannot delete documents they did not author
   if (membership.role === 'EDITOR') {
     const isAuthor = (currentDoc.author_ids || []).includes(user.id);
     if (!isAuthor) {
-      throw new Error('Editors can only delete documents they created');
+      throw new AppError(
+        ERROR_CODES.FORBIDDEN,
+        'Editors can only delete documents they created.'
+      );
     }
   }
 
   const { error: deleteError } = await supabase
     .from('documents')
     .update({ deleted_at: new Date().toISOString() })
-    .eq('id', docId);
+    .eq('id', parsedDocId);
 
-  if (deleteError) throw deleteError;
+  if (deleteError) {
+    throw new AppError(ERROR_CODES.DATABASE_ERROR, undefined, {
+      cause: deleteError,
+    });
+  }
 
   revalidatePath(`/hub/libraries/${currentDoc.library_id}/documents`);
+  logger.info('Delete document action completed', {
+    correlationId,
+    userId: user.id,
+    documentId: parsedDocId,
+    duration: Math.round(performance.now() - startedAt),
+  });
 
   return { success: true };
+}
+
+export async function createDocument(input: CreateDocumentInput) {
+  return withActionErrorHandling(() => createDocumentImpl(input), {
+    action: 'createDocument',
+  });
+}
+
+export async function updateDocument(
+  docId: string,
+  input: UpdateDocumentInput
+) {
+  return withActionErrorHandling(() => updateDocumentImpl(docId, input), {
+    action: 'updateDocument',
+    documentId: docId,
+  });
+}
+
+export async function deleteDocument(docId: string) {
+  return withActionErrorHandling(() => deleteDocumentImpl(docId), {
+    action: 'deleteDocument',
+    documentId: docId,
+  });
 }

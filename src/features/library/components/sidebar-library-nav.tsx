@@ -37,6 +37,9 @@ import { leaveLibrary } from '@/features/library/actions';
 import { createClient } from '@/lib/supabase/client';
 import { getLibraryName } from '../queries';
 import { Spinner } from '@/components/ui/spinner';
+import { unwrapActionResult } from '@/lib/errors/app-error';
+import { Button } from '@/components/ui/button';
+import { logger } from '@/lib/logging/logger';
 interface SidebarLibraryNavProps {
   userRole: string;
 }
@@ -55,15 +58,18 @@ export function SidebarLibraryNav({ userRole }: SidebarLibraryNavProps) {
   }, [isMobile, setOpenMobile]);
 
   const [libraryName, setLibraryName] = useState('');
+  const [libraryNameError, setLibraryNameError] = useState(false);
   const fetchLibraryName = useCallback(async () => {
     if (!userRole || !libraryId) return;
     const supabase = createClient();
+    setLibraryNameError(false);
 
     try {
       const value = await getLibraryName(libraryId, supabase);
       setLibraryName(value || '');
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      logger.warn('Failed to load library name for leave dialog', { error });
+      setLibraryNameError(true);
     }
   }, [libraryId, userRole]);
 
@@ -73,6 +79,7 @@ export function SidebarLibraryNav({ userRole }: SidebarLibraryNavProps) {
 
   const handleOpenLeaveDialog = () => {
     setLibraryName('');
+    setLibraryNameError(false);
     fetchLibraryName();
     setLeaveError(null);
     setIsLeaveDialogOpen(true);
@@ -92,7 +99,7 @@ export function SidebarLibraryNav({ userRole }: SidebarLibraryNavProps) {
     setLeaveError(null);
 
     try {
-      await leaveLibrary(libraryId);
+      unwrapActionResult(await leaveLibrary(libraryId));
       setIsLeaveDialogOpen(false);
       handleNavClick();
       router.push('/hub');
@@ -274,6 +281,15 @@ export function SidebarLibraryNav({ userRole }: SidebarLibraryNavProps) {
                 </AlertDialogAction>
               </AlertDialogFooter>
             </>
+          ) : libraryNameError ? (
+            <div className="space-y-3 text-center">
+              <p className="text-muted-foreground text-sm" role="alert">
+                Unable to load the library name. Please try again.
+              </p>
+              <Button variant="outline" onClick={fetchLibraryName}>
+                Try again
+              </Button>
+            </div>
           ) : (
             <div className="flex justify-center">
               <Spinner className="size-6" />
