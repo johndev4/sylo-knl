@@ -2,7 +2,10 @@ packages:
   - "."
 
 overrides:
+  glob@>=9.0.0 <=14.0.1: ^14.0.2
   jsdom: 26.1.0
+  minimatch@>=7.0.0 <11.0.1: ^11.0.1
+  next@>=16.0.0 <=16.4.4: ^16.4.5
 
 allowBuilds:
   "@parcel/watcher@2.6.0": true
