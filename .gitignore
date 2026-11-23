@@ -80,3 +80,6 @@ __pycache__/
 
 # Model Context Protocol (MCP) configuration files
 .mcp.json
+
+# Agent skills: installed via `npx skills`, restorable from skills-lock.json
+/.agents/skills/
