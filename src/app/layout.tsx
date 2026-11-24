@@ -17,7 +17,6 @@ export const metadata: Metadata = {
   description: 'An AI-powered knowledge library',
   icons: {
     icon: [
-      { url: '/assets/logo/favicon.svg', type: 'image/svg+xml' },
       {
         url: '/assets/logo/favicon.ico',
         type: 'image/x-icon',
