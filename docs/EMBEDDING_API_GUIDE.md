@@ -6,9 +6,7 @@ chunks. Its URL and bearer token are read from that database's Supabase Vault.
 
 ## Configure the Worker
 
-1. Set `CRON_SECRET` in the Next.js app environment (`.env.local` locally, or
-   your hosting provider's environment settings). Generate a random value, for
-   example with `openssl rand -hex 32`.
+1. Set `CRON_SECRET` in the Next.js app environment (`.env.local` locally, `.env` for [Docker Compose](DOCKER_SETUP.md), or your hosting provider's environment settings). Generate a random value, for example with `openssl rand -hex 32`.
 2. Open Supabase Studio for the database where the worker should run. For local
    Supabase, Studio is at `http://localhost:54323`; for a hosted project, use
    that project's dashboard. In **Database > Vault**, create these secrets:
@@ -39,7 +37,8 @@ Vault secret.
 ## Test and Verify
 
 With the app running, send a manual request. Make sure `CRON_SECRET` is set in
-the current terminal session before you send it.
+the current terminal session before you send it (replace `.env.local` with `.env`
+in the commands below if running via Docker Compose).
 
 ### Windows (PowerShell)
 

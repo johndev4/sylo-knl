@@ -34,6 +34,9 @@ and may include development-only error stacks.
 
 ```ts
 import { logger } from '@/lib/logging/logger';
+import { getRequestId } from '@/lib/logging/request';
+
+const correlationId = await getRequestId();
 
 logger.info('Document action completed', {
   correlationId,
