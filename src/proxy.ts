@@ -5,13 +5,11 @@ import { createServerClient } from '@supabase/ssr';
 const LOGIN_PATH = '/login';
 const PROTECTED_ROUTES = ['/hub', '/chat', '/account'];
 
-// Validate env vars at build time
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? '';
-
 export async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
   const response = NextResponse.next({ request });
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? '';
 
   const supabase = createServerClient(supabaseUrl, supabaseKey, {
     cookies: {

@@ -5,14 +5,16 @@ import {
 } from '@/features/library/invite/invite-schema';
 import { logger } from '@/lib/logging/logger';
 
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const serviceKey = process.env.SUPABASE_SECRET_KEY;
+function createSupabaseAdminClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SECRET_KEY;
 
-if (!url || !serviceKey) {
-  throw new Error('Missing Supabase environment variables');
+  if (!url || !serviceKey) {
+    throw new Error('Missing Supabase environment variables');
+  }
+
+  return createClient(url, serviceKey);
 }
-
-const supabaseAdmin = createClient(url, serviceKey);
 
 export async function getInviteDetails(rawInviteCode: string) {
   try {
@@ -25,6 +27,7 @@ export async function getInviteDetails(rawInviteCode: string) {
     const inviteCode = inputParsed.data;
 
     // 2. Fetch Data
+    const supabaseAdmin = createSupabaseAdminClient();
     const { data: invite, error } = await supabaseAdmin
       .from('library_invites')
       .select('*, library:libraries(name)')
