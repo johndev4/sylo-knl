@@ -15,7 +15,7 @@
 
 <p align="center">
   <a href="#key-features"><img alt="Google Gemini" src="https://img.shields.io/badge/Google_Gemini-Supported-4285F4?style=flat-square&logo=google" /></a>
-  <a href="#1-running-local-ai-with-ollama"><img alt="Ollama Local AI" src="https://img.shields.io/badge/Ollama_Local_AI-Supported-white?style=flat-square&logo=ollama&logoColor=black" /></a>
+  <a href="#local-ai-with-ollama"><img alt="Ollama Local AI" src="https://img.shields.io/badge/Ollama_Local_AI-Supported-white?style=flat-square&logo=ollama&logoColor=black" /></a>
   <a href="#self-hosting-guide"><img alt="Self-Hosted" src="https://img.shields.io/badge/Self--Hosted-Ready-orange?style=flat-square" /></a>
   <a href="#2-vercel-hosting"><img alt="Vercel" src="https://img.shields.io/badge/Vercel-Deploy-black?style=flat-square&logo=vercel" /></a>
 </p>
@@ -38,9 +38,10 @@
   - [1. Supabase (Database & Auth)](#1-supabase-database--auth)
   - [2. Vercel (Hosting)](#2-vercel-hosting)
 - [Self-Hosting Guide](#self-hosting-guide)
-  - [1. Running Local AI with Ollama](#1-running-local-ai-with-ollama)
-  - [2. Self-Hosted Supabase](#2-self-hosted-supabase)
-  - [3. Running the Application](#3-running-the-application)
+  - [Option A: Docker Compose (Recommended)](#option-a-docker-compose-recommended)
+  - [Option B: Manual Host Build](#option-b-manual-host-build)
+  - [Local AI with Ollama](#local-ai-with-ollama)
+  - [Self-Hosted Supabase](#self-hosted-supabase)
 - [License](#license)
 
 ---
@@ -142,8 +143,9 @@ Configure the following variables in `.env.local`:
 # App URL
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
 
-# Optional cron fallback: set in the app environment and also in Supabase Vault
-CRON_SECRET="<generate-a-random-secret>"
+# Optional: set only if enabling the pg_cron embedding fallback.
+# Store the same generated secret in Supabase Vault as `cron_secret`.
+# CRON_SECRET="<generate-a-random-secret>"
 
 # Supabase (Project Settings -> API)
 NEXT_PUBLIC_SUPABASE_URL="https://your-project.supabase.co"
@@ -202,6 +204,8 @@ and verification steps.
 | `pnpm lint`             | Runs ESLint validation                                           |
 | `pnpm lint:fix`         | Runs ESLint and auto-fixes issues                                |
 | `pnpm format`           | Formats code using Prettier                                      |
+| `pnpm format:check`     | Checks formatting without writing changes                        |
+| `pnpm test:unit`        | Runs Jest unit tests                                             |
 | `pnpm test:e2e`         | Runs Playwright end-to-end test suite                            |
 | `pnpm migrate:re-embed` | Utility script to re-generate document embeddings                |
 
@@ -246,7 +250,7 @@ Sylo is optimized for seamless deployment on Vercel:
    - `NEXT_PUBLIC_SUPABASE_URL`: Supabase project URL
    - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`: Supabase anon key
    - `SUPABASE_SECRET_KEY`: Supabase service role key
-   - `CRON_SECRET`: random secret also stored as `cron_secret` in the production Supabase Vault
+   - `CRON_SECRET`: only when enabling the pg_cron fallback; use the same secret in the production Supabase Vault
    - `LLM_PROVIDER`: `google`
    - `EMBEDDING_PROVIDER`: `google`
    - `GOOGLE_GENERATIVE_AI_API_KEY`: Google AI Studio API key
@@ -260,7 +264,33 @@ Sylo is optimized for seamless deployment on Vercel:
 
 Sylo can be self-hosted in air-gapped or privacy-conscious environments without sending any documents or queries to third-party AI services.
 
-### 1. Running Local AI with Ollama
+### Option A: Docker Compose (Recommended)
+
+Run the Sylo web application in Docker using `docker-compose.yml` (connects to a cloud or local Supabase instance and optional host Ollama):
+
+```bash
+cp .env.example .env          # PowerShell: Copy-Item .env.example .env
+# Edit .env with your Supabase and AI provider settings
+docker compose up --build -d
+```
+
+See the full **[Docker Setup Guide](docs/DOCKER_SETUP.md)** for prerequisites, `.env` configuration, local Supabase LAN IP networking, database migrations, and Ollama setup.
+
+### Option B: Manual Host Build
+
+Build and run the Next.js production server directly on your host (after configuring `.env.local` or `.env.production` and applying [Database Setup & Migrations](#database-setup--migrations)):
+
+```bash
+# Build the production bundle
+pnpm build
+
+# Start the standalone server
+pnpm start -p 3000
+```
+
+Alternatively, reverse-proxy port `3000` behind Nginx, Caddy, or Traefik with SSL certificates configured.
+
+### Local AI with Ollama
 
 1. Install [Ollama](https://ollama.ai/download) on your host or server.
 2. Pull the embedding model and generation model:
@@ -273,39 +303,23 @@ Sylo can be self-hosted in air-gapped or privacy-conscious environments without 
    ```bash
    ollama serve
    ```
-4. Set the following in your `.env.local` / production environment:
+4. Set the following in `.env.local` (for local `pnpm dev`) or `.env` (for Docker):
    ```env
    LLM_PROVIDER="ollama"
    EMBEDDING_PROVIDER="ollama"
+   # Use http://host.docker.internal:11434/api when running Sylo inside Docker
    OLLAMA_BASE_URL="http://localhost:11434/api"
    OLLAMA_LLM_MODEL="gemma4:e4b"
    OLLAMA_EMBEDDING_MODEL="nomic-embed-text:v1.5"
    ```
 
-### 2. Self-Hosted Supabase
+### Self-Hosted Supabase
 
 You can run Supabase locally or on your own VPS using [Docker Compose](https://supabase.com/docs/guides/self-hosting/docker):
 
 1. Follow the official [Supabase Self-Hosting Guide](https://supabase.com/docs/guides/self-hosting/docker).
 2. Ensure the `pgvector` extension is enabled.
-3. Run migrations against your self-hosted database using the Supabase CLI:
-   ```bash
-   supabase db push --db-url "postgresql://postgres:postgres@localhost:5432/postgres"
-   ```
-
-### 3. Running the Application
-
-Build and run the Next.js production server on your host:
-
-```bash
-# Build the production bundle
-pnpm build
-
-# Start the standalone server
-pnpm start -p 3000
-```
-
-Alternatively, reverse-proxy port `3000` behind Nginx, Caddy, or Traefik with SSL certificates configured.
+3. Apply migrations using `supabase db push --db-url "<database-url>"` (see [Database Setup & Migrations](#database-setup--migrations)).
 
 ---
 

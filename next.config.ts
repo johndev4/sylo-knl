@@ -1,6 +1,9 @@
 import type { NextConfig } from 'next';
 
+const isDocker = process.env.DOCKER_BUILD === '1';
+
 const nextConfig: NextConfig = {
+  ...(isDocker && { output: 'standalone' as const }),
   cacheComponents: true,
   partialPrefetching: false,
   allowedDevOrigins: ['127.0.0.1'],

@@ -67,3 +67,4 @@ In addition to automatic embedding via `after()`, Sylo provides a dedicated serv
 - **Route**: `POST /api/embed-pending`
 - **Authentication**: `Authorization: Bearer <CRON_SECRET>`
 - **Behavior**: Grabs the oldest 5 pending chunks across any document, generates embeddings, writes them to the database, and returns `{ processed: count }`.
+- **Setup & Testing**: See the [Embedding Worker Setup Guide](EMBEDDING_API_GUIDE.md).

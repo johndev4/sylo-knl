@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { FileText, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { HydrationSafeDate } from '@/components/shared/hydration-safe-date';
 
 type Membership = {
   role: string;
@@ -15,20 +16,6 @@ type Membership = {
 
 interface LibrariesTableProps {
   hubData: Membership[];
-}
-
-// Simple date formatter
-function formatRelativeDate(dateString: string): string {
-  const date = new Date(dateString);
-  const now = new Date();
-  const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-  if (seconds < 60) return 'Just now';
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
-  if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
-
-  return date.toLocaleDateString();
 }
 
 export function LibrariesTable({ hubData }: LibrariesTableProps) {
@@ -116,7 +103,10 @@ export function LibrariesTable({ hubData }: LibrariesTableProps) {
                       {dataItem.docCount}
                     </td>
                     <td className="px-4 py-3 text-xs text-neutral-600 dark:text-neutral-400">
-                      {formatRelativeDate(library.created_at)}
+                      <HydrationSafeDate
+                        value={library.created_at}
+                        format="relative"
+                      />
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-2">

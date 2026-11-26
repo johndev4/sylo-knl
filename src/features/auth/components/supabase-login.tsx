@@ -43,9 +43,7 @@ export function SupabaseLogin() {
       providers={['google']}
       onlyThirdPartyProviders={
         process.env.NEXT_PUBLIC_TEST_MODE !== 'true' &&
-        !['http://127.0.0.1:54321', 'http://localhost:54321'].includes(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!
-        )
+        process.env.NODE_ENV === 'production'
       }
       redirectTo={`${getURL()}/auth/callback?next=${encodedAuthNextParam}`}
     />

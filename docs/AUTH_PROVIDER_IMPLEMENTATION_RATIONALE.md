@@ -1,8 +1,8 @@
-# AUTH_PROVIDER_IMPLEMENTATION_RATIONALE.md
+# Auth Provider Implementation Rationale
 
 ## Overview
 
-This document outlines the architectural decision to use Supabase's native authentication subscriptions via `onAuthStateChange` within the `AuthProvider` component, rather than employing a request-based fetching library like SWR.
+This document outlines the architectural decision to use Supabase's native authentication subscriptions via `onAuthStateChange` within `AuthProvider` (`src/components/providers/auth-provider.tsx`), rather than employing a request-based fetching library like SWR.
 
 ## Comparison: Supabase Subscriptions vs. SWR
 

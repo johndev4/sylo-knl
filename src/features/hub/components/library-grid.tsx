@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { MessageSquare, FileText } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import { HydrationSafeDate } from '@/components/shared/hydration-safe-date';
 
 type Membership = {
   role: string;
@@ -97,7 +98,7 @@ export function LibrariesBentoGrid({ hubData }: LibraryGridProps) {
                     </div>
 
                     <div className="text-sm text-neutral-500 dark:text-neutral-400">
-                      Created {new Date(space.created_at).toLocaleDateString()}{' '}
+                      Created <HydrationSafeDate value={space.created_at} />{' '}
                       &middot; {dataItem.memberCount} members &middot;{' '}
                       {dataItem.docCount} docs
                     </div>
