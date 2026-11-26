@@ -41,10 +41,7 @@ export function SupabaseLogin() {
       supabaseClient={supabase}
       appearance={{ theme: getAuthTheme(resolvedTheme === 'dark') }}
       providers={['google']}
-      onlyThirdPartyProviders={
-        process.env.NEXT_PUBLIC_TEST_MODE !== 'true' &&
-        process.env.NODE_ENV === 'production'
-      }
+      onlyThirdPartyProviders={process.env.NEXT_PUBLIC_TEST_MODE !== 'true'}
       redirectTo={`${getURL()}/auth/callback?next=${encodedAuthNextParam}`}
     />
   );
