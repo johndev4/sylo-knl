@@ -1,6 +1,13 @@
 {
   "version": 2,
   "skills": {
+    "rag-implementation": {
+      "source": "wshobson/agents",
+      "commit": "c96b5f6552dba32e4492307493ee613581430715",
+      "sourceType": "github",
+      "skillPath": "plugins/llm-application-dev/skills/rag-implementation/SKILL.md",
+      "computedHash": "f488cd68c88657f8e0fb6476b4b6acf0142ab4aa17ceb036f0106829a94935ab"
+    },
     "shadcn": {
       "source": "shadcn/ui",
       "commit": "968d8cb9dc42ae5d52e8fd356cf84596ec832a26",

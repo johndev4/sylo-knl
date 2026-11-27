@@ -1,6 +1,6 @@
 /**
- * Document retrieval logic using pgvector similarity search and tag-based keyword search.
- * Extracts relevant chunks based on query embedding, document tags, and filters by library IDs.
+ * Document retrieval logic using vector similarity, full-text search, and document tags.
+ * Extracts relevant chunks while enforcing library and mention-scope filters.
  */
 
 import { createClient } from '@/lib/supabase/server';
@@ -16,11 +16,68 @@ export interface RetrievedChunk {
   title: string;
   library_name: string;
   similarity: number;
+  tags?: string[];
+}
+
+export interface CitedRetrievedChunk extends RetrievedChunk {
+  document_url: string;
 }
 
 export interface ScopedRetrievalFilters {
   documentIds: string[];
   tags: string[];
+}
+
+/**
+ * Attach authorized Sylo document routes to retrieved chunks for answer citations.
+ */
+export async function attachDocumentLinks(
+  chunks: RetrievedChunk[],
+  libraryIds: string[]
+): Promise<CitedRetrievedChunk[]> {
+  const documentIds = [...new Set(chunks.map((chunk) => chunk.document_id))];
+  if (documentIds.length === 0 || libraryIds.length === 0) {
+    return [];
+  }
+
+  const supabase = await createClient();
+  const { data: documents, error } = await supabase
+    .from('documents')
+    .select('id, library_id')
+    .in('id', documentIds)
+    .in('library_id', libraryIds)
+    .is('deleted_at', null);
+
+  if (error) {
+    throw error;
+  }
+
+  const libraryIdsByDocumentId = new Map(
+    (documents ?? []).map((document) => [document.id, document.library_id])
+  );
+  const citedChunks: CitedRetrievedChunk[] = [];
+
+  for (const chunk of chunks) {
+    const libraryId = libraryIdsByDocumentId.get(chunk.document_id);
+    if (!libraryId) {
+      continue;
+    }
+
+    citedChunks.push({
+      ...chunk,
+      document_url: `/hub/libraries/${encodeURIComponent(libraryId)}/documents/${encodeURIComponent(chunk.document_id)}`,
+    });
+  }
+
+  if (citedChunks.length < chunks.length) {
+    logger.warn('Some retrieved documents could not be linked for citations', {
+      missingDocumentCount:
+        documentIds.length -
+        new Set(citedChunks.map((chunk) => chunk.document_id)).size,
+    });
+  }
+
+  return citedChunks;
 }
 
 /**
@@ -153,13 +210,48 @@ export async function retrieveChunksByTags(
 }
 
 /**
- * Merge and deduplicate chunks from vector search and tag keyword search.
+ * Retrieve chunks with lexical matches in their content or document title.
+ * The database function ranks matches while applying the same library and
+ * optional mention scope used by vector retrieval.
+ */
+export async function retrieveChunksByKeywords(
+  query: string,
+  libraryIds: string[],
+  limit: number = 12,
+  scope?: ScopedRetrievalFilters
+): Promise<RetrievedChunk[]> {
+  if (!query.trim() || libraryIds.length === 0) {
+    return [];
+  }
+
+  const supabase = await createClient();
+  const { data: chunks, error } = await supabase.rpc(
+    'search_document_chunks_keywords',
+    {
+      search_query: query,
+      filter_library_ids: libraryIds,
+      filter_document_ids: scope?.documentIds ?? null,
+      filter_tags: scope?.tags ?? null,
+      match_count: limit,
+    }
+  );
+
+  if (error) {
+    throw error;
+  }
+
+  return chunks ?? [];
+}
+
+/**
+ * Merge and deduplicate chunks from vector, full-text, and tag search.
  * Prioritizes high similarity chunks, boosts items discovered via both channels,
  * and maintains diverse context.
  */
 export function mergeAndRankChunks(
   vectorChunks: RetrievedChunk[],
   tagChunks: RetrievedChunk[],
+  keywordChunks: RetrievedChunk[] = [],
   limit: number = 7
 ): RetrievedChunk[] {
   const chunkMap = new Map<string, RetrievedChunk>();
@@ -177,6 +269,18 @@ export function mergeAndRankChunks(
       existing.similarity = Math.min(
         1.0,
         Math.max(existing.similarity, 0.9) + 0.08
+      );
+    } else {
+      chunkMap.set(chunk.id, { ...chunk });
+    }
+  }
+
+  for (const chunk of keywordChunks) {
+    if (chunkMap.has(chunk.id)) {
+      const existing = chunkMap.get(chunk.id)!;
+      existing.similarity = Math.min(
+        1.0,
+        Math.max(existing.similarity, chunk.similarity) + 0.04
       );
     } else {
       chunkMap.set(chunk.id, { ...chunk });

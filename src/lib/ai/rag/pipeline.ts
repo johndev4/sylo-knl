@@ -15,8 +15,10 @@ import { generateEmbedding } from '@/lib/ai/embeddings';
 import { streamAnswer } from '@/lib/ai/core/llm';
 import type { StreamChunk } from '@/lib/ai/types/provider-types';
 import {
+  attachDocumentLinks,
   retrieveRelevantChunks,
   retrieveChunksByTags,
+  retrieveChunksByKeywords,
   mergeAndRankChunks,
 } from './retrieve';
 import {
@@ -25,10 +27,13 @@ import {
   buildConversationalSystemPrompt,
   buildOutOfScopeSystemPrompt,
   buildDocumentActionSystemPrompt,
+  buildClarificationSystemPrompt,
+  buildCorrectionVerificationSystemPrompt,
 } from './context-builder';
 import { analyzeChatQuery } from './query-analyzer';
 import type { ScopedRetrievalFilters } from './retrieve';
 import { logger } from '@/lib/logging/logger';
+import { logDurationMs } from '@/lib/logging/request';
 
 /**
  * Execute full enhanced RAG chat flow with chat memory, tag search, scope guardrails,
@@ -39,7 +44,8 @@ export async function* executeRAGChat(
   libraryIds: string[],
   userMessages: Array<{ role: 'user' | 'assistant'; content: string }>,
   selectedLibraryNames: string[],
-  mentionScope?: ScopedRetrievalFilters
+  mentionScope?: ScopedRetrievalFilters,
+  requestId?: string
 ): AsyncIterable<StreamChunk> {
   try {
     // Step 1: Analyze query with conversational memory and intent detection
@@ -55,11 +61,87 @@ export async function* executeRAGChat(
       return;
     }
 
-    // Step 2b: If out-of-scope, decline politely and explain capabilities
-    if (analysis.isOutOfScope) {
-      const outOfScopePrompt =
-        buildOutOfScopeSystemPrompt(selectedLibraryNames);
-      for await (const chunk of streamAnswer(outOfScopePrompt, userMessages)) {
+    const hasMentionScope =
+      !!mentionScope &&
+      (mentionScope.documentIds.length > 0 || mentionScope.tags.length > 0);
+
+    // Step 2b: User correction — verify claim against documents before agreeing or disagreeing
+    if (analysis.isUserCorrection) {
+      logger.info('User correction detected — running verification retrieval', {
+        requestId,
+      });
+      const correctionQuery =
+        analysis.correctionSearchQuery || analysis.standaloneQuery || userQuery;
+      const retrievalTags = hasMentionScope
+        ? mentionScope.tags
+        : analysis.tagKeywords;
+
+      const [vectorChunks, tagChunks, keywordChunks] = await Promise.all([
+        (async () => {
+          try {
+            const queryEmbedding = await generateEmbedding(correctionQuery);
+            return await retrieveRelevantChunks(
+              queryEmbedding,
+              libraryIds,
+              8,
+              mentionScope
+            );
+          } catch (error: unknown) {
+            logger.warn(
+              'Correction vector retrieval failed; continuing with fallback results',
+              { error }
+            );
+            return [];
+          }
+        })(),
+        (async () => {
+          if (!retrievalTags || retrievalTags.length === 0) {
+            return [];
+          }
+          try {
+            return await retrieveChunksByTags(libraryIds, retrievalTags, 8);
+          } catch (error: unknown) {
+            logger.warn(
+              'Correction tag retrieval failed; continuing with fallback results',
+              { error }
+            );
+            return [];
+          }
+        })(),
+        (async () => {
+          try {
+            return await retrieveChunksByKeywords(
+              correctionQuery,
+              libraryIds,
+              12,
+              mentionScope
+            );
+          } catch (error: unknown) {
+            logger.warn(
+              'Correction keyword retrieval failed; continuing with fallback results',
+              { error }
+            );
+            return [];
+          }
+        })(),
+      ]);
+
+      const mergedChunks = mergeAndRankChunks(
+        vectorChunks,
+        tagChunks,
+        keywordChunks,
+        12
+      );
+      const citedChunks = await attachDocumentLinks(mergedChunks, libraryIds);
+      const contextContent = buildPromptContext(citedChunks);
+      const correctionPrompt = buildCorrectionVerificationSystemPrompt(
+        contextContent,
+        selectedLibraryNames
+      );
+
+      for await (const chunk of streamAnswer(correctionPrompt, userMessages, {
+        temperature: 0.1,
+      })) {
         yield chunk;
       }
       return;
@@ -79,22 +161,44 @@ export async function* executeRAGChat(
     }
 
     const effectiveQuery = analysis.standaloneQuery || userQuery;
-    const hasMentionScope =
-      !!mentionScope &&
-      (mentionScope.documentIds.length > 0 || mentionScope.tags.length > 0);
+
+    // Step 2d: If query lacks essential context and no @mention scope is provided, ask for clarification
+    if (analysis.needsClarification && !hasMentionScope) {
+      logger.info('Query clarification requested', { requestId });
+      const clarificationPrompt = buildClarificationSystemPrompt(
+        selectedLibraryNames,
+        analysis.clarificationQuestion
+      );
+      for await (const chunk of streamAnswer(
+        clarificationPrompt,
+        userMessages
+      )) {
+        yield chunk;
+      }
+      return;
+    }
+
+    const retrievalLimit =
+      /\b(?:all|every|list|which|between|before|after|during|year|total|count|compare|sort|filter)\b/i.test(
+        effectiveQuery
+      )
+        ? 30
+        : 12;
     const retrievalTags = hasMentionScope
       ? mentionScope.tags
       : analysis.tagKeywords;
 
-    // Step 3: Run parallel hybrid retrieval (vector search + tag keyword search)
-    const [vectorChunks, tagChunks] = await Promise.all([
+    // Step 3: Run parallel hybrid retrieval (vector, tag, and lexical search)
+    let vectorSearchDurationMs = 0;
+    const [vectorChunks, tagChunks, keywordChunks] = await Promise.all([
       (async () => {
+        const startedAt = performance.now();
         try {
           const queryEmbedding = await generateEmbedding(effectiveQuery);
           return await retrieveRelevantChunks(
             queryEmbedding,
             libraryIds,
-            5,
+            Math.min(8, retrievalLimit),
             mentionScope
           );
         } catch (error: unknown) {
@@ -105,6 +209,8 @@ export async function* executeRAGChat(
             }
           );
           return [];
+        } finally {
+          vectorSearchDurationMs = logDurationMs(startedAt);
         }
       })(),
       (async () => {
@@ -112,7 +218,11 @@ export async function* executeRAGChat(
           return [];
         }
         try {
-          return await retrieveChunksByTags(libraryIds, retrievalTags, 4);
+          return await retrieveChunksByTags(
+            libraryIds,
+            retrievalTags,
+            Math.min(16, retrievalLimit)
+          );
         } catch (error: unknown) {
           logger.warn('Tag retrieval failed; continuing without tag results', {
             error,
@@ -120,13 +230,55 @@ export async function* executeRAGChat(
           return [];
         }
       })(),
+      (async () => {
+        try {
+          return await retrieveChunksByKeywords(
+            effectiveQuery,
+            libraryIds,
+            retrievalLimit,
+            mentionScope
+          );
+        } catch (error: unknown) {
+          logger.warn(
+            'Keyword retrieval failed; continuing without keyword results',
+            { error }
+          );
+          return [];
+        }
+      })(),
     ]);
 
+    logger.info('Hybrid search completed', {
+      requestId,
+      vectorResultCount: vectorChunks.length,
+      tagResultCount: tagChunks.length,
+      keywordResultCount: keywordChunks.length,
+      durationMs: vectorSearchDurationMs,
+      similarityScores: vectorChunks.map((chunk) => chunk.similarity),
+    });
+
     // Step 4: Merge, deduplicate, and rank chunks
-    const mergedChunks = mergeAndRankChunks(vectorChunks, tagChunks, 7);
+    const mergedChunks = mergeAndRankChunks(
+      vectorChunks,
+      tagChunks,
+      keywordChunks,
+      retrievalLimit
+    );
+    const citedChunks = await attachDocumentLinks(mergedChunks, libraryIds);
+
+    // Only decline after searching the selected libraries. A scoped mention is
+    // an explicit signal to search its documents even if query analysis was unsure.
+    if (analysis.isOutOfScope && citedChunks.length === 0 && !hasMentionScope) {
+      const outOfScopePrompt =
+        buildOutOfScopeSystemPrompt(selectedLibraryNames);
+      for await (const chunk of streamAnswer(outOfScopePrompt, userMessages)) {
+        yield chunk;
+      }
+      return;
+    }
 
     // Step 5: Build context from hybrid chunks with balanced grounding
-    const contextContent = buildPromptContext(mergedChunks);
+    const contextContent = buildPromptContext(citedChunks);
     const systemPrompt = buildSystemPrompt(
       contextContent,
       selectedLibraryNames

@@ -1,21 +1,21 @@
-import { createClient } from '@supabase/supabase-js';
-import { embedMany } from 'ai';
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
-import { createOllama } from 'ollama-ai-provider-v2';
-import { config as loadEnv } from 'dotenv';
+import { createClient } from "@supabase/supabase-js";
+import { embedMany } from "ai";
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
+import { createOllama } from "ollama-ai-provider-v2";
+import { config as loadEnv } from "dotenv";
 
 // Load environment variables from project root.
 // Stage is resolved from --env flag (e.g. --env production → .env.production).
 // Falls back to .env.local when --env is not provided.
 const envStage = (() => {
-  const idx = process.argv.indexOf('--env');
+  const idx = process.argv.indexOf("--env");
   return idx !== -1 ? process.argv[idx + 1] : null;
 })();
-loadEnv({ path: envStage ? `.env.${envStage}` : '.env.local' });
-loadEnv({ path: '.env' });
+loadEnv({ path: envStage ? `.env.${envStage}` : ".env.local" });
+loadEnv({ path: ".env" });
 
 function getTimestamp() {
-  return new Date().toISOString().replace('T', ' ').substring(0, 19);
+  return new Date().toISOString().replace("T", " ").substring(0, 19);
 }
 
 function log(msg) {
@@ -32,9 +32,9 @@ function logError(msg) {
 
 function parseArguments(args) {
   const options = {
-    env: envStage ?? 'local',
-    libraryId: '',
-    newModel: '',
+    env: envStage ?? "local",
+    libraryId: "",
+    newModel: "",
     batchSize: 100,
     apply: false,
     help: false,
@@ -42,17 +42,17 @@ function parseArguments(args) {
 
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index];
-    if (argument === '--help' || argument === '-h') {
+    if (argument === "--help" || argument === "-h") {
       options.help = true;
-    } else if (argument === '--env') {
+    } else if (argument === "--env") {
       index += 1; // already consumed at module load time; skip value
-    } else if (argument === '--library-id') {
-      options.libraryId = args[++index] ?? '';
-    } else if (argument === '--new-model') {
-      options.newModel = args[++index] ?? '';
-    } else if (argument === '--batch-size') {
+    } else if (argument === "--library-id") {
+      options.libraryId = args[++index] ?? "";
+    } else if (argument === "--new-model") {
+      options.newModel = args[++index] ?? "";
+    } else if (argument === "--batch-size") {
       options.batchSize = Number(args[++index]);
-    } else if (argument === '--apply') {
+    } else if (argument === "--apply") {
       options.apply = true;
     } else {
       throw new Error(`Unknown argument: ${argument}`);
@@ -64,7 +64,7 @@ function parseArguments(args) {
   }
 
   if (!options.libraryId) {
-    throw new Error('--library-id is required');
+    throw new Error("--library-id is required");
   }
 
   const uuidRegex =
@@ -74,7 +74,7 @@ function parseArguments(args) {
   }
 
   if (!Number.isInteger(options.batchSize) || options.batchSize < 1) {
-    throw new Error('--batch-size must be a positive integer');
+    throw new Error("--batch-size must be a positive integer");
   }
 
   return options;
@@ -83,28 +83,28 @@ function parseArguments(args) {
 function showHelp() {
   console.log(
     [
-      'Re-embed existing documents using a new embedding model.',
-      '',
-      'Supports Google and Ollama providers with batch processing,',
-      'pre-flight validation, dry-run mode, and comprehensive error recovery.',
-      '',
-      'Usage:',
-      '  node scripts/re-embed-documents.mjs --library-id <uuid> [options]',
-      '  node scripts/re-embed-documents.mjs --library-id <uuid> --apply [options]',
-      '',
-      'Options:',
-      '  --env <stage>        Environment stage to load: .env.<stage> (default: .env.local)',
-      '                       (Note: If the .env.<stage> file does not exists, it defaults to .env)',
-      '  --library-id <uuid>  UUID of the library to re-embed (required)',
+      "Re-embed existing documents using a new embedding model.",
+      "",
+      "Supports Google and Ollama providers with batch processing,",
+      "pre-flight validation, dry-run mode, and comprehensive error recovery.",
+      "",
+      "Usage:",
+      "  node scripts/re-embed-documents.mjs --library-id <uuid> [options]",
+      "  node scripts/re-embed-documents.mjs --library-id <uuid> --apply [options]",
+      "",
+      "Options:",
+      "  --env <stage>        Environment stage to load: .env.<stage> (default: .env.local)",
+      "                       (Note: If the .env.<stage> file does not exists, it defaults to .env)",
+      "  --library-id <uuid>  UUID of the library to re-embed (required)",
       '  --new-model <name>   Embedding provider ("google" or "ollama")',
-      '  --batch-size <num>   Documents per batch (default: 100)',
-      '  --apply              Execute database changes (default is dry run)',
-      '  -h, --help           Show this help message',
-      '',
-      'Examples:',
-      '  node scripts/re-embed-documents.mjs --env local --library-id <uuid>',
-      '  node scripts/re-embed-documents.mjs --env production --library-id <uuid> --apply',
-    ].join('\n')
+      "  --batch-size <num>   Documents per batch (default: 100)",
+      "  --apply              Execute database changes (default is dry run)",
+      "  -h, --help           Show this help message",
+      "",
+      "Examples:",
+      "  node scripts/re-embed-documents.mjs --env local --library-id <uuid>",
+      "  node scripts/re-embed-documents.mjs --env production --library-id <uuid> --apply",
+    ].join("\n")
   );
 }
 
@@ -116,22 +116,37 @@ class Config {
     this.llmProvider = (
       process.env.EMBEDDING_PROVIDER ??
       process.env.LLM_PROVIDER ??
-      'google'
+      "google"
     ).toLowerCase();
     this.googleApiKey =
       process.env.GOOGLE_API_KEY ?? process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+    this.googleEmbeddingModel = process.env.GOOGLE_EMBEDDING_MODEL;
     this.ollamaBaseUrl =
-      process.env.OLLAMA_BASE_URL ?? 'http://localhost:11434';
+      process.env.OLLAMA_BASE_URL ?? "http://localhost:11434";
+    this.ollamaEmbeddingModel = process.env.OLLAMA_EMBEDDING_MODEL;
 
     if (!this.supabaseUrl || !this.supabaseKey) {
       throw new Error(
-        'SUPABASE_URL and SUPABASE_SECRET_KEY environment variables are required'
+        "SUPABASE_URL and SUPABASE_SECRET_KEY environment variables are required"
       );
     }
 
-    if (this.llmProvider === 'google' && !this.googleApiKey) {
+    if (this.llmProvider === "google") {
+      if (!this.googleApiKey) {
+        throw new Error(
+          "GOOGLE_API_KEY or GOOGLE_GENERATIVE_AI_API_KEY environment variable is required for Google provider"
+        );
+      }
+      if (!this.googleEmbeddingModel) {
+        throw new Error(
+          "GOOGLE_EMBEDDING_MODEL environment variable is required for Google provider"
+        );
+      }
+    }
+
+    if (this.llmProvider === "ollama" && !this.ollamaEmbeddingModel) {
       throw new Error(
-        'GOOGLE_API_KEY or GOOGLE_GENERATIVE_AI_API_KEY environment variable is required for Google provider'
+        "OLLAMA_EMBEDDING_MODEL environment variable is required for Ollama provider"
       );
     }
   }
@@ -159,15 +174,14 @@ async function generateBatchEmbeddings(
   ollamaBaseUrl
 ) {
   try {
-    if (provider === 'google') {
+    if (provider === "google") {
       if (!googleApiKey) {
-        throw new Error('Google embedding API key is missing');
+        throw new Error("Google embedding API key is missing");
       }
       const providerInstance = createGoogleGenerativeAI({
         apiKey: googleApiKey,
       });
-      const model =
-        process.env.GOOGLE_EMBEDDING_MODEL || 'gemini-embedding-001';
+      const model = process.env.GOOGLE_EMBEDDING_MODEL;
       const result = await embedMany({
         model: providerInstance.textEmbeddingModel(model),
         values: texts,
@@ -175,10 +189,9 @@ async function generateBatchEmbeddings(
       return result.embeddings;
     }
 
-    if (provider === 'ollama') {
+    if (provider === "ollama") {
       const providerInstance = createOllama({ baseURL: ollamaBaseUrl });
-      const model =
-        process.env.OLLAMA_EMBEDDING_MODEL ?? 'nomic-embed-text:v1.5';
+      const model = process.env.OLLAMA_EMBEDDING_MODEL;
       const result = await embedMany({
         model: providerInstance.textEmbeddingModel(model),
         values: texts,
@@ -193,7 +206,9 @@ async function generateBatchEmbeddings(
 
     throw new Error(`Unknown provider: ${provider}`);
   } catch (e) {
-    logError(`Failed to generate embeddings: ${e instanceof Error ? e.message : e}`);
+    logError(
+      `Failed to generate embeddings: ${e instanceof Error ? e.message : e}`
+    );
     return null;
   }
 }
@@ -201,13 +216,13 @@ async function generateBatchEmbeddings(
 async function testEmbeddingProvider(provider, googleApiKey, ollamaBaseUrl) {
   try {
     const embeddings = await generateBatchEmbeddings(
-      ['test'],
+      ["test"],
       provider,
       googleApiKey,
       ollamaBaseUrl
     );
     if (!embeddings || embeddings.length === 0 || !embeddings[0]) {
-      throw new Error('Provider returned no embeddings');
+      throw new Error("Provider returned no embeddings");
     }
     const vectorDim = embeddings[0].length;
     log(`${provider} provider test successful: vector_dim=${vectorDim}`);
@@ -221,9 +236,9 @@ async function testEmbeddingProvider(provider, googleApiKey, ollamaBaseUrl) {
 async function verifyDatabaseSchema(client, libraryId) {
   try {
     const { data: libraries, error: libError } = await client
-      .from('libraries')
-      .select('id, name')
-      .eq('id', libraryId);
+      .from("libraries")
+      .select("id, name")
+      .eq("id", libraryId);
 
     if (libError) throw libError;
     const library = libraries && libraries[0];
@@ -233,9 +248,9 @@ async function verifyDatabaseSchema(client, libraryId) {
     log(`Library found: ${library.name} (id=${libraryId})`);
 
     const { data: documents, error: docsError } = await client
-      .from('documents')
-      .select('id, deleted_at')
-      .eq('library_id', libraryId);
+      .from("documents")
+      .select("id, deleted_at")
+      .eq("library_id", libraryId);
 
     if (docsError) throw docsError;
     const activeDocuments = (documents || []).filter((doc) => !doc.deleted_at);
@@ -248,9 +263,9 @@ async function verifyDatabaseSchema(client, libraryId) {
 
     if (docIds.length > 0) {
       const { data: chunks, error: chunksError } = await client
-        .from('document_chunks')
-        .select('id, embedding')
-        .in('document_id', docIds);
+        .from("document_chunks")
+        .select("id, embedding")
+        .in("document_id", docIds);
 
       if (chunksError) throw chunksError;
       chunkCount = (chunks || []).length;
@@ -259,7 +274,7 @@ async function verifyDatabaseSchema(client, libraryId) {
         if (chunk.embedding) {
           currentDim = Array.isArray(chunk.embedding)
             ? chunk.embedding.length
-            : typeof chunk.embedding === 'string'
+            : typeof chunk.embedding === "string"
               ? JSON.parse(chunk.embedding).length
               : null;
           if (currentDim) break;
@@ -271,7 +286,7 @@ async function verifyDatabaseSchema(client, libraryId) {
     if (currentDim !== null) {
       log(`Current vector dimension: ${currentDim}`);
     } else {
-      logWarn('No existing embeddings found in library');
+      logWarn("No existing embeddings found in library");
     }
 
     return {
@@ -282,7 +297,9 @@ async function verifyDatabaseSchema(client, libraryId) {
       currentVectorDim: currentDim,
     };
   } catch (e) {
-    logError(`Database schema verification failed: ${e instanceof Error ? e.message : e}`);
+    logError(
+      `Database schema verification failed: ${e instanceof Error ? e.message : e}`
+    );
     throw e;
   }
 }
@@ -290,17 +307,19 @@ async function verifyDatabaseSchema(client, libraryId) {
 async function fetchDocumentsBatch(client, libraryId, offset, limit) {
   try {
     const { data, error } = await client
-      .from('documents')
-      .select('id, title, deleted_at')
-      .eq('library_id', libraryId)
-      .is('deleted_at', null)
-      .order('created_at')
+      .from("documents")
+      .select("id, title, deleted_at")
+      .eq("library_id", libraryId)
+      .is("deleted_at", null)
+      .order("created_at")
       .range(offset, offset + limit - 1);
 
     if (error) throw error;
     return data || [];
   } catch (e) {
-    logError(`Failed to fetch documents batch at offset ${offset}: ${e instanceof Error ? e.message : e}`);
+    logError(
+      `Failed to fetch documents batch at offset ${offset}: ${e instanceof Error ? e.message : e}`
+    );
     return [];
   }
 }
@@ -308,9 +327,9 @@ async function fetchDocumentsBatch(client, libraryId, offset, limit) {
 async function fetchChunksForDocuments(client, docIds) {
   try {
     const { data, error } = await client
-      .from('document_chunks')
-      .select('id, document_id, content')
-      .in('document_id', docIds);
+      .from("document_chunks")
+      .select("id, document_id, content")
+      .in("document_id", docIds);
 
     if (error) throw error;
 
@@ -324,7 +343,9 @@ async function fetchChunksForDocuments(client, docIds) {
     }
     return chunksByDoc;
   } catch (e) {
-    logError(`Failed to fetch chunks for documents: ${e instanceof Error ? e.message : e}`);
+    logError(
+      `Failed to fetch chunks for documents: ${e instanceof Error ? e.message : e}`
+    );
     return {};
   }
 }
@@ -337,14 +358,15 @@ async function updateChunksEmbeddings(client, updates, dryRun) {
 
   try {
     for (const update of updates) {
-      const embeddingValue = typeof update.embedding === 'string'
-        ? update.embedding
-        : JSON.stringify(update.embedding);
+      const embeddingValue =
+        typeof update.embedding === "string"
+          ? update.embedding
+          : JSON.stringify(update.embedding);
 
       const { error } = await client
-        .from('document_chunks')
+        .from("document_chunks")
         .update({ embedding: embeddingValue })
-        .eq('id', update.chunk_id);
+        .eq("id", update.chunk_id);
 
       if (error) throw error;
     }
@@ -362,7 +384,7 @@ async function main() {
     options = parseArguments(process.argv.slice(2));
   } catch (e) {
     logError(e instanceof Error ? e.message : String(e));
-    console.log('');
+    console.log("");
     showHelp();
     process.exitCode = 2;
     return;
@@ -377,18 +399,24 @@ async function main() {
   const batchSize = options.batchSize;
   const dryRun = !options.apply;
 
-  log('='.repeat(80));
-  log('Starting re-embed process');
+  log("=".repeat(80));
+  log("Starting re-embed process");
   log(`Environment: ${options.env} (.env.${options.env})`);
   log(`Library ID: ${libraryId}`);
   log(`Batch size: ${batchSize}`);
   log(`Dry run: ${dryRun}`);
-  log('='.repeat(80));
+  log("=".repeat(80));
 
   try {
     const { client, config } = getDbClient();
     const provider = (options.newModel || config.llmProvider).toLowerCase();
+    const embeddingModel =
+      provider === "google"
+        ? config.googleEmbeddingModel
+        : config.ollamaEmbeddingModel;
 
+    log(`Embedding provider: ${provider}`);
+    log(`Embedding model: ${embeddingModel}`);
     log(`Testing embedding provider: ${provider}`);
     const newVectorDim = await testEmbeddingProvider(
       provider,
@@ -396,27 +424,24 @@ async function main() {
       config.ollamaBaseUrl
     );
 
-    log('Verifying database schema...');
+    log("Verifying database schema...");
     const libInfo = await verifyDatabaseSchema(client, libraryId);
 
     if (libInfo.chunkCount === 0) {
-      logWarn('No chunks found in library. Aborting.');
+      logWarn("No chunks found in library. Aborting.");
       process.exitCode = 2;
       return;
     }
 
     log(`New vector dimension: ${newVectorDim}`);
-    if (
-      libInfo.currentVectorDim &&
-      libInfo.currentVectorDim !== newVectorDim
-    ) {
+    if (libInfo.currentVectorDim && libInfo.currentVectorDim !== newVectorDim) {
       logWarn(
         `Vector dimension mismatch: current=${libInfo.currentVectorDim}, new=${newVectorDim}`
       );
     }
 
     if (dryRun) {
-      log('DRY RUN MODE - No changes will be committed');
+      log("DRY RUN MODE - No changes will be committed");
     }
 
     const startTime = Date.now();
@@ -427,12 +452,15 @@ async function main() {
 
     for (let batchIdx = 0; batchIdx < totalBatches; batchIdx += 1) {
       const offset = batchIdx * batchSize;
-      const docs = await fetchDocumentsBatch(client, libraryId, offset, batchSize);
+      const docs = await fetchDocumentsBatch(
+        client,
+        libraryId,
+        offset,
+        batchSize
+      );
 
       if (!docs || docs.length === 0) {
-        logWarn(
-          `Batch ${batchIdx + 1}/${totalBatches}: No documents fetched`
-        );
+        logWarn(`Batch ${batchIdx + 1}/${totalBatches}: No documents fetched`);
         failedBatches += 1;
         continue;
       }
@@ -492,23 +520,23 @@ async function main() {
 
     const elapsedTime = (Date.now() - startTime) / 1000;
 
-    log('='.repeat(80));
-    log('Re-embed process completed');
+    log("=".repeat(80));
+    log("Re-embed process completed");
     log(`Total documents processed: ${totalDocs}`);
     log(`Total chunks re-embedded: ${totalChunksReEmbedded}`);
     log(`Failed batches: ${failedBatches}`);
     log(`Execution time: ${elapsedTime.toFixed(2)} seconds`);
     if (dryRun) {
-      log('No changes committed (dry run)');
+      log("No changes committed (dry run)");
     } else {
-      log('All changes committed to database');
+      log("All changes committed to database");
     }
-    log('='.repeat(80));
+    log("=".repeat(80));
 
     process.exitCode = failedBatches === 0 ? 0 : 1;
   } catch (e) {
     logError(`Fatal error: ${e instanceof Error ? e.message : e}`);
-    log('='.repeat(80));
+    log("=".repeat(80));
     process.exitCode = 2;
   }
 }

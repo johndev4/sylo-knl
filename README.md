@@ -14,7 +14,7 @@
 </p>
 
 <p align="center">
-  <a href="#key-features"><img alt="Google Gemini" src="https://img.shields.io/badge/Google_Gemini-Supported-4285F4?style=flat-square&logo=google" /></a>
+  <a href="#key-features"><img alt="Google AI" src="https://img.shields.io/badge/Google_AI-Supported-4285F4?style=flat-square&logo=google" /></a>
   <a href="#local-ai-with-ollama"><img alt="Ollama Local AI" src="https://img.shields.io/badge/Ollama_Local_AI-Supported-white?style=flat-square&logo=ollama&logoColor=black" /></a>
   <a href="#self-hosting-guide"><img alt="Self-Hosted" src="https://img.shields.io/badge/Self--Hosted-Ready-orange?style=flat-square" /></a>
   <a href="#2-vercel-hosting"><img alt="Vercel" src="https://img.shields.io/badge/Vercel-Deploy-black?style=flat-square&logo=vercel" /></a>
@@ -57,7 +57,7 @@ Sylo is engineered to give you complete ownership of your data: deploy it secure
 ## Key Features
 
 - 🔍 **Hybrid Multi-Library RAG**: Retrieve relevant context across multiple knowledge libraries simultaneously using `pgvector` semantic vector similarity search.
-- ⚡ **Dual AI Core (Cloud & Local)**: Provider-agnostic LLM architecture supporting Google Gemini for cloud scale or Ollama for private, on-premise text generation and embeddings.
+- ⚡ **Dual AI Core (Cloud & Local)**: Provider-agnostic LLM architecture supporting cloud and local AI providers for text generation and embeddings.
 - 📝 **Block-Based Rich Text Editor**: Notion-style modular editor powered by BlockNote and ProseMirror with real-time editing and clean Markdown interchange.
 - 👥 **Role-Based Access Control (RBAC)**: Fine-grained permissions (`Owner`, `Admin`, `Editor`, `Viewer`) enforced at both database level (Row-Level Security) and API endpoints.
 - 🔄 **Atomic Chunking & Ingestion**: Transactional document updates, automated semantic chunking, embedding generation, and audit trail logging.
@@ -72,7 +72,7 @@ Sylo is engineered to give you complete ownership of your data: deploy it secure
 | **Framework**       | [Next.js 16](https://nextjs.org/) (App Router), [React 19](https://react.dev/)   |
 | **Language**        | [TypeScript](https://www.typescriptlang.org/)                                    |
 | **Database & Auth** | [Supabase](https://supabase.com/) (PostgreSQL + `pgvector`, Row-Level Security)  |
-| **AI & RAG**        | [Vercel AI SDK](https://sdk.vercel.ai/), Google Gemini, Ollama                   |
+| **AI & RAG**        | [Vercel AI SDK](https://sdk.vercel.ai/), cloud and local AI providers             |
 | **Styling**         | [Tailwind CSS v4](https://tailwindcss.com/), [shadcn/ui](https://ui.shadcn.com/) |
 | **Document Engine** | [BlockNote](https://www.blocknotejs.org/) (ProseMirror)                          |
 
@@ -161,8 +161,8 @@ GOOGLE_GENERATIVE_AI_API_KEY="your-google-api-key"
 
 # Ollama Configuration (Required if provider is 'ollama')
 OLLAMA_BASE_URL="http://localhost:11434/api"
-OLLAMA_LLM_MODEL="gemma4:e4b"
-OLLAMA_EMBEDDING_MODEL="nomic-embed-text:v1.5"
+# OLLAMA_LLM_MODEL="<text-generation-model>"
+# OLLAMA_EMBEDDING_MODEL="<embedding-model>"
 ```
 
 ---
@@ -293,11 +293,10 @@ Alternatively, reverse-proxy port `3000` behind Nginx, Caddy, or Traefik with SS
 ### Local AI with Ollama
 
 1. Install [Ollama](https://ollama.ai/download) on your host or server.
-2. Pull the embedding model and generation model:
+2. Pull a text-generation model and an embedding model of your choice:
    ```bash
-   ollama pull nomic-embed-text:v1.5
-   ollama pull gemma4:e4b
-   # or any other supported model (e.g. mistral, llama3)
+   ollama pull TEXT_GENERATION_MODEL
+   ollama pull EMBEDDING_MODEL
    ```
 3. Start the Ollama server:
    ```bash
@@ -309,8 +308,8 @@ Alternatively, reverse-proxy port `3000` behind Nginx, Caddy, or Traefik with SS
    EMBEDDING_PROVIDER="ollama"
    # Use http://host.docker.internal:11434/api when running Sylo inside Docker
    OLLAMA_BASE_URL="http://localhost:11434/api"
-   OLLAMA_LLM_MODEL="gemma4:e4b"
-   OLLAMA_EMBEDDING_MODEL="nomic-embed-text:v1.5"
+   # OLLAMA_LLM_MODEL="<text-generation-model>"
+   # OLLAMA_EMBEDDING_MODEL="<embedding-model>"
    ```
 
 ### Self-Hosted Supabase

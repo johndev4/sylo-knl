@@ -10,6 +10,7 @@ Guides and architectural references for **Sylo**.
 
 ## Architecture & Design
 
+- **[RAG Pipeline Architecture & Execution Guide](RAG_PIPELINE.md)** — Conversational query analysis, hybrid multi-source retrieval, anti-sycophancy guardrails, and streaming generation.
 - **[Document Save & Retrieval Architecture](DOCUMENT_SAVE_FLOW.md)** — Atomic document writes and asynchronous background embedding via `after()`.
 - **[Tracking and Auditing](TRACKING_AND_AUDITING.md)** — Database-trigger-based `audit_logs` and `document_edits` architecture.
 - **[Auth Provider Implementation Rationale](AUTH_PROVIDER_IMPLEMENTATION_RATIONALE.md)** — Why Sylo uses Supabase `onAuthStateChange` subscriptions instead of SWR.

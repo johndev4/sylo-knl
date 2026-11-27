@@ -251,7 +251,8 @@ export async function POST(req: NextRequest) {
       authorizedIds,
       messages,
       selectedLibraryNames,
-      mentionScope
+      mentionScope,
+      requestContext.requestId
     );
     const stream = streamChunksToResponse(chunks, requestContext);
 
